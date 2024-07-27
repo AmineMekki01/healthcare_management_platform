@@ -1,13 +1,11 @@
 package routes
 
 import (
-	"tbibi_back_end_go/services"
+	"backend_go/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
-
-
 
 func SetupDoctorRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 
@@ -26,5 +24,5 @@ func SetupDoctorRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 	r.GET("/api/v1/doctors", func(c *gin.Context) {
 		services.GetAllDoctors(c, pool)
 	})
-	
+
 }

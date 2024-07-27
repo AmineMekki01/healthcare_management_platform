@@ -1,6 +1,9 @@
 package services
 
 import (
+	"backend_go/auth"
+	"backend_go/models"
+	"backend_go/validators"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -8,9 +11,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"tbibi_back_end_go/auth"
-	"tbibi_back_end_go/models"
-	"tbibi_back_end_go/validators"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,8 +29,6 @@ func emailExists(conn *pgxpool.Conn, email string, c *gin.Context) (bool, error)
 	}
 	return true, nil
 }
-
-
 
 // RegisterDoctor registers a new doctor
 func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
@@ -68,7 +66,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		if err.Error() != "no rows in result set" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
-		} 
+		}
 
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
@@ -90,14 +88,12 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	
 	birthDate, err := time.Parse("2006-01-02", doctor.BirthDate)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
 		return
 	}
 	doctor.Age = time.Now().Year() - birthDate.Year()
-
 
 	// Location
 	doctor.Location = fmt.Sprintf("%s, %s, %s, %s, %s", doctor.StreetAddress, doctor.ZipCode, doctor.CityName, doctor.StateName, doctor.CountryName)
@@ -134,34 +130,33 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		uuid_generate_v4(),
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
 		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
-	)`, 
+	)`,
 
-	doctor.Username,
-	doctor.FirstName, 
-	doctor.LastName, 
-	doctor.Age, 
-	doctor.Sex, 
-	hashedPassword, 
-	salt, 
-	doctor.Specialty, 
-	doctor.Experience, 
-	nil, 
-	0, 
-	time.Now(), 
-	time.Now(), 
-	doctor.MedicalLicense, 
-	doctor.DoctorBio, 
-	doctor.Email, 
-	doctor.PhoneNumber, 
-	doctor.StreetAddress, 
-	doctor.CityName, 
-	doctor.StateName, 
-	doctor.ZipCode, 
-	doctor.CountryName, 
-	doctor.BirthDate, 
-	doctor.Location,
-		
-	)	
+		doctor.Username,
+		doctor.FirstName,
+		doctor.LastName,
+		doctor.Age,
+		doctor.Sex,
+		hashedPassword,
+		salt,
+		doctor.Specialty,
+		doctor.Experience,
+		nil,
+		0,
+		time.Now(),
+		time.Now(),
+		doctor.MedicalLicense,
+		doctor.DoctorBio,
+		doctor.Email,
+		doctor.PhoneNumber,
+		doctor.StreetAddress,
+		doctor.CityName,
+		doctor.StateName,
+		doctor.ZipCode,
+		doctor.CountryName,
+		doctor.BirthDate,
+		doctor.Location,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -176,7 +171,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	// Send the verification email
-	err = validators.SendVerificationEmail(doctor.Email, verificationLink) 
+	err = validators.SendVerificationEmail(doctor.Email, verificationLink)
 	if err != nil {
 		// Log the error and send a response to the user
 		log.Printf("Failed to send verification email: %v", err)
@@ -192,7 +187,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 }
 
 func doctorToAuthUser(d *models.Doctor) auth.User {
-	return auth.User{ID: d.Email}  
+	return auth.User{ID: d.Email}
 }
 
 func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
@@ -209,7 +204,7 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	err := pool.QueryRow(ctx, "SELECT is_verified FROM doctor_info WHERE email = $1", loginReq.Email).Scan(&isVerified)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Account Not Verified"})
-		return	
+		return
 	}
 
 	if !isVerified {
@@ -221,8 +216,8 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	var doctor models.Doctor
 	ctx = context.Background()
 	err = pool.QueryRow(ctx, "SELECT email, hashed_password FROM doctor_info WHERE email = $1", loginReq.Email).Scan(
-	&doctor.Email,
-	&doctor.Password,
+		&doctor.Email,
+		&doctor.Password,
 	)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
@@ -243,7 +238,7 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	// get user id 
+	// get user id
 	err = pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", loginReq.Email).Scan(
 		&doctor.DoctorID,
 	)
@@ -255,41 +250,37 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "token": token, "doctor_id": doctor.DoctorID})
 }
 
-
-
 func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
-    doctorId := c.Param("doctorId")  
+	doctorId := c.Param("doctorId")
 	var doctor models.Doctor
 	doctor.DoctorID = doctorId
 
-    err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count  FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
-        &doctor.Email,
-        &doctor.PhoneNumber,
-        &doctor.FirstName, 
-        &doctor.LastName,
-        &doctor.BirthDate,
-        &doctor.DoctorBio,
-        &doctor.Sex,
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count  FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
+		&doctor.Email,
+		&doctor.PhoneNumber,
+		&doctor.FirstName,
+		&doctor.LastName,
+		&doctor.BirthDate,
+		&doctor.DoctorBio,
+		&doctor.Sex,
 		&doctor.Location,
 		&doctor.Specialty,
 		&doctor.RatingScore,
 		&doctor.RatingCount,
-    )
-    
-    if err != nil {
-        if err.Error() == "no rows in result set" {
-            c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
-        } else {
-            log.Println("Database error:", err)
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-        }
-        return
-    }
+	)
 
-    c.JSON(http.StatusOK, doctor) 
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
+		} else {
+			log.Println("Database error:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, doctor)
 }
-
-
 
 func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 	var doctors []models.Doctor
@@ -324,18 +315,18 @@ func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		var doctor models.Doctor
 		err := rows.Scan(
-			&doctor.DoctorID, 
-			&doctor.Username, 
-			&doctor.FirstName, 
-			&doctor.LastName, 
-			&doctor.Specialty, 
-			&doctor.Experience, 
-			&doctor.RatingScore, 
-			&doctor.RatingCount,  
+			&doctor.DoctorID,
+			&doctor.Username,
+			&doctor.FirstName,
+			&doctor.LastName,
+			&doctor.Specialty,
+			&doctor.Experience,
+			&doctor.RatingScore,
+			&doctor.RatingCount,
 			&doctor.Location,
 		)
 		if err != nil {
