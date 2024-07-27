@@ -66,6 +66,13 @@ const DoctorRegisterPage = () => {
     const [specialty, setSpecialty] = useState('');
     const [experience, setExperience] = useState('');
     
+    const [file, setFile] = useState(null);
+
+    const handleFileChange = (event) => {
+        setFile(event.target.files[0]);
+    };
+    
+
     useEffect(() => {
         userRef.current.focus();
     }, [])
@@ -102,26 +109,32 @@ const DoctorRegisterPage = () => {
             setErrMsg('Invalid Entry');
             return;
         }
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('Username', user);
+        formData.append('Password', pwd);
+        formData.append('Email', email);
+        formData.append('PhoneNumber', phone);
+        formData.append('FirstName', firstName);
+        formData.append('LastName', lastName);
+        formData.append('BirthDate', birthdate);
+        formData.append('MedicalLicense', license);
+        formData.append('StreetAddress', address);
+        formData.append('CityName', city);
+        formData.append('StateName', state_name);
+        formData.append('ZipCode', zipCode);
+        formData.append('CountryName', country_name);
+        formData.append('DoctorBio', bio);
+        formData.append('Specialty', specialty);
+        formData.append('Experience', experience);
+        formData.append('Sex', sex);
+  
+        console.log("form data : ", formData)
         try {
-            const response = await axios.post('http://localhost:3001/api/v1/doctors/register', {
-                Username: user,
-                Password: pwd,
-                Email: email,
-                PhoneNumber: phone,
-                FirstName: firstName,
-                LastName: lastName,
-                BirthDate: birthdate,
-                MedicalLicense: license,
-                StreetAddress: address,
-                CityName: city,
-                StateName: state_name,
-                ZipCode: zipCode,
-                CountryName: country_name,
-                DoctorBio: bio,
-                Specialty: specialty,
-                Experience: experience,
-                Sex:sex,
-
+            const response = await axios.post('http://localhost:3001/api/v1/doctors/register', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
             });
             if(response.data.success) {
                 setSuccess(true);
@@ -163,7 +176,10 @@ const DoctorRegisterPage = () => {
                 </p>
 
                 <form onSubmit={handleSubmit}>
-
+                    <div>
+                        <label htmlFor="file">Profile Picture:</label>
+                        <input type="file" id="file" onChange={handleFileChange} />
+                    </div>
                     <CheckboxContainer>
                         <CheckboxLabel>
                             <CheckboxInput 

@@ -61,7 +61,13 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			zip_code VARCHAR(255) NOT NULL,
 			country_name VARCHAR(255) NOT NULL,
 			birth_date DATE NOT NULL,
-			location VARCHAR(255) NOT NULL
+			location VARCHAR(255) NOT NULL,
+			profile_photo_url VARCHAR(255) NOT NULL,
+			hospitals TEXT[],
+			organizations TEXT[],
+			awards TEXT[],
+			certifications TEXT[],
+			languages TEXT[]
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS patient_info (
@@ -85,7 +91,8 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			zip_code VARCHAR(255) NOT NULL,
 			country_name VARCHAR(255) NOT NULL,
 			birth_date DATE NOT NULL,
-			location VARCHAR(255) NOT NULL
+			location VARCHAR(255) NOT NULL,
+			profile_photo_url VARCHAR(255) NOT NULL
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS availabilities (

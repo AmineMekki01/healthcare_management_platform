@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
 import {
@@ -13,6 +13,7 @@ import {
 
 import profilePhoto from './../../../assets/images/profile_photo.jpeg';
 import { useParams } from 'react-router-dom';
+import { AuthContext } from './../../Auth/AuthContext';  
 
 export default function PatientProfile() {
 
@@ -20,6 +21,7 @@ export default function PatientProfile() {
   const [patientInfo, setPatientInfo] = useState([]);
   const [loading, setLoading] = useState([]);
   const [error, setError] = useState([]);
+  const { userProfilePhotoUrl } = useContext(AuthContext);
 
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function PatientProfile() {
               <CardContent className="text-center">
                 <CardMedia
                   component="img"
-                  image={profilePhoto}
+                  image={`http://localhost:3001/${userProfilePhotoUrl}`}
                   title="avatar"
                   className="rounded-circle"
                   style={{ width: '150px', margin: 'auto' }}
