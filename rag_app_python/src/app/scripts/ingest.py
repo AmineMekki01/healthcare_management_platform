@@ -19,7 +19,7 @@ def extract_text_from_pdf(file_path):
             text += pdf.pages[page_num].extract_text()
         return text
     except Exception as e:
-        print(f"An error occurred while reading PDF: {e}")
+        logger.info(f"An error occurred while reading PDF: {e}")
         return None
 
 
@@ -28,7 +28,7 @@ def extract_text_from_txt(file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
-        print(f"An error occurred while reading TXT: {e}")
+        logger.info(f"An error occurred while reading TXT: {e}")
         return None
 
 
@@ -40,7 +40,7 @@ def extract_text_from_docx(file_path):
             text += para.text + '\n'
         return text
     except Exception as e:
-        print(f"An error occurred while reading DOCX: {e}")
+        logger.info(f"An error occurred while reading DOCX: {e}")
         return None
 
 
@@ -130,7 +130,7 @@ def extract_metadata(file_path: str) -> Dict[str, str]:
             "file_type": os.path.splitext(file_path)[1].replace(".", ""),
         }
     except Exception as e:
-        print(f"An error occurred while extracting metadata: {e}")
+        logger.info(f"An error occurred while extracting metadata: {e}")
         return {}
 
 
@@ -158,10 +158,9 @@ def populate_qdrant(client: QdrantClient, documents: List[str], metadata: List[D
             documents=documents,
             metadata=metadata,
             ids=ids,
-
         )
     except Exception as e:
-        print(f"An error occurred while populating Qdrant: {e}")
+        logger.info(f"An error occurred while populating Qdrant: {e}")
 
 
 def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict, userId: str):
@@ -214,6 +213,7 @@ def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict, userId: str)
 
     if documents and metadata and ids:
         logger.info("Started populating Qdrant..")
+        logger.info("User ID: " + userId)
         populate_qdrant(client, documents, metadata, ids, userId)
         logger.info("Qdrant was populated.")
     else:

@@ -1,6 +1,6 @@
 -- migrate:up
 
-CREATE TABLE messages (
+CREATE TABLE chatbot_messages (
     id uuid PRIMARY KEY,
     chat_id uuid NOT NULL,
     user_id VARCHAR(255) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE messages (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE chats (
+CREATE TABLE chatbot_chats (
     id uuid PRIMARY KEY,
     user_id uuid NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE chats (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE files (
+CREATE TABLE chatbot_files (
     id uuid PRIMARY KEY,
     chat_id uuid NOT NULL,
     message_id uuid NOT NULL,
@@ -36,6 +36,6 @@ CREATE TABLE files (
 );
 
 -- migrate:down
-DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS chats;
-DROP TABLE if EXISTS files;
+DROP TABLE IF EXISTS chatbot_messages;
+DROP TABLE IF EXISTS chatbot_chats;
+DROP TABLE if EXISTS chatbot_files;
