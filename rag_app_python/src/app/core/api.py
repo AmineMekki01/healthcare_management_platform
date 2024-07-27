@@ -26,7 +26,12 @@ async def healthCheck(request: Request) -> dict:
 
 @router.post("/v1/upload-document")
 async def upload_document(files: List[UploadFile] = File(...), userId: str = Form(...)):
-    file_names = []    
+    file_names = []
+    save_directory = "data"
+
+    # Ensure the directory exists
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)   
     for file in files:        
         contents = await file.read()
         print(file)
