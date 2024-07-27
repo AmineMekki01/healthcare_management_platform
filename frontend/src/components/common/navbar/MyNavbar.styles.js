@@ -8,15 +8,22 @@ export const NavbarContainer = styled.nav`
 `;
 
 export const LogoContainer = styled.div`
-    max-width: 12vw;
-    width: 12vw;
-    // center logo in center 
-    margin: 0 auto;
-    img {
-        padding : 1vw 1vw;
-        max-width: 10vw; 
-        margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    width: 8vw;
+    padding: 10px 10px;
+    @media (max-width: 549px) {
+        width: 36px;
     }
+    img {
+        @media (max-width: 549px) {
+
+            min-width: 36px;
+        }
+    }
+    
     
 `;
 
@@ -42,7 +49,7 @@ export const MenuItem = styled.li`
     a {
         transition: 0.2s;
         display: flex;
-        
+        align-items: center;
         span {
             margin-left: 0.5rem;
             @media (max-width: 549px) {
@@ -54,11 +61,40 @@ export const MenuItem = styled.li`
     }
 `;
 
-export const LogoutItem = styled(MenuItem)`
+export const LowerMenuList = styled(MenuItem)`
     margin-top: auto;
+    display: flex;  
+    flex-direction: column;
+    align-items: flex-start;
     @media (max-width: 549px) {
         display: flex;  
         flex-direction: column;
         align-items: center;
     }
+`;
+
+export const UserInfoContainer = styled.div`
+    display: flex;
+    margin-top: auto;
+    text-align: center;
+   
+`;
+
+export const UserInfo = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 0.5rem;
+    color: #ccc;
+    font-size: 0.5rem;
+    text-align: left;
+    @media (max-width: 549px) {
+        display: none;
+    }
+`;
+
+export const UserInfoImage = styled.img`
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
 `;

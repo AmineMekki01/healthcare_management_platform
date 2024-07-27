@@ -35,7 +35,7 @@ export default function DoctorProfile() {
   const [doctorInfo, setDoctorInfo] = useState([]);
   const [loading, setLoading] = useState(true);  
   const [error, setError] = useState([]);
-  const { userType } = useContext(AuthContext);
+  const { userType, userProfilePhotoUrl } = useContext(AuthContext);
 
   useEffect(() => {
     axios.get(`http://localhost:3001/api/v1/doctors/${doctorId}`)
@@ -66,7 +66,7 @@ export default function DoctorProfile() {
               <CardContent className="text-center">
                 <CardMedia
                   component="img"
-                  image={profilePhoto}
+                  image={`http://localhost:3001/${userProfilePhotoUrl}`}
                   title="avatar"
                   className="rounded-circle"
                   style={{ width: '150px', margin: 'auto' }}

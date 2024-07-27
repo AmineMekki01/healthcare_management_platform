@@ -4,9 +4,18 @@ import {
   LogoContainer,
   MenuList,
   MenuItem,
-  LogoutItem,
+  LowerMenuList,
+  UserInfoContainer,
+  UserInfoImage,
+  UserInfo,
 } from './MyNavbar.styles';
 import { AuthContext } from './../../Auth/AuthContext';
+
+
+function capitalizeWords(str) {
+  if (!str) return ''; 
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
 
 const MyNavbar = () => {
   const { isLoggedIn, logout, doctorId, patientId, userType } = useContext(AuthContext); 
@@ -14,6 +23,9 @@ const MyNavbar = () => {
   const profileHref = userType === 'doctor'
     ? `/DoctorProfile/${doctorId}`
     : `/PatientProfile/${patientId}`;  
+
+  const { userFullName, userProfilePhotoUrl } = useContext(AuthContext);
+
 
   const menus = isLoggedIn
     ? [
@@ -31,6 +43,9 @@ const MyNavbar = () => {
         { title: 'Login', src: 'login', href: '/login' },
         { title: 'Register', src: 'register', href: '/register' },
       ];
+    
+      console.log("userFullName : ", userFullName);
+      console.log("userProfilePhotoUrl : ", userProfilePhotoUrl);
 
   return (
     <NavbarContainer>
@@ -53,17 +68,28 @@ const MyNavbar = () => {
           </MenuItem>
         ))}
       </MenuList>
-      <LogoutItem>
+      
+      <LowerMenuList>
                 {isLoggedIn && (
                     <>  
                     <a href="/login" onClick={logout}>
-                        <img src={require(`./../../../assets/images/menu_images/Chart.png`)} alt="Logout" />
+                        <img src={require(`./../../../assets/images/menu_images/logout.png`)} alt="Logout" />
                         <span>Logout</span>
                     </a>  
-                        
+                    <UserInfoContainer>
+                    <UserInfoImage src={`http://localhost:3001/${userProfilePhotoUrl}`} alt="User" />
+                    <UserInfo>
+                        <span>{capitalizeWords(userFullName)}</span>
+                      </UserInfo>
+                    </UserInfoContainer>    
                     </>
+
                 )}
-            </LogoutItem>
+
+          
+        
+      </LowerMenuList>
+      
     </NavbarContainer>
   );
 };

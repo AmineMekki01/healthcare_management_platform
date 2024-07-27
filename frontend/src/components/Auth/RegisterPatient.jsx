@@ -64,7 +64,10 @@ const PatientRegisterPage = () => {
     const [country_name, setCountryName] = useState('');
     const [bio, setBio] = useState('');
  
-
+    const [file, setFile] = useState(null);
+    const handleFileChange = (event) => {
+        setFile(event.target.files[0]);
+    };
 
     useEffect(() => {
         userRef.current.focus();
@@ -120,45 +123,30 @@ const PatientRegisterPage = () => {
             setErrMsg('Invalid Entry');
             return;
         }
-        console.log('Submitting form with data:', {
-            Username: user,
-            Password: pwd,
-            Email: email,
-            PhoneNumber: phone,
-            FirstName: firstName,
-            LastName: lastName,
-            BirthDate: birthdate,
-            StreetAddress: address,
-            CityName: city,
-            StateName: state_name,
-            ZipCode: zipCode,
-            CountryName: country_name,
-            PatientBio: bio,
-            Sex: sex,
-        });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('Username', user);
+        formData.append('Password', pwd);
+        formData.append('Email', email);
+        formData.append('PhoneNumber', phone);
+        formData.append('FirstName', firstName);
+        formData.append('LastName', lastName);
+        formData.append('BirthDate', birthdate);
+        formData.append('StreetAddress', address);
+        formData.append('CityName', city);
+        formData.append('StateName', state_name);
+        formData.append('ZipCode', zipCode);
+        formData.append('CountryName', country_name);
+        formData.append('PatientBio', bio);
+        formData.append('Sex', sex);
+        console.log("form data : ", formData)
+
         try {
-            const response = await axios.post('http://localhost:3001/api/v1/patients/register', {
-                Username: user,
-                Password: pwd,
-                Email: email,
-                PhoneNumber: phone,
-                FirstName: firstName,
-                LastName: lastName,
-                BirthDate: birthdate,
-                StreetAddress: address,
-                CityName: city,
-                StateName: state_name,
-                ZipCode: zipCode,
-                CountryName: country_name,
-                PatientBio: bio,
-                Sex: sex,
-            },{
+            const response = await axios.post('http://localhost:3001/api/v1/patients/register', formData, {
                 headers: {
-                    'Content-Type': 'application/json'
-                  }
-            }
-            
-            );
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             if(response.data.success) {
                 setSuccess(true);
             } else {
@@ -209,6 +197,10 @@ const PatientRegisterPage = () => {
                 </p>
 
                 <form onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="file">Profile Picture:</label>
+                        <input type="file" id="file" onChange={handleFileChange} />
+                    </div>
                     <CheckboxContainer>
                         <CheckboxLabel>
                             <CheckboxInput 
