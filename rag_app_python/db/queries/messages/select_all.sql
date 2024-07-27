@@ -2,7 +2,7 @@
 SELECT 
     * 
 FROM 
-    messages 
+    chatbot_messages 
 WHERE 
     user_id = :user_id 
 ORDER BY 
@@ -19,7 +19,7 @@ SELECT
     c.updated_at,
     c.created_at
 FROM 
-    chats c 
+    chatbot_chats c 
 WHERE 
     user_id = :user_id 
 ORDER BY 
@@ -27,7 +27,7 @@ ORDER BY
 DESC;
 
 -- :name select_messages_by_chat :many
-SELECT e4r
+SELECT 
   m.id,
   m.user_id,
   m.model,
@@ -35,7 +35,7 @@ SELECT e4r
   m.user_message,
   m.answer,
   m.created_at
-FROM messages m
-INNER JOIN chats c ON m.chat_id = c.id
+FROM chatbot_messages m
+INNER JOIN chatbot_chats c ON m.chat_id = c.id
 WHERE c.id = :chat_id
 ORDER BY m.created_at;
