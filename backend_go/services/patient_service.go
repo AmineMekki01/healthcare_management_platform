@@ -8,8 +8,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -49,12 +51,59 @@ func GetPatientById(c *gin.Context, pool *pgxpool.Pool) {
 func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
 	// Registering a new patient
 	var patient models.Patient
-	if err := c.ShouldBindJSON(&patient); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format", "details": err.Error()})
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		log.Println("Failed to parse form : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 		return
 	}
-	log.Printf("Received patient data: %+v", patient)
+
+	patient.Username = c.PostForm("Username")
+	patient.Password = c.PostForm("Password")
+	patient.Email = c.PostForm("Email")
+	patient.PhoneNumber = c.PostForm("PhoneNumber")
+	patient.FirstName = c.PostForm("FirstName")
+	patient.LastName = c.PostForm("LastName")
+	patient.BirthDate = c.PostForm("BirthDate")
+	patient.StreetAddress = c.PostForm("StreetAddress")
+	patient.CityName = c.PostForm("CityName")
+	patient.StateName = c.PostForm("StateName")
+	patient.ZipCode = c.PostForm("ZipCode")
+	patient.CountryName = c.PostForm("CountryName")
+	patient.Sex = c.PostForm("Sex")
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Println("Failed to upload file : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload file"})
+		return
+	}
+	defer file.Close()
+
+	fileName := fmt.Sprintf("%s_%d", patient.Username, time.Now().Unix())
+	filePath := fmt.Sprintf("user_photos/%s.jpg", fileName)
+
+	if _, err := os.Stat("user_photos"); os.IsNotExist(err) {
+		if err := os.MkdirAll("user_photos", os.ModePerm); err != nil {
+			log.Println("Could not create directory : ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create directory"})
+			return
+		}
+	}
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		log.Println("Failed to create file : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Println("Failed to save file : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
 
 	conn, err := pool.Acquire(c)
 	if err != nil {
@@ -145,12 +194,13 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
         zip_code, 
         country_name, 
         birth_date, 
-        location
+        location,
+		profile_photo_url
     ) 
     VALUES (
         uuid_generate_v4(), 
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-        $11, $12, $13, $14, $15, $16, $17, $18, $19
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
     )`,
 		patient.Username,
 		patient.FirstName,
@@ -171,6 +221,7 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
 		patient.CountryName,
 		patient.BirthDate,
 		location,
+		filePath,
 	)
 	if err != nil {
 		log.Printf("inserting Patient Info to database error: %v", err)
@@ -258,14 +309,25 @@ func LoginPatient(c *gin.Context, pool *pgxpool.Pool) {
 
 	// get user id
 	var patientId string
-	err = pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", loginReq.Email).Scan(
+	err = pool.QueryRow(ctx, "SELECT patient_id, first_name, last_name, profile_photo_url FROM patient_info WHERE email = $1", loginReq.Email).Scan(
 		&patientId,
+		&patient.FirstName,
+		&patient.LastName,
+		&patient.ProfilePictureURL,
 	)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "token": token, "patient_id": patientId})
+	response := gin.H{
+		"success":             true,
+		"token":               token,
+		"patient_id":          patientId,
+		"first_name":          patient.FirstName,
+		"last_name":           patient.LastName,
+		"profile_picture_url": patient.ProfilePictureURL,
+	}
 
+	c.JSON(http.StatusOK, response)
 }

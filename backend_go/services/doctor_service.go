@@ -8,8 +8,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -34,13 +36,67 @@ func emailExists(conn *pgxpool.Conn, email string, c *gin.Context) (bool, error)
 func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	var doctor models.Doctor
 
-	if err := c.ShouldBindJSON(&doctor); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		log.Println("Failed to parse form : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
+		return
+	}
+
+	doctor.Username = c.PostForm("Username")
+	doctor.Password = c.PostForm("Password")
+	doctor.Email = c.PostForm("Email")
+	doctor.PhoneNumber = c.PostForm("PhoneNumber")
+	doctor.FirstName = c.PostForm("FirstName")
+	doctor.LastName = c.PostForm("LastName")
+	doctor.BirthDate = c.PostForm("BirthDate")
+	doctor.MedicalLicense = c.PostForm("MedicalLicense")
+	doctor.StreetAddress = c.PostForm("StreetAddress")
+	doctor.CityName = c.PostForm("CityName")
+	doctor.StateName = c.PostForm("StateName")
+	doctor.ZipCode = c.PostForm("ZipCode")
+	doctor.CountryName = c.PostForm("CountryName")
+	doctor.DoctorBio = c.PostForm("DoctorBio")
+	doctor.Specialty = c.PostForm("Specialty")
+	doctor.Experience = c.PostForm("Experience")
+	doctor.Sex = c.PostForm("Sex")
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Println("Failed to upload file : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload file"})
+		return
+	}
+	defer file.Close()
+
+	fileName := fmt.Sprintf("%s_%d", doctor.Username, time.Now().Unix())
+	filePath := fmt.Sprintf("user_photos/%s.jpg", fileName)
+
+	if _, err := os.Stat("user_photos"); os.IsNotExist(err) {
+		if err := os.MkdirAll("user_photos", os.ModePerm); err != nil {
+			log.Println("Could not create directory : ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create directory"})
+			return
+		}
+	}
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		log.Println("Failed to create file : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Println("Failed to save file : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
 
 	conn, err := pool.Acquire(c)
 	if err != nil {
+		log.Println("Could not acquire database connection : ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not acquire database connection"})
 		return
 	}
@@ -55,6 +111,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	if exists {
+		log.Printf("Email already exists : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
 		return
 	}
@@ -63,12 +120,16 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	var username string
 	err = conn.QueryRow(c, "SELECT username FROM doctor_info WHERE username = $1", doctor.Username).Scan(&username)
 	if err != nil {
+		log.Printf("username already exists : %v", err)
+
 		if err.Error() != "no rows in result set" {
+			log.Printf("username already exists : %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
 	} else {
+		log.Printf("username already exists : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
 		return
 	}
@@ -77,6 +138,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	saltBytes := make([]byte, 16)
 	_, err = rand.Read(saltBytes)
 	if err != nil {
+		log.Printf("Generating Salt error : %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
@@ -84,12 +146,14 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(doctor.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Printf("Generating hashedPassword error : %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
 	birthDate, err := time.Parse("2006-01-02", doctor.BirthDate)
 	if err != nil {
+		log.Printf("Generating birthDate error : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
 		return
 	}
@@ -124,12 +188,13 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		zip_code, 
 		country_name, 
 		birth_date, 
-		location
+		location,
+		profile_photo_url
 	) 
 	VALUES (
 		uuid_generate_v4(),
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
 	)`,
 
 		doctor.Username,
@@ -156,9 +221,11 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		doctor.CountryName,
 		doctor.BirthDate,
 		doctor.Location,
+		filePath,
 	)
 
 	if err != nil {
+		log.Printf("Generating birthDate error : %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
@@ -239,15 +306,29 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	// get user id
-	err = pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", loginReq.Email).Scan(
+	err = pool.QueryRow(ctx, "SELECT doctor_id, first_name, last_name, profile_photo_url FROM doctor_info WHERE email = $1", loginReq.Email).Scan(
 		&doctor.DoctorID,
+		&doctor.FirstName,
+		&doctor.LastName,
+		&doctor.ProfilePictureURL,
 	)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Invalid email or password"})
+		log.Println("Error getting doctor data :", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "token": token, "doctor_id": doctor.DoctorID})
+	response := gin.H{
+		"success":             true,
+		"token":               token,
+		"doctor_id":           doctor.DoctorID,
+		"first_name":          doctor.FirstName,
+		"last_name":           doctor.LastName,
+		"profile_picture_url": doctor.ProfilePictureURL,
+	}
+
+	c.JSON(http.StatusOK, response)
+
 }
 
 func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {

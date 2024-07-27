@@ -1,5 +1,6 @@
-import React from 'react'
+import React, {useContext} from 'react'
 import styled from 'styled-components'
+import { AuthContext } from './../Auth/AuthContext';
 
 const Navbar = styled.div`
     display: flex;
@@ -29,15 +30,20 @@ const ProfileImg = styled.img`
     object-fit: cover;
 `;
 
-
+function capitalizeWords(str) {
+    if (!str) return ''; 
+    return str.replace(/\b\w/g, char => char.toUpperCase());
+  }
 
 const NavbarComponent = () => {
+    const { userFullName, userProfilePhotoUrl } = useContext(AuthContext);
   return (
     <Navbar>
         <Logo className='logo'>TBIBI Chat</Logo>
         <User className='user'>
-            <ProfileImg src="https://images.pexels.com/photos/15031666/pexels-photo-15031666/free-photo-of-portrait-of-a-girl.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt=""/>
-            <span>MK</span>
+            
+            <ProfileImg src={`http://localhost:3001/${userProfilePhotoUrl}`} alt=""/>
+            <span>{capitalizeWords(userFullName)}</span>
         </User>
     </Navbar>
   )
