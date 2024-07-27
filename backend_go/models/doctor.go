@@ -26,6 +26,6 @@ type Doctor struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`	
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
