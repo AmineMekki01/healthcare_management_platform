@@ -14,7 +14,7 @@ import (
 
 func main() {
 	r := gin.Default()
-
+	r.Static("/user_photos", "./user_photos")
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://10.134.32.128:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
