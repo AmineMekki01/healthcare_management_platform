@@ -10,35 +10,29 @@ const AuthProvider = ({ children, navigate  }) => {
     const [userName, setUserName] = useState(null);
     const [userAge, setUserAge] = useState(null);
     const [logoutTimer, setLogoutTimer] = useState(null);
-
+    const [userFullName, setUserFullName] = useState(null);
+    const [userProfilePhotoUrl, setUserProfilePhotoUrl] = useState(null);
 
     useEffect(() => {   
         if (localStorage.getItem('token')) {
             setIsLoggedIn(true);
-        }
-    }
-    , []);
-
-    useEffect(() => {
-        if (localStorage.getItem('userType')) {
+            setUserFullName(localStorage.getItem('userFullName'));
             setUserType(localStorage.getItem('userType'));
-        }
-    }   
-    , []);  
+            setUserProfilePhotoUrl(localStorage.getItem("userProfilePhotoUrl"))
 
-    useEffect(() => {   
-        if (localStorage.getItem('doctorId')) {
-            setDoctorId(localStorage.getItem('doctorId'));
+
+        setDoctorId(localStorage.getItem('doctorId'));
+        setPatientId(localStorage.getItem('patientId'));
         }
     }
     , []);
-
 
     const logout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('doctorId');
         localStorage.removeItem('patientId');  
         localStorage.removeItem('userType'); 
+        
         setDoctorId(null);
         setPatientId(null);  
         setIsLoggedIn(false);
@@ -54,30 +48,28 @@ const AuthProvider = ({ children, navigate  }) => {
       setLogoutTimer(setTimeout(() => {
           logout();   
       }, 15 * 60 * 1000));
-  }, [logout]);
+    }, [logout]);
   
-  const clearLogoutTimer = useCallback(() => {
-      if (logoutTimer) {
-          clearTimeout(logoutTimer);
-          setLogoutTimer(null);
-      }
-  }, [logoutTimer]);
+    const clearLogoutTimer = useCallback(() => {
+        if (logoutTimer) {
+            clearTimeout(logoutTimer);
+            setLogoutTimer(null);
+        }
+    }, [logoutTimer]);
 
     useEffect(() => {
     if (isLoggedIn) {
         startLogoutTimer();
     }
-}, [isLoggedIn, startLogoutTimer]);
+    }, [isLoggedIn, startLogoutTimer]);
 
-useEffect(() => {
-    return () => {
-        clearLogoutTimer();
-    };
-}, [clearLogoutTimer]);
+    useEffect(() => {
+        return () => {
+            clearLogoutTimer();
+        };
+    }, [clearLogoutTimer]);
 
 
-    
-    
     return (
         <AuthContext.Provider value={{
             isLoggedIn,
@@ -86,6 +78,8 @@ useEffect(() => {
             userType,
             doctorId,
             patientId, 
+            userFullName,
+            userProfilePhotoUrl,
             setIsLoggedIn,
             setUserName,
             setUserAge,
@@ -94,7 +88,9 @@ useEffect(() => {
             setPatientId, 
             logout,
             startLogoutTimer,
-            clearLogoutTimer,
+            clearLogoutTimer, 
+            setUserFullName,
+            setUserProfilePhotoUrl
         }}>
             {children}
         </AuthContext.Provider>

@@ -17,4 +17,5 @@ type Patient struct {
 	PatientBio    string `json:"PatientBio"`
 	Sex           string `json:"sex"`
 	// Location      string `json:"location"`
+	ProfilePictureURL string `json:"ProfilePictureUrl"`
 }
