@@ -1,78 +1,76 @@
 package services
 
 import (
+	"backend_go/models"
 	"context"
 	"log"
 	"net/http"
-	"tbibi_back_end_go/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-
-
 func GetAvailabilities(c *gin.Context, pool *pgxpool.Pool) {
-    doctorId := c.DefaultQuery("doctorId", "")
-    day := c.DefaultQuery("day", "")
-    currentTime := c.DefaultQuery("currentTime", "")
-    timeZone := c.DefaultQuery("timeZone", "")
+	doctorId := c.DefaultQuery("doctorId", "")
+	day := c.DefaultQuery("day", "")
+	currentTime := c.DefaultQuery("currentTime", "")
+	timeZone := c.DefaultQuery("timeZone", "")
 
-	const customDateFormat = "2006-01-02" 
-	dayStart, err := time.Parse(customDateFormat, day) 
+	const customDateFormat = "2006-01-02"
+	dayStart, err := time.Parse(customDateFormat, day)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid day format"})
 		return
 	}
 
-    dayEnd := dayStart.AddDate(0, 0, 1)
-    location, err := time.LoadLocation(timeZone)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time zone"})
-        return
-    }
-
-    localCurrentTime, err := time.ParseInLocation(time.RFC3339, currentTime, location)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid current time format"})
-        return
-    }
-
-    rows, err := pool.Query(context.Background(),
-        "SELECT availability_id, availability_start, availability_end, doctor_id FROM availabilities WHERE doctor_id = $1 AND availability_start >= $2 AND availability_end < $3 AND availability_start >= $4",
-        doctorId, dayStart, dayEnd, localCurrentTime)
+	dayEnd := dayStart.AddDate(0, 0, 1)
+	location, err := time.LoadLocation(timeZone)
 	if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    defer rows.Close()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time zone"})
+		return
+	}
 
-    var availabilities []models.Availability 
-    berlinLocation, _ := time.LoadLocation("Europe/Berlin")
-    for rows.Next() {
-        var availability models.Availability
-        err := rows.Scan(&availability.AvailabilityID, &availability.AvailabilityStart, &availability.AvailabilityEnd, &availability.DoctorID)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-            return
-        }
+	localCurrentTime, err := time.ParseInLocation(time.RFC3339, currentTime, location)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid current time format"})
+		return
+	}
 
-        availability.AvailabilityStart = availability.AvailabilityStart.In(berlinLocation)
-        availability.AvailabilityEnd = availability.AvailabilityEnd.In(berlinLocation)
-        availabilities = append(availabilities, availability)
-    }
+	rows, err := pool.Query(context.Background(),
+		"SELECT availability_id, availability_start, availability_end, doctor_id FROM availabilities WHERE doctor_id = $1 AND availability_start >= $2 AND availability_end < $3 AND availability_start >= $4",
+		doctorId, dayStart, dayEnd, localCurrentTime)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
 
-    c.JSON(http.StatusOK, availabilities)
+	var availabilities []models.Availability
+	berlinLocation, _ := time.LoadLocation("Europe/Berlin")
+	for rows.Next() {
+		var availability models.Availability
+		err := rows.Scan(&availability.AvailabilityID, &availability.AvailabilityStart, &availability.AvailabilityEnd, &availability.DoctorID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		availability.AvailabilityStart = availability.AvailabilityStart.In(berlinLocation)
+		availability.AvailabilityEnd = availability.AvailabilityEnd.In(berlinLocation)
+		availabilities = append(availabilities, availability)
+	}
+
+	c.JSON(http.StatusOK, availabilities)
 }
 
 type Appointments struct {
-	AppointmentStart          time.Time `json:"AppointmentStart"`
-	AppointmentEnd            time.Time `json:"AppointmentEnd"`
-	AppointmentTitle          string    `json:"AppointmentTitle"`
-	DoctorID       string    `json:"DoctorID"`
-	PatientID      string    `json:"PatientID"`
-	AvailabilityID int       `json:"AvailabilityID"`
+	AppointmentStart time.Time `json:"AppointmentStart"`
+	AppointmentEnd   time.Time `json:"AppointmentEnd"`
+	AppointmentTitle string    `json:"AppointmentTitle"`
+	DoctorID         string    `json:"DoctorID"`
+	PatientID        string    `json:"PatientID"`
+	AvailabilityID   int       `json:"AvailabilityID"`
 }
 
 // Implement POST /api/v1/reservations
@@ -102,8 +100,8 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 
 	// Insert reservation
 	_, err = tx.Exec(context.Background(),
-    "INSERT INTO appointments (appointment_start, appointment_end, appointment_title, doctor_id, patient_id) VALUES ($1::timestamp with time zone, $2::timestamp with time zone, $3, $4, $5)",
-    appointment.AppointmentStart, appointment.AppointmentEnd, appointment.AppointmentTitle, appointment.DoctorID, appointment.PatientID)
+		"INSERT INTO appointments (appointment_start, appointment_end, appointment_title, doctor_id, patient_id) VALUES ($1::timestamp with time zone, $2::timestamp with time zone, $3, $4, $5)",
+		appointment.AppointmentStart, appointment.AppointmentEnd, appointment.AppointmentTitle, appointment.DoctorID, appointment.PatientID)
 
 	if err != nil {
 		log.Println("Insert Error:", err)
@@ -124,8 +122,6 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 	tx.Commit(context.Background())
 	c.JSON(http.StatusCreated, gin.H{"message": "Appointment booked and availability removed successfully"})
 }
-
-
 
 // Implement GET /api/v1/reservations
 func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
@@ -199,14 +195,14 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
-	
+
 		r.ReservationStart = r.ReservationStart.In(location)
 		r.ReservationEnd = r.ReservationEnd.In(location)
-		log.Println("r", r)		// Append to the reservations slice
+		log.Println("r", r) // Append to the reservations slice
 		reservations = append(reservations, r)
-		
+
 	}
-	
+
 	log.Println(reservations)
 	c.JSON(http.StatusOK, reservations)
 }

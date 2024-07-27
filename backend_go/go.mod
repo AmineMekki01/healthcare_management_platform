@@ -1,4 +1,4 @@
-module tbibi_back_end_go
+module backend_go
 
 go 1.21.2
 
