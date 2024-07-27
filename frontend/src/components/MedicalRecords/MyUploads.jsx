@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef  } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from './../Auth/AuthContext';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -24,9 +24,8 @@ import PhotoSizeSelectActualIcon from '@mui/icons-material/PhotoSizeSelectActual
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
-import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, updateFolderName, downloadFile} from './routes/api'; 
+import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, updateFolderName, downloadFile } from './routes/api'; 
 const API_BASE_URL = 'http://localhost:3001';
-
 
 function MyUploads() {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +44,6 @@ function MyUploads() {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-
   const getUserId = () => {
     return userType === 'doctor' ? doctorId : patientId;
   };
@@ -61,7 +59,7 @@ function MyUploads() {
 
       if (folderId) {
         const breadcrumbData = await fetchBreadcrumbs(folderId);
-        setBreadcrumbs(breadcrumbData);
+        setBreadcrumbs(Array.isArray(breadcrumbData) ? breadcrumbData : []);
       } else {
         setBreadcrumbs([]);
       }
@@ -78,13 +76,12 @@ function MyUploads() {
     if (folderId && !newPath.includes(folderId)) {
       newPath.push(folderId);
     }
-    console.log('folderId : ', folderId)
     setCurrentPath(newPath);
     fetchAllFolder(folderId);
   }, [folderId]);
 
   const navigateToFolder = (subfolderId, file_type) => {
-    if (file_type == 'folder' ) {
+    if (file_type === 'folder') {
       setCurrentPath(prevPath => {
         const newPath = [...prevPath];
         if (!newPath.includes(subfolderId)) {
@@ -117,7 +114,6 @@ function MyUploads() {
   };
 
   const navigateUp = () => {
-  
     const newPath = currentPath.slice(0, -1).filter(id => id != null);
     const parentFolderId = newPath.at(-1) || '';
     navigate(parentFolderId ? `/MyDocs/Upload/${parentFolderId}` : '/MyDocs/Upload');
@@ -217,7 +213,6 @@ function MyUploads() {
       
       fetchAllFolder(currentPath[currentPath.length - 1]);
       alert("File uploaded successfully!");
-      // empty the file
       
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -245,6 +240,7 @@ function MyUploads() {
       console.error('Error during file download:', error);
     }
   };
+
   const shareFolder = async (folderId, doctorId) => {
     if (!doctorId) {
       alert('Please select a doctor to share with.');
@@ -274,6 +270,7 @@ function MyUploads() {
       alert('Error sharing folder: ' + error.message);
     }
   };
+
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -288,8 +285,7 @@ function MyUploads() {
           throw new Error('Failed to fetch doctors');
         }
         const data = await response.json();
-        console.log('data : ', data)
-        setDoctors(data); 
+        setDoctors(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching doctors:', error);
       }
@@ -297,31 +293,31 @@ function MyUploads() {
 
     fetchDoctors();
   }, []);
+
   return (
     <Container>
       <HeaderTitle>My Uploads</HeaderTitle>
       <SubHeader>
         <PathContainer>
-            <span>Root</span>
-            {breadcrumbs.map((crumb, index) => (
-              <span key={crumb.folder_id}>
-                {' > '}
-                <a onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}>
-                  {crumb.name}
-                </a>
-              </span>
-            ))}
-            {breadcrumbs.length > 0 && (
-              <span>
-                {' > '}
-                <a onClick={navigateUp}>Go Up</a>
-              </span>
-            )}
+          <span>Root</span>
+          {breadcrumbs.map((crumb, index) => (
+            <span key={crumb.folder_id}>
+              {' > '}
+              <a onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}>
+                {crumb.name}
+              </a>
+            </span>
+          ))}
+          {breadcrumbs.length > 0 && (
+            <span>
+              {' > '}
+              <a onClick={navigateUp}>Go Up</a>
+            </span>
+          )}
         </PathContainer>
-        
-        <FolderHandlingContainer> 
-        <button onClick={() => selectedFileId && handleDownload(selectedFileId)}>Download</button>
 
+        <FolderHandlingContainer>
+          <button onClick={() => selectedFileId && handleDownload(selectedFileId)}>Download</button>
           <UploadFolderButton>
             <input
               type="file"
@@ -367,45 +363,42 @@ function MyUploads() {
         </FolderHandlingContainer>
       </SubHeader>
       <FolderCardContainer>
-        {Array.isArray(folders) && folders?.map((folder) => {
+        {folders.map((folder) => {
           const formattedPath = folder.path.replace(/\\/g, '/').replace('uploads/', '');
           const imageUrl = `${API_BASE_URL}/files/${formattedPath}`;
 
           return (
-          
-          <FolderCard key={folder.folder_id} className="col-md-4">
-            <input
-              type="checkbox"
-              checked={selectedFiles.has(folder.folder_id)}
-              onChange={() => toggleFileSelection(folder.folder_id)}
-            />
-          
-            <div className="card" onClick={() => navigateToFolder(folder.folder_id, folder.file_type)}>
-              <div className="card-body">
-                <i className="fa fa-folder-o">
-                  {fileIconMapper(folder.file_type === 'folder' ? 'folder' : folder.extension, imageUrl)}
-                </i>
-              </div>
-
-              <div className="card-footer">
+            <FolderCard key={folder.folder_id} className="col-md-4">
+              <input
+                type="checkbox"
+                checked={selectedFiles.has(folder.folder_id)}
+                onChange={() => toggleFileSelection(folder.folder_id)}
+              />
+              <div className="card" onClick={() => navigateToFolder(folder.folder_id, folder.file_type)}>
+                <div className="card-body">
+                  <i className="fa fa-folder-o">
+                    {fileIconMapper(folder.file_type === 'folder' ? 'folder' : folder.extension, imageUrl)}
+                  </i>
+                </div>
+                <div className="card-footer">
                   <h3>
-                  <a href="#" onClick={() => viewFolder(folder)}>
+                    <a href="#" onClick={() => viewFolder(folder)}>
                       {folder.name.substring(0, 20)}
                       {folder.name.length > 20 ? "..." : ""}
-                  </a>
+                    </a>
                   </h3>
+                </div>
               </div>
-            </div>
-          </FolderCard>
-          );	
+            </FolderCard>
+          );
         })}
       </FolderCardContainer>
 
       <form method="POST" action="/create-folder" id="form-create-folder">
-          <input type="hidden" name="name" value={folderName} required />
-          <input type="hidden" name="user_id" id="userId" required />
-          <input type="hidden" name="file_type" id="fileType" required />
-          <input type="hidden" name="user_type" id="userType" required />
+        <input type="hidden" name="name" value={folderName} required />
+        <input type="hidden" name="user_id" id="userId" required />
+        <input type="hidden" name="file_type" id="fileType" required />
+        <input type="hidden" name="user_type" id="userType" required />
       </form>
     </Container>
   );
