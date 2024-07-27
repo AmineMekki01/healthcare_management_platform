@@ -1,0 +1,51 @@
+const express = require('express');
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: 'your_user',
+  host: 'your_host',
+  database: 'your_database',
+  password: 'your_password',
+  port: 'your_port',
+});
+
+const app = express();
+
+app.get('/api/doctor-availability/:doctorId', async (req, res) => {
+  const { doctorId } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT available_date, available_time FROM doctor_availability WHERE doctor_id = $1',
+      [doctorId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.listen(3001, () => {
+  console.log('Server running on http://localhost:3001');
+});
+
+
+import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import axios from 'axios';
+
+// ... existing imports and code
+
+const BookAppointment = () => {
+  // ... existing state and functions
+
+  const [doctorAvailability, setDoctorAvailability] = useState([]);
+
+  useEffect(() => {
+    // Replace with your doctor's ID and backend API URL
+    const doctorId = 1;
+    axios.get(`/api/doctor-availability/${doctorId}`)
+      .then((response) => {
+        setDoctorAvailability(response.data);
+      })
+      .catch((error)
