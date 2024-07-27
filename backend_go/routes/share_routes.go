@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"tbibi_back_end_go/services"
+	"backend_go/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -22,6 +22,6 @@ func SetupShareRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 	})
 
 	r.GET("/api/v1/doctors-to-share-with", func(c *gin.Context) {
-        services.ListDoctors(c, pool)
-    })
-}	
+		services.ListDoctors(c, pool)
+	})
+}

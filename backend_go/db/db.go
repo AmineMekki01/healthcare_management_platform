@@ -13,8 +13,8 @@ import (
 func InitDatabase() (*pgxpool.Pool, error) {
 
 	if err := godotenv.Load(); err != nil {
-        log.Fatalf("Error loading .env file: %v", err)
-    }
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 	host := os.Getenv("DATABASE_HOST")
 	port := os.Getenv("DATABASE_PORT")
 	user := os.Getenv("DATABASE_USER")
@@ -34,8 +34,6 @@ func InitDatabase() (*pgxpool.Pool, error) {
 	// Create tables
 	sqlQueries := []string{
 		`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
-		
-		
 
 		`CREATE TABLE IF NOT EXISTS doctor_info (
 			doctor_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -44,26 +42,26 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			last_name VARCHAR(50) NOT NULL,
 			age INTEGER NOT NULL,
 			sex VARCHAR(50) NOT NULL,
-			hashed_password VARCHAR(50) NOT NULL,
+			hashed_password VARCHAR(255) NOT NULL,
 			salt VARCHAR(50) NOT NULL,
 			specialty VARCHAR(50) NOT NULL,
 			experience VARCHAR(50) NOT NULL,
-			rating_score NUMERIC NOT NULL,
+			rating_score NUMERIC ,
 			rating_count INTEGER NOT NULL,
 			create_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			update_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			medical_license VARCHAR(50) NOT NULL,
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
 			doctor_bio VARCHAR(50) NOT NULL,
-			email VARCHAR(50) NOT NULL,
-			phone_number VARCHAR(50) NOT NULL,
-			street_address VARCHAR(50) NOT NULL,
-			city_name VARCHAR(50) NOT NULL,
-			state_name VARCHAR(50) NOT NULL,
-			zip_code VARCHAR(50) NOT NULL,
-			country_name VARCHAR(50) NOT NULL,
+			email VARCHAR(255) NOT NULL,
+			phone_number VARCHAR(255) NOT NULL,
+			street_address VARCHAR(255) NOT NULL,
+			city_name VARCHAR(255) NOT NULL,
+			state_name VARCHAR(255) NOT NULL,
+			zip_code VARCHAR(255) NOT NULL,
+			country_name VARCHAR(255) NOT NULL,
 			birth_date DATE NOT NULL,
-			location VARCHAR(50) NOT NULL
+			location VARCHAR(255) NOT NULL
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS patient_info (
@@ -73,23 +71,22 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			last_name VARCHAR(50) NOT NULL,
 			age INTEGER NOT NULL,
 			sex VARCHAR(50) NOT NULL,
-			hashed_password VARCHAR(50) NOT NULL,
+			hashed_password VARCHAR(255) NOT NULL,
 			salt VARCHAR(50) NOT NULL,
 			create_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			update_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-			patient_bio VARCHAR(50) NOT NULL,
-			email VARCHAR(50) NOT NULL,
+			patient_bio TEXT NOT NULL,
+			email VARCHAR(255) NOT NULL,
 			phone_number VARCHAR(50) NOT NULL,
-			street_address VARCHAR(50) NOT NULL,
-			city_name VARCHAR(50) NOT NULL,
-			state_name VARCHAR(50) NOT NULL,
-			zip_code VARCHAR(50) NOT NULL,
-			country_address VARCHAR(50) NOT NULL,
+			street_address VARCHAR(255) NOT NULL,
+			city_name VARCHAR(255) NOT NULL,
+			state_name VARCHAR(255) NOT NULL,
+			zip_code VARCHAR(255) NOT NULL,
+			country_name VARCHAR(255) NOT NULL,
 			birth_date DATE NOT NULL,
-			location VARCHAR(50) NOT NULL
+			location VARCHAR(255) NOT NULL
 		)`,
-
 
 		`CREATE TABLE IF NOT EXISTS availabilities (
 			availability_id SERIAL PRIMARY KEY,
@@ -97,7 +94,6 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			availability_end TIMESTAMP NOT NULL,
 			doctor_id uuid REFERENCES doctor_info(doctor_id)
 		)`,
-
 
 		`CREATE TABLE IF NOT EXISTS appointments (
 			appointment_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -107,7 +103,6 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			doctor_id uuid REFERENCES doctor_info(doctor_id),
 			patient_id uuid REFERENCES patient_info(patient_id)
 		)`,
-	
 
 		`CREATE TABLE IF NOT EXISTS folder_file_info (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -116,11 +111,11 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			updated_at TIMESTAMP NOT NULL,
 			type VARCHAR(50) NOT NULL,
 			size INTEGER NOT NULL,
-			extension VARCHAR(50) NOT NULL,
-			path VARCHAR(50) NOT NULL,
+			extension VARCHAR(50),
+			path VARCHAR(255),
 			user_id uuid NOT NULL,
 			user_type VARCHAR(50) NOT NULL,
-			parent_id uuid REFERENCES folder_file_info(folder_id)
+			parent_id uuid REFERENCES folder_file_info(id)
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS shared_items (
@@ -157,8 +152,12 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			updated_at TIMESTAMP NOT NULL,
 			deleted_at TIMESTAMP
 		)`,
-
-
+		`CREATE TABLE IF NOT EXISTS verification_tokens (
+			id SERIAL PRIMARY KEY,
+			email VARCHAR(255) NOT NULL,
+			token VARCHAR(255) NOT NULL,
+			type VARCHAR(255) NOT NULL
+		)`,
 	}
 
 	for _, query := range sqlQueries {
@@ -170,4 +169,3 @@ func InitDatabase() (*pgxpool.Pool, error) {
 
 	return conn, nil
 }
-

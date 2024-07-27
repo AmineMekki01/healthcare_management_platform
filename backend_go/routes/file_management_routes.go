@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"tbibi_back_end_go/services"
+	"backend_go/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -20,12 +20,12 @@ func SetupFileRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		services.GetSubfolders(c, pool)
 	})
 
-	r.GET("/folders/:folderId/breadcrumbs", func(c *gin.Context) {	
+	r.GET("/folders/:folderId/breadcrumbs", func(c *gin.Context) {
 		services.GetBreadcrumbs(c, pool)
 	})
-	
+
 	r.DELETE("/delete-files/:folderId", func(c *gin.Context) {
-    	services.DeleteFolderAndContents(c, pool)
+		services.DeleteFolderAndContents(c, pool)
 	})
 
 	r.PATCH("/update-folder/:folderId", func(c *gin.Context) {
@@ -39,7 +39,7 @@ func SetupFileRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 	r.Static("/files", "./uploads")
 
 	r.GET("/download-file/:fileId", func(c *gin.Context) {
-        services.DownloadFile(c, pool)
-    })
+		services.DownloadFile(c, pool)
+	})
 
 }
