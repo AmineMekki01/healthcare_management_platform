@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import axios from 'axios';
 
 import DoctorCard from '../Users/Doctor/DoctorCard';
 import { AppContainer, SearchInputContainer, SearchInput, UserList } from './SearchBar.styles';
+import { debounce } from 'lodash';
 
 const SearchBar = () => {
 
@@ -10,26 +11,75 @@ const SearchBar = () => {
   const [query, setQuery] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [location, setLocation] = useState('');
+  const [specialtyFromQuery, setSpecialtyFromQuery] = useState('');
+  const [userQuery, setUserQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
 
-  
-  
+  const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '' });
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        let url = 'http://localhost:3001/api/v1/doctors';
-        if (query || specialty || location) {
-          url += `?query=${query}&specialty=${specialty}&location=${location}`;
-        }
-        const response = await axios.get(url);
-        console.log(response.data);
-        setUsers(response.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchUsers();
+    const handler = setTimeout(() => {
+      setSearchParams({
+        query: query,
+        specialty: specialty,
+        location: location
+      });
+    }, 500);
+    return () => clearTimeout(handler);
   }, [query, specialty, location]);
 
+  const fetchUsers = async () => {
+    const { query, specialty, location } = searchParams;
+    if (query || specialty || location) {
+      try {
+        const response = await axios.get(`http://localhost:3001/api/v1/doctors?query=${query}&specialty=${specialty}&location=${location}`);
+        if (response.status === 200) {
+          setUsers(response.data);
+        } else {
+          throw new Error(`Failed to fetch users: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('API error:', error.response ? error.response.data : error.message);
+      }
+    }
+  };
+
+  const debouncedFetchUsers = useCallback(debounce(() => {
+    fetchUsers();
+  }, 500), [searchParams]);
+
+  useEffect(() => {
+    debouncedFetchUsers();
+  }, [debouncedFetchUsers]);
+
+  useEffect(() => {
+    if (searchParams.specialty) {
+        fetchUsers();
+      }
+  }, [searchParams.specialty]);
+
+
+  const analyzeAndRecommendDoctor = async () => {
+    try {
+      const specialtyResponse = await axios.post('http://localhost:8000/api/v1/analyze_symptoms_and_recommend_doctor', { userQuery });
+      if (specialtyResponse.data && specialtyResponse.data.doctors && specialtyResponse.data.doctors.length > 0) {
+        const newSpecialty = specialtyResponse.data.doctors[0].Specialty;
+        setSearchParams(prev => ({ ...prev, specialty: newSpecialty }));
+
+        const doctorsResponse = await axios.get(`http://localhost:3001/api/v1/doctors`, {
+            params: { query: '', specialty: newSpecialty, location: '' }
+        });
+
+        if (doctorsResponse.status === 200) { 
+            setUsers(doctorsResponse.data);
+            console.log('Doctors:', doctorsResponse.data);
+        } else {
+            console.error('Failed to fetch doctors:', doctorsResponse.status);
+        }
+      }
+  } catch (error) {
+      console.error('Error in analyzeAndRecommendDoctor:', error);
+  }
+};
 
   return (
     <AppContainer className="app mt-6">
@@ -53,9 +103,15 @@ const SearchBar = () => {
           onChange={(e) => setLocation(e.target.value)}
         />
 
-    
+        <SearchInput
+            type="text"
+            placeholder="Describe your symptoms..."
+            value={userQuery}
+            onChange={(e) => setUserQuery(e.target.value)}
+        />
+        <button onClick={analyzeAndRecommendDoctor}>Analyze Symptoms</button>
       </SearchInputContainer>
-      { (query || specialty || location) && (
+      { (users ) && (
       <UserList className='flex flex-wrap justify-center'>
         {users && users.filter((user) => 
             (
@@ -65,7 +121,6 @@ const SearchBar = () => {
             )
           ).map((user, index) => {
           return (
-    
             <li key={index}>
               <DoctorCard
                 doctorId={user.DoctorId}

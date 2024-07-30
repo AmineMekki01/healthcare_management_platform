@@ -52,7 +52,7 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			update_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			medical_license VARCHAR(50) NOT NULL,
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-			doctor_bio VARCHAR(50) NOT NULL,
+			doctor_bio TEXT,
 			email VARCHAR(255) NOT NULL,
 			phone_number VARCHAR(255) NOT NULL,
 			street_address VARCHAR(255) NOT NULL,
