@@ -17,7 +17,7 @@ const DoctorCard = ({
   return (
     <CardContainer>
       <TopSection>
-        <DoctorImage src={require("./../../../assets/images/profile_photo.jpeg")} alt={`${first_name} ${last_name}`} />
+        <DoctorImage src={`http://localhost:3001/${imageUrl}`} alt={`${first_name} ${last_name}`} />
         <NameSpecialtyContainer>
           <DoctorName>{`${first_name} ${last_name}`}</DoctorName>
           <DoctorSpecialty>{specialty}</DoctorSpecialty>

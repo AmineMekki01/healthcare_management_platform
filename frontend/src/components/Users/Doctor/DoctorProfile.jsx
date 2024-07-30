@@ -23,7 +23,6 @@ import {
   } from '@mui/icons-material';
   
 
-import profilePhoto from './../../../assets/images/profile_photo.jpeg';
 import { useParams } from 'react-router-dom';
 import BookAppointment from '../Patient/BookAppointment'; 
 import { AuthContext } from './../../Auth/AuthContext';  
@@ -35,14 +34,16 @@ export default function DoctorProfile() {
   const [doctorInfo, setDoctorInfo] = useState([]);
   const [loading, setLoading] = useState(true);  
   const [error, setError] = useState([]);
-  const { userType, userProfilePhotoUrl } = useContext(AuthContext);
+  const { userType } = useContext(AuthContext);
 
   useEffect(() => {
     axios.get(`http://localhost:3001/api/v1/doctors/${doctorId}`)
         .then(response => {
             setDoctorInfo(response.data);
             setLoading(false);
+            console.log("doctor data : ", response.data)
         })
+        
         .catch(error => {
           console.error(error);
           setLoading(false);  
@@ -66,7 +67,7 @@ export default function DoctorProfile() {
               <CardContent className="text-center">
                 <CardMedia
                   component="img"
-                  image={`http://localhost:3001/${userProfilePhotoUrl}`}
+                  image={`http://localhost:3001/${doctorInfo.ProfilePictureUrl}`}
                   title="avatar"
                   className="rounded-circle"
                   style={{ width: '150px', margin: 'auto' }}
@@ -112,13 +113,11 @@ export default function DoctorProfile() {
           </Grid>
           
           
-          {/* The following grid is for displaying info about the doctor and available appointments as well */}
+
           <Grid item lg={8}>
                 
-                {/* The following Card is the container of the  CardContent*/}
                 <Card className='mb-2'>
 
-                  {/* The following CardContent is for displaying the doctors personal info */}
                   <CardContent>
                               <Grid container spacing={3}>
                                   <Grid item sm={3}>

@@ -336,7 +336,7 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	var doctor models.Doctor
 	doctor.DoctorID = doctorId
 
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count  FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count, profile_photo_url FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
 		&doctor.Email,
 		&doctor.PhoneNumber,
 		&doctor.FirstName,
@@ -348,6 +348,7 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		&doctor.Specialty,
 		&doctor.RatingScore,
 		&doctor.RatingCount,
+		&doctor.ProfilePictureURL,
 	)
 
 	if err != nil {
@@ -371,7 +372,7 @@ func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 	log.Println("query", query)
 	log.Println("specialty", specialty)
 	log.Println("location", location)
-	sqlQuery := "SELECT doctor_id, username, first_name, last_name, specialty, experience, rating_score,rating_count, location FROM doctor_info"
+	sqlQuery := "SELECT doctor_id, username, first_name, last_name, specialty, experience, rating_score,rating_count, location, profile_photo_url FROM doctor_info"
 	var conditions []string
 	var queryParams []interface{}
 	paramIndex := 1
@@ -422,6 +423,7 @@ func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 			&doctor.RatingScore,
 			&doctor.RatingCount,
 			&doctor.Location,
+			&doctor.ProfilePictureURL,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
