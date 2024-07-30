@@ -368,27 +368,40 @@ func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 	query := c.DefaultQuery("query", "")
 	specialty := c.DefaultQuery("specialty", "")
 	location := c.DefaultQuery("location", "")
-
+	log.Println("query", query)
+	log.Println("specialty", specialty)
+	log.Println("location", location)
 	sqlQuery := "SELECT doctor_id, username, first_name, last_name, specialty, experience, rating_score,rating_count, location FROM doctor_info"
 	var conditions []string
 	var queryParams []interface{}
-
-	if query != "" || specialty != "" || location != "" {
-		sqlQuery += " WHERE "
-		if query != "" {
-			conditions = append(conditions, fmt.Sprintf("(first_name ILIKE $%d OR last_name ILIKE $%d)", len(queryParams)+1, len(queryParams)+1))
-			queryParams = append(queryParams, "%"+query+"%", "%"+query+"%")
-		}
-		if specialty != "" {
-			conditions = append(conditions, fmt.Sprintf("specialty ILIKE $%d", len(queryParams)+1))
-			queryParams = append(queryParams, "%"+specialty+"%")
-		}
-		if location != "" {
-			conditions = append(conditions, fmt.Sprintf("location ILIKE $%d", len(queryParams)+1))
-			queryParams = append(queryParams, "%"+location+"%")
-		}
-		sqlQuery += strings.Join(conditions, " AND ")
+	paramIndex := 1
+	if specialty == "undefined" {
+		specialty = ""
 	}
+	if query != "" {
+		conditions = append(conditions, fmt.Sprintf("first_name ILIKE $%d OR last_name ILIKE $%d", paramIndex, paramIndex))
+		queryParams = append(queryParams, "%"+query+"%")
+		paramIndex++
+	}
+	if specialty != "" {
+		conditions = append(conditions, fmt.Sprintf("specialty ILIKE $%d", paramIndex))
+		queryParams = append(queryParams, "%"+specialty+"%")
+		paramIndex++
+	}
+	if location != "" {
+		conditions = append(conditions, fmt.Sprintf("location ILIKE $%d", paramIndex))
+		queryParams = append(queryParams, "%"+location+"%")
+		paramIndex++
+	}
+
+	// Join the conditions with " AND "
+	if len(conditions) > 0 {
+		sqlQuery += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Log the final SQL query and parameters
+	log.Println("Executing SQL:", sqlQuery)
+	log.Println("With parameters:", queryParams)
 
 	rows, err := pool.Query(context.Background(), sqlQuery, queryParams...)
 	if err != nil {
@@ -415,9 +428,8 @@ func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
 
 			return
 		}
-		log.Println(doctor)
 		doctors = append(doctors, doctor)
 	}
-
+	log.Println("doctors", doctors)
 	c.JSON(http.StatusOK, doctors)
 }
