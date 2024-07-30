@@ -336,7 +336,7 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	var doctor models.Doctor
 	doctor.DoctorID = doctorId
 
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count, profile_photo_url FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, hospitals, organizations, awards, certifications, languages, city_name, country_name FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
 		&doctor.Email,
 		&doctor.PhoneNumber,
 		&doctor.FirstName,
@@ -349,6 +349,13 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		&doctor.RatingScore,
 		&doctor.RatingCount,
 		&doctor.ProfilePictureURL,
+		&doctor.Hospitals,
+		&doctor.Organizations,
+		&doctor.Awards,
+		&doctor.Certifications,
+		&doctor.Languages,
+		&doctor.CityName,
+		&doctor.CountryName,
 	)
 
 	if err != nil {
