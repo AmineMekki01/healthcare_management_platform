@@ -32,6 +32,7 @@ const SearchBar = () => {
     if (query || specialty || location) {
       try {
         const response = await axios.get(`http://localhost:3001/api/v1/doctors?query=${query}&specialty=${specialty}&location=${location}`);
+        console.log("users : ", response.data)
         if (response.status === 200) {
           setUsers(response.data);
         } else {
@@ -71,7 +72,6 @@ const SearchBar = () => {
 
         if (doctorsResponse.status === 200) { 
             setUsers(doctorsResponse.data);
-            console.log('Doctors:', doctorsResponse.data);
         } else {
             console.error('Failed to fetch doctors:', doctorsResponse.status);
         }
@@ -130,7 +130,7 @@ const SearchBar = () => {
                 years_experience={user.Experience} 
                 doctor_rating={user.RatingScore} 
                 location={user.Location}
-                imageUrl={user.image_url}
+                imageUrl={user.ProfilePictureUrl}
                 doctor_user_name={user.Username}
               />
             </li>
