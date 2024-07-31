@@ -98,9 +98,8 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	// Insert reservation
 	_, err = tx.Exec(context.Background(),
-		"INSERT INTO appointments (appointment_start, appointment_end, appointment_title, doctor_id, patient_id) VALUES ($1::timestamp with time zone, $2::timestamp with time zone, $3, $4, $5)",
+		"INSERT INTO appointments (appointment_start, appointment_end, title, doctor_id, patient_id) VALUES ($1::timestamp with time zone, $2::timestamp with time zone, $3, $4, $5)",
 		appointment.AppointmentStart, appointment.AppointmentEnd, appointment.AppointmentTitle, appointment.DoctorID, appointment.PatientID)
 
 	if err != nil {
@@ -109,7 +108,7 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
-
+	log.Println("appointment.AvailabilityID:", appointment.AvailabilityID)
 	// Delete availability
 	_, err = tx.Exec(context.Background(), "DELETE FROM availabilities WHERE availability_id = $1", appointment.AvailabilityID)
 	if err != nil {

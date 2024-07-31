@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import {
-  Header, Info, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, Badge, Image, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, LocationLink, MapImage, BreakingLine
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, Image, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine
 } from './styles/DoctorProfileStyles';
 
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
@@ -10,6 +10,7 @@ import { Instagram as InstagramIcon, Twitter as TwitterIcon, Facebook as Faceboo
 import { useParams } from 'react-router-dom';
 import BookAppointment from '../Patient/BookAppointment';
 import { AuthContext } from './../../Auth/AuthContext';
+import AvailableAppointments from './AvailableAppointments';
 
 export default function DoctorProfile() {
   const { doctorId } = useParams();
@@ -40,6 +41,8 @@ export default function DoctorProfile() {
       return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
     };
 
+  const doctorFullName = `${capitalizeText(doctorInfo.FirstName)} ${doctorInfo.LastName ? doctorInfo.LastName.toUpperCase() : ''}`;
+
   return (
     <MainContainer>
       <Header>
@@ -59,7 +62,7 @@ export default function DoctorProfile() {
           <LocationContainer>
             <Title>I'm Located At</Title>
             <LocationInfo>{doctorInfo.Location}</LocationInfo>
-            <div ref={mapContainerRef} style={{ width: '100%', 'maxWidth': '400px', maxHeight: '400px' }}>
+            {/* <div ref={mapContainerRef} style={{ width: '100%', 'maxWidth': '400px', maxHeight: '400px' }}>
               <LoadScript googleMapsApiKey="YOUR_API_KEY">
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -69,7 +72,7 @@ export default function DoctorProfile() {
                   <Marker position={{ lat: doctorInfo.Latitude, lng: doctorInfo.Longitude }} />
                 </GoogleMap>
               </LoadScript>
-            </div>
+            </div> */}
           </LocationContainer>
           <Section>
             <Title>My Education</Title>
@@ -111,6 +114,7 @@ export default function DoctorProfile() {
               )}
             </List>
           </Section>
+
         </LeftColumn>
         <RightColumn>
           <Section>
@@ -166,8 +170,12 @@ export default function DoctorProfile() {
             </List>
 
           </Section>
+          
         </RightColumn>
       </BodyContainer>
+
+      <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />
+     
     </MainContainer>
   );
 }
