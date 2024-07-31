@@ -3,8 +3,8 @@ artifacts/
 uploads/
 user_photos/
 __pycache__/
-
-
+doctor_data_gen.py
+appointments_gen.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
