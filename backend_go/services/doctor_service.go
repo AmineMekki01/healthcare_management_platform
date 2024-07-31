@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -162,6 +163,8 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	// Location
 	doctor.Location = fmt.Sprintf("%s, %s, %s, %s, %s", doctor.StreetAddress, doctor.ZipCode, doctor.CityName, doctor.StateName, doctor.CountryName)
 
+	doctorID := uuid.New()
+
 	_, err = conn.Exec(c, `
 	INSERT INTO doctor_info (
 		doctor_id, 
@@ -192,11 +195,10 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		profile_photo_url
 	) 
 	VALUES (
-		uuid_generate_v4(),
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
 	)`,
-
+		doctorID,
 		doctor.Username,
 		doctor.FirstName,
 		doctor.LastName,
@@ -230,17 +232,22 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
+	if err = generateDoctorAvailability(conn, doctorID, c); err != nil {
+		log.Printf("Failed to generating doctor availability : %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generating doctor availability"})
+		return
+	}
+
 	verificationLink := validators.GenerateVerificationLink(doctor.Email, c, pool)
 	if verificationLink == "" {
-		// Handle the error if the link couldn't be generated
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate verification link"})
-		return
+		if err != nil {
+			log.Printf("Failed to generate verification link : %v", err)
+		}
 	}
 
 	// Send the verification email
 	err = validators.SendVerificationEmail(doctor.Email, verificationLink)
 	if err != nil {
-		// Log the error and send a response to the user
 		log.Printf("Failed to send verification email: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send verification email"})
 		return
@@ -251,6 +258,24 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		"success": "true",
 		"message": "Doctor created successfully. Please check your email to verify your account.",
 	})
+}
+
+func generateDoctorAvailability(conn *pgxpool.Conn, doctorID uuid.UUID, c *gin.Context) error {
+	availabilityStartTime := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 7, 0, 0, 0, time.Local)
+	availabilityEndTime := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 20, 0, 0, 0, time.Local)
+
+	for currentTime := availabilityStartTime; currentTime.Before(availabilityEndTime); currentTime = currentTime.Add(30 * time.Minute) {
+		endTime := currentTime.Add(30 * time.Minute)
+
+		_, err := conn.Exec(c, `
+			INSERT INTO availabilities (availability_start, availability_end, doctor_id) VALUES ($1, $2, $3)
+		`, currentTime, endTime, doctorID)
+
+		if err != nil {
+			return fmt.Errorf("error inserting availability: %v", err)
+		}
+	}
+	return nil
 }
 
 func doctorToAuthUser(d *models.Doctor) auth.User {
