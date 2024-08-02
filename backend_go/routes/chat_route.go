@@ -57,4 +57,13 @@ func SetupChatRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		services.SendMessage(conn.Conn(), c)
 	})
 
+	r.GET("/api/v1/users/:userID/image", func(c *gin.Context) {
+		conn, err := pool.Acquire(context.Background())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+			return
+		}
+		defer conn.Release()
+		services.GetUserImage(conn.Conn(), c)
+	})
 }

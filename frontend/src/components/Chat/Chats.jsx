@@ -121,8 +121,9 @@ const ChatsComponent = ({onChatSelect}) => {
                     onClick={() => handleSelectChat(chat)}
                     $isSelected={selectedChatId === chat.id}
                 >                
-                    <UserChatImg src="https://images.pexels.com/photos/15835264/pexels-photo-15835264/free-photo-of-woman-wearing-a-hat.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load" alt=""/>
 
+                    <UserChatImg src={`http://localhost:3001/${chat.recipient_image_url}`} alt="" />
+                    
                     <UserChatInfo>
                         <span>{chat.first_name_recipient} {chat.last_name_recipient}</span>
                         <MessageAndTime>
