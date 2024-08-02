@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Availability struct {
 	AvailabilityID    int       `json:"AvailabilityId"`
@@ -10,7 +14,7 @@ type Availability struct {
 }
 
 type Reservation struct {
-	ReservationID    int       `json:"reservation_id"`
+	ReservationID    uuid.UUID `json:"reservation_id"`
 	ReservationStart time.Time `json:"reservation_start"`
 	ReservationEnd   time.Time `json:"reservation_end"`
 	DoctorFirstName  string    `json:"doctor_first_name"`

@@ -156,7 +156,6 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 	`
 	params := []interface{}{}
 	if doctorID != "" {
-		// log print for the type of the doctorID
 		log.Println(doctorID)
 		query += " WHERE appointments.doctor_id = $1"
 		params = append(params, doctorID)
@@ -171,7 +170,7 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
-	// print the retrieved data from the front
+
 	log.Println(rows)
 	defer rows.Close()
 
