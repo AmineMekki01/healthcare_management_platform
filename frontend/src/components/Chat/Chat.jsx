@@ -11,7 +11,7 @@ import { WebSocketContext } from './WebSocketContext';
 
 const Chat = styled.div`
     flex: 2;
-    width: 65%; // remember to remove this if something goes wrong
+    width: 65%;
 
 `;
 
@@ -66,21 +66,28 @@ const ChatComponent = ({ currentChat }) => {
 
     const sendMessage = (content) => {
         if (!currentChat || !websocket || websocket.readyState !== WebSocket.OPEN) {
-            console.error("No chat or WebSocket is not open.");
+            console.error("[Client] No chat or WebSocket is not open.");
             return;
         }
     
         const message = {
             chat_id: currentChat.id, 
             sender_id: userId,
-            recipient_id: currentChat.user_id,
-            content: content
+            recipient_id: currentChat.recipient_user_id,
+            content: content,
+            created_at: new Date().toISOString()
         };
     
         websocket.send(JSON.stringify(message));
         dispatch({ type: 'ADD_MESSAGE', payload: message });
-
-        console.log("Sending message though ws :", message);
+        dispatch({
+            type: 'UPDATE_LAST_MESSAGE',
+            payload: {
+                chatId: currentChat.id,
+                latest_message_content: content,
+                latest_message_time: new Date().toISOString(),
+            },
+        });
         fetch('http://localhost:3001/api/v1/SendMessage', {
             method: 'POST',
             headers: {
@@ -101,7 +108,7 @@ const ChatComponent = ({ currentChat }) => {
     return (
         <Chat>
             <ChatInfo>
-                <span>{currentChat.first_name} {currentChat.last_name}</span>
+                <span>{currentChat.first_name_recipient} {currentChat.last_name_recipient}</span>
                 <ChatIcons>
                     <ChatIconsImg src={Cam} alt=""/>
                     <ChatIconsImg src={Add} alt=""/>

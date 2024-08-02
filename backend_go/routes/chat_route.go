@@ -11,7 +11,7 @@ import (
 
 func SetupChatRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 	// Endpoint to search users
-	r.GET("/api/v1/search/:username", func(c *gin.Context) {
+	r.GET("/api/v1/search/:username/:userId", func(c *gin.Context) {
 		services.SearchUsers(c, pool)
 	})
 

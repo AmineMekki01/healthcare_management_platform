@@ -3,7 +3,6 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { ChatContext } from './ChatContext'; 
 
 export const WebSocketContext = createContext(null);
-
 export const WebSocketProvider = ({ userId, children }) => {
     const [websocket, setWebsocket] = useState(null);
     const { dispatch } = useContext(ChatContext);
@@ -12,22 +11,36 @@ export const WebSocketProvider = ({ userId, children }) => {
         const ws = new WebSocket(`ws://localhost:3001/ws?userId=${userId}`);
 
         ws.onopen = () => {
-            console.log("Connected to WebSocket");
+            console.log("[Client] Connected to WebSocket");
         };
 
         ws.onmessage = (message) => {
-            console.log("Received message:", message.data);
             const msgData = JSON.parse(message.data);
+            if (msgData.type === 'new_message') {
+                dispatch({
+                    type: 'UPDATE_LAST_MESSAGE',
+                    payload: {
+                        chatId: msgData.chat_id,
+                        latest_message_content: msgData.content,
+                        latest_message_time: msgData.created_at,
+                    },
+                });
+            }
             dispatch({ type: 'ADD_MESSAGE', payload: msgData });
         };
 
-        ws.onclose = () => {
-            console.log("Disconnected from WebSocket server");
+        ws.onclose = (event) => {  
+            console.log(`[Client] Disconnected from WebSocket server: ${event.code} - ${event.reason}`); 
+        };
+
+        ws.onerror = (event) => { 
+            console.error("[Client] WebSocket error: ", event); 
         };
 
         setWebsocket(ws);
 
         return () => {
+            console.log("[Client] Closing WebSocket connection"); 
             ws.close();
         };
     }, [userId, dispatch]);
