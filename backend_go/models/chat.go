@@ -15,6 +15,7 @@ type Chat struct {
 	UpdatedAt            time.Time  `json:"updated_at"`
 	LastMessage          *string    `json:"latest_message_content"`
 	LastMessageCreatedAt *time.Time `json:"latest_message_time"`
+	RecipientImageURL    string     `json:"recipient_image_url"`
 }
 
 type Participant struct {

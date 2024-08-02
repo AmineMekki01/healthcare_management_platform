@@ -20,7 +20,6 @@ type CombinedUser struct {
 	LastName  string `json:"last_name"`
 }
 
-// GetChatsForUser retrieves all chat sessions for the specified user.
 func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
 	const query = `
     SELECT
@@ -28,28 +27,23 @@ func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
         MAX(c.updated_at) AS updated_at,
         $1 AS sender_user_id,
         CASE 
-            WHEN curr_p.user_id = other_p.user_id THEN curr_p.user_id 
             WHEN curr_p.user_id::text = $1 THEN other_p.user_id 
             ELSE curr_p.user_id 
         END AS recipient_user_id,
         MAX(CASE 
-            WHEN curr_user.user_id::text = $1 THEN curr_user.first_name 
-            ELSE other_user.first_name 
-        END) AS first_name_sender,
-        MAX(CASE 
-            WHEN curr_user.user_id::text = $1 THEN curr_user.last_name 
-            ELSE other_user.last_name 
-        END) AS last_name_sender,
-        MAX(CASE 
-            WHEN other_user.user_id::text != $1 THEN other_user.first_name 
+            WHEN curr_p.user_id::text = $1 THEN other_user.first_name 
             ELSE curr_user.first_name 
         END) AS first_name_recipient,
         MAX(CASE 
-            WHEN other_user.user_id::text != $1 THEN other_user.last_name 
+            WHEN curr_p.user_id::text = $1 THEN other_user.last_name 
             ELSE curr_user.last_name 
         END) AS last_name_recipient,
         MAX(lm.content) AS latest_message_content,
-        MAX(lm.created_at) AS latest_message_time
+        MAX(lm.created_at) AS latest_message_time,
+        MAX(CASE 
+            WHEN curr_p.user_id::text = $1 THEN other_user.profile_photo_url 
+            ELSE curr_user.profile_photo_url 
+        END) AS recipient_image_url
     FROM
         chats c
     JOIN
@@ -57,13 +51,13 @@ func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
     JOIN
         participants other_p ON c.id = other_p.chat_id AND curr_p.user_id != other_p.user_id
     LEFT JOIN
-        (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+        (SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url FROM doctor_info
         UNION
-        SELECT patient_id AS user_id, first_name, last_name FROM patient_info) curr_user ON curr_p.user_id = curr_user.user_id
+        SELECT patient_id AS user_id, first_name, last_name, profile_photo_url FROM patient_info) curr_user ON curr_p.user_id = curr_user.user_id
     LEFT JOIN
-        (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+        (SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url FROM doctor_info
         UNION
-        SELECT patient_id AS user_id, first_name, last_name FROM patient_info) other_user ON other_p.user_id = other_user.user_id
+        SELECT patient_id AS user_id, first_name, last_name, profile_photo_url FROM patient_info) other_user ON other_p.user_id = other_user.user_id
     LEFT JOIN
         (SELECT
             chat_id,
@@ -93,7 +87,7 @@ func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
 	var chats []models.Chat
 	for rows.Next() {
 		var chat models.Chat
-		if err := rows.Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt); err != nil {
+		if err := rows.Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt, &chat.RecipientImageURL); err != nil {
 			log.Println("error scanning chat row: ", err)
 			return nil, fmt.Errorf("error scanning chat row: %v", err)
 		}
@@ -413,4 +407,32 @@ func FindOrCreateChatWithUser(db *pgx.Conn, c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"chats": chats})
+}
+
+func GetUserImage(db *pgx.Conn, c *gin.Context) {
+	userID := c.Param("userID")
+
+	var imageUrl string
+	var query string
+	var err error
+
+	// Check if user is a doctor
+	query = `SELECT profile_photo_url FROM doctor_info WHERE doctor_id = $1`
+	err = db.QueryRow(context.Background(), query, userID).Scan(&imageUrl)
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
+		return
+	}
+
+	// If not a doctor, check if user is a patient
+	query = `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`
+	err = db.QueryRow(context.Background(), query, userID).Scan(&imageUrl)
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
+		return
+	}
+
+	// If user is not found in either table, return an error
+	log.Println("Error fetching user image:", err)
+	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user image"})
 }

@@ -10,16 +10,19 @@ const Messages = styled.div`
     overflow-y: scroll;
 `;
 
-const MessagesComponent = ({ messages, currentUserId }) => {
+const MessagesComponent = ({ messages, currentUserId, senderImage, recipientImage }) => {
+ 
   return (
       <Messages>
           {messages &&
               messages.map((msg, index) => (
-                  <MessageComponent
-                      key={index}
-                      message={msg}
-                      isOwner={msg.sender_id === currentUserId}
-                  />
+                    <MessageComponent
+                    key={index}
+                    message={msg}
+                    isOwner={msg.sender_id === currentUserId}
+                    senderImage={senderImage}
+                    recipientImage={recipientImage}
+                />
               ))}
       </Messages>
   );

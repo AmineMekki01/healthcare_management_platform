@@ -8,7 +8,7 @@ const Message = styled.div`
     margin-bottom: 20px;
 
     &.owner {
-        flex-direction: row-reverse; // Right-align the message if it's the user's own message
+        flex-direction: row-reverse; 
     }
 `;
 
@@ -20,14 +20,12 @@ const MessageInfo = styled.div`
     max-width: 20%;
 `;
 
-
 const UserImg = styled.img`
     width: 40px;
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
 `;
-
 
 const MessageContent = styled.div`
     max-width: 80%;
@@ -42,7 +40,6 @@ const MessageContent = styled.div`
             background-color: #29355b;
         }
     }
-    
 
     p {
         color: white;
@@ -51,11 +48,15 @@ const MessageContent = styled.div`
         font-size: 14px;
         max-width: max-content;
         background-color: #b44b8e;
-
+    }
 `;
 
+const MessageImage = styled.img`
+    max-width: 300px;
+    border-radius: 10px;
+`;
 
-const MessageComponent = React.memo(({ message, isOwner }) => {
+const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientImage }) => {
     const formatMessageDate = (dateString) => {
         if (!dateString) {
             return 'just now';
@@ -70,17 +71,32 @@ const MessageComponent = React.memo(({ message, isOwner }) => {
         });
     };
 
+    const renderMessageContent = (content) => {
+        const imageRegex = /\[Image: (.+)\]\((.+)\)/;
+        const match = content.match(imageRegex);
+
+        if (match) {
+            const [_, altText, imageUrl] = match;
+            return <MessageImage src={imageUrl} alt={altText} />;
+        }
+
+        return <p>{content}</p>;
+    };
+
     return (
         <Message className={isOwner ? 'owner' : 'not-owner'}>
             <MessageInfo>
-                <UserImg src="https://images.pexels.com/photos/15835264/pexels-photo-15835264/free-photo-of-woman-wearing-a-hat.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load" alt=""/>
+
+                <UserImg src={isOwner ? `http://localhost:3001/${senderImage}` : `http://localhost:3001/${recipientImage}` } alt=""/>
+                <span>{formatMessageDate(message.created_at)}</span>
+
                 <span>{formatMessageDate(message.created_at)}</span>
             </MessageInfo>
             <MessageContent className={isOwner ? 'owner' : 'not-owner'}>
-                <p>{message.content}</p>
+                {renderMessageContent(message.content)}
             </MessageContent>
         </Message>
     );
 });
 
-export default MessageComponent
+export default MessageComponent;

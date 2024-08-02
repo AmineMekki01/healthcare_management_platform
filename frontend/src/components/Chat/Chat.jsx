@@ -12,7 +12,6 @@ import { WebSocketContext } from './WebSocketContext';
 const Chat = styled.div`
     flex: 2;
     width: 65%;
-
 `;
 
 const ChatInfo = styled.div`
@@ -35,34 +34,49 @@ const ChatIconsImg = styled.img`
 `;
 
 const ChatComponent = ({ currentChat }) => {
-    const { patientId, doctorId, userType } = useContext(AuthContext);
+    const { patientId, doctorId, userType, userProfilePhotoUrl} = useContext(AuthContext);
     const userId = userType === 'doctor' ? doctorId : patientId;
     const { state, dispatch } = useContext(ChatContext);
     const { messages } = state;
     const websocket = useContext(WebSocketContext);
 
-    console.log("Current chat in ChatComponent:", currentChat);
+    const [recipientImage, setRecipientImage] = useState('');
+
     const fetchMessages = (chatId) => {
         fetch(`http://localhost:3001/api/v1/messages/${chatId}`)
             .then(response => response.json())
             .then(data => {
                 const fetchedMessages = data.messages;
-                console.log("Fetched messages:", fetchedMessages);
                 dispatch({ type: 'SET_MESSAGES', payload: fetchedMessages });
             })
             .catch(error => console.error('Error fetching messages:', error));
     };
 
-    useEffect(() => {
-        console.log("Effect running for currentChat: ", currentChat);
+    const fetchUserImages = () => {
+        const fetchImage = async (userId) => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/v1/users/${userId}/image`);
+                const data = await response.json();
+                return data.imageUrl;
+            } catch (error) {
+                console.error('Error fetching user image:', error);
+                return '';
+            }
+        };
+
         if (currentChat && currentChat.id) {
-            console.log("Fetching messages for chat: ", currentChat.id);
+            const recipientId = currentChat.recipient_user_id;
+
+            fetchImage(recipientId).then(url => setRecipientImage(url));
+        }
+    };
+
+    useEffect(() => {
+        if (currentChat && currentChat.id) {
             fetchMessages(currentChat.id);
-        } else {
-            console.log("Invalid or null currentChat: ", currentChat);
+            fetchUserImages();
         }
     }, [currentChat]);
-
 
     const sendMessage = (content) => {
         if (!currentChat || !websocket || websocket.readyState !== WebSocket.OPEN) {
@@ -104,7 +118,6 @@ const ChatComponent = ({ currentChat }) => {
         });
     };
 
-    console.log("Messages in ChatComponent:", messages);
     return (
         <Chat>
             <ChatInfo>
@@ -115,10 +128,15 @@ const ChatComponent = ({ currentChat }) => {
                     <ChatIconsImg src={More} alt=""/>
                 </ChatIcons>
             </ChatInfo>
-            <MessagesComponent messages={messages} currentUserId={userId} />
+            <MessagesComponent 
+                messages={messages} 
+                currentUserId={userId}
+                senderImage={userProfilePhotoUrl}
+                recipientImage={recipientImage}
+            />
             <InputComponent sendMessage={sendMessage} />
         </Chat>
     )
 }
 
-export default ChatComponent
+export default ChatComponent;
