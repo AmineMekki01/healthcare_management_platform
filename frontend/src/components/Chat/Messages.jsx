@@ -11,8 +11,6 @@ const Messages = styled.div`
 `;
 
 const MessagesComponent = ({ messages, currentUserId }) => {
-    console.log("messages in MessagesComponent: ", messages)
-    console.log("currentUserId in MessagesComponent: ", currentUserId)
   return (
       <Messages>
           {messages &&

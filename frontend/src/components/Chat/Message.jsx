@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import moment from 'moment';
 
 const Message = styled.div`
     display: flex;
@@ -33,31 +34,49 @@ const MessageContent = styled.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: flex-start; // Left-align the message content
-
+    align-items: flex-start; 
+    
     &.owner {
-        align-items: flex-end; // Right-align the message content for the user's own message
+        align-items: flex-end; 
+        p {
+            background-color: #29355b;
+        }
     }
+    
 
     p {
-        background-color: #29355b;
         color: white;
         padding: 10px;
         border-radius: 10px 0px 10px 10px;
         font-size: 14px;
         max-width: max-content;
-    }
+        background-color: #b44b8e;
+
 `;
 
 
 const MessageComponent = React.memo(({ message, isOwner }) => {
+    const formatMessageDate = (dateString) => {
+        if (!dateString) {
+            return 'just now';
+        }
+        return moment(dateString).calendar(null, {
+            sameDay: 'LT',
+            nextDay: '[Tomorrow at] LT',
+            nextWeek: 'dddd [at] LT',
+            lastDay: '[Yesterday at] LT',
+            lastWeek: '[Last] dddd [at] LT',
+            sameElse: 'L'
+        });
+    };
+
     return (
-        <Message className={isOwner ? 'owner' : ''}>
+        <Message className={isOwner ? 'owner' : 'not-owner'}>
             <MessageInfo>
                 <UserImg src="https://images.pexels.com/photos/15835264/pexels-photo-15835264/free-photo-of-woman-wearing-a-hat.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load" alt=""/>
-                <span>Just Now</span>
+                <span>{formatMessageDate(message.created_at)}</span>
             </MessageInfo>
-            <MessageContent className={isOwner ? 'owner' : ''}>
+            <MessageContent className={isOwner ? 'owner' : 'not-owner'}>
                 <p>{message.content}</p>
             </MessageContent>
         </Message>

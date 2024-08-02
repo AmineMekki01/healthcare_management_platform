@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext} from 'react';
 import styled from 'styled-components'
 import NavbarComponent from './Navbar';
 import SearchComponent from './Search';
 import ChatsComponent from './Chats';
+import { ChatContext } from './ChatContext'; 
 
 const Sidebar = styled.div`
     flex: 1;
-    width: 35%; // remember to remove this if something goes wrong
-
+    width: 35%; 
     background-color: #29355b;
     color: white;
 `;
@@ -15,19 +15,23 @@ const Sidebar = styled.div`
 
 const SidebarComponent = ({onChatSelect }) => {
   const [selectedUser, setSelectedUser] = useState(null);
-  const [currentChat, setCurrentChat] = useState(null);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const { state, dispatch } = useContext(ChatContext);
 
-  const handleUserSelect = (user, chatId) => {
+  const handleUserSelect = (user) => {
     setSelectedUser(user);
-    setCurrentChat(chatId);
-    console.log("Selected user in Sidebar: ", user);
-    console.log("Current chat in Sidebar: ", chatId);
   };
+  const handleSelectChat = (chat) => {
+    console.log("Select chat from search result:", chat);
+    setSelectedChat(chat);
+    dispatch({ type: 'SET_CURRENT_CHAT', payload: chat }); 
+    onChatSelect(chat);
+};
   return (
     <Sidebar>
       <NavbarComponent />
-      <SearchComponent onUserSelect={handleUserSelect} />
-      <ChatsComponent onChatSelect={onChatSelect} />
+      <SearchComponent onUserSelect={handleUserSelect} onSelectChat={handleSelectChat} />
+      <ChatsComponent onChatSelect={handleSelectChat} />
     </Sidebar>
   );
 };
