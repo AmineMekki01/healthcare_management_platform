@@ -34,20 +34,21 @@ const MessageContent = styled.div`
     gap: 10px;
     align-items: flex-start; 
     
+    p {
+        color: white;
+        padding: 10px;
+        border-radius: 0px 10px 10px 10px;
+        font-size: 14px;
+        max-width: max-content;
+        background-color: #b44b8e;
+    }
+
     &.owner {
         align-items: flex-end; 
         p {
             background-color: #29355b;
+            border-radius: 10px 0px 10px 10px;
         }
-    }
-
-    p {
-        color: white;
-        padding: 10px;
-        border-radius: 10px 0px 10px 10px;
-        font-size: 14px;
-        max-width: max-content;
-        background-color: #b44b8e;
     }
 `;
 
@@ -88,12 +89,11 @@ const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientI
             <MessageInfo>
 
                 <UserImg src={isOwner ? `http://localhost:3001/${senderImage}` : `http://localhost:3001/${recipientImage}` } alt=""/>
-                <span>{formatMessageDate(message.created_at)}</span>
 
-                <span>{formatMessageDate(message.created_at)}</span>
             </MessageInfo>
             <MessageContent className={isOwner ? 'owner' : 'not-owner'}>
                 {renderMessageContent(message.content)}
+                <span>{formatMessageDate(message.created_at)}</span>
             </MessageContent>
         </Message>
     );
