@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from './../Auth/AuthContext';
-import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   FolderCardContainer,
@@ -13,23 +12,18 @@ import {
   CreateFolderButton,
   DeleteFolderButton,
   RenameFolderButton,
-  ContainerFileImage,
   UploadFolderButton
 } from './StyledComponents/MyDocsStyles';
 import { fileIconMapper } from './Helpers'; 
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import PhotoSizeSelectActualIcon from '@mui/icons-material/PhotoSizeSelectActual';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, updateFolderName, downloadFile } from './routes/api'; 
 const API_BASE_URL = 'http://localhost:3001';
 
 function MyUploads() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const { doctorId, patientId, userType } = useContext(AuthContext);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [currentPath, setCurrentPath] = useState([]);
@@ -49,8 +43,6 @@ function MyUploads() {
   };
 
   const fetchAllFolder = async (folderId) => {
-    setIsLoading(true);
-    setError(null);
     const userId = getUserId();
 
     try {
@@ -64,10 +56,7 @@ function MyUploads() {
         setBreadcrumbs([]);
       }
     } catch (error) {
-      setError(error.toString());
       console.error('Error during folder fetch:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -198,7 +187,7 @@ function MyUploads() {
     formData.append('fileName', file.name);
     formData.append('fileSize', file.size)
     formData.append('fileExt', file.name.split('.').pop())  
-
+    console.log("formData :  ", formData)
     try {
       const response = await fetch(`${API_BASE_URL}/upload-file`, {
         method: 'POST',
@@ -207,10 +196,7 @@ function MyUploads() {
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
+      }      
       fetchAllFolder(currentPath[currentPath.length - 1]);
       alert("File uploaded successfully!");
       
