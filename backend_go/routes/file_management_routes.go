@@ -28,18 +28,15 @@ func SetupFileRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		services.DeleteFolderAndContents(c, pool)
 	})
 
-	r.PATCH("/update-folder/:folderId", func(c *gin.Context) {
-		services.UpdateFolderName(c, pool)
+	r.PATCH("/rename-item", func(c *gin.Context) {
+		services.RenameFileOrFolder(c, pool)
 	})
 
 	r.POST("/upload-file", func(c *gin.Context) {
 		services.UploadFile(c, pool)
 	})
 
-	r.Static("/files", "./uploads")
-
 	r.GET("/download-file/:fileId", func(c *gin.Context) {
 		services.DownloadFile(c, pool)
 	})
-
 }

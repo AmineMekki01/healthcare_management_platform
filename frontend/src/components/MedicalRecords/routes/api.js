@@ -77,3 +77,14 @@ export async function downloadFile(fileId) {
 
   return response.blob();
 }
+
+export async function renameItem(id, name) {
+  const url = `${API_BASE_URL}/rename-item`;
+  const body = JSON.stringify({ id, name });
+
+  return fetchWithErrors(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: body
+  });
+}
