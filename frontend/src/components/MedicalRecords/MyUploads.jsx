@@ -20,7 +20,7 @@ import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, updateFolderName, downloadFile } from './routes/api'; 
+import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, renameItem, downloadFile } from './routes/api'; 
 const API_BASE_URL = 'http://localhost:3001';
 
 function MyUploads() {
@@ -145,28 +145,28 @@ function MyUploads() {
     setSelectedFiles(new Set());
   };
 
-  const onClickRenameFolder = async () => {
+  const onClickRenameItem = async () => {
     if (selectedFiles.size !== 1) {
-      alert("Please select exactly one folder to rename.");
+      alert("Please select exactly one item to rename.");
       return;
     }
   
-    const folderIdToRename = Array.from(selectedFiles)[0]; 
-    const currentFolderName = folders.find(folder => folder.folder_id === folderIdToRename)?.name;
+    const itemIdToRename = Array.from(selectedFiles)[0];
+    const currentItemName = folders.find(folder => folder.folder_id === itemIdToRename)?.name;
   
-    const newName = prompt("Please enter the new folder name", currentFolderName || "New Folder Name");
+    const newName = prompt("Please enter the new item name", currentItemName || "New Item Name");
     if (newName && newName.trim() !== "") {
       try {
-        await updateFolderName(folderIdToRename, newName);
+        await renameItem(itemIdToRename, newName);
         setFolders(folders.map(folder => {
-          if (folder.folder_id === folderIdToRename) {
+          if (folder.folder_id === itemIdToRename) {
             return { ...folder, name: newName };
           }
           return folder;
         }));
-        setSelectedFiles(new Set()); 
+        setSelectedFiles(new Set());
       } catch (error) {
-        console.error('Error updating folder name:', error);
+        console.error('Error updating item name:', error);
       }
     }
   };
@@ -320,7 +320,7 @@ function MyUploads() {
           </DeleteFolderButton>
           <RenameFolderButton
             type="button"
-            onClick={onClickRenameFolder}
+            onClick={onClickRenameItem}
             disabled={selectedFiles.size !== 1}
           >
             <DriveFileRenameOutlineIcon />
