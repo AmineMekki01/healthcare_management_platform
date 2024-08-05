@@ -3,24 +3,62 @@ package services
 import (
 	"archive/zip"
 	"backend_go/models"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+func createS3Client() *s3.S3 {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("S3_BUCKET_REGION")),
+	})
+	if err != nil {
+		log.Fatalf("Unable to create AWS session: %v", err)
+	}
+	return s3.New(sess)
+}
+
+// get parent folder path
+func getParentFolderPath(folderID string, pool *pgxpool.Pool) (string, error) {
+	log.Println("Got the folderID in the getParentFolderPath function :", folderID)
+	var parentFolder models.FileFolder
+	row := pool.QueryRow(context.Background(), "SELECT name, parent_id FROM folder_file_info WHERE id = $1", folderID)
+	err := row.Scan(&parentFolder.Name, &parentFolder.ParentID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", nil
+		}
+		log.Println("Error getting parent folder:", err)
+		return "", err
+	}
+	if parentFolder.ParentID == nil {
+		return parentFolder.Name, nil
+	}
+	parentPath, err := getParentFolderPath(*parentFolder.ParentID, pool)
+	if err != nil {
+		log.Println("Error getting parent folder path:", err)
+		return "", err
+	}
+	return filepath.Join(parentPath, parentFolder.Name), nil
+}
+
+// Creating a folder
 func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
-	// Parsing the form data
 	var fileFolder models.FileFolder
 	if err := c.ShouldBind(&fileFolder); err != nil {
 		log.Println("Error parsing form:", err)
@@ -28,7 +66,7 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 	log.Println("fileFolder : ", fileFolder)
-	// Generating a new UUID for the folder
+
 	folderUUID, err := uuid.NewRandom()
 	if err != nil {
 		log.Println("Error generating folder UUID:", err)
@@ -39,19 +77,15 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 	fileFolder.CreatedAt = time.Now()
 	fileFolder.UpdatedAt = time.Now()
 
-	// set fileFolder.Size to NaN
 	var size int64
 	fileFolder.Size = size
 	var ext *string
 	fileFolder.Ext = ext
 
-	// Create a new folder in the uploads directory
-	folderPath := filepath.Join("./uploads", fileFolder.UserID)
+	folderPath := filepath.Join(fileFolder.UserID)
+	log.Println("folderPath 1 : ", folderPath)
 	if fileFolder.ParentID != nil && *fileFolder.ParentID != "" {
-		var parentFolderPath string
-		if fileFolder.ParentID != nil {
-			parentFolderPath, err = getParentFolderPath(*fileFolder.ParentID, pool)
-		}
+		parentFolderPath, err := getParentFolderPath(*fileFolder.ParentID, pool)
 		if err != nil {
 			log.Println("Error retrieving parent folder path:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -59,17 +93,25 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		}
 		folderPath = filepath.Join(folderPath, parentFolderPath)
 	}
+	folderPath = filepath.Join(folderPath, fileFolder.Name) + "/marker.txt"
+	log.Println("folderPath 2 : ", folderPath)
 
-	folderPath = filepath.Join(folderPath, fileFolder.Name)
-	fileFolder.Path = folderPath
-	err = os.MkdirAll(folderPath, 0755)
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+
+	emptyFile := bytes.NewReader([]byte{})
+
+	_, err = s3Client.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(folderPath),
+		Body:   emptyFile,
+	})
 	if err != nil {
-		log.Println("Error creating folder:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("Error uploading file to S3: %s\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file to S3"})
 		return
 	}
 
-	// Acquiring a connection from the connection pool
 	conn, err := pool.Acquire(c.Request.Context())
 	if err != nil {
 		log.Println("Error acquiring connection:", err)
@@ -78,7 +120,6 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	// Beginning a transaction
 	tx, err := conn.Begin(c.Request.Context())
 	if err != nil {
 		log.Println("Error beginning transaction:", err)
@@ -86,11 +127,9 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	log.Println("hey")
-	// Inserting the folder info into the database
 	_, err = tx.Exec(c.Request.Context(),
 		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, user_id, user_type, parent_id, size, extension, path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-		fileFolder.ID, fileFolder.Name, fileFolder.CreatedAt, fileFolder.UpdatedAt, fileFolder.Type, fileFolder.UserID, fileFolder.UserType, fileFolder.ParentID, fileFolder.Size, fileFolder.Ext, fileFolder.Path)
+		fileFolder.ID, fileFolder.Name, fileFolder.CreatedAt, fileFolder.UpdatedAt, fileFolder.Type, fileFolder.UserID, fileFolder.UserType, fileFolder.ParentID, fileFolder.Size, fileFolder.Ext, folderPath)
 	if err != nil {
 		log.Println("Error inserting folder info:", err)
 		tx.Rollback(c.Request.Context())
@@ -98,20 +137,482 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	// Committing the transaction
 	if err := tx.Commit(c.Request.Context()); err != nil {
 		log.Println("Error committing transaction:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not commit transaction"})
 		return
 	}
 
-	// Returning the folder info as a JSON response
 	c.JSON(http.StatusOK, fileFolder)
 }
 
+// Uploading a file to ss3
+func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
+	var fileInfo models.FileFolder
+
+	err := c.Request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		log.Println("Error parsing multipart form:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse multipart form"})
+		return
+	}
+
+	file, handler, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Println("Error retrieving file from request:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not get file from request"})
+		return
+	}
+	defer file.Close()
+	parentFolderID := c.Request.FormValue("parentFolderId")
+	log.Println("parentFolderID : ", parentFolderID)
+	if parentFolderID != "" {
+		if _, err := uuid.Parse(parentFolderID); err != nil {
+			log.Printf("Invalid parentFolderId: %s\n", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parentFolderId"})
+			return
+		}
+		fileInfo.ParentID = &parentFolderID
+	} else {
+		fileInfo.ParentID = nil
+	}
+	log.Println("fileInfo.ParentID : ", fileInfo.ParentID)
+	fileInfo.CreatedAt = time.Now()
+	fileInfo.UpdatedAt = time.Now()
+	fileInfo.Type = c.Request.FormValue("fileType")
+	ext := c.Request.FormValue("fileExt")
+	fileInfo.Ext = &ext
+	fileInfo.UserID = c.Request.FormValue("userId")
+	fileInfo.UserType = c.Request.FormValue("userType")
+	fileInfo.Size = handler.Size
+	fileInfo.Name = handler.Filename
+	id, _ := uuid.NewRandom()
+	fileInfo.ID = id.String()
+
+	if fileInfo.ParentID != nil && *fileInfo.ParentID != "" {
+		parentFolderPath, err := getParentFolderPath(*fileInfo.ParentID, pool)
+		if err != nil {
+			log.Println("Error retrieving parent folder path:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		log.Println("parentFolderPath :", parentFolderPath)
+		log.Println("parentFolderID :", parentFolderID)
+		fileInfo.Path = fmt.Sprintf("%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
+	} else {
+		fileInfo.Path = fmt.Sprintf("%s/%s", fileInfo.UserID, fileInfo.Name)
+	}
+	log.Println("fileInfo.Path : ", fileInfo.Path)
+
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+
+	_, err = s3Client.PutObject(&s3.PutObjectInput{
+		Bucket:        aws.String(bucket),
+		Key:           aws.String(fileInfo.Path),
+		Body:          file,
+		ContentLength: aws.Int64(fileInfo.Size),
+		ContentType:   aws.String(handler.Header.Get("Content-Type")),
+	})
+	if err != nil {
+		log.Printf("Error uploading file to S3: %s\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file to S3"})
+		return
+	}
+
+	_, err = pool.Exec(c.Request.Context(), "INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+		fileInfo.ID, fileInfo.Name, fileInfo.CreatedAt, fileInfo.UpdatedAt, fileInfo.Type, fileInfo.Size, fileInfo.Ext, fileInfo.UserID, fileInfo.UserType, fileInfo.ParentID, fileInfo.Path)
+	if err != nil {
+		log.Printf("Error inserting file info: %s\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert file info"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
+}
+
+// Dowanloding a file to s3
+func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
+	log.Println("DownloadFile function called")
+
+	fileId := c.Param("fileId")
+	log.Printf("Requested file ID: %s", fileId)
+
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		log.Printf("Error acquiring connection: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not acquire database connection"})
+		return
+	}
+	defer conn.Release()
+
+	var file models.FileFolder
+	err = conn.QueryRow(c.Request.Context(), "SELECT id, name, path, type FROM folder_file_info WHERE id = $1", fileId).Scan(&file.ID, &file.Name, &file.Path, &file.Type)
+	if err != nil {
+		log.Printf("Error retrieving file information: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve file information"})
+		return
+	}
+
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+
+	if file.Type == "folder" {
+		log.Println("Processing as a folder")
+		zipFilePath, err := createZipFromFolder(file.Path)
+		if err != nil {
+			log.Printf("Error creating zip file: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create zip file"})
+			return
+		}
+		log.Printf("Zip file created: %s", zipFilePath)
+		c.File(zipFilePath)
+	} else {
+		log.Println("Processing as a regular file")
+		s3Object, err := s3Client.GetObject(&s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(file.Path),
+		})
+		if err != nil {
+			log.Printf("Error retrieving file from S3: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve file from S3"})
+			return
+		}
+		defer s3Object.Body.Close()
+
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file.Name))
+		c.Header("Content-Type", *s3Object.ContentType)
+		c.Header("Content-Length", fmt.Sprintf("%d", *s3Object.ContentLength))
+		io.Copy(c.Writer, s3Object.Body)
+	}
+}
+
+// delete folder and content from ss3
+func DeleteFolderAndContents(c *gin.Context, pool *pgxpool.Pool) {
+	var request struct {
+		FolderID string `json:"folderId"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println("Error parsing JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	tx, err := pool.Begin(c.Request.Context())
+	if err != nil {
+		log.Println("Error beginning transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not begin transaction"})
+		return
+	}
+	defer tx.Rollback(c.Request.Context())
+
+	cteQuery := `
+        WITH RECURSIVE subfolders AS (
+            SELECT id, path, type FROM folder_file_info WHERE id = $1
+            UNION ALL
+            SELECT fi.id, fi.path, fi.type FROM folder_file_info fi
+            INNER JOIN subfolders s ON s.id = fi.parent_id
+        )
+        SELECT id, path FROM subfolders;
+
+    `
+	rows, err := tx.Query(c.Request.Context(), cteQuery, request.FolderID)
+	if err != nil {
+		log.Println("Error querying subfolders:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve folder contents"})
+		return
+	}
+	defer rows.Close()
+
+	var paths []string
+	for rows.Next() {
+		var id, path string
+		if err := rows.Scan(&id, &path); err != nil {
+			log.Println("Error scanning row:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve folder contents"})
+			return
+		}
+		if strings.TrimSpace(path) != "" {
+			paths = append(paths, path)
+		}
+	}
+
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+	log.Println("paths :", paths)
+	for _, path := range paths {
+		log.Printf("path: %s", path)
+		_, err := s3Client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(path),
+		})
+		if err != nil {
+			log.Printf("Error deleting file from S3: %s\n", err)
+			log.Printf("Error deleting file : %s\n", path)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete folder contents from S3"})
+			return
+		}
+	}
+
+	deleteQuery := `
+        WITH RECURSIVE subfolders AS (
+            SELECT id FROM folder_file_info WHERE id = $1
+            UNION ALL
+            SELECT fi.id FROM folder_file_info fi
+            INNER JOIN subfolders s ON fi.parent_id = s.id
+        )
+        DELETE FROM folder_file_info WHERE id IN (SELECT id FROM subfolders);
+    `
+	_, err = tx.Exec(c.Request.Context(), deleteQuery, request.FolderID)
+	if err != nil {
+		log.Println("Error deleting folder contents from database:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete folder contents"})
+		return
+	}
+
+	if err := tx.Commit(c.Request.Context()); err != nil {
+		log.Println("Error committing transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Folder and contents deleted successfully"})
+}
+
+// create the zip file from the folder
+func createZipFromFolder(folderPath string) (string, error) {
+	log.Printf("Creating ZIP from folder: %s", folderPath)
+	zipFileName := fmt.Sprintf("%s.zip", uuid.New().String())
+	zipFilePath := filepath.Join("/tmp", zipFileName)
+
+	newZipFile, err := os.Create(zipFilePath)
+	if err != nil {
+		log.Printf("Error creating zip file: %v", err)
+		return "", err
+	}
+	defer newZipFile.Close()
+
+	zipWriter := zip.NewWriter(newZipFile)
+	defer zipWriter.Close()
+
+	err = addFilesToZip(zipWriter, folderPath, "")
+	if err != nil {
+		log.Printf("Error adding files to zip: %v", err)
+		return "", err
+	}
+
+	return zipFilePath, nil
+}
+
+// recursively adding files to the zip archive
+func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
+	log.Printf("Adding files to ZIP: BasePath: %s, BaseInZip: %s", basePath, baseInZip)
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+
+	prefix := basePath[:strings.LastIndex(basePath, "/marker.txt")]
+	resp, err := s3Client.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		log.Printf("Error listing S3 objects: %v", err)
+		return err
+	}
+
+	for _, item := range resp.Contents {
+		key := *item.Key
+		if key == prefix+"/marker.txt" {
+			continue
+		}
+		log.Printf("Processing S3 object: %s", key)
+
+		relativePath := strings.TrimPrefix(key, prefix+"/")
+		if strings.HasSuffix(key, "/") {
+			newBaseInZip := filepath.Join(baseInZip, relativePath)
+			err = addFilesToZip(zipWriter, key, newBaseInZip)
+			if err != nil {
+				log.Printf("Error adding directory to zip: %v", err)
+				return err
+			}
+		} else {
+			obj, err := s3Client.GetObject(&s3.GetObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(key),
+			})
+			if err != nil {
+				log.Printf("Error getting S3 object: %v", err)
+				return err
+			}
+			defer obj.Body.Close()
+
+			f, err := zipWriter.Create(filepath.Join(baseInZip, relativePath))
+			if err != nil {
+				log.Printf("Error creating zip entry: %v", err)
+				return err
+			}
+			_, err = io.Copy(f, obj.Body)
+			if err != nil {
+				log.Printf("Error writing to zip entry: %v", err)
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// Rename a file or folder in s3 and ui related db
+func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
+	var request struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println("Error parsing JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	tx, err := pool.Begin(c.Request.Context())
+	if err != nil {
+		log.Println("Error beginning transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not begin transaction"})
+		return
+	}
+	defer tx.Rollback(c.Request.Context())
+
+	var oldPath, itemType string
+	err = tx.QueryRow(c.Request.Context(), "SELECT path, type FROM folder_file_info WHERE id = $1", request.ID).Scan(&oldPath, &itemType)
+	if err != nil {
+		log.Println("Error fetching item details:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch item details"})
+		return
+	}
+	log.Println("oldPath : ", oldPath)
+	log.Println("itemType : ", itemType)
+
+	var newPath string
+	if itemType == "folder" {
+		newPath = strings.Replace(oldPath, "/marker.txt", "", 1)
+		newPath = filepath.Dir(newPath)
+		newPath = filepath.Join(newPath, request.Name) + "/marker.txt"
+		log.Println("newPath folder : ", newPath)
+	} else {
+		newPath := filepath.Join(filepath.Dir(oldPath), request.Name)
+		log.Println("newPath file : ", newPath)
+	}
+
+	_, err = tx.Exec(c.Request.Context(), "UPDATE folder_file_info SET name = $1, path = $2, updated_at = $3 WHERE id = $4", request.Name, newPath, time.Now(), request.ID)
+	if err != nil {
+		log.Println("Error updating item:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update item"})
+		return
+	}
+
+	s3Client := createS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+
+	if itemType == "folder" {
+		cteQuery := `
+			WITH RECURSIVE subfolders AS (
+				SELECT id, path FROM folder_file_info WHERE parent_id = $1
+				UNION ALL
+				SELECT fi.id, fi.path FROM folder_file_info fi
+				INNER JOIN subfolders s ON s.id = fi.parent_id
+			)
+			UPDATE folder_file_info
+			SET path = regexp_replace(path, $2, $3)
+			WHERE id IN (SELECT id FROM subfolders);
+		`
+		oldPathPattern := "^" + strings.Replace(filepath.Dir(oldPath), "/", "\\/", -1) + "\\/"
+		newPathPattern := strings.Replace(filepath.Dir(newPath), "/", "\\/", -1) + "/"
+		log.Println("oldPathPattern : ", oldPathPattern)
+		log.Println("newPathPattern : ", newPathPattern)
+		log.Println("request.ID : ", request.ID)
+		_, err = tx.Exec(c.Request.Context(), cteQuery, request.ID, oldPathPattern, newPathPattern)
+		if err != nil {
+			log.Println("Error updating nested paths:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update nested paths"})
+			return
+		}
+
+		err = renameS3Folder(s3Client, bucket, filepath.Dir(oldPath), filepath.Dir(newPath))
+		if err != nil {
+			log.Println("Error renaming folder in S3:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not rename folder in S3"})
+			return
+		}
+	} else {
+		_, err = s3Client.CopyObject(&s3.CopyObjectInput{
+			Bucket:     aws.String(bucket),
+			CopySource: aws.String(bucket + "/" + oldPath),
+			Key:        aws.String(newPath),
+		})
+		if err != nil {
+			log.Println("Error renaming file in S3:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not rename file in S3"})
+			return
+		}
+
+		_, err = s3Client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(oldPath),
+		})
+		if err != nil {
+			log.Println("Error deleting old file in S3:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete old file in S3"})
+			return
+		}
+	}
+
+	if err := tx.Commit(c.Request.Context()); err != nil {
+		log.Println("Error committing transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Item renamed successfully"})
+}
+
+// rename the folder in s3
+func renameS3Folder(s3Client *s3.S3, bucket, oldPath, newPath string) error {
+	resp, err := s3Client.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(oldPath + "/"),
+	})
+	if err != nil {
+		return fmt.Errorf("error listing S3 objects: %w", err)
+	}
+
+	for _, item := range resp.Contents {
+		oldKey := *item.Key
+		newKey := strings.Replace(oldKey, oldPath, newPath, 1)
+		log.Println("oldKey :", oldKey)
+		log.Println("newKey :", newKey)
+		_, err = s3Client.CopyObject(&s3.CopyObjectInput{
+			Bucket:     aws.String(bucket),
+			CopySource: aws.String(bucket + "/" + oldKey),
+			Key:        aws.String(newKey),
+		})
+		if err != nil {
+			return fmt.Errorf("error copying S3 object: %w", err)
+		}
+
+		_, err = s3Client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(oldKey),
+		})
+		if err != nil {
+			return fmt.Errorf("error deleting old S3 object: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// get breadcrumbs
 func GetBreadcrumbs(c *gin.Context, pool *pgxpool.Pool) {
 	folderID := c.Param("folderId")
-	// Acquiring a connection from the connection pool
 	breadcrumbs, err := getParentFolders(folderID, pool)
 	if err != nil {
 		log.Println("Error getting parent folders:", err)
@@ -121,9 +622,9 @@ func GetBreadcrumbs(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusOK, breadcrumbs)
 }
 
+// get parent folder
 func getParentFolders(folderID string, pool *pgxpool.Pool) ([]models.FileFolder, error) {
 	var breadcrumbs []models.FileFolder
-	// getting the parent folder
 	for folderID != "" {
 		var folder models.FileFolder
 		row := pool.QueryRow(context.Background(), "SELECT id, name, parent_id FROM folder_file_info WHERE id = $1", folderID)
@@ -141,33 +642,8 @@ func getParentFolders(folderID string, pool *pgxpool.Pool) ([]models.FileFolder,
 	return breadcrumbs, nil
 }
 
-func getParentFolderPath(folderID string, pool *pgxpool.Pool) (string, error) {
-	// getting the parent folder path
-	log.Println("Got the folderID in the getParentFolderPath function :", folderID)
-	var parentFolder models.FileFolder
-	row := pool.QueryRow(context.Background(), "SELECT name, parent_id FROM folder_file_info WHERE id = $1", folderID)
-	err := row.Scan(&parentFolder.Name, &parentFolder.ParentID)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return "", nil // If no rows are found, return an empty path
-		}
-		log.Println("Error getting parent folder:", err)
-		return "", err
-	}
-	if parentFolder.ParentID == nil {
-		return parentFolder.Name, nil
-	}
-	parentPath, err := getParentFolderPath(*parentFolder.ParentID, pool)
-	if err != nil {
-		log.Println("Error getting parent folder path:", err)
-		return "", err
-	}
-	return filepath.Join(parentPath, parentFolder.Name), nil
-}
-
+// get folders
 func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
-
-	// Acquiring a connection from the connection pool
 	conn, err := pool.Acquire(c.Request.Context())
 	if err != nil {
 		log.Println("Error acquiring connection:", err)
@@ -176,26 +652,20 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	// Extracting the query parameters
 	userID := c.DefaultQuery("user_id", "")
 	userType := c.DefaultQuery("user_type", "")
 	parentID := c.Query("parent_id")
 
-	// Preparing the base query
 	baseQuery := "SELECT id, name, created_at, updated_at, type, extension, path FROM folder_file_info WHERE user_id = $1 AND user_type = $2"
 	args := []interface{}{userID, userType}
 
-	// Adding the parent_id condition if it is specified
 	if parentID != "" {
-		// Fetching subfolders for a given parent_id
 		baseQuery += " AND parent_id = $3"
 		args = append(args, parentID)
 	} else {
-		// Fetching root folders (no parent_id)
 		baseQuery += " AND parent_id IS NULL"
 	}
 
-	// Executing the query with the prepared arguments
 	rows, err := conn.Query(c.Request.Context(), baseQuery, args...)
 	if err != nil {
 		log.Println("Error executing query:", err)
@@ -204,10 +674,8 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer rows.Close()
 
-	// Initializing a slice to hold the retrieved folders
 	var folders []models.FileFolder
 
-	// Iterating over the rows in the result set
 	for rows.Next() {
 		var folder models.FileFolder
 		var path *string
@@ -229,11 +697,10 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusOK, folders)
 }
 
+// get subfolders
 func GetSubfolders(c *gin.Context, pool *pgxpool.Pool) {
-	// Extracting the parent_id from the URL parameter
 	parentID := c.Param("folderId")
 
-	// Acquiring a connection from the connection pool
 	conn, err := pool.Acquire(c.Request.Context())
 	if err != nil {
 		log.Println("Error acquiring connection:", err)
@@ -242,10 +709,8 @@ func GetSubfolders(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	// Preparing the SQL query to select folders with the specified parent_id
 	query := "SELECT id, name, created_at, updated_at FROM folder_file_info WHERE parent_id = $1"
 
-	// Executing the query with the parentID as the parameter
 	rows, err := conn.Query(c.Request.Context(), query, parentID)
 	if err != nil {
 		log.Println("Error executing query:", err)
@@ -254,10 +719,8 @@ func GetSubfolders(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer rows.Close()
 
-	// Initializing a slice to hold the retrieved folders
 	var subfolders []models.FileFolder
 
-	// Iterating over the rows in the result set
 	for rows.Next() {
 		var folder models.FileFolder
 		err := rows.Scan(&folder.ID, &folder.Name, &folder.CreatedAt, &folder.UpdatedAt)
@@ -274,368 +737,4 @@ func GetSubfolders(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 	c.JSON(http.StatusOK, subfolders)
-}
-
-func DeleteFolderAndContents(c *gin.Context, pool *pgxpool.Pool) {
-	// Parse the JSON body to get the folder ID to delete
-
-	var request struct {
-		FolderID string `json:"folderId"`
-	}
-	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Println("Error parsing JSON:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	// Start a transaction
-	tx, err := pool.Begin(c.Request.Context())
-	if err != nil {
-		log.Println("Error beginning transaction:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not begin transaction"})
-		return
-	}
-	defer tx.Rollback(c.Request.Context())
-
-	// Use a CTE to recursively get all file and folder IDs within the target folder
-	cteQuery := `
-        WITH RECURSIVE subfolders AS (
-            SELECT id FROM folder_file_info WHERE id = $1
-            UNION ALL
-            SELECT fi.id FROM folder_file_info fi
-            INNER JOIN subfolders s ON s.id = fi.parent_id
-        )
-        DELETE FROM folder_file_info WHERE id IN (SELECT id FROM subfolders);
-        `
-	// Execute the CTE query to delete all subfolders and files in the database
-	if _, err := tx.Exec(c.Request.Context(), cteQuery, request.FolderID); err != nil {
-		log.Println("Error deleting folder contents:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete folder contents"})
-		return
-	}
-
-	// Commit the transaction - This is missing from the code snippet provided
-	if err := tx.Commit(c.Request.Context()); err != nil {
-		log.Println("Error committing transaction:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not commit transaction"})
-		return
-	}
-
-	// Commit the transaction
-	_, err = tx.Exec(c.Request.Context(), "DELETE FROM folder_file_info WHERE id = $1", request.FolderID)
-	if err != nil {
-		log.Println("Error deleting root folder:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete root folder"})
-		return
-	}
-
-	// Delete the folder from the filesystem
-	folderPath := filepath.Join("./uploads", request.FolderID)
-	if err := os.RemoveAll(folderPath); err != nil {
-		log.Printf("Error deleting folder from filesystem: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete folder from filesystem"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Folder and contents deleted successfully"})
-}
-
-func UpdateFolderName(c *gin.Context, pool *pgxpool.Pool) {
-	folderID := c.Param("folderId")
-	var updateRequest struct {
-		Name string `json:"name"`
-	}
-
-	if err := c.ShouldBindJSON(&updateRequest); err != nil {
-		log.Println("Error parsing JSON:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	conn, err := pool.Acquire(c.Request.Context())
-	if err != nil {
-		log.Println("Error acquiring connection:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not acquire database connection"})
-		return
-	}
-	defer conn.Release()
-
-	// use the folderID to update the folder name
-
-	_, err = conn.Exec(c.Request.Context(), "UPDATE folder_file_info SET name = $1, updated_at = $2 WHERE id = $3",
-		updateRequest.Name, time.Now(), folderID)
-
-	if err != nil {
-		log.Println("Error updating folder name:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update folder name"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Folder name updated successfully"})
-}
-
-func generateFilePath(userID string, parentFolderId string, filename string, pool *pgxpool.Pool) (string, error) {
-	var folderPath string
-	var err error
-
-	log.Println("parentFolderId : ", parentFolderId)
-	if parentFolderId != "" {
-		folderPath, err = getParentFolderPath(parentFolderId, pool)
-		log.Println("the folder path in from generate the parent folder id : ", folderPath)
-		if err != nil {
-			log.Println("Error retrieving parent folder path:", err)
-			return "", err
-		}
-	} else {
-		folderPath = filepath.Join("./uploads")
-	}
-
-	err = os.MkdirAll(folderPath, os.ModePerm)
-	if err != nil {
-		log.Println("Error creating folder:", err)
-		return "", err
-	}
-
-	if !filepath.HasPrefix(folderPath, userID) {
-		if !filepath.HasPrefix(folderPath, "uploads") {
-			folderPath = filepath.Join("uploads", userID, folderPath)
-		} else {
-			log.Println("Got the folderPath in the generateFilePath function :", folderPath)
-
-			parts := filepath.SplitList("uploads")
-			if len(parts) > 1 {
-				folderPath = filepath.Join(parts[0], userID, folderPath)
-			} else {
-				folderPath = filepath.Join(parts[0], userID)
-			}
-		}
-	}
-
-	fullFilePath := filepath.Join(folderPath, filename)
-
-	_, err = os.Stat(fullFilePath)
-	if err == nil {
-		log.Println("File already exists")
-		return "", fmt.Errorf("file already exists")
-	}
-	return fullFilePath, nil
-}
-
-func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
-
-	var fileInfo models.FileFolder
-
-	err := c.Request.ParseMultipartForm(10 << 20) // 10 MB
-	if err != nil {
-		log.Println("Error parsing multipart form:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse multipart form"})
-		return
-	}
-
-	file, handler, err := c.Request.FormFile("file")
-	if err != nil {
-		log.Println("Error retrieving file from request:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not get file from request"})
-		return
-	}
-	defer file.Close()
-
-	if parentFolderID := c.Request.FormValue("parentFolderId"); parentFolderID != "" {
-		if _, err := uuid.Parse(parentFolderID); err != nil {
-			log.Printf("Invalid parentFolderId: %s\n", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parentFolderId"})
-			return
-		}
-		fileInfo.ParentID = &parentFolderID
-	} else {
-		fileInfo.ParentID = nil
-	}
-
-	// Generate the file info
-	fileInfo.CreatedAt = time.Now()
-	fileInfo.UpdatedAt = time.Now()
-	fileInfo.Type = c.Request.FormValue("fileType")
-	ext := c.Request.FormValue("fileExt")
-	fileInfo.Ext = &ext
-	fileInfo.UserID = c.Request.FormValue("userId")
-	fileInfo.UserType = c.Request.FormValue("userType")
-	fileInfo.Size = handler.Size
-	fileInfo.Name = handler.Filename
-	id, _ := uuid.NewRandom()
-	fileInfo.ID = id.String()
-
-	// Generate the file path
-	var parentID string
-	if fileInfo.ParentID != nil {
-		parentID = *fileInfo.ParentID
-	}
-	var filePath string
-	filePath, err = generateFilePath(fileInfo.UserID, parentID, fileInfo.Name, pool)
-	if err != nil {
-		log.Printf("Error generating file path: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate file path"})
-		return
-	}
-
-	fileInfo.Path = filePath
-	// save the file to the filesystem
-	newFile, err := os.Create(filePath)
-	if err != nil {
-		log.Printf("Error creating file: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create file"})
-		return
-	}
-
-	_, err = file.Seek(0, 0)
-	if err != nil {
-		log.Printf("Error seeking to beginning of file: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to seek to beginning of file"})
-		return
-	}
-
-	_, err = newFile.Seek(0, 0)
-	if err != nil {
-		log.Printf("Error seeking to beginning of new file: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to seek to beginning of new file"})
-		return
-	}
-
-	_, err = io.Copy(newFile, file)
-	if err != nil {
-		log.Printf("Error copying file data: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to copy file data"})
-		return
-	}
-
-	// Close the file
-	if err = newFile.Close(); err != nil {
-		log.Printf("Error closing file: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to close file"})
-		return
-	}
-
-	// Insert the file info into the database
-	_, err = pool.Exec(c.Request.Context(), "INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-		fileInfo.ID, fileInfo.Name, fileInfo.CreatedAt, fileInfo.UpdatedAt, fileInfo.Type, fileInfo.Size, fileInfo.Ext, fileInfo.UserID, fileInfo.UserType, fileInfo.ParentID, fileInfo.Path)
-	if err != nil {
-		log.Printf("Error inserting file info: %s\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert file info"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
-}
-
-func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
-	log.Println("DownloadFile function called")
-
-	fileId := c.Param("fileId")
-	log.Printf("Requested file ID: %s", fileId)
-
-	// Acquire a connection from the pool
-	conn, err := pool.Acquire(c.Request.Context())
-	if err != nil {
-		log.Printf("Error acquiring connection: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not acquire database connection"})
-		return
-	}
-	defer conn.Release()
-
-	// Retrieve file information
-	var file models.FileFolder
-	err = conn.QueryRow(c.Request.Context(), "SELECT id, name, path FROM folder_file_info WHERE id = $1", fileId).Scan(&file.ID, &file.Name, &file.Path)
-	if err != nil {
-		log.Printf("Error retrieving file information: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve file information"})
-		return
-	}
-
-	log.Printf("File Type: %s, Path: %s", file.Type, file.Path)
-
-	if file.Type == "folder" {
-		log.Println("Processing as a folder")
-		zipFilePath, err := createZipFromFolder(file.Path)
-		if err != nil {
-			log.Printf("Error creating zip file: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create zip file"})
-			return
-		}
-		log.Printf("Zip file created: %s", zipFilePath)
-		c.File(zipFilePath)
-		// Optionally delete the zip file after serving it
-	} else {
-		log.Println("Processing as a regular file")
-		// It's a file, serve it as before
-		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
-		c.File(file.Path)
-	}
-}
-
-func createZipFromFolder(folderPath string) (string, error) {
-	log.Printf("Creating ZIP from folder: %s", folderPath)
-	zipFileName := "tempFolderZip.zip"
-	zipFilePath := filepath.Join("./uploads", zipFileName)
-	log.Printf("Zip file path: %s", zipFilePath)
-
-	newZipFile, err := os.Create(zipFilePath)
-	if err != nil {
-		log.Printf("Error creating zip file: %v", err)
-		return "", err
-	}
-	defer newZipFile.Close()
-
-	zipWriter := zip.NewWriter(newZipFile)
-	defer zipWriter.Close()
-
-	// Function to recursively add files and folders to the zip
-	err = addFilesToZip(zipWriter, folderPath, "")
-	if err != nil {
-		log.Printf("Error adding files to zip: %v", err)
-		return "", err
-	}
-
-	return zipFilePath, nil
-}
-
-func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
-	log.Printf("Adding files to ZIP: BasePath: %s, BaseInZip: %s", basePath, baseInZip)
-	files, err := ioutil.ReadDir(basePath)
-	if err != nil {
-		log.Printf("Error reading directory: %v", err)
-		return err
-	}
-
-	for _, file := range files {
-		currentPath := filepath.Join(basePath, file.Name())
-		log.Printf("Processing file: %s", currentPath)
-
-		// Check if it's a directory, recursively add its files
-		if file.IsDir() {
-			newBaseInZip := filepath.Join(baseInZip, file.Name())
-			err = addFilesToZip(zipWriter, currentPath, newBaseInZip)
-			if err != nil {
-				log.Printf("Error adding directory to zip: %v", err)
-				return err
-			}
-		} else {
-			// It's a file, add it to the zip
-			data, err := ioutil.ReadFile(currentPath)
-			if err != nil {
-				log.Printf("Error reading file: %v", err)
-				return err
-			}
-
-			f, err := zipWriter.Create(filepath.Join(baseInZip, file.Name()))
-			if err != nil {
-				log.Printf("Error creating zip entry: %v", err)
-				return err
-			}
-			_, err = f.Write(data)
-			if err != nil {
-				log.Printf("Error writing to zip entry: %v", err)
-				return err
-			}
-		}
-	}
-
-	return nil
 }
