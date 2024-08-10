@@ -30,7 +30,7 @@ export const fileIconMapper = (extension, imageUrl) => {
         return <FolderIcon sx={{ fontSize: 200, color }} />;
     case 'jpeg':
     case 'jpg':
-        return <CardImage src={imageUrl} alt="folder" />;
+        return <CardImage src={imageUrl} alt="image" />;
     case 'pdf':
         color = iconColors.pdf;
         return <PictureAsPdfIcon sx={{ fontSize: 200, color  }} />;

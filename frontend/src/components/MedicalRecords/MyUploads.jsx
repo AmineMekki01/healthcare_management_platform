@@ -14,13 +14,14 @@ import {
   RenameFolderButton,
   UploadFolderButton
 } from './StyledComponents/MyDocsStyles';
-import { fileIconMapper } from './Helpers'; 
+import { fileIconMapper } from './Helpers';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, renameItem, downloadFile } from './routes/api'; 
+import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, renameItem, downloadFile } from './routes/api';
+
 const API_BASE_URL = 'http://localhost:3001';
 
 function MyUploads() {
@@ -84,7 +85,7 @@ function MyUploads() {
   };
 
   function viewFolder(folder) {
-    setSelectedFolder(folder.folder_id); 
+    setSelectedFolder(folder.folder_id);
   };
 
   const onClickCreateFolder = async () => {
@@ -150,10 +151,10 @@ function MyUploads() {
       alert("Please select exactly one item to rename.");
       return;
     }
-  
+
     const itemIdToRename = Array.from(selectedFiles)[0];
     const currentItemName = folders.find(folder => folder.folder_id === itemIdToRename)?.name;
-  
+
     const newName = prompt("Please enter the new item name", currentItemName || "New Item Name");
     if (newName && newName.trim() !== "") {
       try {
@@ -379,13 +380,6 @@ function MyUploads() {
           );
         })}
       </FolderCardContainer>
-
-      <form method="POST" action="/create-folder" id="form-create-folder">
-        <input type="hidden" name="name" value={folderName} required />
-        <input type="hidden" name="user_id" id="userId" required />
-        <input type="hidden" name="file_type" id="fileType" required />
-        <input type="hidden" name="user_type" id="userType" required />
-      </form>
     </Container>
   );
 }
