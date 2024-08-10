@@ -1,187 +1,155 @@
 import styled from 'styled-components';
 
-
 export const Container = styled.div`
-    width: 100%;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #f4f7fa;
+  min-height: 100vh;
 `;
 
 export const SubHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 `;
 
-export const HeaderTitle = styled.div`
-    font-size: 22px;    
-    margin-top: 20px;
-    text-align: center;
-`;
-
-export const PathContainer = styled.div`    
-    margin-top: 18px;
-    margin-left: 20px;
-    text-align: left;
-    border: 1px solid #ddd;
-    padding: 3px 5px;
-    span {
-        font-size: 18px;    
-    } 
-`;  
-
-export const FolderHandlingContainer = styled.div`
-    margin-top: 18px;
-    margin-right: 20px; 
-    text-align: right;
-`;  
-
-export const CreateFolderButton = styled.button`
-    background-color: #007bff;
-    border-color: #007bff;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    margin-left: 10px;
-    &:hover {
-        background-color: #0069d9;
-        border-color: #0062cc;
-    }   
-
-    @media (max-width: 768px) {
-        span {
-            display: none;
-        }
-    }
-`;
-export const DeleteFolderButton = styled.button`
-    background-color: #f45768;
-    border-color: #f45768;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    margin-left: 10px;
-    &:hover {
-        background-color: #e24453;
-        border-color: #e24453;
-    }   
-
-    @media (max-width: 768px) {
-        span {
-            display: none;
-        }
-    }
-`;
-
-
-export const FolderCardContainer = styled.div`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    justify-content: center;
-    margin-top: 30px;
-`;
-
-
-export const FolderCard = styled.div`
-  margin-top: 30px;
-  width: 320px;
-  max-width: 320px;
-  min-width: 320px;
-  height; 320px;
-  max-height: 320px;
-  min-height: 320px;
-
+export const HeaderTitle = styled.h1`
+  font-size: 32px;
+  font-weight: 600;
   text-align: center;
-  margin: 10px;
+  color: #333;
+  margin-bottom: 30px;
+`;
 
-
-  .card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease-in-out;
-
+export const PathContainer = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  color: #555;
+  span {
+    margin-right: 10px;
+    cursor: pointer;
+    color: #007bff;
     &:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .card-body {
-        height: 250px;
-        i {
-            font-size: 100px;
-            color: #f0ad4e;
-        }
-    }
-
-    .card-footer {
-      background: #f8f9fa;
-      border-top: 1px solid #ddd;
-      height: 50px;
-      h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        word-break: break-word;
-      }
+      text-decoration: underline;
+      color: #0056b3;
     }
   }
 `;
 
-
-export const RenameFolderButton  = styled.button`
+export const FolderHandlingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  button {
+    margin-left: 10px;
     background-color: #007bff;
-    border-color: #007bff;
+    border: none;
+    padding: 10px 20px;
     color: #fff;
-    padding: 5px 10px;
+    font-size: 16px;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 18px;
-    margin-left: 10px;
+    transition: all 0.3s ease;
     &:hover {
-        background-color: #0069d9;
-        border-color: #0062cc;
-    }   
-
-    @media (max-width: 768px) {
-        span {
-            display: none;
-        }
+      background-color: #0056b3;
+      transform: translateY(-2px);
     }
-`;  
-
-export const ContainerFileImage = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center; 
-    background-color: #fff;
-    height : 100%;
-    img {
-        
-        height: 200px;
-        width: auto;
+    &:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
+  }
+`;
 
-    `;
+const buttonStyles = `
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  &:hover {
+    background-color: darken($color, 10%);
+    transform: translateY(-2px);
+  }
+`;
+
+export const CreateFolderButton = styled.button`
+  ${buttonStyles}
+  background-color: #28a745;
+`;
+
+export const DeleteFolderButton = styled.button`
+  ${buttonStyles}
+  background-color: #dc3545;
+`;
+
+export const RenameFolderButton = styled.button`
+  ${buttonStyles}
+  background-color: #ffc107;
+`;
 
 export const UploadFolderButton = styled.button`
- background-color: #007bff;
-    border-color: #007bff;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    margin-left: 10px;
-    &:hover {
-        background-color: #0069d9;
-        border-color: #0062cc;
-    }   
+  ${buttonStyles}
+  background-color: #007bff;
+`;
 
-    @media (max-width: 768px) {
-        span {
-            display: none;
-        }
+export const FolderCardContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+`;
+
+export const FolderCard = styled.div`
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  .card-body {
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    i {
+      font-size: 100px;
+      color: #f0ad4e;
     }
+  }
+  .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #ddd;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #333;
+      word-break: break-word;
+    }
+  }
+`;
 
+export const ContainerFileImage = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  height: 100%;
+  img {
+    height: 200px;
+    width: auto;
+  }
 `;
