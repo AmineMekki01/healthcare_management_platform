@@ -128,7 +128,10 @@ const ChatsComponent = ({onChatSelect}) => {
                         <span>{chat.first_name_recipient} {chat.last_name_recipient}</span>
                         <MessageAndTime>
                             <MessageContent>{chat.latest_message_content}</MessageContent>
-                            <MessageTime>{formatMessageDate(chat.latest_message_time)}</MessageTime>
+
+                            {/* check if chat.latest_message_time is not empty  else we shout chat.updated_at*/}
+                            <MessageTime>{formatMessageDate(chat.latest_message_time || chat.updated_at)}</MessageTime>
+
                         </MessageAndTime>
                     </UserChatInfo>
                 </UserChat>
