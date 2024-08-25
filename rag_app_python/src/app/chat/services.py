@@ -37,16 +37,22 @@ class OpenAIService:
                 user_id=str(input_message.userId),
                 agent_role=str(ChatRolesEnum.ASSISTANT.value),
                 user_message=str(input_message.user_message),
-                answer=str(completion)
+                answer=str(completion),
             )
             logger.info("Message inserted to db successfully")
 
         except Exception as e:
             logger.error("Error while inserting message to db: " + str(e))
         return Message(
-            model=input_message.model,
-            message=completion,
-            role=ChatRolesEnum.ASSISTANT.value
+            id=str(message_id),
+            chat_id=str(input_message.chat_id),
+            model=str(input_message.model),
+            userId=str(input_message.userId),
+            agent_role=str(ChatRolesEnum.ASSISTANT.value),
+            user_message=str(input_message.user_message),
+            answer=str(completion),
+            augmented_message=str(input_message.augmented_message)
+
         )
 
     @staticmethod
