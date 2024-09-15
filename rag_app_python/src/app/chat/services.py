@@ -14,20 +14,14 @@ from src.app.db import messages_queries
 from src.app.chat.models import BaseMessage, Message, ChatSummary
 from uuid import UUID
 
-
+from src.app.utils import get_llm_chain
 class OpenAIService:
     @classmethod
-    async def chat_completion_without_streaming(cls, input_message: BaseMessage) -> Message:
-        completion: openai.ChatCompletion = await openai.ChatCompletion.acreate(
-            model=input_message.model,
-            api_key=settings.OPENAI_API_KEY,
-            messages=[{"role": ChatRolesEnum.USER.value,
-                       "content": input_message.augmented_message}]
-        )
-
-        completion = cls.extract_response_from_completion(
-            chat_completion=completion)
-
+    async def invoke_llm(cls, input_message: BaseMessage) -> Message:
+        llm_rag_chain = get_llm_chain(input_message.chat_id)
+        
+        completion = await llm_rag_chain.ainvoke(input=input_message.user_message)
+        print(f"completion : {completion}")
         try:
             message_id = uuid.uuid4()
             messages_queries.insert_message(
@@ -50,48 +44,9 @@ class OpenAIService:
             userId=str(input_message.userId),
             agent_role=str(ChatRolesEnum.ASSISTANT.value),
             user_message=str(input_message.user_message),
-            answer=str(completion),
+            answer=completion,
             augmented_message=str(input_message.augmented_message)
-
         )
-
-    @staticmethod
-    async def chat_completion_with_streaming(input_message: BaseMessage) -> StreamingResponse:
-        subscription: openai.ChatCompletion = await openai.ChatCompletion.acreate(
-            model=input_message.model,
-            api_key=settings.OPENAI_API_KEY,
-            messages=[{"role": ChatRolesEnum.USER.value,
-                       "content": input_message.user_message}],
-            stream=True,
-        )
-        return StreamingResponse(stream_generator(subscription), media_type="text/event-stream")
-
-    @staticmethod
-    def extract_response_from_completion(chat_completion: ChatCompletion) -> str:
-        return chat_completion.choices[0]["message"]["content"]
-
-    @classmethod
-    async def qa_without_stream(cls, input_message: BaseMessage) -> Message:
-        try:
-            augmented_message = process_retrieval(
-                message=input_message)
-            logger.info("Context retrieved successfully.")
-            return await cls.chat_completion_without_streaming(input_message=augmented_message)
-        except RetrievalNoDocumentsFoundException:
-            return Message(model=input_message.model, message=NO_DOCUMENTS_FOUND, role=ChatRolesEnum.ASSISTANT.value)
-
-    @classmethod
-    async def qa_with_stream(cls, input_message: BaseMessage) -> StreamingResponse:
-        try:
-            augmented_message: BaseMessage = process_retrieval(
-                message=input_message)
-            logger.info("Context retrieved successfully.")
-            return await cls.chat_completion_with_streaming(input_message=augmented_message)
-        except RetrievalNoDocumentsFoundException:
-            return StreamingResponse(
-                (format_to_event_stream(y) for y in "Not found"),
-                media_type="text/event-stream",
-            )
 
 
 class ChatServices:

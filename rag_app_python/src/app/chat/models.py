@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from src.app.chat.constants import ChatRolesEnum, ModelsEnum
 from src.app.core.models import TimestampAbstractModel
 from src.app.chat.exceptions import OpenAIFailedProcessingException
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -35,6 +35,13 @@ class ChatSummary(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class FileSummary(BaseModel):
+    id: str
+    chat_id: str
+    file_name: str
+
+class DocumentResponse(BaseModel):
+    documents: List[FileSummary]
 
 class Chunk(BaseModel):
     id: str

@@ -1,11 +1,10 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from './../../Auth/AuthContext';
-import { useParams } from 'react-router-dom';
-
+import remarkGfm from 'remark-gfm';
 import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadButton, FileUploadContainer, FilesUploadTitle } from './ChatInterfaceStyles';
+import ReactMarkdown from 'react-markdown';
 
 import DocumentList from '../DocumentUpload/DocumentList';
-
 
 const ChatInterface = ({onFileSelect, documents, chatId}) => {
   const [messages, setMessages] = useState([]);
@@ -15,13 +14,26 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [error, setError] = useState(null);
   const { doctorId, patientId, userType } = useContext(AuthContext);
+  const [chats, setChats] = useState([]);
 
+  const updateChatHistory = (chatId, lastMessageDate) => {
+    setChats(prevChats => {
+      const updatedChats = prevChats.map(chat => {
+        if (chat.id === chatId) {
+          return { ...chat, last_message_date: lastMessageDate };
+        }
+        return chat;
+      });
+      return updatedChats.sort((a, b) => new Date(b.last_message_date) - new Date(a.last_message_date));
+    });
+  };
   let userIdStr = userType === 'doctor' ? doctorId : patientId;
   const handleInputChange = (event) => {
     setUserInput(event.target.value);
   };
     
-  const chat_id = localStorage.getItem('chatId');
+  const chat_id = chatId;
+
   const handleSelectDocument = (document) => {
     
     setSelectedDocument(document);
@@ -42,36 +54,36 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
   const handleSendMessage = async (event) => {
     event.preventDefault();
     if (!userInput.trim()) return;
-
+  
     const userMessage = { agent_role: 'user', user_message: userInput };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     try {
-      console.log('hey',JSON.stringify({ user_message: userInput, userId: userIdStr, chat_id: chat_id}));
       const response = await fetch('http://localhost:8000/v1/qa-create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        
-        body: JSON.stringify({ user_message: userInput, userId: userIdStr, chat_id: chat_id}),
+        body: JSON.stringify({ user_message: userInput, userId: userIdStr, chat_id: chat_id }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
-        console.log('data', data);
+        const now = new Date().toISOString();
         setMessages(prevMessages => [
           ...prevMessages.filter(msg => msg.user_message !== userInput), 
           userMessage,
           { agent_role: 'assistant', answer: data.answer }
         ]);
+        
+        updateChatHistory(chat_id, now);
+        
       } else {
         console.error('Failed to get the answer');
       }
     } catch (error) {
-      
       console.error('Error during chat interaction:', error);
     }
-
+  
     setUserInput(''); 
   };
 
@@ -112,7 +124,10 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
             )}
             {msg.answer && (
               <ChatInterfaceMessageLlm>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {msg.answer}
+               </ReactMarkdown>
+                
               </ChatInterfaceMessageLlm>
             )}
           </div>

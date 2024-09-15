@@ -8,13 +8,13 @@ const FileUpload = ({ onFileSelect }) => {
   const handleFileChange = (event) => {
       const selectedFiles = event.target.files;
       if (selectedFiles.length) {
-        setFile(selectedFiles[0]); // Store the selected file in state
+        setFile(selectedFiles[0]); 
         onFileSelect(selectedFiles);
       }
   };
 
   const handleButtonClick = () => {
-    fileInputRef.current.click(); // Trigger the file input click event
+    fileInputRef.current.click();
   };
 
   return (

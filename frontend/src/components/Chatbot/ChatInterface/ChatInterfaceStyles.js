@@ -6,7 +6,6 @@ export const ChatInterfaceContainer = styled.div`
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    max-width: 600px;
     margin: 0 auto;
     background-color: #ffffff;
     border: 1px solid black;
@@ -28,7 +27,6 @@ export const ChatInterfaceMessages = styled.ul`
     padding: 20px;
     overflow-y: scroll;
     scrollbar-width: none;
-    
 
 `;
 
@@ -37,7 +35,6 @@ export const ChatInterfaceForm = styled.form`
     flex-direction: row; 
     justify-content: space-between;
     width: 100%;
-    max-width: 650px;
     min-width: 350px;
 
     padding: 0;
@@ -58,15 +55,18 @@ export const ChatInterfaceForm = styled.form`
 `;
 
 export const ChatInterfaceMessageLlm = styled.li`
-    display: flex;
     align-items: start;
     justify-content: flex-start;
     width: fit-content;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 12px;
-    background: #EDEDEF;
+    max-width: 80%; 
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    background: #E4E1E5;
     margin-right: auto;
+    color: #333;
+    font-size: 18px;
+    line-height: 1.5;
 `;
 
 export const ChatInterfaceMessageUser = styled.li`
@@ -105,7 +105,6 @@ export const ChatInterfaceSubmitButton = styled.button`
     display: flex;
     align-items: flex-end;
 
-    // change the content of the span element 
     .span2 {
         display: none;
 
@@ -121,9 +120,6 @@ export const ChatInterfaceSubmitButton = styled.button`
     }
 
 `;
-
-
-
 
 
 export const FileUploadButton = styled.button`

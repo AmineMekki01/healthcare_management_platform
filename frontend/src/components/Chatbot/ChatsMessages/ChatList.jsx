@@ -62,10 +62,9 @@ const ChatList = ({ chats, onSelectChat, selectedChatId }) => {
         lastWeek: '[Last] dddd [at] LT',
         sameElse: 'L'
     });
-};
+  };
 
-
-  const sortedChat = [...chats].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  const sortedChat = [...chats].sort((a,b) => new Date(b.last_message_date) - new Date(a.last_message_date));
 
   return (
     <ChatsList>
@@ -77,9 +76,8 @@ const ChatList = ({ chats, onSelectChat, selectedChatId }) => {
         >
           <MessageAndTime>
             <MessageContent>{chat.title}</MessageContent>
-            <MessageTime>{formatMessageDate(chat.created_at)}</MessageTime>
-
-        </MessageAndTime>
+            <MessageTime>{formatMessageDate(chat.last_message_date)}</MessageTime>
+          </MessageAndTime>
         </Chat>
       ))}
     </ChatsList>

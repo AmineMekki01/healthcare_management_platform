@@ -5,7 +5,7 @@ import openai
 from starlette.responses import StreamingResponse
 
 from src.app.chat.exceptions import OpenAIException
-from src.app.chat.models import BaseMessage, Message, ChatSummary
+from src.app.chat.models import BaseMessage, Message, ChatSummary, FileSummary, DocumentResponse
 from src.app.chat.services import OpenAIService, ChatServices
 from src.app.core.logs import logger
 from src.app.db import messages_queries
@@ -38,6 +38,23 @@ async def get_chat_messages(chat_id) -> list[Message]:
 async def get_chat(chat_id: UUID) -> ChatSummary:
     return ChatSummary(**messages_queries.select_chat_by_id(chat_id=chat_id))
 
+@router.get("/v1/documents/{chat_id}", response_model=DocumentResponse)
+async def get_chat_documents(chat_id: UUID) -> DocumentResponse:
+    chat_documents = list(messages_queries.select_documents_by_chat(chat_id=chat_id))
+    
+    documents_to_return = [
+        {
+            'id': str(doc['id']), 
+            'chat_id': str(doc['chat_id']), 
+            'file_name': doc['file_name']
+        } 
+        for doc in chat_documents
+    ]
+    
+    if not documents_to_return:
+        return DocumentResponse(documents=[])
+    
+    return DocumentResponse(documents=documents_to_return)
 
 @router.post("/v1/chat-create")
 async def create_chat(chat: ChatSummary):
@@ -71,8 +88,9 @@ async def completion_stream(input_message: BaseMessage) -> StreamingResponse:
 @router.post("/v1/qa-create")
 async def qa_create(input_message: BaseMessage) -> Message:
     try:
-        return await OpenAIService.qa_without_stream(input_message=input_message)
-    except openai.OpenAIError:
+        return await OpenAIService.invoke_llm(input_message=input_message)
+    except Exception as e:
+        logger.info(f"Error in qa_create : {e}")
         raise OpenAIException
 
 

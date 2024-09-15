@@ -95,13 +95,11 @@ CREATE TABLE public.chatbot_chats (
 CREATE TABLE public.chatbot_files (
     id uuid NOT NULL,
     chat_id uuid NOT NULL,
-    message_id uuid NOT NULL,
     user_id uuid NOT NULL,
     uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
     file_name character varying(255) NOT NULL,
     file_size character varying(255) NOT NULL,
     file_type character varying(255) NOT NULL,
-    file_url character varying(255) NOT NULL
 );
 
 

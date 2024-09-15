@@ -16,18 +16,32 @@ function ChatbotChat() {
   const [currentChatId, setCurrentChatId] = useState(null);
   const navigate = useNavigate();
   const DOCUMENTS_API = 'http://localhost:8000/v1/documents';
+  const [chats, setChats] = useState([]);
 
   let userId = userType === 'doctor' ? doctorId : patientId;
-  console.log('userId', userId);
+
+  const updateChatHistory = (chatId, lastMessageDate) => {
+    setChats(prevChats => {
+      const updatedChats = prevChats.map(chat => {
+        if (chat.id === chatId) {
+          return { ...chat, last_message_date: lastMessageDate };
+        }
+        return chat;
+      });
+      return updatedChats.sort((a, b) => new Date(b.last_message_date) - new Date(a.last_message_date));
+    });
+  };
 
   const handleFileSelect = async (files) => {
     const formData = new FormData();
-    
+  
     for (let i = 0; i < files.length; i++) {
       formData.append('files', files[i]);
     }
-    
-    formData.append('userId', userId);
+  
+    formData.append('user_id', userId);
+    formData.append('chat_id', currentChatId);
+  
     try {
       const response = await axios.post('http://localhost:8000/v1/upload-document', formData, {
         headers: {
@@ -36,12 +50,15 @@ function ChatbotChat() {
         },
       });
       const uploadedFileInfo = response.data.files_names;
-      setDocuments([...documents, uploadedFileInfo]);
+  
+      const newFiles = Array.isArray(uploadedFileInfo) ? uploadedFileInfo : [uploadedFileInfo];
+  
+      setDocuments(prevDocuments => [...prevDocuments, ...newFiles]);
     } catch (error) {
       setError('There was an error uploading the file!');
       console.error('There was an error!', error);
     }
-    console.log(formData)
+    console.log(formData);
   };
 
 
@@ -49,20 +66,41 @@ function ChatbotChat() {
     return <div>Error: {error}</div>;
   }
 
-  const handleChatSelect = (chatId) => {
+  const handleChatSelect = async (chatId) => {
     setCurrentChatId(chatId);
     setShowChatInterface(true);
+    console.log("selected chat : ", chatId)
+
+    try {
+      const response = await axios.get(`http://localhost:8000/v1/documents/${chatId}`);
+      if (response.status === 200) {
+        const fileNames = response.data.documents.map(doc => doc.file_name);
+        setDocuments(fileNames);
+        console.log("fileNames", fileNames)
+      }
+    } catch (error) {
+      setError('Error fetching documents for the selected chat.');
+      console.error('Error fetching documents:', error);
+    }
+    console.log("selected chat : ", chatId);
   };
 
   return (   
-    <Container className="app">
+    <Container>
       <FileContainer className="App-content">
-        <ChatHistory 
-        onChatSelect={handleChatSelect}
+      <ChatHistory 
+          chats={chats}
+          setChats={setChats}
+          onChatSelect={handleChatSelect}
         />
         {showChatInterface && (
             <ChatContainer>
-              <ChatInterface chatId={currentChatId} onFileSelect={handleFileSelect} documents={documents} />
+              <ChatInterface 
+                chatId={currentChatId} 
+                onFileSelect={handleFileSelect} 
+                documents={documents}
+                updateChatHistory={updateChatHistory}
+              />
             </ChatContainer>
           )}
       </FileContainer>

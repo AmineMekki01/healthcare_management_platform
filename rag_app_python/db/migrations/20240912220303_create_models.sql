@@ -24,15 +24,12 @@ CREATE TABLE chatbot_chats (
 CREATE TABLE chatbot_files (
     id uuid PRIMARY KEY,
     chat_id uuid NOT NULL,
-    message_id uuid NOT NULL,
     user_id uuid NOT NULL,
     uploaded_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_size VARCHAR(255) NOT NULL,
     file_type VARCHAR(255) NOT NULL,
-    file_url VARCHAR(255) NOT NULL,
-    FOREIGN KEY (chat_id) REFERENCES chats(id),
-    FOREIGN KEY (message_id) REFERENCES messages(id)
+    FOREIGN KEY (chat_id) REFERENCES chatbot_chats(id)
 );
 
 -- migrate:down

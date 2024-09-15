@@ -6,7 +6,7 @@ export const Container = styled.div`
     flex-direction: column;
     height: 100vh;
     align-items: center;
-    
+    width: 100%;
     @media (max-width: 650px ) {
         flex-direction: column;
     }
@@ -54,10 +54,9 @@ export const FilesUploadTitle = styled.h2`
 
 
 export const ChatContainer = styled.div`
-    width: 100%;
-    max-width: 600px;   
+
     background-color: #ffffff;
-    
+    width: 70%;
     @media (max-width: 650px ) {
         width: 100%;
         max-width: 100%;

@@ -24,8 +24,8 @@ const CreateNewChat = styled.button`
 const ChatHist = styled.div`    
     display: flex;
     flex-direction: column; 
-    width: 30%; 
-    background-color: #465B7A;   
+    background-color: #465B7A;
+    width: 30%;
 `;
 
 const ChatHistory = ({onChatSelect}) => {
@@ -68,7 +68,6 @@ const ChatHistory = ({onChatSelect}) => {
         console.error('Error creating Chat:', error);
       }
       handleSelectChat(newChat.id);
-      localStorage.setItem('chatId', newChat.id);
     }
   };
 

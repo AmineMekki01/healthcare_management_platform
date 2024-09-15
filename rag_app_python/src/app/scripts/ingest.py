@@ -1,14 +1,15 @@
 import os
-from typing import Dict, List
+from typing import Dict
 from PyPDF2 import PdfReader
-from qdrant_client import QdrantClient
 from docx import Document
-import tiktoken
-import re
-import uuid
-from src.app.settings import settings
-from src.app.core.logs import logger
+from uuid import uuid4
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.documents.base import Document
+
+
+from src.app.core.logs import logger
+from src.app.utils import create_qdrant_collection, init_vector_store
 
 def extract_text_from_pdf(file_path):
     try:
@@ -44,41 +45,24 @@ def extract_text_from_docx(file_path):
         return None
 
 
-def create_chunks(text: str, max_tokens: int = 500) -> list[str]:
+def split_docs_docx(texts):
+    """Split DocX docs into chunks.
+
+    Args:
+        texts (Iterable[Document]): DocX document with metadata.
+
+    Returns:
+        List[Document]: Splitted DocX Document
+
     """
-        Split the text into chunks of `max_tokens` length.
+    character_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=5000,
+        chunk_overlap=100,
+        is_separator_regex=False,
+    )
 
-    params:
-    -------
-        text: str
-            The text to be split into chunks.
-        max_tokens: int
-            The maximum number of tokens per chunk.
-    returns:
-    --------
-        chunks: list[str]
-            A list of chunks of text.
-    """
-    encoding = tiktoken.get_encoding("cl100k_base")
-    sentences = re.split('(?<=[.!?]) +', text)
-    chunks = []
-    current_chunk = ""
-    current_count = 0
-
-    for sentence in sentences:
-        tokens = encoding.encode(sentence)
-        token_count = len(tokens)
-
-        if current_count + token_count <= max_tokens:
-            current_chunk += " " + sentence
-            current_count += token_count
-        else:
-            chunks.append(current_chunk)
-            current_chunk = sentence
-            current_count = token_count
-
-    chunks.append(current_chunk)
-    return chunks
+    list_documents = character_splitter.split_text(texts)
+    return list_documents, character_splitter
 
 
 def extract_text_from_file(file_path: str) -> str:
@@ -134,36 +118,7 @@ def extract_metadata(file_path: str) -> Dict[str, str]:
         return {}
 
 
-def populate_qdrant(client: QdrantClient, documents: List[str], metadata: List[Dict],  ids: List[str], userId: str):
-    """
-    Populate Qdrant with the provided documents and metadata.
-
-    params:
-    -------
-        client: QdrantClient
-            The Qdrant client.
-        documents: list[str]
-            A list of documents to be indexed.
-        metadata: list[dict]
-            A list of dictionaries containing the metadata for each document.
-        ids: list[str]
-            A list of ids for each document.
-        userId: str
-            The user id of the user who uploaded the file.
-
-    """
-    try:
-        client.add(
-            collection_name=userId,
-            documents=documents,
-            metadata=metadata,
-            ids=ids,
-        )
-    except Exception as e:
-        logger.info(f"An error occurred while populating Qdrant: {e}")
-
-
-def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict, userId: str):
+def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict):
     """
     Chunk the text into smaller chunks and upload them to Qdrant.
 
@@ -177,44 +132,35 @@ def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict, userId: str)
             The user id of the user who uploaded the file.
 
     """
-    client = QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
-
+    create_qdrant_collection()
+    vector_store = init_vector_store()
+    list_text, character_splitter = split_docs_docx(text)
+    
     logger.info(
         "Started Chunking text and extracting metadata from provided content.")
 
-    documents = []
-    metadata = []
-    ids = []
+    
+    metadata = {
+        "file_name": file_metadata["file_name"],
+        "file_size": file_metadata["file_size"],
+        "file_type": file_metadata["file_type"],
+        "chat_id" : file_metadata["chat_id"],
+        "user_id" : file_metadata["user_id"],
+    }
 
-    if text:
-        chunks = create_chunks(text)
+    langchain_documents = [
+        Document(page_content=text, metadata=metadata) for text in list_text
+    ]
+    
 
-        for chunk in chunks:
-            doc_id = str(uuid.uuid4())
-            documents.append(chunk)
-            metadata.append(
-                {
-                    "id": doc_id,
-                    "chunk": chunk,
-                    "chunk_length": len(chunk),
-                    "file_name": file_metadata["file_name"],
-                    "file_size": file_metadata["file_size"],
-                    "file_extension": file_metadata["file_extension"],
-                    "file_type": file_metadata["file_type"]
-                }
-            )
-            ids.append(doc_id)
-        logger.info(
-            "Chunking text and extracting metadata from provided content was successful."
+    langchain_documents = character_splitter.split_documents(langchain_documents)
+    langchain_documents_uuid = [str(uuid4()) for _ in range(len(langchain_documents))]
+
+    for doc in langchain_documents:
+        doc.metadata.update(
+            {
+                "chunk_length": len(doc.page_content)
+            }
         )
-
-    else:
-        logger.info("No text was provided.")
-
-    if documents and metadata and ids:
-        logger.info("Started populating Qdrant..")
-        logger.info("User ID: " + userId)
-        populate_qdrant(client, documents, metadata, ids, userId)
-        logger.info("Qdrant was populated.")
-    else:
-        logger.info("No documents, metadata, or ids were provided.")
+    
+    vector_store.add_documents(documents=langchain_documents, ids=langchain_documents_uuid)

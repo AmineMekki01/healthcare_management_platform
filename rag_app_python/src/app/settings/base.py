@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = Field(env="QDRANT_PORT", default=9999)
     QDRANT_COLLECTION_NAME: str = Field(
         env="QDRANT_COLLECTION_NAME", default="demo")
+    EMBEDDING_MODEL_DIM : int = 384
 
     @property
     def is_local(self):
