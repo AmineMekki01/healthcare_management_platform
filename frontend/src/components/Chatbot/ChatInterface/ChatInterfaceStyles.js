@@ -30,29 +30,7 @@ export const ChatInterfaceMessages = styled.ul`
 
 `;
 
-export const ChatInterfaceForm = styled.form`
-    display: flex; 
-    flex-direction: row; 
-    justify-content: space-between;
-    width: 100%;
-    min-width: 350px;
 
-    padding: 0;
-    margin: 0 auto; 
-
-    border-top: 1px solid black;
-
-    @media (max-width: 768px) {
-        width: 100%;
-        min-width: 250px;
-    }
-
-    @media (max-width : 300px) {
-        width: 100%;
-        min-width: 0px;
-    }
-
-`;
 
 export const ChatInterfaceMessageLlm = styled.li`
     align-items: start;
@@ -83,55 +61,6 @@ export const ChatInterfaceMessageUser = styled.li`
     color: #fff;
 `;
 
-
-export const ChatInterfaceInput = styled.input`
-    padding: 10px;
-    border: 0;
-    width: 100%;
-    font-size: 20px;
-    &:focus {
-        outline: none;
-    }
-`;
-
-export const ChatInterfaceSubmitButton = styled.button`
-    background: #121F49;
-    color: #fff;
-    font-size: 20px;
-    padding: 10px;
-    width: fit-content;
-    border: 0;
-    height: 100%;
-    display: flex;
-    align-items: flex-end;
-
-    .span2 {
-        display: none;
-
-    }
-
-    @media (max-width: 250px) {
-        .span1 {
-            display: none;
-        }
-        .span2 {
-            display: flex;
-        }
-    }
-
-`;
-
-
-export const FileUploadButton = styled.button`
-    background: #121F49;
-    color: #fff;
-    font-size: 20px;
-    padding: 10px;
-    width: 120px;
-    border: 0;
-`;
-
-
 export const FilesUploadTitle = styled.div`
  
     padding: 10px;
@@ -151,4 +80,75 @@ export const FileUploadContainer = styled.div`
     align-items: center;
     justify-content: center;
     padding: 0;
+`;
+
+export const ChatInputContainer = styled.div`
+    display: flex;
+    width: 100%;
+`;
+
+export const FileUploadButton = styled.button`
+    color: #fff;
+`;
+
+export const FileUpload = styled.div`
+    width: 10%;
+    background: #121F49;
+    display: flex;
+    justify-content: center;
+`;
+
+export const ChatInterfaceForm = styled.form`
+    display: flex; 
+    width: 90%;
+    border-top: 1px solid black;
+
+
+    @media (max-width : 300px) {
+        width: 100%;
+        min-width: 0px;
+    }
+
+`;
+
+export const ChatInterfaceInput = styled.input`
+    padding: 10px;
+    border: 0;
+    font-size: 20px;
+    width: 90%;
+    &:focus {
+        outline: none;
+    }
+`;
+
+
+export const ChatInterfaceSubmitButton = styled.button`
+    background: #121F49;
+    width: 10%;
+    color: #fff;
+    font-size: 20px;
+    padding: 10px;
+`;
+
+export const Header = styled.div`
+  display: none;
+  align-items: center;
+  padding: 10px;
+  background-color: #f5f5f5;
+
+  @media (max-width: 650px) {
+    display: flex;
+  }
+`;
+
+export const BackButton = styled.button`
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+`;
+
+export const ChatTitle = styled.h2`
+  margin: 0;
+  margin-left: 10px;
 `;

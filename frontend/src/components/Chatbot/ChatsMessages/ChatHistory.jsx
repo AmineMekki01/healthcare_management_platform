@@ -26,11 +26,14 @@ const ChatHist = styled.div`
     flex-direction: column; 
     background-color: #465B7A;
     width: 30%;
+
+    @media (max-width: 650px) {
+      width: 100%;
+    }
 `;
 
-const ChatHistory = ({onChatSelect}) => {
+const ChatHistory = ({ onChatSelect, selectedChatId, isSmallScreen, setView }) => {
   const [chats, setChats] = useState([]);
-  const [selectedChatId, setSelectedChatId] = useState(null);
   const { doctorId, patientId, userType } = useContext(AuthContext);
   let userId = userType === 'doctor' ? doctorId : patientId;
   
@@ -72,31 +75,30 @@ const ChatHistory = ({onChatSelect}) => {
   };
 
   useEffect(() => {
-
     const fetchChats = async () => {
-      console.log("userId type : ", typeof(userId) )
-      
-        const response = await fetch(`http://localhost:8000/v1/chats/${userId}`);
-
-        if (response.ok) {
-          const data = await response.json();
-          setChats(data);
-          if (data.length > 0) {
-            handleSelectChat(data[0].id);
-          }
-        } else {
-          console.error('Failed to fetch chats');
-        }
+      console.log("userId type:", typeof userId);
+  
+      const response = await fetch(`http://localhost:8000/v1/chats/${userId}`);
+  
+      if (response.ok) {
+        const data = await response.json();
+        setChats(data);
+     
+      } else {
+        console.error('Failed to fetch chats');
+      }
     };
-
+  
     fetchChats();
   }, []);
 
   const handleSelectChat = (chatId) => {
-    onChatSelect(chatId); 
-    setSelectedChatId(chatId);
+    onChatSelect(chatId);
+  
+    if (isSmallScreen) {
+      setView('chat');
+    }
   };
-
   return (
     <ChatHist>
       <CreateNewChat

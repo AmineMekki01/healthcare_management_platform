@@ -62,7 +62,7 @@ export default function DoctorProfile() {
           <LocationContainer>
             <Title>I'm Located At</Title>
             <LocationInfo>{doctorInfo.Location}</LocationInfo>
-            {/* <div ref={mapContainerRef} style={{ width: '100%', 'maxWidth': '400px', maxHeight: '400px' }}>
+            <div ref={mapContainerRef} style={{ width: '100%', 'maxWidth': '400px', maxHeight: '400px' }}>
               <LoadScript googleMapsApiKey="YOUR_API_KEY">
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -72,7 +72,7 @@ export default function DoctorProfile() {
                   <Marker position={{ lat: doctorInfo.Latitude, lng: doctorInfo.Longitude }} />
                 </GoogleMap>
               </LoadScript>
-            </div> */}
+            </div>
           </LocationContainer>
           <Section>
             <Title>My Education</Title>
@@ -172,26 +172,10 @@ export default function DoctorProfile() {
           </Section>
           
         </RightColumn>
-      </BodyContainer>
+      </BodyContainer> 
 
-      <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />
-     
+      {userType === 'patient' && <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />}
+
     </MainContainer>
   );
 }
-
-
-
-
-{/* <Card>
-                    <CardContent>
-                        <Typography>
-                            Book Appointment
-                        </Typography>
-                        <Grid spacing={3} className='mt-2'>
-
-                          {userType === 'patient' && <BookAppointment show={true} />}
-                          {userType === 'doctor' && <BookAppointment show={false} />}
-                        </Grid>
-                    </CardContent>
-                </Card> */}

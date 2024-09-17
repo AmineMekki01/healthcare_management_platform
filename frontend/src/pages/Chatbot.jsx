@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect  } from 'react';
 import axios from 'axios';
 import { AuthContext } from './../components/Auth/AuthContext';
 import ChatInterface from './../components/Chatbot/ChatInterface/ChatInterface';
-import {FileContainer, Container, ChatContainer} from './styles/ChatbotStyles';
+import {FileContainer, Container, ChatContainer, ToggleButton} from './styles/ChatbotStyles';
 import ChatHistory from './../components/Chatbot/ChatsMessages/ChatHistory'; 
 import {useNavigate} from 'react-router-dom';
 
@@ -12,11 +12,12 @@ function ChatbotChat() {
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState(null);
   const { doctorId, patientId, userType } = useContext(AuthContext);
-  const [showChatInterface, setShowChatInterface] = useState(false);
   const [currentChatId, setCurrentChatId] = useState(null);
   const navigate = useNavigate();
   const DOCUMENTS_API = 'http://localhost:8000/v1/documents';
   const [chats, setChats] = useState([]);
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 650);
+  const [view, setView] = useState('history'); // 'history', 'chat', or 'both'
 
   let userId = userType === 'doctor' ? doctorId : patientId;
 
@@ -62,15 +63,10 @@ function ChatbotChat() {
   };
 
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
-  const handleChatSelect = async (chatId) => {
+  const handleChatSelect = async (chatId, shouldSetView = true) => {
     setCurrentChatId(chatId);
-    setShowChatInterface(true);
-    console.log("selected chat : ", chatId)
-
+    setView('chat');
     try {
       const response = await axios.get(`http://localhost:8000/v1/documents/${chatId}`);
       if (response.status === 200) {
@@ -85,27 +81,84 @@ function ChatbotChat() {
     console.log("selected chat : ", chatId);
   };
 
-  return (   
-    <Container>
-      <FileContainer className="App-content">
-      <ChatHistory 
+  const toggleChatHistory = () => {
+    if (isSmallScreen) {
+      setView((prevView) => (prevView === 'chat' ? 'history' : 'chat'));
+    }
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const smallScreen = window.innerWidth < 650;
+      setIsSmallScreen(smallScreen);
+      if (!smallScreen) {
+        setView('both');
+      } else if (view !== 'chat') {
+        setView('history');
+      }
+    };
+  
+    window.addEventListener('resize', handleResize);
+  
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [view]);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+return (
+  <FileContainer className="App-content" isSmallScreen={isSmallScreen}>
+    {isSmallScreen ? (
+      view === 'history' ? (
+        <ChatHistory
           chats={chats}
           setChats={setChats}
           onChatSelect={handleChatSelect}
+          selectedChatId={currentChatId}
+          isSmallScreen={isSmallScreen}
+          setView={setView}
         />
-        {showChatInterface && (
-            <ChatContainer>
-              <ChatInterface 
-                chatId={currentChatId} 
-                onFileSelect={handleFileSelect} 
-                documents={documents}
-                updateChatHistory={updateChatHistory}
-              />
-            </ChatContainer>
-          )}
-      </FileContainer>
-    </Container>
-  );
+      ) : view === 'chat' ? (
+        <ChatContainer>
+          <ChatInterface
+            chatId={currentChatId}
+            onFileSelect={handleFileSelect}
+            documents={documents}
+            updateChatHistory={updateChatHistory}
+            toggleChatHistory={toggleChatHistory}
+            isSmallScreen={isSmallScreen}
+          />
+        </ChatContainer>
+      ) : null
+    ) : (
+      <>
+        <ChatHistory
+          chats={chats}
+          setChats={setChats}
+          onChatSelect={handleChatSelect}
+          selectedChatId={currentChatId}
+          isSmallScreen={isSmallScreen}
+          setView={setView}
+
+        />
+        <ChatContainer>
+          <ChatInterface
+            chatId={currentChatId}
+            onFileSelect={handleFileSelect}
+            documents={documents}
+            updateChatHistory={updateChatHistory}
+            toggleChatHistory={toggleChatHistory}
+            isSmallScreen={isSmallScreen}
+          />
+        </ChatContainer>
+      </>
+    )}
+  </FileContainer>
+);
+
 }
 
 export default ChatbotChat;

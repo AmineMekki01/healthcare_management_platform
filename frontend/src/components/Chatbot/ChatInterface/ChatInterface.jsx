@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from './../../Auth/AuthContext';
 import remarkGfm from 'remark-gfm';
-import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadButton, FileUploadContainer, FilesUploadTitle } from './ChatInterfaceStyles';
+import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadButton, FileUploadContainer, FilesUploadTitle, ChatInputContainer, FileUpload, Header, BackButton, ChatTitle} from './ChatInterfaceStyles';
 import ReactMarkdown from 'react-markdown';
 
 import DocumentList from '../DocumentUpload/DocumentList';
 
-const ChatInterface = ({onFileSelect, documents, chatId}) => {
+const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isSmallScreen }) => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [file, setFile] = useState(null);
@@ -57,6 +57,9 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
   
     const userMessage = { agent_role: 'user', user_message: userInput };
     setMessages(prevMessages => [...prevMessages, userMessage]);
+
+    setUserInput('');
+
     try {
       const response = await fetch('http://localhost:8000/v1/qa-create', {
         method: 'POST',
@@ -110,6 +113,14 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
   
   return (
     <ChatInterfaceContainer>
+      {isSmallScreen && (
+        <Header>
+          <BackButton onClick={toggleChatHistory}>
+            &#8592;
+          </BackButton>
+          <ChatTitle>Chat</ChatTitle>
+        </Header>
+      )}
       <FileUploadContainer>
                 <FilesUploadTitle></FilesUploadTitle>
                 <DocumentList documents={documents} onSelectDocument={handleSelectDocument} />
@@ -133,27 +144,34 @@ const ChatInterface = ({onFileSelect, documents, chatId}) => {
           </div>
         ))}
       </ChatInterfaceMessages>
-      <ChatInterfaceForm onSubmit={handleSendMessage}>
-      <label htmlFor="file-upload">
-        <FileUploadButton onClick={handleButtonClick}>+</FileUploadButton>
-      </label>
-      <input 
-        type="file" 
-        onChange={handleFileSelect}
-        multiple 
-        ref={fileInputRef}
-        style={{ display: 'none' }} 
-        id="file-upload" 
-      />
-        <ChatInterfaceInput
-          type="text"
-          value={userInput}
-          onChange={handleInputChange}
-          placeholder="Type your message..."
-          
+
+      
+      <ChatInputContainer>
+        <FileUpload htmlFor="file-upload">
+          <FileUploadButton onClick={handleButtonClick}>+</FileUploadButton>
+          <input 
+          type="file" 
+          onChange={handleFileSelect}
+          multiple 
+          ref={fileInputRef}
+          style={{ display: 'none' }} 
+          id="file-upload" 
         />
-        <ChatInterfaceSubmitButton type="submit"><span className='span1'>Send</span><span className='span2'>{'>'}</span></ChatInterfaceSubmitButton>
-      </ChatInterfaceForm>
+        </FileUpload>
+       
+
+        <ChatInterfaceForm onSubmit={handleSendMessage}>
+          <ChatInterfaceInput
+            type="text"
+            value={userInput}
+            onChange={handleInputChange}
+            placeholder="Type your message..."
+            
+          />
+          <ChatInterfaceSubmitButton type="submit"><span className='span1'>{'>'}</span></ChatInterfaceSubmitButton>
+        </ChatInterfaceForm>
+      </ChatInputContainer>
+      
     </ChatInterfaceContainer>
   );
 };

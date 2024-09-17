@@ -1,31 +1,13 @@
 import styled from 'styled-components';
 
 
-export const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    align-items: center;
-    width: 100%;
-    @media (max-width: 650px ) {
-        flex-direction: column;
-    }
-`;
-
-
 export const FileContainer = styled.div`
     display: flex;
-    flex-direction: row;
+    flex-direction: ${(props) => (props.isSmallScreen ? 'column' : 'row')};
     justify-content: center;
     height: 100%;
     width: 100%;
     padding: 20px;
-    
-    @media (max-width: 650px) {
-        flex-direction: column;
-        align-items: flex-start;
-        padding-top: 0; 
-    }
 `;
 
 
@@ -64,3 +46,19 @@ export const ChatContainer = styled.div`
     }
 
 `;  
+
+
+export const ToggleButton = styled.button`
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  @media (max-width: 650px) {
+    display: block;
+  }
+`;
