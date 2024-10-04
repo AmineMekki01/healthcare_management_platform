@@ -136,10 +136,7 @@ def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict):
     vector_store = init_vector_store()
     list_text, character_splitter = split_docs_docx(text)
     
-    logger.info(
-        "Started Chunking text and extracting metadata from provided content.")
 
-    
     metadata = {
         "file_name": file_metadata["file_name"],
         "file_size": file_metadata["file_size"],
@@ -151,6 +148,7 @@ def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict):
     langchain_documents = [
         Document(page_content=text, metadata=metadata) for text in list_text
     ]
+    logger.info(f"langchain_documents : {langchain_documents}")
     
 
     langchain_documents = character_splitter.split_documents(langchain_documents)
@@ -163,4 +161,8 @@ def text_chunking_and_qdrant_upload(text: str, file_metadata: Dict):
             }
         )
     
-    vector_store.add_documents(documents=langchain_documents, ids=langchain_documents_uuid)
+    try:
+        vector_store.add_documents(documents=langchain_documents, ids=langchain_documents_uuid)
+        logger.info(f"Documents were successfully uploaded.")
+    except Exception as e:
+        logger.info(f"Error while uploading document to qdrant.")

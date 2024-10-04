@@ -1,21 +1,13 @@
 import uuid
-import openai
-from openai import ChatCompletion
-from starlette.responses import StreamingResponse
 from src.app.chat.constants import ChatRolesEnum
 from src.app.chat.models import BaseMessage, Message
 from src.app.core.logs import logger
-from src.app.settings import settings
-from src.app.chat.streaming import stream_generator, format_to_event_stream
-from src.app.chat.constants import ChatRolesEnum, NO_DOCUMENTS_FOUND
-from src.app.chat.exceptions import RetrievalNoDocumentsFoundException
-from src.app.chat.retrieval import process_retrieval
+from src.app.chat.constants import ChatRolesEnum
 from src.app.db import messages_queries
 from src.app.chat.models import BaseMessage, Message, ChatSummary
-from uuid import UUID
 
 from src.app.utils import get_llm_chain
-class OpenAIService:
+class ChatbotService:
     @classmethod
     async def invoke_llm(cls, input_message: BaseMessage) -> Message:
         llm_rag_chain = get_llm_chain(input_message.chat_id)

@@ -96,6 +96,7 @@ def init_retriever(chat_id):
 
 
 def format_docs(docs):
+    print(f"retrieved doc : {[doc.page_content for doc in docs]}")
     return "\n\n".join(doc.page_content for doc in docs)
 
 

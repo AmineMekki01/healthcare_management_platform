@@ -1,12 +1,8 @@
 from uuid import UUID
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-import openai
-from starlette.responses import StreamingResponse
-
-from src.app.chat.exceptions import OpenAIException
-from src.app.chat.models import BaseMessage, Message, ChatSummary, FileSummary, DocumentResponse
-from src.app.chat.services import OpenAIService, ChatServices
+from src.app.chat.models import BaseMessage, Message, ChatSummary, DocumentResponse
+from src.app.chat.services import ChatbotService, ChatServices
 from src.app.core.logs import logger
 from src.app.db import messages_queries
 
@@ -64,39 +60,9 @@ async def create_chat(chat: ChatSummary):
         logger.error(f"Error creating chat: {e}")
 
 
-@router.post("/v1/completion")
-async def completion_create(input_message: BaseMessage, context: str) -> Message:
-    try:
-        answer = await OpenAIService.chat_completion_without_streaming(input_message=input_message, context=context)
-        return answer
-    except openai.OpenAIError as e:
-        logger.error(f"OpenAI API Error: {e}")
-        raise OpenAIException
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/v1/completion-stream")
-async def completion_stream(input_message: BaseMessage) -> StreamingResponse:
-    try:
-        return await OpenAIService.chat_completion_with_streaming(input_message=input_message)
-    except openai.OpenAIError:
-        raise OpenAIException
-
-
 @router.post("/v1/qa-create")
 async def qa_create(input_message: BaseMessage) -> Message:
     try:
-        return await OpenAIService.invoke_llm(input_message=input_message)
+        return await ChatbotService.invoke_llm(input_message=input_message)
     except Exception as e:
         logger.info(f"Error in qa_create : {e}")
-        raise OpenAIException
-
-
-@router.post("/v1/qa-stream")
-async def qa_stream(input_message: BaseMessage) -> StreamingResponse:
-    try:
-        return await OpenAIService.qa_with_stream(input_message=input_message)
-    except openai.OpenAIError:
-        raise OpenAIException
