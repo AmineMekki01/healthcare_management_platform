@@ -5,7 +5,7 @@ import { ContainerLogin, FormWrapper, Title, RadioButtonContainer, RadioButton, 
 import axios from 'axios';
 
 const LoginForm = () => {
-    const { setIsLoggedIn, setDoctorId, setPatientId, setUserType, doctorId, patientId, userFullName, setUserFullName, userProfilePhotoUrl, setUserProfilePhotoUrl } = useContext(AuthContext);
+    const { setIsLoggedIn, setDoctorId, setPatientId, setUserType, doctorId, patientId, userFullName, setUserFullName, userProfilePhotoUrl, setUserProfilePhotoUrl, userId, setUserId} = useContext(AuthContext);
 
     const [localUserType, setLocalUserType] = useState('patient'); 
     const navigate = useNavigate();
@@ -45,12 +45,17 @@ const LoginForm = () => {
                     setUserProfilePhotoUrl(data.profile_picture_url);
                 if(localUserType === 'doctor') {
                     localStorage.setItem('doctorId', data.doctor_id);
+                    localStorage.setItem('userId', data.doctor_id);
                     setDoctorId(data.doctor_id);  
+                    setUserId(data.doctor_id);
                     navigate('/patient-appointments');
                 }
                 else {
                     localStorage.setItem('patientId', data.patient_id);
-                    setPatientId(data.patient_id);  
+                    localStorage.setItem('userId', data.patient_id);
+                    setPatientId(data.patient_id);
+                    setUserId(data.patient_id);
+ 
                     navigate('/patient-appointments');
     
                 }

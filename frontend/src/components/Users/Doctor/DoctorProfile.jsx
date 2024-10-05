@@ -17,8 +17,12 @@ export default function DoctorProfile() {
   const [doctorInfo, setDoctorInfo] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { userType } = useContext(AuthContext);
+  const [followerCount, setFollowerCount] = useState(null);
+  const { userType, userId, patientId} = useContext(AuthContext);
   const mapContainerRef = useRef(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isProcessingFollow, setIsProcessingFollow] = useState(false);
+  
 
   useEffect(() => {
     axios.get(`http://localhost:3001/api/v1/doctors/${doctorId}`)
@@ -34,6 +38,34 @@ export default function DoctorProfile() {
       });
   }, [doctorId]);
 
+  useEffect(() => {
+    axios.get(`http://localhost:3001/api/v1/doctor-follow-count/${doctorId}`).then(response => {
+      setFollowerCount(response.data.follower_count);
+    })
+    .catch(error => {
+      console.error(error);
+      setError('An error occurred while fetching the doctor follower count.');
+    });
+  }, [doctorId]);
+
+
+  useEffect(() => {
+    console.log("userId: ", userId)
+    console.log("userType: ", userType)
+
+    if (userId && userType && userType !== 'doctor') {
+      axios.get(`http://localhost:3001/api/v1/is-following/${doctorId}`, {
+        params: { follower_id: userId, follower_type: userType },
+      })
+        .then(response => {
+          setIsFollowing(response.data.is_following);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+  }, [doctorId, userId, userType]);
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -43,6 +75,31 @@ export default function DoctorProfile() {
 
   const doctorFullName = `${capitalizeText(doctorInfo.FirstName)} ${doctorInfo.LastName ? doctorInfo.LastName.toUpperCase() : ''}`;
 
+  const handleFollowClick = () => {
+    setIsProcessingFollow(true);
+
+    axios.post('http://localhost:3001/api/v1/follow-doctor', {
+        doctor_id: doctorId,
+        follower_id: userId,
+        follower_type: userType,
+      }
+    )
+      .then(response => {
+        setIsFollowing(true);
+        setFollowerCount(prevCount => prevCount + 1);
+      })
+      .catch(error => {
+        console.error(error);
+        alert('An error occurred while trying to follow the doctor.');
+      })
+      .finally(() => {
+        setIsProcessingFollow(false);
+      });
+  };
+
+  const showFollowButton = userId && userId !== doctorId && userType !== 'doctor';
+
+
   return (
     <MainContainer>
       <Header>
@@ -50,6 +107,26 @@ export default function DoctorProfile() {
         <Title>Dr. {capitalizeText(doctorInfo.FirstName)} {doctorInfo.LastName && doctorInfo.LastName.toUpperCase()}</Title>
         <Subtitle>{capitalizeText(doctorInfo.Specialty)} - {doctorInfo.RatingScore} ({ doctorInfo.RatingCount })</Subtitle>
         <Subtitle>{doctorInfo.CityName} , { doctorInfo.CountryName }</Subtitle>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Subtitle>{followerCount} Followers</Subtitle>
+          {showFollowButton && (
+            <button
+              onClick={handleFollowClick}
+              disabled={isProcessingFollow || isFollowing}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: isFollowing ? 'gray' : '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: isProcessingFollow || isFollowing ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          )}
+        </div>
       </Header>
 
       <BodyContainer>

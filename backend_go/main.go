@@ -25,7 +25,6 @@ func main() {
 	}
 	r.Use(cors.New(config))
 
-	// Middleware for debugging headers
 	r.Use(func(c *gin.Context) {
 		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
 		log.Println("CORS Middleware triggered")
@@ -36,14 +35,12 @@ func main() {
 		}
 		c.Next()
 
-		// After request processing
 		fmt.Printf("Response Headers:\n")
 		for k, v := range c.Writer.Header() {
 			fmt.Println(k, v)
 		}
 	})
 
-	// Initialize database
 	conn, err := db.InitDatabase()
 
 	if err != nil {
@@ -54,7 +51,6 @@ func main() {
 
 	r.GET("/ws", services.ServeWs)
 
-	// Initialize routes
 	routes.SetupPatientRoutes(r, conn)
 	routes.SetupDoctorRoutes(r, conn)
 	routes.SetupAppointmentManagementRoutes(r, conn)
@@ -62,12 +58,12 @@ func main() {
 	routes.SetupAccountValidationRoutes(r, conn)
 	routes.SetupShareRoutes(r, conn)
 	routes.SetupChatRoutes(r, conn)
+	routes.SetupFollowServiceRoutes(r, conn)
 
 	r.Use(func(c *gin.Context) {
 		for k, v := range c.Writer.Header() {
 			fmt.Println(k, v)
 		}
 	})
-	// Start server
 	r.Run(":3001")
 }

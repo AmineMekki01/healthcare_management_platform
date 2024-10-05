@@ -12,6 +12,8 @@ const AuthProvider = ({ children, navigate  }) => {
     const [logoutTimer, setLogoutTimer] = useState(null);
     const [userFullName, setUserFullName] = useState(null);
     const [userProfilePhotoUrl, setUserProfilePhotoUrl] = useState(null);
+    const [userId, setUserId] = useState(null);
+    
 
     useEffect(() => {   
         if (localStorage.getItem('token')) {
@@ -21,8 +23,16 @@ const AuthProvider = ({ children, navigate  }) => {
             setUserProfilePhotoUrl(localStorage.getItem("userProfilePhotoUrl"))
 
 
-        setDoctorId(localStorage.getItem('doctorId'));
-        setPatientId(localStorage.getItem('patientId'));
+            setDoctorId(localStorage.getItem('doctorId'));
+            setPatientId(localStorage.getItem('patientId'));
+
+            if (localStorage.getItem('userType') === 'doctor') {
+                setUserId(localStorage.getItem('doctorId'))
+
+            }else {
+                setUserId(localStorage.getItem('patientId'))
+   
+            }
         }
     }
     , []);
@@ -80,6 +90,7 @@ const AuthProvider = ({ children, navigate  }) => {
             patientId, 
             userFullName,
             userProfilePhotoUrl,
+            userId,
             setIsLoggedIn,
             setUserName,
             setUserAge,
@@ -90,7 +101,8 @@ const AuthProvider = ({ children, navigate  }) => {
             startLogoutTimer,
             clearLogoutTimer, 
             setUserFullName,
-            setUserProfilePhotoUrl
+            setUserProfilePhotoUrl,
+            setUserId
         }}>
             {children}
         </AuthContext.Provider>

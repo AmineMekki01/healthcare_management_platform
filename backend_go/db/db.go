@@ -165,6 +165,15 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			token VARCHAR(255) NOT NULL,
 			type VARCHAR(255) NOT NULL
 		)`,
+
+		`CREATE TABLE IF NOT EXISTS followers (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
+			follower_id UUID NOT NULL,
+			follower_type VARCHAR(50) NOT NULL CHECK (follower_type IN ('patient' , 'doctor')),
+			followed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			UNIQUE (doctor_id, follower_id, follower_type)
+		)`,
 	}
 
 	for _, query := range sqlQueries {
