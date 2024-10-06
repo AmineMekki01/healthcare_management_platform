@@ -34,8 +34,7 @@ const ChatIconsImg = styled.img`
 `;
 
 const ChatComponent = ({ currentChat }) => {
-    const { patientId, doctorId, userType, userProfilePhotoUrl} = useContext(AuthContext);
-    const userId = userType === 'doctor' ? doctorId : patientId;
+    const { userId, userProfilePhotoUrl } = useContext(AuthContext);
     const { state, dispatch } = useContext(ChatContext);
     const { messages } = state;
     const websocket = useContext(WebSocketContext);

@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { Button } from '../components/Auth/styles/LoginRegisterFormStyles';
 import { useNavigate } from 'react-router-dom';
 
-// ,ake a styled component for the centered div and use it in the return statement
 const CenteredDiv = styled.div`
     display: flex;
     justify-content: center;

@@ -13,8 +13,8 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
   const fileInputRef = useRef();
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [error, setError] = useState(null);
-  const { doctorId, patientId, userType } = useContext(AuthContext);
   const [chats, setChats] = useState([]);
+  const { userId } = useContext(AuthContext);
 
   const updateChatHistory = (chatId, lastMessageDate) => {
     setChats(prevChats => {
@@ -27,7 +27,6 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
       return updatedChats.sort((a, b) => new Date(b.last_message_date) - new Date(a.last_message_date));
     });
   };
-  let userIdStr = userType === 'doctor' ? doctorId : patientId;
   const handleInputChange = (event) => {
     setUserInput(event.target.value);
   };
@@ -66,7 +65,7 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_message: userInput, userId: userIdStr, chat_id: chat_id }),
+        body: JSON.stringify({ user_message: userInput, userId: userId, chat_id: chat_id }),
       });
   
       if (response.ok) {

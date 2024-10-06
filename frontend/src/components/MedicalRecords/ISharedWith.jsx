@@ -8,30 +8,26 @@ import { fileIconMapper } from './Helpers';
 
 
 function ISharedWith() {
-  const { patientId, doctorId, userType } = useContext(AuthContext);
-  const userID = userType === 'doctor' ? doctorId : patientId;
+  const { userId } = useContext(AuthContext);
   const [sharedItems, setSharedItems] = useState([]);
 
         
     useEffect(() => {
         const fetchSharedItems = async () => {
           try {
-            const response = await fetch(`http://localhost:3001/api/v1/shared-by-me?userId=${userID}`, {
+            const response = await fetch(`http://localhost:3001/api/v1/shared-by-me?userId=${userId}`, {
               headers: {
                 'Content-Type': 'application/json',
               },
             });
       
             if (!response.ok) {
-              // If the HTTP status code is not OK, then throw an error
               const contentType = response.headers.get("content-type");
               if (contentType && contentType.indexOf("application/json") !== -1) {
-                // We have JSON, proceed to parse it
                 const json = await response.json();
                 console.log('i share with data : ', json);
                 setSharedItems(json);
               } else {
-                // We don't have JSON, read the text and throw an error
                 const errorText = await response.text();
                 throw new Error(`Server response: ${errorText}`);
               }
@@ -46,7 +42,7 @@ function ISharedWith() {
         };
       
         fetchSharedItems();
-      }, [userID]);
+      }, [userId]);
       function viewFolder(item) {
         setSharedItems(item.id); 
       };

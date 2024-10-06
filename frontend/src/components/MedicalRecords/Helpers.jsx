@@ -8,12 +8,12 @@ import VideoFileIcon from '@mui/icons-material/VideoFile';
 import styled from 'styled-components';
 
 const iconColors = {
-    folder: "#f39c12", // example color for folders
-    pdf: "#c0392b",    // example color for PDFs
-    audio: "#9b59b6",  // example color for audio files
-    text: "#3498db",   // example color for text documents
-    video: "#2ecc71",  // example color for videos
-    default: "#95a5a6" // default color
+    folder: "#f39c12",
+    pdf: "#c0392b",
+    audio: "#9b59b6",
+    text: "#3498db",
+    video: "#2ecc71",
+    default: "#95a5a6"
 };
 
 export const CardImage = styled.img`

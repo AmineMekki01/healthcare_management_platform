@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
-import Sidebar from '../components/Chat/Sidebar'
-import Chat from '../components/Chat/Chat'
+import React, { useState, useContext } from 'react';
 import styled from 'styled-components'
 import SidebarComponent from '../components/Chat/Sidebar';
 import ChatComponent from '../components/Chat/Chat';
-import { ChatProvider } from './../components/Chat/ChatContext'; // Adjust the path as necessary
+import { ChatProvider } from './../components/Chat/ChatContext';
 import { AuthContext } from './../components/Auth/AuthContext';
 import { WebSocketProvider } from './../components/Chat/WebSocketContext';
 
@@ -28,14 +26,11 @@ const Container = styled.div`
 
 const ChatPage = () => {
   const [currentChat, setCurrentChat] = useState(null);
-  const { patientId, doctorId, userType } = useContext(AuthContext);
-  const userId = userType === 'doctor' ? doctorId : patientId;
+  const {userId} = useContext(AuthContext);
 
   const handleChatSelect = (chat) => {
     setCurrentChat(chat);
-    console.log("Selected chat in ChatPage: ", chat);
-    console.log("Selected chat in ChatPage (after set): ", currentChat);
-};
+  };
   return (
     <ChatProvider>
       <WebSocketProvider userId={userId}>

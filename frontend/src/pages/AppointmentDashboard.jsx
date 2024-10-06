@@ -7,22 +7,23 @@ import { AuthContext } from './../components/Auth/AuthContext';
 
 export default function Dashboard() {
   const [reservations, setReservations] = useState([]);
-  const { doctorId, patientId, userType } = useContext(AuthContext);
+  const {userType, userId} = useContext(AuthContext);
 
   useEffect(() => {
  
-    const queryParam = userType === 'doctor' ? `doctor_id=${doctorId}` : `patient_id=${patientId}`;
+    const queryParam = userType === 'doctor' ? `doctor_id=${userId}` : `patient_id=${userId}`;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     axios.get(`http://localhost:3001/api/v1/reservations?${queryParam}&timezone=${timezone}`)
 
         .then(response => {
             setReservations(response.data);
+            console.log("reservation data : ", response.data)
         })
         .catch(error => {
             console.error(error);
         });
-}, [doctorId, patientId, userType]);
+}, [userId, userType]);
 
   return (
       <Container>

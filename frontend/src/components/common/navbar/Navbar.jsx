@@ -18,14 +18,11 @@ function capitalizeWords(str) {
 }
 
 const MyNavbar = () => {
-  const { isLoggedIn, logout, doctorId, patientId, userType } = useContext(AuthContext); 
+  const { isLoggedIn, logout, userId, userType, userFullName, userProfilePhotoUrl} = useContext(AuthContext); 
 
   const profileHref = userType === 'doctor'
-    ? `/DoctorProfile/${doctorId}`
-    : `/PatientProfile/${patientId}`;  
-
-  const { userFullName, userProfilePhotoUrl } = useContext(AuthContext);
-
+    ? `/DoctorProfile/${userId}`
+    : `/PatientProfile/${userId}`;
 
   const menus = isLoggedIn
     ? [
@@ -43,10 +40,6 @@ const MyNavbar = () => {
         { title: 'Login', src: 'login', href: '/login' },
         { title: 'Register', src: 'register', href: '/register' },
       ];
-    
-      console.log("userFullName : ", userFullName);
-      console.log("userProfilePhotoUrl : ", userProfilePhotoUrl);
-
   return (
     <NavbarContainer>
       <LogoContainer>

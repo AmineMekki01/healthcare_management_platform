@@ -57,17 +57,14 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
     const [username, setUsername] = useState('')
     const [users, setUsers] = useState([])
     const [error, setError] = useState(false)
-    const { patientId, doctorId, userType } = useContext(AuthContext);
-    const userId = userType === 'doctor' ? doctorId : patientId;
+    const { userId } = useContext(AuthContext);
     const { state, dispatch } = useContext(ChatContext);
 
 
     const handleSearch = () => {
-        console.log("Starting search for:", username);
         fetch(`http://localhost:3001/api/v1/search/${username}/${userId}`)
         .then(res => res.json())
         .then(data => {
-            console.log("Search results:", data.users);
             setUsers(data.users); 
             setError(false)
         })
@@ -80,13 +77,11 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
 
     const handleKey = (e) => {
         if (e.code === "Enter") {
-            console.log("Enter key pressed, initiating search");
             handleSearch();
         }
     }
 
     const handleSelect = (user) => {
-        console.log("User selected from search:", user);
         createOrSelectChat(user);
         setUsers([]);
       };
@@ -96,18 +91,15 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
             console.error("Missing userId or selectedUserId");
             return;
         }
-        console.log("Creating or selecting chat for user ID:", selectedUser.user_id);
         fetch(`http://localhost:3001/api/findOrCreateChat?currentUserId=${userId}&selectedUserId=${selectedUser.user_id}`)
 
             .then(response => response.json())
             .then(data => {
                 if(data) {
                     const newChat = data.chats[0];
-                    console.log("Chat found or created:", newChat);
                     onUserSelect(selectedUser, data.recipient_user_id); 
                     onSelectChat(newChat); 
                     dispatch({ type: 'SET_CURRENT_CHAT', payload: newChat });
-                    
                     } else {
                     console.error('No chat ID returned from the server.');
                 }

@@ -2,24 +2,19 @@ import React, { useState, useContext, useEffect  } from 'react';
 import axios from 'axios';
 import { AuthContext } from './../components/Auth/AuthContext';
 import ChatInterface from './../components/Chatbot/ChatInterface/ChatInterface';
-import {FileContainer, Container, ChatContainer, ToggleButton} from './styles/ChatbotStyles';
+import {FileContainer, ChatContainer} from './styles/ChatbotStyles';
 import ChatHistory from './../components/Chatbot/ChatsMessages/ChatHistory'; 
-import {useNavigate} from 'react-router-dom';
-
 
 
 function ChatbotChat() {
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState(null);
-  const { doctorId, patientId, userType } = useContext(AuthContext);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const navigate = useNavigate();
-  const DOCUMENTS_API = 'http://localhost:8000/v1/documents';
   const [chats, setChats] = useState([]);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 650);
-  const [view, setView] = useState('history'); // 'history', 'chat', or 'both'
+  const [view, setView] = useState('history');
 
-  let userId = userType === 'doctor' ? doctorId : patientId;
+  const {userId} = useContext(AuthContext);
 
   const updateChatHistory = (chatId, lastMessageDate) => {
     setChats(prevChats => {
@@ -59,10 +54,7 @@ function ChatbotChat() {
       setError('There was an error uploading the file!');
       console.error('There was an error!', error);
     }
-    console.log(formData);
   };
-
-
 
   const handleChatSelect = async (chatId, shouldSetView = true) => {
     setCurrentChatId(chatId);
@@ -72,13 +64,11 @@ function ChatbotChat() {
       if (response.status === 200) {
         const fileNames = response.data.documents.map(doc => doc.file_name);
         setDocuments(fileNames);
-        console.log("fileNames", fileNames)
       }
     } catch (error) {
       setError('Error fetching documents for the selected chat.');
       console.error('Error fetching documents:', error);
     }
-    console.log("selected chat : ", chatId);
   };
 
   const toggleChatHistory = () => {
@@ -97,9 +87,7 @@ function ChatbotChat() {
         setView('history');
       }
     };
-  
     window.addEventListener('resize', handleResize);
-  
     return () => {
       window.removeEventListener('resize', handleResize);
     };

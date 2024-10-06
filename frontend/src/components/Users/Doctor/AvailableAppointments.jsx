@@ -20,9 +20,7 @@ export default function AvailableAppointments({ doctorId , doctorFullName}) {
   const [error, setError] = useState('');
   const [selectedSlot, setSelectedSlot] = useState();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const { 
-    patientId 
-  } = useContext(AuthContext);
+  const { userId } = useContext(AuthContext);
 
   useEffect(() => {
     fetchAppointments(selectedDate);
@@ -63,7 +61,7 @@ export default function AvailableAppointments({ doctorId , doctorFullName}) {
       AppointmentEnd: selectedSlot.AvailabilityEnd,
       AppointmentTitle: `Appointment with Dr. ${doctorFullName}`,
       DoctorID: doctorId,
-      PatientID: patientId,
+      PatientID: userId,
       AvailabilityID: selectedSlot.AvailabilityId
     })
     .then(response => {

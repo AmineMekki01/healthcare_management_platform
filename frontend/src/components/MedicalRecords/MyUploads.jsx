@@ -25,7 +25,7 @@ import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, renameItem,
 const API_BASE_URL = 'http://localhost:3001';
 
 function MyUploads() {
-  const { doctorId, patientId, userType } = useContext(AuthContext);
+  const { userId, userType  } = useContext(AuthContext);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [currentPath, setCurrentPath] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -39,13 +39,14 @@ function MyUploads() {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-  const getUserId = () => {
-    return userType === 'doctor' ? doctorId : patientId;
-  };
+  // const getUserId = () => {
+  //   return userType === 'doctor' ? doctorId : patientId;
+  // };
 
   const fetchAllFolder = async (folderId) => {
-    const userId = getUserId();
-
+    if (!userId) {
+      return;
+    }
     try {
       const data = await fetchFolders(userId, userType, folderId);
       setFolders(Array.isArray(data) ? data : []);
@@ -62,13 +63,16 @@ function MyUploads() {
   };
 
   useEffect(() => {
+    if (!userId) {
+      return;
+    }
     const newPath = [...currentPath.filter(id => id !== null)];
     if (folderId && !newPath.includes(folderId)) {
       newPath.push(folderId);
     }
     setCurrentPath(newPath);
     fetchAllFolder(folderId);
-  }, [folderId]);
+  }, [folderId, userId]);
 
   const navigateToFolder = (subfolderId, file_type) => {
     if (file_type === 'folder') {
@@ -89,11 +93,13 @@ function MyUploads() {
   };
 
   const onClickCreateFolder = async () => {
+    if (!userId) {
+      alert("User ID not available.");
+      return;
+    }
     const name = prompt("Please enter folder name", "New Folder");
     if (name) {
       const parent_id = currentPath[currentPath.length - 1] || null;
-      const userId = getUserId();
-
       try {
         await createFolder(name, userId, userType, parent_id);
         fetchAllFolder(parent_id);
@@ -125,6 +131,10 @@ function MyUploads() {
   };
 
   const deleteFolderAndContents = async () => {
+    if (!userId) {
+      alert("User ID not available.");
+      return;
+    }
     const userConfirmation = window.confirm(
       "Are you sure you want to delete the selected folders and all of their contents? This action cannot be undone."
     );
@@ -147,6 +157,10 @@ function MyUploads() {
   };
 
   const onClickRenameItem = async () => {
+    if (!userId) {
+      alert("User ID not available.");
+      return;
+    }
     if (selectedFiles.size !== 1) {
       alert("Please select exactly one item to rename.");
       return;
@@ -173,6 +187,10 @@ function MyUploads() {
   };
 
   const handleFileUpload = async (event) => {
+    if (!userId) {
+      alert("User ID not available.");
+      return;
+    }
     const file = event.target.files[0];
     if (!file) {
       alert("Please select a file to upload.");
@@ -181,7 +199,7 @@ function MyUploads() {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('userId', getUserId());
+    formData.append('userId', userId);
     formData.append('parentFolderId', currentPath[currentPath.length - 1] || '');
     formData.append('userType', userType);
     formData.append('fileType', 'file');
@@ -212,13 +230,12 @@ function MyUploads() {
   };
 
   const handleDownload = async (fileId) => {
-    console.log(`Downloading file with ID: ${fileId}`);
     try {
       const fileBlob = await downloadFile(fileId);
       const downloadUrl = window.URL.createObjectURL(fileBlob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = "downloadedFile"; // You can give the file a name here
+      link.download = "downloadedFile";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -229,6 +246,10 @@ function MyUploads() {
   };
 
   const shareFolder = async (folderId, doctorId) => {
+    if (!userId) {
+      alert("User ID not available.")
+      return;
+    }
     if (!doctorId) {
       alert('Please select a doctor to share with.');
       return;
@@ -242,7 +263,7 @@ function MyUploads() {
         body: JSON.stringify({
           itemIDs: [folderId],
           sharedWithID: doctorId,
-          userID: getUserId(),
+          userID: userId,
           userType: userType,
         }),
       });
@@ -326,8 +347,7 @@ function MyUploads() {
           >
             <DriveFileRenameOutlineIcon />
           </RenameFolderButton>
-          {/* Sharing UI */}
-          {selectedFiles.size === 1 && userType === 'patient' && (
+          {selectedFiles.size === 1 && (
             <div>
               <select
                 value={selectedDoctor}

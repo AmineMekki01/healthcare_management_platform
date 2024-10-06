@@ -34,9 +34,8 @@ const ChatHist = styled.div`
 
 const ChatHistory = ({ onChatSelect, selectedChatId, isSmallScreen, setView }) => {
   const [chats, setChats] = useState([]);
-  const { doctorId, patientId, userType } = useContext(AuthContext);
-  let userId = userType === 'doctor' ? doctorId : patientId;
-  
+  const { userId } = useContext(AuthContext);
+
   const onClickCreateChat = async () => {
     const chatName = prompt("Please enter the name of the chat : ", "New Chat");
     if (chatName) {
@@ -75,9 +74,7 @@ const ChatHistory = ({ onChatSelect, selectedChatId, isSmallScreen, setView }) =
   };
 
   useEffect(() => {
-    const fetchChats = async () => {
-      console.log("userId type:", typeof userId);
-  
+    const fetchChats = async () => {  
       const response = await fetch(`http://localhost:8000/v1/chats/${userId}`);
   
       if (response.ok) {

@@ -18,7 +18,7 @@ export default function DoctorProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [followerCount, setFollowerCount] = useState(null);
-  const { userType, userId, patientId} = useContext(AuthContext);
+  const { userType, userId} = useContext(AuthContext);
   const mapContainerRef = useRef(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isProcessingFollow, setIsProcessingFollow] = useState(false);
@@ -29,7 +29,6 @@ export default function DoctorProfile() {
       .then(response => {
         setDoctorInfo(response.data);
         setLoading(false);
-        console.log("user data :", response.data)
       })
       .catch(error => {
         console.error(error);
@@ -50,9 +49,6 @@ export default function DoctorProfile() {
 
 
   useEffect(() => {
-    console.log("userId: ", userId)
-    console.log("userType: ", userType)
-
     if (userId && userType && userType !== 'doctor') {
       axios.get(`http://localhost:3001/api/v1/is-following/${doctorId}`, {
         params: { follower_id: userId, follower_type: userType },

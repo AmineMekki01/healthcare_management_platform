@@ -1,12 +1,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import {RecoilRoot} from "recoil";
-
-// import './App.scss'
 import Testimonials from "../components/Testimonals/Testimonals";
-
 import stetoImage from "./../assets/images/no_background_doc_steto.png";
 import stetoImageSized from "./../assets/images/no_small_background_doc_steto.png";
-
 import styled from 'styled-components';
 import AgePieChart from '../components/common/Charts/AgePieChart';
 
@@ -18,7 +14,7 @@ const PageContainer = styled.div`
   background-color: white;
   width: 100%;
   padding-top: 0;
-  `;
+`;
 
 const HeaderContainer = styled.div`
   display: flex;
@@ -36,7 +32,6 @@ const HeaderText = styled.div`
     margin-top: 1rem;
     background : rgba(218, 224, 222, 0.6) ;
   }
-
 `;
 
 const HeaderMedia = styled.div`
@@ -51,8 +46,6 @@ const HeaderMedia = styled.div`
   @media (max-width: 700px) {
     display: none;
   }
-
-
 `;
 
 const MainTitle = styled.p`
@@ -61,7 +54,6 @@ const MainTitle = styled.p`
   font-size: 3vw;
   @media (max-width: 750px) {
     font-size: 1.5rem;
-
   }
 `;
 
@@ -157,10 +149,7 @@ function HomePage() {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 550);
     };
-
     window.addEventListener('resize', handleResize);
-
-    // Cleanup the event listener on component unmount
     return () => {
       window.removeEventListener('resize', handleResize);
     };

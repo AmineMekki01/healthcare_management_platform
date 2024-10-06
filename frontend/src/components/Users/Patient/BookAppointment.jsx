@@ -21,12 +21,7 @@ function BookAppointment({show}) {
 
   maxDate.setDate(currentDate.getDate() + 6);
   const { 
-    setIsLoggedIn, 
-    setDoctorId, 
-    setPatientId, 
-    setUserType, 
-    doctorId: contextDoctorId,  
-    patientId 
+    userId,
   } = useContext(AuthContext);
 
   useEffect(() => {
@@ -82,7 +77,7 @@ function BookAppointment({show}) {
       AppointmentEnd: selectedSlot.AvailabilityEnd,
       AppointmentTitle: 'New Appointment',
       DoctorID: urlDoctorId,  
-      PatientID: patientId,  
+      PatientID: userId,  
       AvailabilityID: selectedSlot.AvailabilityId,
     };    
 

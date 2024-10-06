@@ -62,40 +62,34 @@ const MessageTime = styled.span`
 `;
 
 const ChatsComponent = ({onChatSelect}) => {
-    const { patientId, doctorId, userType } = useContext(AuthContext);
-    const userId = userType === 'doctor' ? doctorId : patientId;
+    const { userId } = useContext(AuthContext);
     const { state, dispatch } = useContext(ChatContext); 
     const { currentChat } = state;
     const [selectedChatId, setSelectedChatId] = useState(null);
     const { chats } = state;
 
     useEffect(() => {
-        console.log("Fetching chats for user ID:", userId);
+        if (!userId) {
+            return;
+        }
         const fetchChats = async () => {
           try {
             const response = await fetch(`http://localhost:3001/api/v1/chats?userID=${userId}`);
             const data = await response.json();
-            console.log("Chats fetched:", data);
             dispatch({ type: 'SET_CHATS', payload: data });
-
           } catch (error) {
             console.error("Failed to fetch chats: ", error);
           }
         };
         fetchChats();
-        
-      }, [userId, dispatch, currentChat]);
+    }, [userId, dispatch, currentChat]);
+    
 
     const handleSelectChat = (chat) => {
-        console.log("Attempting to select chat:", chat.id);
         setSelectedChatId(chat.id);
         dispatch({ type: 'SET_CURRENT_CHAT', payload: chat }); 
         onChatSelect(chat)
-        console.log("Chat selected, state should now be updated.", chat);
     };
-    useEffect(() => {
-        console.log("Current selectedChatId:", selectedChatId);
-    }, [selectedChatId]);
 
     const formatMessageDate = (dateString) => {
         if (!dateString) {
@@ -110,9 +104,6 @@ const ChatsComponent = ({onChatSelect}) => {
             sameElse: 'L'  
         });
     };
-
-    console.log("Rendering UserChat, selectedChatId:", selectedChatId);
-
     return (
         <Chats>
             {Array.isArray(chats) && chats.map(chat => (
@@ -121,7 +112,6 @@ const ChatsComponent = ({onChatSelect}) => {
                     onClick={() => handleSelectChat(chat)}
                     $isSelected={selectedChatId === chat.id}
                 >                
-
                     <UserChatImg src={`http://localhost:3001/${chat.recipient_image_url}`} alt="" />
                     
                     <UserChatInfo>

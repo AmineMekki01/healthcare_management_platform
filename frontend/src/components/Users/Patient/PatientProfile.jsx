@@ -11,7 +11,6 @@ import {
     Grid,
   } from '@mui/material';
 
-import profilePhoto from './../../../assets/images/profile_photo.jpeg';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from './../../Auth/AuthContext';  
 

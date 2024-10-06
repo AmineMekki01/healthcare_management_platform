@@ -14,8 +14,8 @@ const SearchBar = () => {
   const [specialtyFromQuery, setSpecialtyFromQuery] = useState('');
   const [userQuery, setUserQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState(query);
-
   const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '' });
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setSearchParams({
@@ -32,7 +32,6 @@ const SearchBar = () => {
     if (query || specialty || location) {
       try {
         const response = await axios.get(`http://localhost:3001/api/v1/doctors?query=${query}&specialty=${specialty}&location=${location}`);
-        console.log("users : ", response.data)
         if (response.status === 200) {
           setUsers(response.data);
         } else {

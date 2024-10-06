@@ -22,7 +22,6 @@ const SidebarComponent = ({onChatSelect }) => {
     setSelectedUser(user);
   };
   const handleSelectChat = (chat) => {
-    console.log("Select chat from search result:", chat);
     setSelectedChat(chat);
     dispatch({ type: 'SET_CURRENT_CHAT', payload: chat }); 
     onChatSelect(chat);
