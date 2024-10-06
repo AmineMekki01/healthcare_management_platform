@@ -18,7 +18,7 @@ func main() {
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://10.188.27.252:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -59,6 +59,7 @@ func main() {
 	routes.SetupShareRoutes(r, conn)
 	routes.SetupChatRoutes(r, conn)
 	routes.SetupFollowServiceRoutes(r, conn)
+	routes.SetupFeedRoutes(r, conn)
 
 	r.Use(func(c *gin.Context) {
 		for k, v := range c.Writer.Header() {

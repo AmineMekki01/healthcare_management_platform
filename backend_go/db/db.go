@@ -174,6 +174,33 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			followed_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			UNIQUE (doctor_id, follower_id, follower_type)
 		)`,
+
+		`CREATE TABLE IF NOT EXISTS blog_posts (
+			post_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
+			title VARCHAR(255) NOT NULL,
+			content TEXT NOT NULL,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS comments (
+			comment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			post_id UUID NOT NULL REFERENCES blog_posts(post_id) ON DELETE CASCADE,
+			user_id UUID NOT NULL,
+			user_type VARCHAR(50) NOT NULL CHECK (user_type IN ('patient', 'doctor')),
+			content TEXT NOT NULL,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW()
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS likes (
+			like_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			post_id UUID NOT NULL REFERENCES blog_posts(post_id) ON DELETE CASCADE,
+			user_id UUID NOT NULL,
+			user_type VARCHAR(50) NOT NULL CHECK (user_type IN ('patient', 'doctor')),
+			liked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			UNIQUE (post_id, user_id, user_type)
+		);`,
 	}
 
 	for _, query := range sqlQueries {

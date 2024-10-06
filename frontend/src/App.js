@@ -19,6 +19,8 @@ import ChatbotChat from './pages/Chatbot';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/Auth/ResetPasswordPage';
 import ChatPage from './pages/ChatPage';
+import Feed from './pages/FeedPage'
+import CreatePost from './pages/CreatePost';
 
 function App() {
 
@@ -44,6 +46,10 @@ function App() {
                 <Route path="/reset-password" element={<ResetPasswordForm />} />
                 <Route path="/Chatbot" element={<ChatbotChat />} />
                 <Route path="/Messages" element={<ChatPage />} />
+
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/create-post" element={<CreatePost />} />
+
               </Routes>
             </div>
           </div>
