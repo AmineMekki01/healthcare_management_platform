@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import BlogPost from './../components/FeedBlog/BlogPost';
-import axios from 'axios';
+import axios from './../components/axiosConfig';
 import styled from 'styled-components';
 import { AuthContext } from './../components/Auth/AuthContext';
 

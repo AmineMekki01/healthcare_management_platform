@@ -124,6 +124,21 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 
 // Implement GET /api/v1/reservations
 func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
+	userIDInterface, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID := userIDInterface.(string)
+
+	userTypeInterface, exists := c.Get("userType")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userType := userTypeInterface.(string)
+	log.Println(userID)
+	log.Println(userType)
 	doctorID := c.DefaultQuery("doctor_id", "")
 	patientID := c.DefaultQuery("patient_id", "")
 	timezone := c.DefaultQuery("timezone", "UTC")

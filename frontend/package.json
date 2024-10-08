@@ -21,6 +21,7 @@
         "dayjs": "^1.11.10",
         "flowbite": "^1.8.1",
         "ics": "^3.7.2",
+        "jwt-decode": "^4.0.0",
         "mdb-react-ui-kit": "^6.3.0",
         "moment-timezone": "^0.5.43",
         "react": "^18.2.0",

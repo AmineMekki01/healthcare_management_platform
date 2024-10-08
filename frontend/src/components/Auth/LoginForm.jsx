@@ -2,7 +2,7 @@ import React, {useContext, useState, useEffect} from 'react';
 import { AuthContext } from './AuthContext';  
 import { useNavigate } from 'react-router-dom';
 import { ContainerLogin, FormWrapper, Title, RadioButtonContainer, RadioButton, Input, Button } from './styles/LoginRegisterFormStyles';
-import axios from 'axios';
+import axios from './../axiosConfig';
 
 const LoginForm = () => {
     const { setIsLoggedIn, setDoctorId, setPatientId, setUserType, doctorId, patientId, userFullName, setUserFullName, userProfilePhotoUrl, setUserProfilePhotoUrl, userId, setUserId} = useContext(AuthContext);

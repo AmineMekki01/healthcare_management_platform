@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import axios from './../axiosConfig';
 import {
   CommentsContainer,
   Comment,

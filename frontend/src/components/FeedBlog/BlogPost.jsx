@@ -1,5 +1,5 @@
 import react, {useState, useContext} from 'react';
-import axios from 'axios';
+import axios from './../axiosConfig';
 import CommentsSection from './CommentsSection';
 import {
     PostContainer,

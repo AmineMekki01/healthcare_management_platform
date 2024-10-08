@@ -3,7 +3,7 @@ import { AuthContext } from './../components/Auth/AuthContext';
 
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import axios from 'axios';
+import axios from './../components/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 

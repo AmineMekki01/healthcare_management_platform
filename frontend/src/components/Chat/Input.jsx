@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import ImgAttachment from '../../assets/images/ChatImages/img-attachment.png'
 import FileAttachment from '../../assets/images/ChatImages/file-attachment.png'
 import Send from '../../assets/images/ChatImages/send.png'
+import axios from './../axiosConfig';
 
 const InputSection = styled.div`
     height: 50px;
@@ -49,26 +50,26 @@ const InputComponent = ({sendMessage}) => {
     const [inputValue, setInputValue] = useState("");
     const [attachedFile, setAttachedFile] = useState(null);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (attachedFile) {
             const formData = new FormData();
             formData.append('file', attachedFile);
-    
-            fetch('http://localhost:3001/upload', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                // The backend might return the URL or ID of the saved file. Use this to send a message.
-                const fileUrl = data.fileUrl; // Adjust depending on your API response
+            
+            try {
+                const response = await axios.post(`http://localhost:3001/upload`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                const fileUrl = response.data.fileUrl;
                 sendMessage(`[File: ${attachedFile.name}](${fileUrl})`);
-            })
-            .catch(error => console.error('Error uploading file:', error));
+            } catch (error) {
+                console.error('Error uploading file:', error);
+            }
         } else if (inputValue.trim()) {
-            sendMessage(inputValue);
+            sendMessage(inputValue)
         }
-        // Clear the inputs after sending
+
         setInputValue('');
         setAttachedFile(null);
     }; 
@@ -77,7 +78,6 @@ const InputComponent = ({sendMessage}) => {
         const file = event.target.files[0];
         if (file) {
             setAttachedFile(file);
-            // You can also create a preview URL here using URL.createObjectURL(file)
         }
     };
 

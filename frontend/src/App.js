@@ -122,8 +122,6 @@ function App() {
                     </DoctorRoute>
                   }
                 />
-                {/* <Route path="*" element={<NotFoundPage />} /> */}
-
               </Routes>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import axios from 'axios';
+import axios from './../../axiosConfig';
 import {
   Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, Image, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine
 } from './styles/DoctorProfileStyles';
