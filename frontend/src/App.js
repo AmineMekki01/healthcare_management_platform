@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext} from 'react';
 import { AuthContext } from './components/Auth/AuthContext';  
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -23,8 +23,10 @@ import Feed from './pages/FeedPage'
 import CreatePost from './pages/CreatePost';
 import DoctorRoute from './components/ProtectedRoutes/DoctorRoutes';
 import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
+import InactivityHandler from './components/Auth/InactivityHandler';  
 
 function App() {
+  const { isLoggedIn } = useContext(AuthContext);
 
   return (
       <Router>
@@ -32,6 +34,8 @@ function App() {
           <div className="flex">
             <MyNavbar />
             <div className="ml-auto w-full scrollable-div">
+              {isLoggedIn && <InactivityHandler />} 
+
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />

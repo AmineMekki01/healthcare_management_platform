@@ -14,7 +14,7 @@ type User struct {
 var JWTSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func GenerateToken(user User, userType string) (string, error) {
-	expirationTime := time.Now().Add(15 * time.Minute)
+	expirationTime := time.Now().Add(20 * time.Minute)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":   user.ID,

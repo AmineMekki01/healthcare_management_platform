@@ -2,6 +2,7 @@
 package routes
 
 import (
+	"backend_go/middlewares"
 	"backend_go/services"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,12 @@ import (
 )
 
 func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
+
+	// token refresh for inactivity
+	r.POST("/api/v1/refresh-token", func(c *gin.Context) {
+		middlewares.RefreshToken(c)
+	})
+
 	// Appointments
 	r.GET("/api/v1/availabilities", func(c *gin.Context) {
 		services.GetAvailabilities(c, pool)
