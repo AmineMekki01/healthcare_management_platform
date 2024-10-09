@@ -5,13 +5,38 @@ export const PostContainer = styled.div`
   border: 1px solid #ddd;
   border-radius: 8px;
   margin-bottom: 20px;
-  padding: 15px;
 `;
 
 export const PostHeader = styled.div`
   display: flex;
   align-items: center;
+  padding: 15px;
+
 `;
+
+export const PostAuthorInfoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 15px;
+
+`;
+
+export const PostAuthorInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+export const GoToPostActionButton = styled.button`
+  padding: 10px;
+  border: 1px solid #f2f2f2;
+  border-radius: 5px;
+
+  &:hover {
+    background-color: #f2f2f2;
+    color: black;
+  }
+`;
+
 
 export const PostAuthorAvatar = styled.img`
   width: 50px;
@@ -37,39 +62,65 @@ export const PostTitle = styled.h2`
 
 export const PostContent = styled.div`
   margin-bottom: 10px;
+  padding: 15px;
+
 `;
 
 export const PostActions = styled.div`
   display: flex;
-  align-items: center;
+  align-items: left;
+  flex-direction: column;
+  border-top: 2px solid #ddd;
+`;
+
+export const ActionButtonsContainer = styled.div`
+  display: flex;
+`;
+
+export const PostStats = styled.div`
+  display: flex;
 `;
 
 export const ActionButton = styled.button`
   background-color: transparent;
   border: none;
-  color: #007bff;
   cursor: pointer;
   margin-right: 10px;
-
+  padding: 10px;
+  width: 100%;
   &:hover {
     text-decoration: underline;
+    background-color: #ddd;
   }
 `;
 
-export const LikesCount = styled.span`
-  margin-right: 10px;
+
+export const CommonStatCount = styled.span`
+  padding: 10px;
 `;
 
-export const CommentsCount = styled.span``;
+export const LikesCount = styled.span`
+  color: #6DAE4F;
+  padding: 10px;
+
+`;
+
+export const CommentsCount = styled.span`
+  color: #378FE9;
+  padding: 10px;
+
+`;
 
 export const CommentsContainer = styled.div`
   margin-top: 10px;
+  padding: 10px;
 `;
 
 export const Comment = styled.div`
   display: flex;
   align-items: flex-start;
-  margin-bottom: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
 `;
 
 export const CommentAvatar = styled.img`

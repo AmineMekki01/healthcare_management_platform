@@ -44,8 +44,8 @@ const CommentsSection = ({ postId }) => {
             { content: newComment },
             { params: { userId, userType } }
         );
-      setComments([...comments, response.data.comment]);
-      setNewComment('');
+        setComments((prevComments) => [...prevComments, response.data.comment]);
+        setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
     }

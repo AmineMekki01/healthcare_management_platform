@@ -9,5 +9,5 @@ import (
 )
 
 func SetupDoctorOnlyRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
-	r.POST("/blog-posts", services.CreateBlogPost(pool))
+	r.POST("/api/v1/blog-posts", services.CreateBlogPost(pool))
 }

@@ -13,14 +13,22 @@ import {
     ActionButton,
     LikesCount,
     CommentsCount,
+    ActionButtonsContainer,
+    PostStats,
+    PostAuthorInfoContainer,
+    PostAuthorInfo,
+    GoToPostActionButton
   } from './styles';
 import { AuthContext } from './../Auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const BlogPost = ({post}) => {
     const [likes, setLikes] = useState(post.likes_count)
     const [liked, setLiked] = useState(false)
     const [showComments, setShowComments] = useState(false);
+    const [showMore, setShowMore] = useState(false);
     const {userId, userType} = useContext(AuthContext)
+    const navigate = useNavigate();
 
     const handleLike = async () => {
         if (!userId && !userType) {
@@ -44,22 +52,60 @@ const BlogPost = ({post}) => {
         setShowComments(!showComments);
     };
 
+    const handleShowMore = () => {
+        setShowMore(!showMore)
+    };
+
+    const handleGoToPost = () => {
+        navigate("/posts/${post.post_id}");
+    };
+
+    const getSnippet = (content) => {
+        const maxLength = 250;
+        if (content.length > maxLength) {
+            return `${content.substring(0, maxLength)}...`
+        }
+        return content;
+    };
+
     return (
         <PostContainer>
             <PostHeader>
-            <PostAuthorAvatar src={`http://localhost:3001/${post.doctor_avatar}`} alt={`Dr. ${post.doctor_name}`} />
-            <div>
-                <PostAuthorName>{post.doctor_name}</PostAuthorName>
-                <PostTimestamp>{new Date(post.created_at).toLocaleString()}</PostTimestamp>
-            </div>
+                <PostAuthorInfoContainer>
+                    <PostAuthorAvatar src={`http://localhost:3001/${post.doctor_avatar}`} alt={`Dr. ${post.doctor_name}`} />
+                    <PostAuthorInfo>
+                        <PostAuthorName>{post.doctor_name}</PostAuthorName>
+                        <PostTimestamp>{new Date(post.created_at).toLocaleString()}</PostTimestamp>
+                    </PostAuthorInfo>
+                </PostAuthorInfoContainer>
+                
+                <GoToPostActionButton onClick={handleGoToPost} style={{ marginLeft: 'auto' }}>
+                    Go to Post
+                </GoToPostActionButton>
             </PostHeader>
-            <PostTitle>{post.title}</PostTitle>
-            <PostContent dangerouslySetInnerHTML={{ __html: post.content }} />
+            <PostContent dangerouslySetInnerHTML={{ __html: showMore ? post.content : getSnippet(post.content) }} />
+
+            <ActionButton onClick={handleShowMore}>
+                {showMore ? 'Show Less' : 'Show More'}
+            </ActionButton>
             <PostActions>
-            <ActionButton onClick={handleLike}>{liked ? 'Unlike' : 'Like'}</ActionButton>
-            <LikesCount>{likes} Likes</LikesCount>
-            <ActionButton onClick={toggleComments}>Comments</ActionButton>
-            <CommentsCount>{post.comments_count} Comments</CommentsCount>
+                
+                <PostStats>
+                    <LikesCount>{likes} Likes</LikesCount>
+                    <CommentsCount>{post.comments_count} Comments</CommentsCount>
+                </PostStats>
+
+                <ActionButtonsContainer>
+
+                    <ActionButton onClick={handleLike}>{liked ? 'Unlike' : 'Like'}</ActionButton>
+                    <ActionButton onClick={toggleComments}>Comments</ActionButton>
+
+                </ActionButtonsContainer>
+
+                
+
+                
+                
             </PostActions>
             {showComments && <CommentsSection postId={post.post_id} />}
       </PostContainer>

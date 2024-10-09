@@ -88,10 +88,10 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 
 	// Feed and Posts
 	r.GET("/api/v1/feed", services.GetFeed(pool))
-	r.POST("/feed/posts/:postID/like", services.LikePost(pool))
-	r.POST("/feed/posts/:postID/unlike", services.UnlikePost(pool))
-	r.POST("/feed/posts/:postID/add-comment", services.AddComment(pool))
-	r.GET("/feed/posts/:postID/comments", services.GetComments(pool))
+	r.POST("/api/v1/feed/posts/:postID/like", services.LikePost(pool))
+	r.POST("/api/v1/feed/posts/:postID/unlike", services.UnlikePost(pool))
+	r.POST("/api/v1/feed/posts/:postID/add-comment", services.AddComment(pool))
+	r.GET("/api/v1/feed/posts/:postID/comments", services.GetComments(pool))
 
 	// Following Doctors
 	r.POST("/api/v1/follow-doctor", func(c *gin.Context) {
