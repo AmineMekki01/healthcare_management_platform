@@ -353,3 +353,49 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"posts": posts})
 	}
 }
+
+func GetPostByID(c *gin.Context, pool *pgxpool.Pool) {
+	postIDStr := c.Param("postID")
+	userType := c.Query("userType")
+	userIDStr := c.Query("userId")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Println("Invalid user ID : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+	postID, err := uuid.Parse(postIDStr)
+	if err != nil {
+		log.Println("Invalid post ID : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+	query := `
+    SELECT 
+        bp.post_id,
+        d.first_name || ' ' || d.last_name AS doctor_name,
+        d.profile_photo_url AS doctor_avatar,
+        bp.content,
+        bp.created_at,
+        (SELECT COUNT(*) FROM likes WHERE post_id = bp.post_id) AS likes_count,
+        (SELECT COUNT(*) FROM comments WHERE post_id = bp.post_id) AS comments_count,
+		EXISTS (
+                    SELECT 1 FROM likes l
+                    WHERE l.post_id = bp.post_id AND l.user_id = $2 AND l.user_type = $3
+                ) AS is_liked
+    FROM blog_posts bp
+    JOIN doctor_info d ON bp.doctor_id = d.doctor_id
+    WHERE bp.post_id = $1;
+    `
+	var post models.BlogPost
+
+	row := pool.QueryRow(context.Background(), query, postID, userID, userType)
+	err = row.Scan(&post.PostID, &post.DoctorName, &post.DoctorAvatar, &post.Content, &post.CreatedAt, &post.LikesCount, &post.CommentsCount, &post.IsLiked)
+	if err != nil {
+		log.Printf("Failed to fetch post by ID: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve post"})
+		return
+	}
+
+	c.JSON(http.StatusOK, post)
+}

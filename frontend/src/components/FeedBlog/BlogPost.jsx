@@ -24,12 +24,12 @@ import { useNavigate } from 'react-router-dom';
 
 const BlogPost = ({post}) => {
     const [likes, setLikes] = useState(post.likes_count)
-    const [liked, setLiked] = useState(false)
+    const [liked, setLiked] = useState(post.is_liked)
     const [showComments, setShowComments] = useState(false);
     const [showMore, setShowMore] = useState(false);
     const {userId, userType} = useContext(AuthContext)
     const navigate = useNavigate();
-
+    
     const handleLike = async () => {
         if (!userId && !userType) {
             return
@@ -43,6 +43,8 @@ const BlogPost = ({post}) => {
                 setLikes(likes - 1)
             }
             setLiked(!liked);
+            console.log("liked : ", liked)
+
         } catch (error) {
             console.error('Error updating like status : ', error)
         }
@@ -57,7 +59,7 @@ const BlogPost = ({post}) => {
     };
 
     const handleGoToPost = () => {
-        navigate("/posts/${post.post_id}");
+        navigate(`/posts/${post.post_id}`);
     };
 
     const getSnippet = (content) => {

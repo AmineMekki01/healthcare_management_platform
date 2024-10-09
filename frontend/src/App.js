@@ -24,6 +24,7 @@ import CreatePost from './pages/CreatePost';
 import DoctorRoute from './components/ProtectedRoutes/DoctorRoutes';
 import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
 import InactivityHandler from './components/Auth/InactivityHandler';  
+import FullPost from './components/FeedBlog/FullPost';  
 
 function App() {
   const { isLoggedIn } = useContext(AuthContext);
@@ -44,7 +45,7 @@ function App() {
                 <Route path="/register-patient" element={<PatientRegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/reset-password" element={<ResetPasswordForm />} />
-
+                <Route path="/posts/:postId" element={<FullPost />} />
                 <Route
                   path="/patient-appointments"
                   element={
