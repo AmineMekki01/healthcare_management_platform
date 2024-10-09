@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 const BlogPost = ({post}) => {
     const [likes, setLikes] = useState(post.likes_count)
     const [liked, setLiked] = useState(post.is_liked)
+    const [commentsCount, setCommentsCount] = useState(post.comments_count)
     const [showComments, setShowComments] = useState(false);
     const [showMore, setShowMore] = useState(false);
     const {userId, userType} = useContext(AuthContext)
@@ -62,6 +63,10 @@ const BlogPost = ({post}) => {
         navigate(`/posts/${post.post_id}`);
     };
 
+    const updateCommentsCount = () => {
+        setCommentsCount((prevCount) => prevCount + 1);
+    };
+
     const getSnippet = (content) => {
         const maxLength = 250;
         if (content.length > maxLength) {
@@ -94,7 +99,7 @@ const BlogPost = ({post}) => {
                 
                 <PostStats>
                     <LikesCount>{likes} Likes</LikesCount>
-                    <CommentsCount>{post.comments_count} Comments</CommentsCount>
+                    <CommentsCount>{commentsCount} Comments</CommentsCount>
                 </PostStats>
 
                 <ActionButtonsContainer>
@@ -104,13 +109,9 @@ const BlogPost = ({post}) => {
 
                 </ActionButtonsContainer>
 
-                
-
-                
-                
             </PostActions>
-            {showComments && <CommentsSection postId={post.post_id} />}
-      </PostContainer>
+            {showComments && <CommentsSection postId={post.post_id} onCommentAdded={updateCommentsCount} />}
+        </PostContainer>
     );
 };
 

@@ -26,7 +26,8 @@ const FullPost = () => {
     const [likes, setLikes] = useState(0);
     const [liked, setLiked] = useState(false);
     const [showComments, setShowComments] = useState(false);
-    console.log('postId : ', postId)
+    const [commentsCount, setCommentsCount] = useState(null)
+
     
     useEffect(() => {
         const fetchPost = async () => {
@@ -42,9 +43,8 @@ const FullPost = () => {
                   });
 
                 setPost(response.data);
-                console.log("fetched posts : ", response.data)
                 setLikes(response.data.likes_count);
-
+                setCommentsCount(response.data.comments_count)
                 if (likes > 0) {
                     setLiked(true);
 
@@ -80,7 +80,10 @@ const FullPost = () => {
     const toggleComments = () => {
         setShowComments(!showComments);
     };
-    console.log("post : ", post)
+    const updateCommentsCount = () => {
+        setCommentsCount((prevCount) => prevCount + 1);
+    };
+
     if (!post) {
         return <div>Loading...</div>;
     }
@@ -100,7 +103,7 @@ const FullPost = () => {
             <PostActions>
                 <PostStats>
                     <LikesCount>{likes} Likes</LikesCount>
-                    <CommentsCount>{post.comments_count} Comments</CommentsCount>
+                    <CommentsCount>{commentsCount} Comments</CommentsCount>
                 </PostStats>
 
                 <ActionButtonsContainer>
@@ -109,7 +112,7 @@ const FullPost = () => {
                 </ActionButtonsContainer>
             </PostActions>
 
-            {showComments && <CommentsSection postId={postId} />}
+            {showComments && <CommentsSection postId={post.post_id} onCommentAdded={updateCommentsCount} />}
         </PostContainer>
     );
 };

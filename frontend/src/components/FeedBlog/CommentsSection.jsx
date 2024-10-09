@@ -14,7 +14,7 @@ import {
 } from './styles';
 import { AuthContext } from './../Auth/AuthContext';
 
-const CommentsSection = ({ postId }) => {
+const CommentsSection = ({ postId, onCommentAdded }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const {userId, userType} = useContext(AuthContext)
@@ -46,6 +46,10 @@ const CommentsSection = ({ postId }) => {
         );
         setComments((prevComments) => [...prevComments, response.data.comment]);
         setNewComment('');
+
+        if (onCommentAdded) {
+          onCommentAdded();
+        }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
