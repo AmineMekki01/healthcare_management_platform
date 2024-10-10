@@ -33,6 +33,8 @@ const MyNavbar = () => {
     { title: 'MyDocs', src: 'Folder', href: '/MyDocs' },
     { title: 'Messages', src: 'Chat', href: '/Messages' },
     { title: 'Feed', src: 'feed_logo', href: '/feed' },
+
+
   ];
 
   if (isLoggedIn && userType === 'doctor') {
@@ -46,7 +48,9 @@ const MyNavbar = () => {
         title: 'ChatBot',
         src: 'chatbot',
         href: '/ChatBot',
-      }
+      },
+      { title: 'Doctor Posts', src: 'feed_logo', href: '/doctor-posts' },
+
     );
   }
   

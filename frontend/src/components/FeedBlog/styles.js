@@ -95,6 +95,30 @@ export const ActionButton = styled.button`
 `;
 
 
+export const EditButton = styled.button`
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  padding: 10px;
+  width: 100%;
+  &:hover {
+    text-decoration: underline;
+    background-color: #ddd;
+  }
+`;
+export const DeleteButton = styled.button`
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  padding: 10px;
+  width: 100%;
+  &:hover {
+    text-decoration: underline;
+    background-color: #ddd;
+  }
+`;
 export const CommonStatCount = styled.span`
   padding: 10px;
 `;
@@ -167,3 +191,16 @@ export const AddCommentButton = styled.button`
   cursor: pointer;
 `;
 
+export const DoctorPostsContainer = styled.div`
+  width: 60%;
+
+  min-width: 250px;
+  margin: auto;
+`;
+
+export const DoctorPostsTitle = styled.div`
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+  padding: 20px;
+`;

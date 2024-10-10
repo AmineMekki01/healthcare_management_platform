@@ -399,3 +399,148 @@ func GetPostByID(c *gin.Context, pool *pgxpool.Pool) {
 
 	c.JSON(http.StatusOK, post)
 }
+
+func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("userId")
+		log.Println("userID : ", userID)
+
+		if userID == "" {
+			log.Println("Missing userID")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+			return
+		}
+
+		postsRows, err := pool.Query(context.Background(), `
+			SELECT
+				bp.post_id,
+				bp.doctor_id,
+				bp.title,
+				bp.content,
+				bp.created_at,
+				bp.updated_at,
+				di.first_name || ' ' || di.last_name AS doctor_name,
+				di.profile_photo_url AS doctor_avatar,
+				(SELECT COUNT(*) FROM likes l WHERE l.post_id = bp.post_id) AS likes_count,
+				(SELECT COUNT(*) FROM comments c WHERE c.post_id = bp.post_id) AS comments_count
+			FROM blog_posts bp
+			JOIN doctor_info di ON bp.doctor_id = di.doctor_id
+			WHERE bp.doctor_id = $1
+			ORDER BY bp.created_at DESC
+		`, userID)
+
+		if err != nil {
+			log.Println("Failed to retrieve blog posts: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve blog posts"})
+			return
+		}
+		log.Println("Query executed successfully")
+		defer postsRows.Close()
+
+		var posts []models.BlogPost
+		for postsRows.Next() {
+			var post models.BlogPost
+			err := postsRows.Scan(
+				&post.PostID,
+				&post.DoctorID,
+				&post.Title,
+				&post.Content,
+				&post.CreatedAt,
+				&post.UpdatedAt,
+				&post.DoctorName,
+				&post.DoctorAvatar,
+				&post.LikesCount,
+				&post.CommentsCount,
+			)
+			if err != nil {
+				log.Println("Failed to scan blog posts: ", err)
+
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan blog posts"})
+				return
+			}
+			posts = append(posts, post)
+		}
+		log.Println(" posts : ", posts)
+
+		c.JSON(http.StatusOK, gin.H{"posts": posts})
+	}
+}
+
+func EditDoctorPost(db *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postID := c.Param("postID")
+		var requestBody struct {
+			Title   string `json:"title"`
+			Content string `json:"content"`
+		}
+
+		if err := c.BindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		_, err := db.Exec(context.Background(), `
+            UPDATE blog_posts 
+            SET title = $1, content = $2, updated_at = NOW() 
+            WHERE post_id = $3
+        `, requestBody.Title, requestBody.Content, postID)
+
+		if err != nil {
+			log.Println("Failed to update blog post: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully"})
+	}
+}
+
+func DeleteDoctorPost(db *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postID := c.Param("postID")
+
+		tx, err := db.Begin(context.Background())
+		if err != nil {
+			log.Println("Failed to start transaction: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+			return
+		}
+		defer tx.Rollback(context.Background())
+
+		_, err = tx.Exec(context.Background(), `
+			DELETE FROM likes WHERE post_id = $1
+		`, postID)
+		if err != nil {
+			log.Println("Failed to delete likes: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post likes"})
+			return
+		}
+
+		_, err = tx.Exec(context.Background(), `
+			DELETE FROM comments WHERE post_id = $1
+		`, postID)
+		if err != nil {
+			log.Println("Failed to delete comments: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post comments"})
+			return
+		}
+
+		_, err = tx.Exec(context.Background(), `
+			DELETE FROM blog_posts WHERE post_id = $1
+		`, postID)
+		if err != nil {
+			log.Println("Failed to delete blog post: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+			return
+		}
+
+		err = tx.Commit(context.Background())
+		if err != nil {
+			log.Println("Failed to commit transaction: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Post and associated data deleted successfully"})
+	}
+}

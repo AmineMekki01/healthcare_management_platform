@@ -95,6 +95,9 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.GET("/api/v1/feed/posts/:postID", func(c *gin.Context) {
 		services.GetPostByID(c, pool)
 	})
+	r.GET("/api/v1/doctor/posts/:userId", services.GetDoctorPosts(pool))
+	r.PUT("/api/v1/posts/:postID/edit", services.EditDoctorPost(pool))
+	r.DELETE("/api/v1/posts/:postID", services.DeleteDoctorPost(pool))
 
 	// Following Doctors
 	r.POST("/api/v1/follow-doctor", func(c *gin.Context) {

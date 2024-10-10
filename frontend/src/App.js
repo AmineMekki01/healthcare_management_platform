@@ -25,6 +25,8 @@ import DoctorRoute from './components/ProtectedRoutes/DoctorRoutes';
 import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
 import InactivityHandler from './components/Auth/InactivityHandler';  
 import FullPost from './components/FeedBlog/FullPost';  
+import DoctorPosts from './components/FeedBlog/DoctorPosts';  
+import EditPost from './components/FeedBlog/EditPostPage';  
 
 function App() {
   const { isLoggedIn } = useContext(AuthContext);
@@ -124,6 +126,22 @@ function App() {
                   element={
                     <DoctorRoute>
                       <ChatbotChat />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/doctor-posts"
+                  element={
+                    <DoctorRoute>
+                      <DoctorPosts />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/edit-post/:postId"
+                  element={
+                    <DoctorRoute>
+                      <EditPost />
                     </DoctorRoute>
                   }
                 />
