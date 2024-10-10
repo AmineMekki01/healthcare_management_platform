@@ -2,8 +2,8 @@ package main
 
 import (
 	"backend_go/db"
+	"backend_go/middlewares"
 	"backend_go/routes"
-	"backend_go/services"
 	"fmt"
 	"log"
 	"time"
@@ -18,7 +18,7 @@ func main() {
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://10.188.27.252:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -49,16 +49,16 @@ func main() {
 
 	defer conn.Close()
 
-	r.GET("/ws", services.ServeWs)
+	public := r.Group("/")
+	routes.SetupPublicRoutes(public, conn)
 
-	routes.SetupPatientRoutes(r, conn)
-	routes.SetupDoctorRoutes(r, conn)
-	routes.SetupAppointmentManagementRoutes(r, conn)
-	routes.SetupFileRoutes(r, conn)
-	routes.SetupAccountValidationRoutes(r, conn)
-	routes.SetupShareRoutes(r, conn)
-	routes.SetupChatRoutes(r, conn)
-	routes.SetupFollowServiceRoutes(r, conn)
+	protected := r.Group("/")
+	protected.Use(middlewares.AuthMiddleware())
+	routes.SetupProtectedRoutes(protected, conn)
+
+	doctorOnly := protected.Group("/")
+	doctorOnly.Use(middlewares.DoctorOnly())
+	routes.SetupDoctorOnlyRoutes(doctorOnly, conn)
 
 	r.Use(func(c *gin.Context) {
 		for k, v := range c.Writer.Header() {

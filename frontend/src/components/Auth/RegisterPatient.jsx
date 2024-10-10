@@ -2,7 +2,7 @@ import React from "react";
 import { useRef, errRef, useState, useEffect } from "react";
 
 import { FactCheck } from "@mui/icons-material";
-import axios from 'axios';
+import axios from './../axiosConfig';
 import {
     ContainerRegister,
     FormWrapper,

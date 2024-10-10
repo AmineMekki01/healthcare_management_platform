@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components'
-import Cam from '../../assets/images/ChatImages/videocam.png'
-import Add from '../../assets/images/ChatImages/add-user.png'
-import More from '../../assets/images/ChatImages/more.png'
+
 import MessagesComponent from './Messages'
 import InputComponent from './Input'
 import { AuthContext } from '../Auth/AuthContext';
 import { ChatContext } from './ChatContext'; 
 import { WebSocketContext } from './WebSocketContext';
+import axios from './../axiosConfig';
 
 const Chat = styled.div`
     flex: 2;
@@ -41,32 +40,29 @@ const ChatComponent = ({ currentChat }) => {
 
     const [recipientImage, setRecipientImage] = useState('');
 
-    const fetchMessages = (chatId) => {
-        fetch(`http://localhost:3001/api/v1/messages/${chatId}`)
-            .then(response => response.json())
-            .then(data => {
-                const fetchedMessages = data.messages;
-                dispatch({ type: 'SET_MESSAGES', payload: fetchedMessages });
-            })
-            .catch(error => console.error('Error fetching messages:', error));
+    const fetchMessages = async (chatId) => {
+
+        try {
+            const response = await axios.get(`http://localhost:3001/api/v1/messages/${chatId}`);
+            console.log("Couldn't fetch messages");
+            const {messages : fetchedMessages} = response.data;
+            dispatch({ type: 'SET_MESSAGES', payload: fetchedMessages });
+
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
     };
 
-    const fetchUserImages = () => {
-        const fetchImage = async (userId) => {
+    const fetchUserImages = async () => {
+        if (currentChat && currentChat.id) {
             try {
-                const response = await fetch(`http://localhost:3001/api/v1/users/${userId}/image`);
-                const data = await response.json();
-                return data.imageUrl;
+                const response = await axios.get(`http://localhost:3001/api/v1/users/${userId}/image`);
+                const { imageUrl } = response.data;
+                setRecipientImage(imageUrl)
             } catch (error) {
                 console.error('Error fetching user image:', error);
-                return '';
+                setRecipientImage('default-avatar.png');
             }
-        };
-
-        if (currentChat && currentChat.id) {
-            const recipientId = currentChat.recipient_user_id;
-
-            fetchImage(recipientId).then(url => setRecipientImage(url));
         }
     };
 
@@ -77,7 +73,7 @@ const ChatComponent = ({ currentChat }) => {
         }
     }, [currentChat]);
 
-    const sendMessage = (content) => {
+    const sendMessage = async (content) => {
         if (!currentChat || !websocket || websocket.readyState !== WebSocket.OPEN) {
             console.error("[Client] No chat or WebSocket is not open.");
             return;
@@ -101,31 +97,19 @@ const ChatComponent = ({ currentChat }) => {
                 latest_message_time: new Date().toISOString(),
             },
         });
-        fetch('http://localhost:3001/api/v1/SendMessage', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(message),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Message saved:", data);
-        })
-        .catch((error) => {
+
+        try {
+            const response = await axios.post('/api/v1/SendMessage', message);
+            console.log("Message saved:", response.data);
+        } catch (error) {
             console.error('Error:', error);
-        });
+        }
     };
 
     return (
         <Chat>
             <ChatInfo>
                 <span>{currentChat.first_name_recipient} {currentChat.last_name_recipient}</span>
-                <ChatIcons>
-                    <ChatIconsImg src={Cam} alt=""/>
-                    <ChatIconsImg src={Add} alt=""/>
-                    <ChatIconsImg src={More} alt=""/>
-                </ChatIcons>
             </ChatInfo>
             <MessagesComponent 
                 messages={messages} 

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect  } from 'react';
-import axios from 'axios';
+import axios from './../components/axiosConfig';
 import { AuthContext } from './../components/Auth/AuthContext';
 import ChatInterface from './../components/Chatbot/ChatInterface/ChatInterface';
 import {FileContainer, ChatContainer} from './styles/ChatbotStyles';

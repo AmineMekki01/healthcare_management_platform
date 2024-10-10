@@ -1,13 +1,23 @@
 // WebSocketContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { ChatContext } from './ChatContext'; 
+import { AuthContext } from '../Auth/AuthContext';
+
 
 export const WebSocketContext = createContext(null);
-export const WebSocketProvider = ({ userId, children }) => {
+
+export const WebSocketProvider = ({children}) => {
     const [websocket, setWebsocket] = useState(null);
     const { dispatch } = useContext(ChatContext);
+    const {userId } = useContext(AuthContext);
+
 
     useEffect(() => {
+
+        if (!userId) {
+            return;
+        }
+
         const ws = new WebSocket(`ws://localhost:3001/ws?userId=${userId}`);
 
         ws.onopen = () => {

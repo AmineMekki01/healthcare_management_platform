@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback} from 'react';
-import axios from 'axios';
-
+import axios from './../axiosConfig';
 import DoctorCard from '../Users/Doctor/DoctorCard';
 import { AppContainer, SearchInputContainer, SearchInput, UserList } from './SearchBar.styles';
 import { debounce } from 'lodash';

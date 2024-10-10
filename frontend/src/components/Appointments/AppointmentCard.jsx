@@ -53,11 +53,9 @@ export default function CardCom({duration, appointment_start, appointment_finish
   };
 
   const createICSFile = () => {
-    // Parse the appointment times
     const start = new Date(appointment_start);
     const end = new Date(appointment_finish);
 
-    // Create ICS content
     const icsContent = createICSContent({
       start,
       end,
@@ -65,7 +63,6 @@ export default function CardCom({duration, appointment_start, appointment_finish
       description: prepareDataToShare()
     });
 
-    // Create and trigger a download of the ICS file
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

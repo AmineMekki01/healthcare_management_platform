@@ -1,7 +1,8 @@
-import React , {useState, useContext, useEffect} from 'react'
+import React , {useState, useContext} from 'react'
 import styled from 'styled-components'
 import { AuthContext } from '../Auth/AuthContext';
 import { ChatContext } from './ChatContext'; 
+import axios from './../axiosConfig';
 
 const Search = styled.div`
     border-bottom : 1px solid #f6f6f6;
@@ -61,18 +62,17 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
     const { state, dispatch } = useContext(ChatContext);
 
 
-    const handleSearch = () => {
-        fetch(`http://localhost:3001/api/v1/search/${username}/${userId}`)
-        .then(res => res.json())
-        .then(data => {
-            setUsers(data.users); 
+    const handleSearch = async () => {
+
+        try {
+            const response = await axios.get(`http://localhost:3001/api/v1/search/${username}/${userId}`)
+            setUsers(response.data.users); 
             setError(false)
-        })
-        .catch(err => {
+        } catch(err) {
             console.error("Search failed:", err);
             setUsers([])
             setError(true)
-        })
+        }
     }
 
     const handleKey = (e) => {
@@ -86,25 +86,31 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
         setUsers([]);
       };
 
-    const createOrSelectChat = (selectedUser) => {
+    const createOrSelectChat = async(selectedUser) => {
         if (!userId || !selectedUser.user_id) {
             console.error("Missing userId or selectedUserId");
             return;
         }
-        fetch(`http://localhost:3001/api/findOrCreateChat?currentUserId=${userId}&selectedUserId=${selectedUser.user_id}`)
-
-            .then(response => response.json())
-            .then(data => {
-                if(data) {
-                    const newChat = data.chats[0];
-                    onUserSelect(selectedUser, data.recipient_user_id); 
-                    onSelectChat(newChat); 
-                    dispatch({ type: 'SET_CURRENT_CHAT', payload: newChat });
-                    } else {
-                    console.error('No chat ID returned from the server.');
+        try {
+            const response = await axios.get(`http://localhost:3001/api/findOrCreateChat`, {
+                params : {
+                    currentUserId: userId,
+                    selectedUserId: selectedUser.user_id
                 }
-            })
-            .catch(error => console.error('Error finding or creating chat:', error));
+            });
+        
+            const { chats } = response.data;
+            if (chats && chats.length > 0) {
+                const newChat = chats[0];
+                onUserSelect(selectedUser, newChat.recipient_user_id); 
+                onSelectChat(newChat); 
+                dispatch({ type: 'SET_CURRENT_CHAT', payload: newChat });
+            } else {
+                console.error('No chat ID returned from the server.');
+            }
+        } catch (error) {
+            console.error('Error finding or creating chat:', error);
+        }
     };
 
   return (

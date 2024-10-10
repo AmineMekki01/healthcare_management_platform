@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useReducer } from 'react';
-import axios from 'axios';
+import axios from './../../axiosConfig';
 import { useParams } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";

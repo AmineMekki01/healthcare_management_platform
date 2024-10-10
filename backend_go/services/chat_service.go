@@ -20,7 +20,15 @@ type CombinedUser struct {
 	LastName  string `json:"last_name"`
 }
 
-func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
+type CombinedMessage struct {
+	ChatID      string    `json:"chat_id"`
+	SenderID    string    `json:"sender_id"`
+	RecipientID string    `json:"recipient_id"`
+	Content     string    `json:"content"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
 	const query = `
     SELECT
         c.id,
@@ -77,7 +85,7 @@ func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
     ORDER BY
         latest_message_time DESC;
     `
-	rows, err := db.Query(context.Background(), query, userID)
+	rows, err := conn.Query(context.Background(), query, userID)
 	if err != nil {
 		log.Println("error querying chats for user: ", err)
 		return nil, fmt.Errorf("error querying chats for user %s: %v", userID, err)
@@ -102,10 +110,16 @@ func GetChatsForUser(db *pgx.Conn, userID string) ([]models.Chat, error) {
 	return chats, nil
 }
 
-func ListChatsForUser(db *pgx.Conn, c *gin.Context) {
+func ListChatsForUser(c *gin.Context, pool *pgxpool.Pool) {
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+		return
+	}
+	defer conn.Release()
+
 	userID := c.Query("userID")
-	log.Println("userID: ", userID)
-	chats, err := GetChatsForUser(db, userID)
+	chats, err := GetChatsForUser(conn, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve chats"})
 		return
@@ -113,23 +127,21 @@ func ListChatsForUser(db *pgx.Conn, c *gin.Context) {
 	c.JSON(http.StatusOK, chats)
 }
 
-type CombinedMessage struct {
-	ChatID      string    `json:"chat_id"`
-	SenderID    string    `json:"sender_id"`
-	RecipientID string    `json:"recipient_id"`
-	Content     string    `json:"content"`
-	CreatedAt   time.Time `json:"created_at"`
-}
+func SendMessage(c *gin.Context, pool *pgxpool.Pool) {
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+		return
+	}
+	defer conn.Release()
 
-// SendMessage - sends a new message to a chat
-func SendMessage(db *pgx.Conn, c *gin.Context) {
 	var newMessage CombinedMessage
 	if err := c.BindJSON(&newMessage); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid message format: " + err.Error()})
 		return
 	}
 
-	err := storeMessage(db, newMessage.SenderID, newMessage.ChatID, newMessage.Content, newMessage.CreatedAt)
+	err = storeMessage(conn, newMessage.SenderID, newMessage.ChatID, newMessage.Content, newMessage.CreatedAt)
 	if err != nil {
 		log.Printf("Failed to store message: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store message"})
@@ -139,10 +151,10 @@ func SendMessage(db *pgx.Conn, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent successfully"})
 }
 
-func storeMessage(db *pgx.Conn, senderID string, chatID string, content string, createdAT time.Time) error {
-	_, err := db.Exec(context.Background(),
+func storeMessage(conn *pgxpool.Conn, senderID, chatID, content string, createdAt time.Time) error {
+	_, err := conn.Exec(context.Background(),
 		`INSERT INTO messages (chat_id, sender_id, content, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW())`,
-		chatID, senderID, content, createdAT)
+		chatID, senderID, content, createdAt)
 	return err
 }
 
@@ -184,8 +196,6 @@ func createChat(db *pgx.Conn, user1ID, user2ID int, user1Type, user2Type string)
 		log.Println("Error starting transaction:", err)
 		return 0, err
 	}
-
-	// Create a new chat
 	var chatID int
 	err = tx.QueryRow(context.Background(),
 		`INSERT INTO chats (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id`).Scan(&chatID)
@@ -194,8 +204,6 @@ func createChat(db *pgx.Conn, user1ID, user2ID int, user1Type, user2Type string)
 		tx.Rollback(context.Background())
 		return 0, err
 	}
-
-	// Add participants
 	_, err = tx.Exec(context.Background(),
 		`INSERT INTO participants (chat_id, user_id, user_type, joined_at, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW(), NOW()), ($1, $4, $5, NOW(), NOW(), NOW())`,
 		chatID, user1ID, user1Type, user2ID, user2Type)
@@ -214,10 +222,17 @@ func createChat(db *pgx.Conn, user1ID, user2ID int, user1Type, user2Type string)
 	return chatID, nil
 }
 
-func GetMessagesForChat(db *pgx.Conn, c *gin.Context) {
+func GetMessagesForChat(c *gin.Context, pool *pgxpool.Pool) {
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+		return
+	}
+	defer conn.Release()
+
 	chatID := c.Param("chatId")
-	log.Println("chatID: ", chatID)
-	rows, err := db.Query(context.Background(), `
+
+	rows, err := conn.Query(context.Background(), `
     SELECT id, chat_id, sender_id, content, created_at, updated_at FROM messages 
     WHERE chat_id = $1 AND deleted_at IS NULL
     ORDER BY created_at ASC;`, chatID)
@@ -244,11 +259,9 @@ func GetMessagesForChat(db *pgx.Conn, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
 
-func findOrCreateChatWithUser(db *pgx.Conn, currentUserID, selectedUserID string) ([]models.Chat, error) {
-
-	// Step 1: Check for an existing chat
+func findOrCreateChatWithUser(conn *pgxpool.Conn, currentUserID, selectedUserID string) ([]models.Chat, error) {
 	var chat models.Chat
-	err := db.QueryRow(context.Background(),
+	err := conn.QueryRow(context.Background(),
 		`SELECT DISTINCT
             c.id,
             c.updated_at,
@@ -296,8 +309,7 @@ func findOrCreateChatWithUser(db *pgx.Conn, currentUserID, selectedUserID string
 		currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt)
 	chat.UpdatedAt = time.Now()
 	if err == pgx.ErrNoRows {
-		// Step 2: No existing chat, so create a new one
-		tx, err := db.Begin(context.Background())
+		tx, err := conn.Begin(context.Background())
 		if err != nil {
 			log.Println("Error starting transaction:", err)
 			return nil, err
@@ -334,7 +346,7 @@ func findOrCreateChatWithUser(db *pgx.Conn, currentUserID, selectedUserID string
 			return nil, err
 		}
 
-		err = db.QueryRow(context.Background(),
+		err = conn.QueryRow(context.Background(),
 			`SELECT DISTINCT
             c.id,
             c.updated_at,
@@ -395,12 +407,18 @@ func findOrCreateChatWithUser(db *pgx.Conn, currentUserID, selectedUserID string
 	return chats, nil
 }
 
-func FindOrCreateChatWithUser(db *pgx.Conn, c *gin.Context) {
+func FindOrCreateChatWithUser(c *gin.Context, pool *pgxpool.Pool) {
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+		return
+	}
+	defer conn.Release()
+
 	currentUserID := c.Query("currentUserId")
 	selectedUserID := c.Query("selectedUserId")
-	log.Println("currentUserId: ", currentUserID)
-	log.Println("selectedUserId: ", selectedUserID)
-	chats, err := findOrCreateChatWithUser(db, currentUserID, selectedUserID)
+
+	chats, err := findOrCreateChatWithUser(conn, currentUserID, selectedUserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -408,31 +426,30 @@ func FindOrCreateChatWithUser(db *pgx.Conn, c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"chats": chats})
 }
+func GetUserImage(c *gin.Context, pool *pgxpool.Pool) {
+	conn, err := pool.Acquire(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
+		return
+	}
+	defer conn.Release()
 
-func GetUserImage(db *pgx.Conn, c *gin.Context) {
 	userID := c.Param("userID")
 
 	var imageUrl string
-	var query string
-	var err error
 
-	// Check if user is a doctor
-	query = `SELECT profile_photo_url FROM doctor_info WHERE doctor_id = $1`
-	err = db.QueryRow(context.Background(), query, userID).Scan(&imageUrl)
+	err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM doctor_info WHERE doctor_id = $1`, userID).Scan(&imageUrl)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
 		return
 	}
 
-	// If not a doctor, check if user is a patient
-	query = `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`
-	err = db.QueryRow(context.Background(), query, userID).Scan(&imageUrl)
+	err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`, userID).Scan(&imageUrl)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
 		return
 	}
 
-	// If user is not found in either table, return an error
 	log.Println("Error fetching user image:", err)
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user image"})
+	c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-
+import axios from './../../axiosConfig';
 import {
     Card,
     CardContent,

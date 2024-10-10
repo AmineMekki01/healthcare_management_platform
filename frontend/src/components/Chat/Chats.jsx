@@ -4,6 +4,7 @@ import { AuthContext } from '../Auth/AuthContext';
 import { ChatContext } from './ChatContext'; 
 
 import moment from 'moment';
+import axios from './../axiosConfig';
 
 
 const Chats = styled.div`
@@ -74,9 +75,12 @@ const ChatsComponent = ({onChatSelect}) => {
         }
         const fetchChats = async () => {
           try {
-            const response = await fetch(`http://localhost:3001/api/v1/chats?userID=${userId}`);
-            const data = await response.json();
-            dispatch({ type: 'SET_CHATS', payload: data });
+            const response = await axios.get(`http://localhost:3001/api/v1/chats`, {
+                params : {
+                    userID: userId
+                }
+            });
+            dispatch({ type: 'SET_CHATS', payload: response.data });
           } catch (error) {
             console.error("Failed to fetch chats: ", error);
           }
@@ -118,8 +122,6 @@ const ChatsComponent = ({onChatSelect}) => {
                         <span>{chat.first_name_recipient} {chat.last_name_recipient}</span>
                         <MessageAndTime>
                             <MessageContent>{chat.latest_message_content}</MessageContent>
-
-                            {/* check if chat.latest_message_time is not empty  else we shout chat.updated_at*/}
                             <MessageTime>{formatMessageDate(chat.latest_message_time || chat.updated_at)}</MessageTime>
 
                         </MessageAndTime>
