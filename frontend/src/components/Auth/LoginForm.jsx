@@ -5,7 +5,7 @@ import { ContainerLogin, FormWrapper, Title, RadioButtonContainer, RadioButton, 
 import axios from './../axiosConfig';
 
 const LoginForm = () => {
-    const { setIsLoggedIn, setDoctorId, setPatientId, setUserType, doctorId, patientId, userFullName, setUserFullName, userProfilePhotoUrl, setUserProfilePhotoUrl, userId, setUserId} = useContext(AuthContext);
+    const { setIsLoggedIn, setDoctorId, setPatientId, setUserType, doctorId, patientId, userFullName, setUserFullName, userProfilePhotoUrl, setUserProfilePhotoUrl, userId, setUserId, setToken, setRefreshToken} = useContext(AuthContext);
 
     const [localUserType, setLocalUserType] = useState('patient'); 
     const navigate = useNavigate();
@@ -32,17 +32,20 @@ const LoginForm = () => {
                 body: JSON.stringify({ email, password, localUserType })
             });
             const text = await response.text();
-            console.log("Raw response:", text);
             const data = JSON.parse(text);
-            console.log("Parsed data:", data);
         
             if(data.success) {
                 localStorage.setItem('token', data.token);
-                setUserType(localUserType);   
                 localStorage.setItem('userType', localUserType);
-                
                 localStorage.setItem('userProfilePhotoUrl', data.profile_picture_url);
-                    setUserProfilePhotoUrl(data.profile_picture_url);
+                localStorage.setItem('token', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+
+                setUserProfilePhotoUrl(data.profile_picture_url);
+                setUserType(localUserType);   
+                setToken(data.accessToken);
+                setRefreshToken(data.refreshToken);
+
                 if(localUserType === 'doctor') {
                     localStorage.setItem('doctorId', data.doctor_id);
                     localStorage.setItem('userId', data.doctor_id);

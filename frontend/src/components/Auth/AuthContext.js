@@ -13,6 +13,8 @@ const AuthProvider = ({ children, navigate }) => {
     const [userProfilePhotoUrl, setUserProfilePhotoUrl] = useState(null);
     const [userId, setUserId] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
+
 
     useEffect(() => {   
         if (localStorage.getItem('token')) {
@@ -23,6 +25,7 @@ const AuthProvider = ({ children, navigate }) => {
             setToken(localStorage.getItem('token'));
             setDoctorId(localStorage.getItem('doctorId'));
             setPatientId(localStorage.getItem('patientId'));
+            setRefreshToken(localStorage.getItem('refreshToken'));
 
             if (localStorage.getItem('userType') === 'doctor') {
                 setUserId(localStorage.getItem('doctorId'));
@@ -42,7 +45,8 @@ const AuthProvider = ({ children, navigate }) => {
         localStorage.removeItem('userType');
         localStorage.removeItem('userFullName');
         localStorage.removeItem('userProfilePhotoUrl');
-        
+        localStorage.removeItem('refreshToken');
+
         setToken(null);
         setDoctorId(null);
         setPatientId(null);  
@@ -51,24 +55,31 @@ const AuthProvider = ({ children, navigate }) => {
         setUserFullName(null);
         setUserProfilePhotoUrl(null);
         setUserId(null);
+        setRefreshToken(null);
 
         navigate('/login');
     }, [navigate]);
 
-    const refreshToken = useCallback(async () => {
+
+    const refreshAccessToken = useCallback(async () => {
         try {
+            const storedRefreshToken = localStorage.getItem('refreshToken');
+            if (!storedRefreshToken) {
+                throw new Error('No refresh token available');
+            }
+
             const response = await fetch('http://localhost:3001/api/v1/refresh-token', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${storedRefreshToken}`,
                     'Content-Type': 'application/json'
                 }
             });
 
             if (response.ok) {
                 const data = await response.json();
-                setToken(data.token);
-                localStorage.setItem('token', data.token);
+                setToken(data.accessToken);
+                localStorage.setItem('token', data.accessToken);
                 return true;
             } else {
                 throw new Error('Failed to refresh token');
@@ -79,6 +90,19 @@ const AuthProvider = ({ children, navigate }) => {
             return false;
         }
     }, [token, logout]);
+
+
+    
+    useEffect(() => {
+        if (isLoggedIn) {
+            const refreshInterval = setInterval(() => {
+                refreshAccessToken();
+            }, 15 * 60 * 1000);
+
+            return () => clearInterval(refreshInterval);
+        }
+    }, [isLoggedIn, refreshAccessToken]);
+
 
     return (
         <AuthContext.Provider value={{
@@ -103,7 +127,8 @@ const AuthProvider = ({ children, navigate }) => {
             setUserProfilePhotoUrl,
             setUserId,
             setToken,
-            refreshToken
+            setRefreshToken,
+            refreshAccessToken
         }}>
             {children}
         </AuthContext.Provider>

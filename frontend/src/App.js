@@ -23,7 +23,6 @@ import Feed from './pages/FeedPage'
 import CreatePost from './pages/CreatePost';
 import DoctorRoute from './components/ProtectedRoutes/DoctorRoutes';
 import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
-import InactivityHandler from './components/Auth/InactivityHandler';  
 import FullPost from './components/FeedBlog/FullPost';  
 import DoctorPosts from './components/FeedBlog/DoctorPosts';  
 import EditPost from './components/FeedBlog/EditPostPage';  
@@ -37,8 +36,6 @@ function App() {
           <div className="flex">
             <MyNavbar />
             <div className="ml-auto w-full scrollable-div">
-              {isLoggedIn && <InactivityHandler />} 
-
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />

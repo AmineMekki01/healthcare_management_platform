@@ -5,7 +5,6 @@ import {
   PostContainer,
   PostHeader,
   PostActions,
-  ActionButton,
   PostTitle,
   PostContent,
   PostStats,
@@ -19,7 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const DoctorPosts = () => {
-  const { userId, userType } = useContext(AuthContext);
+  const { userId } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const navigate = useNavigate();
   console.log("userId : ", userId)

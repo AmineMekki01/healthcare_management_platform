@@ -301,7 +301,12 @@ func LoginPatient(c *gin.Context, pool *pgxpool.Pool) {
 
 	// generating a session token
 	user := patientToAuthUser(&patient)
-	token, err := auth.GenerateToken(user, "patient")
+	token, err := auth.GenerateAccessToken(user, "patient")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+	refreshToken, err := auth.GenerateRefreshToken(user, "patient")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return
@@ -322,7 +327,8 @@ func LoginPatient(c *gin.Context, pool *pgxpool.Pool) {
 
 	response := gin.H{
 		"success":             true,
-		"token":               token,
+		"accessToken":         token,
+		"refreshToken":        refreshToken,
 		"patient_id":          patientId,
 		"first_name":          patient.FirstName,
 		"last_name":           patient.LastName,

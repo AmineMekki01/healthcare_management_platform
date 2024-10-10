@@ -3,9 +3,9 @@ package middlewares
 import (
 	"backend_go/auth"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -22,10 +22,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-			return
-		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -62,43 +58,53 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 func RefreshToken(c *gin.Context) {
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" {
+	refreshToken := c.GetHeader("Authorization")
+	if refreshToken == "" {
+		log.Println("No token provided.")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
 		return
 	}
 
-	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+	refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return auth.JWTSecret, nil
-	})
-
+	token, err := auth.ValidateRefreshToken(refreshToken)
 	if err != nil || !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		log.Println("Invalid or expired refresh token : ", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
 		return
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
+		log.Println("Invalid token claims")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 		return
 	}
 
-	expirationTime := time.Now().Add(20 * time.Minute)
-	claims["exp"] = expirationTime.Unix()
-
-	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err = newToken.SignedString(auth.JWTSecret)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign new token"})
+	userID, ok := claims["userID"].(string)
+	if !ok {
+		log.Println("UserID not found in token claims")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	userType, ok := claims["userType"].(string)
+	if !ok {
+		log.Println("UserType not found in token claims")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	newAccessToken, err := auth.GenerateAccessToken(auth.User{ID: userID}, userType)
+	if err != nil {
+		log.Println("Failed to generate new access token : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
+		return
+	}
+
+	log.Println("Successfully refreshed token for user: ", userID)
+	c.JSON(http.StatusOK, gin.H{
+		"accessToken": newAccessToken,
+	})
 }
