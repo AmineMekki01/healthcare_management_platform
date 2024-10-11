@@ -60,7 +60,6 @@ func (c *Client) readPump() {
 		if err != nil {
 			break
 		}
-		log.Println("Received message:", string(message)) // Log the received message for debugging
 
 		var msg Message
 		err = json.Unmarshal(message, &msg)

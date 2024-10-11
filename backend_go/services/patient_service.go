@@ -228,8 +228,6 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
-	log.Println("hi")
-
 	verificationLink := validators.GenerateVerificationLink(patient.Email, c, pool)
 	if verificationLink == "" {
 		log.Printf("Generating verification Link error: %v", err)

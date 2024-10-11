@@ -91,7 +91,6 @@ func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
 		return nil, fmt.Errorf("error querying chats for user %s: %v", userID, err)
 	}
 	defer rows.Close()
-	log.Println("rowsssss: ", rows)
 	var chats []models.Chat
 	for rows.Next() {
 		var chat models.Chat
@@ -99,7 +98,6 @@ func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
 			log.Println("error scanning chat row: ", err)
 			return nil, fmt.Errorf("error scanning chat row: %v", err)
 		}
-		log.Println("chat: ", chat)
 		chats = append(chats, chat)
 	}
 
@@ -251,7 +249,6 @@ func GetMessagesForChat(c *gin.Context, pool *pgxpool.Pool) {
 			return
 		}
 		messages = append(messages, msg)
-		log.Println("messages: ", messages)
 	}
 	if len(messages) == 0 {
 		log.Println("No messages found for chat ID:", chatID)
@@ -317,7 +314,7 @@ func findOrCreateChatWithUser(conn *pgxpool.Conn, currentUserID, selectedUserID 
 		err = tx.QueryRow(context.Background(),
 			`INSERT INTO chats (created_at, updated_at) VALUES (NOW(), NOW()) RETURNING id`).Scan(&chat.ID)
 		if err != nil {
-			log.Println("Ther was an error in creating a chat : ", err)
+			log.Println("There was an error in creating a chat : ", err)
 			tx.Rollback(context.Background())
 			return nil, err
 		}
@@ -336,7 +333,7 @@ func findOrCreateChatWithUser(conn *pgxpool.Conn, currentUserID, selectedUserID 
 		}
 
 		if err != nil {
-			log.Println("Ther was an error in adding participants : ", err)
+			log.Println("There was an error in adding participants : ", err)
 			tx.Rollback(context.Background())
 			return nil, err
 		}
@@ -393,7 +390,6 @@ func findOrCreateChatWithUser(conn *pgxpool.Conn, currentUserID, selectedUserID 
         `,
 			currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt)
 		chat.UpdatedAt = time.Now()
-		log.Println("chat : ", chat)
 		if err != nil {
 			log.Printf("Error finding or creating chat 1: %v", err)
 			return nil, err
@@ -446,10 +442,10 @@ func GetUserImage(c *gin.Context, pool *pgxpool.Pool) {
 
 	err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`, userID).Scan(&imageUrl)
 	if err == nil {
+		log.Println("Error fetching user image:", err)
 		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
 		return
 	}
 
-	log.Println("Error fetching user image:", err)
 	c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 }

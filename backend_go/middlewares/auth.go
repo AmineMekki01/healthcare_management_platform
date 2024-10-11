@@ -102,8 +102,6 @@ func RefreshToken(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
 		return
 	}
-
-	log.Println("Successfully refreshed token for user: ", userID)
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken": newAccessToken,
 	})

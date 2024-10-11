@@ -28,7 +28,6 @@ func SendVerificationEmail(recipientEmail, verificationLink string) error {
 	to := []string{recipientEmail}
 	smtpHost := os.Getenv("SMTP_HOST")
 	smtpPort := os.Getenv("SMTP_PORT")
-	log.Println("email : ", from)
 	subject := "Verify Your Email At TBIBI."
 	body := "Please verify your email by clicking on the link below:\n" + verificationLink
 
