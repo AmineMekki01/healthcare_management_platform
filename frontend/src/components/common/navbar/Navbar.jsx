@@ -24,22 +24,44 @@ const MyNavbar = () => {
     ? `/DoctorProfile/${userId}`
     : `/PatientProfile/${userId}`;
 
+  const commonMenus = [
+    { title: 'Home', src: 'home', href: '/' },
+    { title: 'Search', src: 'Search', href: '/SearchBar' },
+    { title: 'DashBoard', src: 'Chart', href: '/DashBoard' },
+    { title: 'Profile', src: 'User', href: profileHref },
+    { title: 'Appointment', src: 'Calendar', href: '/patient-appointments' },
+    { title: 'MyDocs', src: 'Folder', href: '/MyDocs' },
+    { title: 'Messages', src: 'Chat', href: '/Messages' },
+    { title: 'Feed', src: 'feed_logo', href: '/feed' },
+
+
+  ];
+
+  if (isLoggedIn && userType === 'doctor') {
+    commonMenus.push(
+      {
+        title: 'Create Post',
+        src: 'create_post',
+        href: '/create-post',
+      },
+      {
+        title: 'ChatBot',
+        src: 'chatbot',
+        href: '/ChatBot',
+      },
+      { title: 'My Posts', src: 'doctor_feed', href: '/doctor-posts' },
+
+    );
+  }
+  
   const menus = isLoggedIn
-    ? [
-        { title: 'Home', src: 'home', href: '/' },
-        { title: 'Search', src: 'Search', href: '/SearchBar' },
-        { title: 'DashBoard', src: 'Chart', href: '/DashBoard' },
-        {title: 'Profile',src: 'User', href: profileHref},
-        { title: 'Appointment', src: 'Calendar', href: '/patient-appointments' },
-        { title: 'MyDocs', src: 'Folder', href: '/MyDocs' },
-        { title: 'Messages ', src: 'Chat', href: '/Messages' },
-        { title: 'ChatBot', src: 'chatbot', href: '/ChatBot' },
-      ]
+    ? commonMenus
     : [
         { title: 'Home', src: 'home', href: '/' },
         { title: 'Login', src: 'login', href: '/login' },
         { title: 'Register', src: 'register', href: '/register' },
       ];
+  
   return (
     <NavbarContainer>
       <LogoContainer>
@@ -63,26 +85,22 @@ const MyNavbar = () => {
       </MenuList>
       
       <LowerMenuList>
-                {isLoggedIn && (
-                    <>  
-                    <a href="/login" onClick={logout}>
-                        <img src={require(`./../../../assets/images/menu_images/logout.png`)} alt="Logout" />
-                        <span>Logout</span>
-                    </a>  
-                    <UserInfoContainer>
-                    <UserInfoImage src={`http://localhost:3001/${userProfilePhotoUrl}`} alt="User" />
-                    <UserInfo>
-                        <span>{capitalizeWords(userFullName)}</span>
-                      </UserInfo>
-                    </UserInfoContainer>    
-                    </>
+        {isLoggedIn && (
+          <>  
+            <a href="/login" onClick={logout}>
+                <img src={require(`./../../../assets/images/menu_images/logout.png`)} alt="Logout" />
+                <span>Logout</span>
+            </a>  
+            <UserInfoContainer>
+            <UserInfoImage src={`http://localhost:3001/${userProfilePhotoUrl}`} alt="User" />
+            <UserInfo>
+                <span>{capitalizeWords(userFullName)}</span>
+              </UserInfo>
+            </UserInfoContainer>    
+          </>
 
-                )}
-
-          
-        
+        )}
       </LowerMenuList>
-      
     </NavbarContainer>
   );
 };

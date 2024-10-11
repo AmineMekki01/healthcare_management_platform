@@ -2,82 +2,106 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 
 export const AuthContext = createContext();
 
-const AuthProvider = ({ children, navigate  }) => {
+const AuthProvider = ({ children, navigate }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
     const [userType, setUserType] = useState(localStorage.getItem('userType') || 'patient');
     const [doctorId, setDoctorId] = useState(localStorage.getItem('doctorId'));
     const [patientId, setPatientId] = useState(localStorage.getItem('patientId'));  
     const [userName, setUserName] = useState(null);
     const [userAge, setUserAge] = useState(null);
-    const [logoutTimer, setLogoutTimer] = useState(null);
     const [userFullName, setUserFullName] = useState(null);
     const [userProfilePhotoUrl, setUserProfilePhotoUrl] = useState(null);
     const [userId, setUserId] = useState(null);
-    
+    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
+
 
     useEffect(() => {   
         if (localStorage.getItem('token')) {
             setIsLoggedIn(true);
             setUserFullName(localStorage.getItem('userFullName'));
             setUserType(localStorage.getItem('userType'));
-            setUserProfilePhotoUrl(localStorage.getItem("userProfilePhotoUrl"))
-
-
+            setUserProfilePhotoUrl(localStorage.getItem("userProfilePhotoUrl"));
+            setToken(localStorage.getItem('token'));
             setDoctorId(localStorage.getItem('doctorId'));
             setPatientId(localStorage.getItem('patientId'));
+            setRefreshToken(localStorage.getItem('refreshToken'));
 
             if (localStorage.getItem('userType') === 'doctor') {
-                setUserId(localStorage.getItem('doctorId'))
-
-            }else {
-                setUserId(localStorage.getItem('patientId'))
-   
+                setUserId(localStorage.getItem('doctorId'));
+            } else {
+                setUserId(localStorage.getItem('patientId'));
             }
         }
-    }
-    , []);
+    }, []);
 
     const logout = useCallback(() => {
+        if (window.inactivityTimeout) clearTimeout(window.inactivityTimeout);
+        if (window.logoutTimeout) clearTimeout(window.logoutTimeout);
+
         localStorage.removeItem('token');
         localStorage.removeItem('doctorId');
         localStorage.removeItem('patientId');  
-        localStorage.removeItem('userType'); 
-        
+        localStorage.removeItem('userType');
+        localStorage.removeItem('userFullName');
+        localStorage.removeItem('userProfilePhotoUrl');
+        localStorage.removeItem('refreshToken');
+
+        setToken(null);
         setDoctorId(null);
         setPatientId(null);  
         setIsLoggedIn(false);
-        setUserType(null); 
+        setUserType(null);
+        setUserFullName(null);
+        setUserProfilePhotoUrl(null);
+        setUserId(null);
+        setRefreshToken(null);
 
-        if (navigate) {
-            navigate('/login'); 
+        navigate('/login');
+    }, [navigate]);
+
+
+    const refreshAccessToken = useCallback(async () => {
+        try {
+            const storedRefreshToken = localStorage.getItem('refreshToken');
+            if (!storedRefreshToken) {
+                throw new Error('No refresh token available');
+            }
+
+            const response = await fetch('http://localhost:3001/api/v1/refresh-token', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${storedRefreshToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setToken(data.accessToken);
+                localStorage.setItem('token', data.accessToken);
+                return true;
+            } else {
+                throw new Error('Failed to refresh token');
+            }
+        } catch (error) {
+            console.error("Failed to refresh token", error);
+            logout();
+            return false;
         }
+    }, [token, logout]);
 
-    }, [setDoctorId, setPatientId, setIsLoggedIn, setUserType]);
 
-    const startLogoutTimer = useCallback(() => {
-      setLogoutTimer(setTimeout(() => {
-          logout();   
-      }, 15 * 60 * 1000));
-    }, [logout]);
-  
-    const clearLogoutTimer = useCallback(() => {
-        if (logoutTimer) {
-            clearTimeout(logoutTimer);
-            setLogoutTimer(null);
+    
+    useEffect(() => {
+        if (isLoggedIn) {
+            const refreshInterval = setInterval(() => {
+                refreshAccessToken();
+            }, 14 * 60 * 1000);
+
+            return () => clearInterval(refreshInterval);
         }
-    }, [logoutTimer]);
-
-    useEffect(() => {
-    if (isLoggedIn) {
-        startLogoutTimer();
-    }
-    }, [isLoggedIn, startLogoutTimer]);
-
-    useEffect(() => {
-        return () => {
-            clearLogoutTimer();
-        };
-    }, [clearLogoutTimer]);
+    }, [isLoggedIn, refreshAccessToken]);
 
 
     return (
@@ -91,6 +115,7 @@ const AuthProvider = ({ children, navigate  }) => {
             userFullName,
             userProfilePhotoUrl,
             userId,
+            token,
             setIsLoggedIn,
             setUserName,
             setUserAge,
@@ -98,11 +123,12 @@ const AuthProvider = ({ children, navigate  }) => {
             setDoctorId,
             setPatientId, 
             logout,
-            startLogoutTimer,
-            clearLogoutTimer, 
             setUserFullName,
             setUserProfilePhotoUrl,
-            setUserId
+            setUserId,
+            setToken,
+            setRefreshToken,
+            refreshAccessToken
         }}>
             {children}
         </AuthContext.Provider>

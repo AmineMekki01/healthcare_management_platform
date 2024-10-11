@@ -1,9 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components'
 import SidebarComponent from '../components/Chat/Sidebar';
 import ChatComponent from '../components/Chat/Chat';
 import { ChatProvider } from './../components/Chat/ChatContext';
-import { AuthContext } from './../components/Auth/AuthContext';
 import { WebSocketProvider } from './../components/Chat/WebSocketContext';
 
 
@@ -26,14 +25,13 @@ const Container = styled.div`
 
 const ChatPage = () => {
   const [currentChat, setCurrentChat] = useState(null);
-  const {userId} = useContext(AuthContext);
 
   const handleChatSelect = (chat) => {
     setCurrentChat(chat);
   };
   return (
     <ChatProvider>
-      <WebSocketProvider userId={userId}>
+      <WebSocketProvider>
         <Home>
             <Container>
                 <SidebarComponent onChatSelect={handleChatSelect}/>

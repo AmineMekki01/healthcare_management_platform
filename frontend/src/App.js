@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext} from 'react';
 import { AuthContext } from './components/Auth/AuthContext';  
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -19,8 +19,16 @@ import ChatbotChat from './pages/Chatbot';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/Auth/ResetPasswordPage';
 import ChatPage from './pages/ChatPage';
+import Feed from './pages/FeedPage'
+import CreatePost from './pages/CreatePost';
+import DoctorRoute from './components/ProtectedRoutes/DoctorRoutes';
+import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
+import FullPost from './components/FeedBlog/FullPost';  
+import DoctorPosts from './components/FeedBlog/DoctorPosts';  
+import EditPost from './components/FeedBlog/EditPostPage';  
 
 function App() {
+  const { isLoggedIn } = useContext(AuthContext);
 
   return (
       <Router>
@@ -31,19 +39,109 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />
-                <Route path="/register" element={<RegisterPage/>} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route path="/register-doctor" element={<DoctorRegisterPage />} />
                 <Route path="/register-patient" element={<PatientRegisterPage />} />
-                <Route path="/patient-appointments" element={<AppointmentDashboard />} />
-                <Route path="/SearchBar" element={<SearchBar />} />
-                <Route path="/DoctorProfile/:doctorId" element={<DoctorProfile/>} />
-                <Route path="/PatientProfile/:patientId" element={<PatientProfile/>} />
-                <Route path="/MyDocs/*" element={<FileManager/>} />
-                <Route path="/activate_account" element={<AccountVerified/>} />
-                <Route path="/forgot-password" element={<ForgotPasswordForm/>} />
+                <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/reset-password" element={<ResetPasswordForm />} />
-                <Route path="/Chatbot" element={<ChatbotChat />} />
-                <Route path="/Messages" element={<ChatPage />} />
+                <Route path="/posts/:postId" element={<FullPost />} />
+                <Route
+                  path="/patient-appointments"
+                  element={
+                    <PrivateRoute>
+                      <AppointmentDashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/SearchBar"
+                  element={
+                    <PrivateRoute>
+                      <SearchBar />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/DoctorProfile/:doctorId"
+                  element={
+                    <PrivateRoute>
+                      <DoctorProfile />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/PatientProfile/:patientId"
+                  element={
+                    <PrivateRoute>
+                      <PatientProfile />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/MyDocs/*"
+                  element={
+                    <PrivateRoute>
+                      <FileManager />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/activate_account"
+                  element={
+                    <PrivateRoute>
+                      <AccountVerified />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Messages"
+                  element={
+                    <PrivateRoute>
+                      <ChatPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/feed"
+                  element={
+                    <PrivateRoute>
+                      <Feed />
+                    </PrivateRoute>
+                  }
+                />
+
+                <Route
+                  path="/create-post"
+                  element={
+                    <DoctorRoute>
+                      <CreatePost />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/ChatBot"
+                  element={
+                    <DoctorRoute>
+                      <ChatbotChat />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/doctor-posts"
+                  element={
+                    <DoctorRoute>
+                      <DoctorPosts />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/edit-post/:postId"
+                  element={
+                    <DoctorRoute>
+                      <EditPost />
+                    </DoctorRoute>
+                  }
+                />
               </Routes>
             </div>
           </div>

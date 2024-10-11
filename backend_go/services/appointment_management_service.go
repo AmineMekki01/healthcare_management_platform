@@ -108,7 +108,6 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
-	log.Println("appointment.AvailabilityID:", appointment.AvailabilityID)
 	// Delete availability
 	_, err = tx.Exec(context.Background(), "DELETE FROM availabilities WHERE availability_id = $1", appointment.AvailabilityID)
 	if err != nil {
@@ -156,7 +155,6 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 	`
 	params := []interface{}{}
 	if doctorID != "" {
-		log.Println(doctorID)
 		query += " WHERE appointments.doctor_id = $1"
 		params = append(params, doctorID)
 	} else {
@@ -171,7 +169,6 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	log.Println(rows)
 	defer rows.Close()
 
 	var reservations []models.Reservation
@@ -185,8 +182,6 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
-		log.Println("r", r)
-		// Convert time to the specified timezone
 		location, err := time.LoadLocation(timezone)
 		if err != nil {
 			log.Println("Timezone Error:", err)
@@ -196,11 +191,10 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 
 		r.ReservationStart = r.ReservationStart.In(location)
 		r.ReservationEnd = r.ReservationEnd.In(location)
-		log.Println("r", r) // Append to the reservations slice
+
 		reservations = append(reservations, r)
 
 	}
 
-	log.Println(reservations)
 	c.JSON(http.StatusOK, reservations)
 }

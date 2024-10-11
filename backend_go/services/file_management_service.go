@@ -35,7 +35,6 @@ func createS3Client() *s3.S3 {
 
 // get parent folder path
 func getParentFolderPath(folderID string, pool *pgxpool.Pool) (string, error) {
-	log.Println("Got the folderID in the getParentFolderPath function :", folderID)
 	var parentFolder models.FileFolder
 	row := pool.QueryRow(context.Background(), "SELECT name, parent_id FROM folder_file_info WHERE id = $1", folderID)
 	err := row.Scan(&parentFolder.Name, &parentFolder.ParentID)
@@ -65,7 +64,6 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 		return
 	}
-	log.Println("fileFolder : ", fileFolder)
 
 	folderUUID, err := uuid.NewRandom()
 	if err != nil {
@@ -83,7 +81,6 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 	fileFolder.Ext = ext
 
 	folderPath := filepath.Join(fileFolder.UserID)
-	log.Println("folderPath 1 : ", folderPath)
 	if fileFolder.ParentID != nil && *fileFolder.ParentID != "" {
 		parentFolderPath, err := getParentFolderPath(*fileFolder.ParentID, pool)
 		if err != nil {
@@ -94,7 +91,6 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		folderPath = filepath.Join(folderPath, parentFolderPath)
 	}
 	folderPath = filepath.Join(folderPath, fileFolder.Name) + "/marker.txt"
-	log.Println("folderPath 2 : ", folderPath)
 
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
@@ -165,7 +161,6 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer file.Close()
 	parentFolderID := c.Request.FormValue("parentFolderId")
-	log.Println("parentFolderID : ", parentFolderID)
 	if parentFolderID != "" {
 		if _, err := uuid.Parse(parentFolderID); err != nil {
 			log.Printf("Invalid parentFolderId: %s\n", err)
@@ -176,7 +171,6 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 	} else {
 		fileInfo.ParentID = nil
 	}
-	log.Println("fileInfo.ParentID : ", fileInfo.ParentID)
 	fileInfo.CreatedAt = time.Now()
 	fileInfo.UpdatedAt = time.Now()
 	fileInfo.Type = c.Request.FormValue("fileType")
@@ -196,14 +190,10 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("parentFolderPath :", parentFolderPath)
-		log.Println("parentFolderID :", parentFolderID)
 		fileInfo.Path = fmt.Sprintf("%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
 	} else {
 		fileInfo.Path = fmt.Sprintf("%s/%s", fileInfo.UserID, fileInfo.Name)
 	}
-	log.Println("fileInfo.Path : ", fileInfo.Path)
-
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
@@ -232,8 +222,6 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 
 // Dowanloding a file to s3
 func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
-	log.Println("DownloadFile function called")
-
 	fileId := c.Param("fileId")
 	log.Printf("Requested file ID: %s", fileId)
 
@@ -257,7 +245,6 @@ func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
 	if file.Type == "folder" {
-		log.Println("Processing as a folder")
 		zipFilePath, err := createZipFromFolder(file.Path)
 		if err != nil {
 			log.Printf("Error creating zip file: %v", err)
@@ -267,7 +254,6 @@ func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
 		log.Printf("Zip file created: %s", zipFilePath)
 		c.File(zipFilePath)
 	} else {
-		log.Println("Processing as a regular file")
 		s3Object, err := s3Client.GetObject(&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(file.Path),
@@ -338,7 +324,6 @@ func DeleteFolderAndContents(c *gin.Context, pool *pgxpool.Pool) {
 
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
-	log.Println("paths :", paths)
 	for _, path := range paths {
 		log.Printf("path: %s", path)
 		_, err := s3Client.DeleteObject(&s3.DeleteObjectInput{
@@ -488,15 +473,12 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch item details"})
 		return
 	}
-	log.Println("oldPath : ", oldPath)
-	log.Println("itemType : ", itemType)
 
 	var newPath string
 	if itemType == "folder" {
 		newPath = strings.Replace(oldPath, "/marker.txt", "", 1)
 		newPath = filepath.Dir(newPath)
 		newPath = filepath.Join(newPath, request.Name) + "/marker.txt"
-		log.Println("newPath folder : ", newPath)
 	} else {
 		newPath := filepath.Join(filepath.Dir(oldPath), request.Name)
 		log.Println("newPath file : ", newPath)
@@ -526,9 +508,6 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 		`
 		oldPathPattern := "^" + strings.Replace(filepath.Dir(oldPath), "/", "\\/", -1) + "\\/"
 		newPathPattern := strings.Replace(filepath.Dir(newPath), "/", "\\/", -1) + "/"
-		log.Println("oldPathPattern : ", oldPathPattern)
-		log.Println("newPathPattern : ", newPathPattern)
-		log.Println("request.ID : ", request.ID)
 		_, err = tx.Exec(c.Request.Context(), cteQuery, request.ID, oldPathPattern, newPathPattern)
 		if err != nil {
 			log.Println("Error updating nested paths:", err)
@@ -587,8 +566,6 @@ func renameS3Folder(s3Client *s3.S3, bucket, oldPath, newPath string) error {
 	for _, item := range resp.Contents {
 		oldKey := *item.Key
 		newKey := strings.Replace(oldKey, oldPath, newPath, 1)
-		log.Println("oldKey :", oldKey)
-		log.Println("newKey :", newKey)
 		_, err = s3Client.CopyObject(&s3.CopyObjectInput{
 			Bucket:     aws.String(bucket),
 			CopySource: aws.String(bucket + "/" + oldKey),

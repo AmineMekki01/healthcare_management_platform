@@ -86,7 +86,6 @@ func ShareItem(c *gin.Context, db *pgxpool.Pool) {
 func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 	userID := c.Query("userId")
 	var items []models.FileFolder
-	log.Println("userID", userID)
 	// SQL query to retrieve the items shared with the user
 	sql := `SELECT 
     f.id, 
@@ -146,7 +145,6 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 	userID := c.Query("userId")
 	var items []models.FileFolder
-	log.Println("userID", userID)
 	// SQL query to retrieve the items shared with the user
 	sql := `SELECT 
     f.id, 
@@ -175,7 +173,6 @@ func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 
 	for rows.Next() {
 		var item models.FileFolder
-		log.Println("rows", rows)
 		if err := rows.Scan(
 			&item.ID,
 			&item.Name,
