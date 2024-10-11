@@ -176,13 +176,15 @@ func InitDatabase() (*pgxpool.Pool, error) {
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS blog_posts (
-			post_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
-			title VARCHAR(255) NOT NULL,
-			content TEXT NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-		);`,
+            post_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
+            title VARCHAR(255) NOT NULL,
+            content TEXT NOT NULL,
+            specialty VARCHAR(100) NOT NULL,
+            keywords TEXT[] NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );`,
 
 		`CREATE TABLE IF NOT EXISTS comments (
 			comment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -15,6 +15,10 @@ import {
     CommentsCount,
     ActionButtonsContainer,
     PostStats,
+    PostMetadata,
+    SpecialtyTag,
+    KeywordTag,
+    KeywordsContainer,
     PostAuthorInfoContainer,
     PostAuthorInfo,
     GoToPostActionButton
@@ -77,6 +81,14 @@ const BlogPost = ({post}) => {
 
     return (
         <PostContainer>
+            <PostMetadata>
+                <SpecialtyTag>{post.specialty}</SpecialtyTag>
+                <KeywordsContainer>
+                {post.keywords.map((keyword, index) => (
+                    <KeywordTag key={index}>{keyword}</KeywordTag>
+                ))}
+                </KeywordsContainer>
+            </PostMetadata>
             <PostHeader>
                 <PostAuthorInfoContainer>
                     <PostAuthorAvatar src={`http://localhost:3001/${post.doctor_avatar}`} alt={`Dr. ${post.doctor_name}`} />

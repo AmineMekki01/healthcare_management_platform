@@ -49,7 +49,7 @@ const MyNavbar = () => {
         src: 'chatbot',
         href: '/ChatBot',
       },
-      { title: 'Doctor Posts', src: 'feed_logo', href: '/doctor-posts' },
+      { title: 'My Posts', src: 'doctor_feed', href: '/doctor-posts' },
 
     );
   }

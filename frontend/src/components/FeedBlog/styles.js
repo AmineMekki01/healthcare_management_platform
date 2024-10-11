@@ -56,8 +56,9 @@ export const PostTimestamp = styled.div`
 `;
 
 export const PostTitle = styled.h2`
-  margin-top: 10px;
-  margin-bottom: 10px;
+
+  margin: 10px auto;
+  font-size: 20px;
 `;
 
 export const PostContent = styled.div`
@@ -203,4 +204,38 @@ export const DoctorPostsTitle = styled.div`
   font-size: 25px;
   font-weight: bold;
   padding: 20px;
+`;
+
+export const PostMetadata = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+`;
+
+export const SpecialtyTag = styled.span`
+  background-color: #007bff;
+  width: fit-content;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9em;
+  margin-right: 10px;
+`;
+
+export const KeywordsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 5px;
+`;
+
+export const KeywordTag = styled.span`
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-right: 5px;
+  margin-bottom: 5px;
 `;

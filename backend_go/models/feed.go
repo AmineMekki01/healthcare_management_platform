@@ -9,12 +9,14 @@ import (
 type BlogPost struct {
 	PostID        uuid.UUID `json:"post_id"`
 	DoctorID      uuid.UUID `json:"doctor_id"`
-	DoctorName    string    `json:"doctor_name"`
-	DoctorAvatar  string    `json:"doctor_avatar"`
 	Title         string    `json:"title"`
 	Content       string    `json:"content"`
+	Specialty     string    `json:"specialty"`
+	Keywords      []string  `json:"keywords"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	DoctorName    string    `json:"doctor_name"`
+	DoctorAvatar  string    `json:"doctor_avatar"`
 	LikesCount    int       `json:"likes_count"`
 	CommentsCount int       `json:"comments_count"`
 	IsLiked       bool      `json:"is_liked"`

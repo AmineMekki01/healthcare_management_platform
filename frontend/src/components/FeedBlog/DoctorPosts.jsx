@@ -13,7 +13,12 @@ import {
   LikesCount,
   CommentsCount,
   DoctorPostsContainer,
-  DoctorPostsTitle
+  DoctorPostsTitle,
+  PostMetadata,
+  SpecialtyTag,
+  KeywordTag,
+  KeywordsContainer,
+  ActionButton
 } from './styles';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,7 +26,7 @@ const DoctorPosts = () => {
   const { userId } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const navigate = useNavigate();
-  console.log("userId : ", userId)
+  const [showMore, setShowMore] = useState(false);
   
   useEffect(() => {
     console.log("userId before making API call: ", userId);
@@ -46,6 +51,19 @@ const DoctorPosts = () => {
     navigate(`/edit-post/${postId}`);
   };
 
+  const handleShowMore = () => {
+      setShowMore(!showMore)
+  };
+
+  const getSnippet = (content) => {
+    const maxLength = 250;
+    if (content.length > maxLength) {
+        return `${content.substring(0, maxLength)}...`
+    }
+    return content;
+  };
+
+
   const handleDeletePost = async (postId) => {
     try {
       await axios.delete(`http://localhost:3001/api/v1/posts/${postId}`);
@@ -61,11 +79,21 @@ const DoctorPosts = () => {
       {posts && posts.map((post) => (
 
         <PostContainer key={post.post_id}>
+          <PostMetadata>
+            <SpecialtyTag>{post.specialty}</SpecialtyTag>
+            <KeywordsContainer>
+            {post.keywords.map((keyword, index) => (
+                <KeywordTag key={index}>{keyword}</KeywordTag>
+            ))}
+            </KeywordsContainer>
+          </PostMetadata>
           <PostHeader>
             <PostTitle>{post.title}</PostTitle>
           </PostHeader>
-          <PostContent dangerouslySetInnerHTML={{ __html: post.content }} />
-
+          <PostContent dangerouslySetInnerHTML={{ __html: showMore ? post.content : getSnippet(post.content) }} />
+          <ActionButton onClick={handleShowMore}>
+                {showMore ? 'Show Less' : 'Show More'}
+          </ActionButton>
           <PostStats>
                     <LikesCount>{post.likes_count} Likes</LikesCount>
                     <CommentsCount>{post.comments_count} Comments</CommentsCount>

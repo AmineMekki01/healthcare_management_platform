@@ -3,22 +3,27 @@ package services
 import (
 	"backend_go/models"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lib/pq"
 	"github.com/microcosm-cc/bluemonday"
 )
 
 func CreateBlogPost(db *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			Title   string `json:"title" binding:"required"`
-			Content string `json:"content" binding:"required"`
-			UserID  string `json:"userId" binding:"required"`
+			Title     string   `json:"title" binding:"required"`
+			Content   string   `json:"content" binding:"required"`
+			UserID    string   `json:"userId" binding:"required"`
+			Specialty string   `json:"specialty" binding:"required"`
+			Keywords  []string `json:"keywords" binding:"required"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Println("Title and content are required : ", err)
@@ -29,9 +34,9 @@ func CreateBlogPost(db *pgxpool.Pool) gin.HandlerFunc {
 		cleanContent := sanitizeHTML(req.Content)
 
 		_, err := db.Exec(context.Background(), `
-            INSERT INTO blog_posts (doctor_id, title, content, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5)
-        `, req.UserID, req.Title, cleanContent, time.Now(), time.Now())
+            INSERT INTO blog_posts (doctor_id, title, content, specialty, keywords, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, req.UserID, req.Title, cleanContent, req.Specialty, pq.Array(req.Keywords), time.Now(), time.Now())
 
 		if err != nil {
 			log.Println("Failed to create post : ", err)
@@ -53,8 +58,7 @@ func LikePost(db *pgxpool.Pool) gin.HandlerFunc {
 		postIDStr := c.Param("postID")
 		userType := c.Query("userType")
 		userIDStr := c.Query("userId")
-		log.Println("userIDStr : ", userIDStr)
-		log.Println("userType : ", userType)
+
 		postID, err := uuid.Parse(postIDStr)
 		if err != nil {
 			log.Println("Invalid post ID : ", err)
@@ -121,8 +125,7 @@ func AddComment(db *pgxpool.Pool) gin.HandlerFunc {
 		postIDStr := c.Param("postID")
 		userType := c.Query("userType")
 		userIDStr := c.Query("userId")
-		log.Println("userIDStr : ", userIDStr)
-		log.Println("userType : ", userType)
+
 		postID, err := uuid.Parse(postIDStr)
 		if err != nil {
 			log.Println("Invalid post ID : ", err)
@@ -249,7 +252,8 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userType := c.Query("userType")
 		userID := c.Query("userId")
-
+		specialty := c.Query("specialty")
+		searchQuery := c.Query("search")
 		if userType == "" || userID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "userType and userId are required"})
 			return
@@ -275,11 +279,9 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve doctor IDs"})
 				return
 			}
-			log.Println("single doc id : ", doctorID)
 			doctorIDs = append(doctorIDs, doctorID)
 		}
 
-		log.Println("doctor ids : ", doctorIDs)
 		if userType == "doctor" {
 			doctorUUID, err := uuid.Parse(userID)
 			if err != nil {
@@ -291,18 +293,19 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		if len(doctorIDs) == 0 {
-			log.Println("nod doctors ")
-
+			log.Println("No doctors found.")
 			c.JSON(http.StatusOK, gin.H{"posts": []models.BlogPost{}})
 			return
 		}
 
-		postsRows, err := db.Query(context.Background(), `
+		query := `
             SELECT
                 bp.post_id,
                 bp.doctor_id,
                 bp.title,
                 bp.content,
+                bp.specialty,
+                bp.keywords,
                 bp.created_at,
                 bp.updated_at,
                 di.first_name || ' ' || di.last_name AS doctor_name,
@@ -316,8 +319,29 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
             FROM blog_posts bp
             JOIN doctor_info di ON bp.doctor_id = di.doctor_id
             WHERE bp.doctor_id = ANY($1)
-            ORDER BY bp.created_at DESC
-        `, doctorIDs, userID, userType)
+        `
+		params := []interface{}{doctorIDs, userID, userType}
+		paramCount := 4
+
+		if specialty != "" {
+			query += fmt.Sprintf(" AND bp.specialty = $%d", paramCount)
+			params = append(params, specialty)
+			paramCount++
+		}
+
+		if searchQuery != "" {
+
+			keywords := strings.Fields(strings.ToLower(searchQuery))
+			for _, keyword := range keywords {
+				query += fmt.Sprintf(" AND EXISTS (SELECT 1 FROM unnest(bp.keywords) k WHERE LOWER(k) LIKE $%d)", paramCount)
+				params = append(params, "%"+keyword+"%")
+				paramCount++
+			}
+		}
+
+		query += " ORDER BY bp.created_at DESC"
+
+		postsRows, err := db.Query(context.Background(), query, params...)
 		if err != nil {
 			log.Println("Failed to retrieve blog posts : ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve blog posts"})
@@ -333,6 +357,8 @@ func GetFeed(db *pgxpool.Pool) gin.HandlerFunc {
 				&post.DoctorID,
 				&post.Title,
 				&post.Content,
+				&post.Specialty,
+				pq.Array(&post.Keywords),
 				&post.CreatedAt,
 				&post.UpdatedAt,
 				&post.DoctorName,
@@ -375,8 +401,11 @@ func GetPostByID(c *gin.Context, pool *pgxpool.Pool) {
         bp.post_id,
         d.first_name || ' ' || d.last_name AS doctor_name,
         d.profile_photo_url AS doctor_avatar,
+		bp.title,
         bp.content,
         bp.created_at,
+		bp.specialty,
+		bp.keywords,
         (SELECT COUNT(*) FROM likes WHERE post_id = bp.post_id) AS likes_count,
         (SELECT COUNT(*) FROM comments WHERE post_id = bp.post_id) AS comments_count,
 		EXISTS (
@@ -390,7 +419,7 @@ func GetPostByID(c *gin.Context, pool *pgxpool.Pool) {
 	var post models.BlogPost
 
 	row := pool.QueryRow(context.Background(), query, postID, userID, userType)
-	err = row.Scan(&post.PostID, &post.DoctorName, &post.DoctorAvatar, &post.Content, &post.CreatedAt, &post.LikesCount, &post.CommentsCount, &post.IsLiked)
+	err = row.Scan(&post.PostID, &post.DoctorName, &post.DoctorAvatar, &post.Title, &post.Content, &post.CreatedAt, &post.Specialty, pq.Array(&post.Keywords), &post.LikesCount, &post.CommentsCount, &post.IsLiked)
 	if err != nil {
 		log.Printf("Failed to fetch post by ID: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve post"})
@@ -403,7 +432,6 @@ func GetPostByID(c *gin.Context, pool *pgxpool.Pool) {
 func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("userId")
-		log.Println("userID : ", userID)
 
 		if userID == "" {
 			log.Println("Missing userID")
@@ -419,6 +447,8 @@ func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
 				bp.content,
 				bp.created_at,
 				bp.updated_at,
+				bp.specialty,
+				bp.Keywords,
 				di.first_name || ' ' || di.last_name AS doctor_name,
 				di.profile_photo_url AS doctor_avatar,
 				(SELECT COUNT(*) FROM likes l WHERE l.post_id = bp.post_id) AS likes_count,
@@ -434,7 +464,6 @@ func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve blog posts"})
 			return
 		}
-		log.Println("Query executed successfully")
 		defer postsRows.Close()
 
 		var posts []models.BlogPost
@@ -447,6 +476,8 @@ func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
 				&post.Content,
 				&post.CreatedAt,
 				&post.UpdatedAt,
+				&post.Specialty,
+				pq.Array(&post.Keywords),
 				&post.DoctorName,
 				&post.DoctorAvatar,
 				&post.LikesCount,
@@ -460,7 +491,6 @@ func GetDoctorPosts(pool *pgxpool.Pool) gin.HandlerFunc {
 			}
 			posts = append(posts, post)
 		}
-		log.Println(" posts : ", posts)
 
 		c.JSON(http.StatusOK, gin.H{"posts": posts})
 	}
