@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from './../../axiosConfig';
 import {
-  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, Image, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, DoctorInfo, DoctorName, FollowButton, DoctorInfoContainer
 } from './styles/DoctorProfileStyles';
 
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
@@ -93,36 +93,27 @@ export default function DoctorProfile() {
       });
   };
 
-  const showFollowButton = userId && userId !== doctorId && userType !== 'doctor';
-
+  const notCurrentUser = userId && userId !== doctorId;
 
   return (
     <MainContainer>
       <Header>
-        <Image src={`http://localhost:3001/${doctorInfo.ProfilePictureUrl}`} alt="Profile avatar" />
-        <Title>Dr. {capitalizeText(doctorInfo.FirstName)} {doctorInfo.LastName && doctorInfo.LastName.toUpperCase()}</Title>
-        <Subtitle>{capitalizeText(doctorInfo.Specialty)} - {doctorInfo.RatingScore} ({ doctorInfo.RatingCount })</Subtitle>
-        <Subtitle>{doctorInfo.CityName} , { doctorInfo.CountryName }</Subtitle>
+        <ProfileImage src={`http://localhost:3001/${doctorInfo.ProfilePictureUrl}`} alt="Profile avatar" />
+        
+        <DoctorInfoContainer>
+          <DoctorName>Dr. {capitalizeText(doctorInfo.FirstName)} {doctorInfo.LastName && doctorInfo.LastName.toUpperCase()}</DoctorName>
+          <DoctorInfo>{capitalizeText(doctorInfo.Specialty)} - {doctorInfo.RatingScore} ({ doctorInfo.RatingCount })</DoctorInfo>
+          <DoctorInfo>{doctorInfo.CityName} , { doctorInfo.CountryName }</DoctorInfo>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {notCurrentUser && (
+              <FollowButton onClick={handleFollowClick} disabled={isProcessingFollow || isFollowing}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </FollowButton>
+            )}
+          </div>
+        </DoctorInfoContainer>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Subtitle>{followerCount} Followers</Subtitle>
-          {showFollowButton && (
-            <button
-              onClick={handleFollowClick}
-              disabled={isProcessingFollow || isFollowing}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: isFollowing ? 'gray' : '#007bff',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: isProcessingFollow || isFollowing ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-          )}
-        </div>
+       
       </Header>
 
       <BodyContainer>
@@ -247,7 +238,7 @@ export default function DoctorProfile() {
         </RightColumn>
       </BodyContainer> 
 
-      {userType === 'patient' && <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />}
+      {notCurrentUser && <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />}
 
     </MainContainer>
   );

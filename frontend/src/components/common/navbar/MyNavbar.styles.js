@@ -1,10 +1,15 @@
 import styled from 'styled-components';
 
 export const NavbarContainer = styled.nav`
-    background: rgb(18, 31, 73);
+    background: linear-gradient(to bottom, #1a237e, #3949ab);
     display: flex;
     flex-direction: column;
-    min-width: max-content;
+    min-width: 220px;
+    transition: all 0.3s ease;
+
+    @media (max-width: 768px) {
+        min-width: 80px;
+    }
 `;
 
 export const LogoContainer = styled.div`
@@ -13,7 +18,7 @@ export const LogoContainer = styled.div`
     justify-content: center;
     align-self: center;
     width: 8vw;
-    padding: 10px 10px;
+    padding: 20px 0;
     @media (max-width: 549px) {
         width: 36px;
     }
@@ -28,6 +33,10 @@ export const LogoContainer = styled.div`
 `;
 
 export const MenuList = styled.ul`
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+
     @media (max-width: 549px) {
         display: flex;  
         flex-direction: column;
@@ -37,64 +46,91 @@ export const MenuList = styled.ul`
 `;
 
 export const MenuItem = styled.li`
-    display: flex;
-    flex-direction: row;
-    padding: 0.5rem;
-    cursor: pointer;
-    color: #ccc;
-    font-size: 0.875rem;
-    align-items: center;
-    gap: 1rem;
-
+    list-style-type: none;
+    
     a {
-        transition: 0.2s;
         display: flex;
         align-items: center;
-        span {
-            margin-left: 0.5rem;
-            @media (max-width: 549px) {
-                display: none;
-                }
+        padding: 12px 20px;
+        color: #fff;
+        text-decoration: none;
+        transition: all 0.3s ease;
+
+        &:hover, &.active {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
-        
+        img {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            @media (max-width: 768px) {
+                margin: auto;
+            }
+        }
+
+        span {
+            font-size: 16px;
+            
+            @media (max-width: 768px) {
+                display: none;
+            }
+        }
     }
 `;
 
-export const LowerMenuList = styled(MenuItem)`
-    margin-top: auto;
-    display: flex;  
-    flex-direction: column;
-    align-items: flex-start;
-    @media (max-width: 549px) {
-        display: flex;  
-        flex-direction: column;
-        align-items: center;
+export const LogoutMenuItem = styled(MenuItem)`
+    @media (max-width: 768px) {
+        a {
+            img {
+                margin: auto;
+            }   
+        }
     }
+`;  
+
+
+export const MenuGroup = styled.div`
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+
+    &:last-child {
+        border-bottom: none;
+    }
+`;
+
+export const LowerMenuList = styled.div`
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 export const UserInfoContainer = styled.div`
     display: flex;
-    margin-top: auto;
-    text-align: center;
+    align-items: center;
+    padding: 12px 20px;
+    color: #fff;
+`;
+
+export const UserInfoImage = styled.img`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
    
 `;
 
 export const UserInfo = styled.div`
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    margin-left: 0.5rem;
-    color: #ccc;
-    font-size: 0.5rem;
-    text-align: left;
-    @media (max-width: 549px) {
+
+    span {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
         display: none;
     }
-`;
-
-export const UserInfoImage = styled.img`
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
 `;

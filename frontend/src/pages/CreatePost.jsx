@@ -7,40 +7,90 @@ import axios from './../components/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+const PageContainer = styled.div`
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  padding: 40px 0;
+`;
+
 const CreatePostContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const FormTitle = styled.h2`
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+`;
+
+const InputGroup = styled.div`
+  margin-bottom: 20px;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #444;
 `;
 
 const TitleInput = styled.input`
   width: 100%;
   padding: 12px;
-  margin-bottom: 15px;
-  font-size: 1.2em;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.3s;
+
+  &:focus {
+    border-color: #4a90e2;
+    outline: none;
+  }
+`;
+
+const SpecialtySelect = styled(Select)`
+  .react-select__control {
+    border-color: #ddd;
+    box-shadow: none;
+    &:hover {
+      border-color: #4a90e2;
+    }
+  }
+  .react-select__control--is-focused {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 1px #4a90e2;
+  }
+`;
+
+const KeywordsInput = styled(TitleInput)``;
+
+const StyledReactQuill = styled(ReactQuill)`
+  .ql-container {
+    min-height: 200px;
+    font-size: 16px;
+  }
 `;
 
 const SubmitButton = styled.button`
   padding: 12px 20px;
-  background-color: #007bff;
+  background-color: #4a90e2;
   color: #fff;
   border: none;
+  border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
-  margin-top: 15px;
-`;
+  transition: background-color 0.3s;
 
-const SpecialtySelect = styled(Select)`
-  margin-bottom: 15px;
+  &:hover {
+    background-color: #3a7bc8;
+  }
 `;
-
-const KeywordsInput = styled.input`
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  font-size: 1em;
-  border: 1px solid #ccc;
-`;
-
 
 const CreatePost = () => {
   const [title, setTitle] = useState('');
@@ -48,7 +98,7 @@ const CreatePost = () => {
   const [specialty, setSpecialty] = useState(null);
   const [keywords, setKeywords] = useState('');
   const navigate = useNavigate();
-  const {userId} = useContext(AuthContext)
+  const { userId } = useContext(AuthContext);
 
   const specialtyOptions = [
     { value: 'cardiology', label: 'Cardiology' },
@@ -59,7 +109,7 @@ const CreatePost = () => {
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim() || !specialty || !keywords.trim()) {
-      alert('Title and content are required.');
+      alert('All fields are required.');
       return;
     }
 
@@ -88,50 +138,70 @@ const CreatePost = () => {
   };
 
   return (
-    <CreatePostContainer>
-      <TitleInput
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Enter post title"
-      />
-      <SpecialtySelect
-        options={specialtyOptions}
-        value={specialty}
-        onChange={setSpecialty}
-        placeholder="Select specialty"
-      />
-      <KeywordsInput
-        value={keywords}
-        onChange={(e) => setKeywords(e.target.value)}
-        placeholder="Enter keywords (comma-separated)"
-      />
-      <ReactQuill
-        value={content}
-        onChange={setContent}
-        modules={{
-          toolbar: [
-            [{ header: [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link', 'image'],
-            ['clean'],
-          ],
-        }}
-        formats={[
-          'header',
-          'bold',
-          'italic',
-          'underline',
-          'strike',
-          'list',
-          'bullet',
-          'link',
-          'image',
-        ]}
-        placeholder="Compose your post here..."
-      />
-      <SubmitButton onClick={handleSubmit}>Publish</SubmitButton>
-    </CreatePostContainer>
+    <PageContainer>
+      <CreatePostContainer>
+        <FormTitle>Create a New Post</FormTitle>
+        <InputGroup>
+          <Label htmlFor="title">Title</Label>
+          <TitleInput
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter post title"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Label htmlFor="specialty">Specialty</Label>
+          <SpecialtySelect
+            id="specialty"
+            options={specialtyOptions}
+            value={specialty}
+            onChange={setSpecialty}
+            placeholder="Select specialty"
+            classNamePrefix="react-select"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Label htmlFor="keywords">Keywords</Label>
+          <KeywordsInput
+            id="keywords"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            placeholder="Enter keywords (comma-separated)"
+          />
+        </InputGroup>
+        <InputGroup>
+          <Label htmlFor="content">Content</Label>
+          <StyledReactQuill
+            id="content"
+            value={content}
+            onChange={setContent}
+            modules={{
+              toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean'],
+              ],
+            }}
+            formats={[
+              'header',
+              'bold',
+              'italic',
+              'underline',
+              'strike',
+              'list',
+              'bullet',
+              'link',
+              'image',
+            ]}
+            placeholder="Compose your post here..."
+          />
+        </InputGroup>
+        <SubmitButton onClick={handleSubmit}>Publish Post</SubmitButton>
+      </CreatePostContainer>
+    </PageContainer>
   );
 };
 
