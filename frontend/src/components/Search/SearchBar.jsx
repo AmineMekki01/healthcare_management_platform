@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback} from 'react';
 import axios from './../axiosConfig';
 import DoctorCard from '../Users/Doctor/DoctorCard';
-import { AppContainer, SearchInputContainer, SearchInput, UserList } from './SearchBar.styles';
+import { AppContainer, SearchInputContainer, SearchInput, UserList, AnalyzeButton } from './SearchBar.styles';
 import { debounce } from 'lodash';
 
 const SearchBar = () => {
@@ -33,6 +33,8 @@ const SearchBar = () => {
         const response = await axios.get(`http://localhost:3001/api/v1/doctors?query=${query}&specialty=${specialty}&location=${location}`);
         if (response.status === 200) {
           setUsers(response.data);
+          console.log("response.data :",response.data)
+
         } else {
           throw new Error(`Failed to fetch users: ${response.status}`);
         }
@@ -70,6 +72,7 @@ const SearchBar = () => {
 
         if (doctorsResponse.status === 200) { 
             setUsers(doctorsResponse.data);
+            console.log("doctorsResponse.data :",doctorsResponse.data)
         } else {
             console.error('Failed to fetch doctors:', doctorsResponse.status);
         }
@@ -107,7 +110,7 @@ const SearchBar = () => {
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
         />
-        <button onClick={analyzeAndRecommendDoctor}>Analyze Symptoms</button>
+        <AnalyzeButton onClick={analyzeAndRecommendDoctor}>Analyze Symptoms</AnalyzeButton>
       </SearchInputContainer>
       { (users ) && (
       <UserList className='flex flex-wrap justify-center'>
@@ -130,6 +133,7 @@ const SearchBar = () => {
                 location={user.Location}
                 imageUrl={user.ProfilePictureUrl}
                 doctor_user_name={user.Username}
+                number_of_raters={user.RatingCount}
               />
             </li>
           );

@@ -1,7 +1,7 @@
 import React from 'react';
-import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, DoctorSpecialty, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, ActionLink, VerticalLine, RatingContainer, NumberOfRaters
-} from './styles/DoctorCardStyles';
+import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, DoctorSpecialty, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, ActionLink, VerticalLine, RatingContainer, NumberOfRaters } from './styles/DoctorCardStyles';
 import { Link } from 'react-router-dom';
+
 const DoctorCard = ({
   doctorId,
   first_name,
@@ -30,21 +30,20 @@ const DoctorCard = ({
         </div>
         <RatingContainer>
           <DoctorInfo>
-            Rating: <DoctorRating>{doctor_rating}</DoctorRating>
+            Rating: <DoctorRating>{doctor_rating || 'N/A'}</DoctorRating>
           </DoctorInfo>
-          <NumberOfRaters>({number_of_raters} raters)</NumberOfRaters>
+          <NumberOfRaters>({number_of_raters || 0} raters)</NumberOfRaters>
         </RatingContainer>
       </InfoContainer>
       <ButtonContainer>
-          <ActionLink href="#" onClick={() => alert('Share Profile')}>Share</ActionLink>
-          <VerticalLine />
-          <Link to={`/DoctorProfile/${doctorId}`}>
-            <ActionLink>Profile</ActionLink>
-          </Link>
+        <ActionLink href="#" onClick={() => alert('Share Profile')}>Share</ActionLink>
+        <VerticalLine />
+        <Link to={`/DoctorProfile/${doctorId}`}>
+          <ActionLink>Profile</ActionLink>
+        </Link>
       </ButtonContainer>
     </CardContainer>
   );
 };
-
 
 export default DoctorCard;

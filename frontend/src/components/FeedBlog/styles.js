@@ -2,23 +2,27 @@ import styled from 'styled-components';
 
 export const PostContainer = styled.div`
   background-color: #fff;
-  border: 1px solid #ddd;
   border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 export const PostHeader = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 15px;
-
+  border-bottom: 1px solid #f0f2f5;
 `;
 
 export const PostAuthorInfoContainer = styled.div`
   display: flex;
   align-items: center;
-  padding: 15px;
-
 `;
 
 export const PostAuthorInfo = styled.div`
@@ -27,16 +31,19 @@ export const PostAuthorInfo = styled.div`
 `;
 
 export const GoToPostActionButton = styled.button`
-  padding: 10px;
-  border: 1px solid #f2f2f2;
-  border-radius: 5px;
+  padding: 8px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
 
   &:hover {
-    background-color: #f2f2f2;
-    color: black;
+    background-color: #3a7bc8;
   }
 `;
-
 
 export const PostAuthorAvatar = styled.img`
   width: 50px;
@@ -48,53 +55,100 @@ export const PostAuthorAvatar = styled.img`
 
 export const PostAuthorName = styled.div`
   font-weight: bold;
+  font-size: 16px;
 `;
 
 export const PostTimestamp = styled.div`
-  font-size: 0.9em;
-  color: #777;
-`;
-
-export const PostTitle = styled.h2`
-
-  margin: 10px auto;
-  font-size: 20px;
+  font-size: 12px;
+  color: #65676b;
 `;
 
 export const PostContent = styled.div`
-  margin-bottom: 10px;
   padding: 15px;
-
+  font-size: 16px;
+  line-height: 1.5;
 `;
 
 export const PostActions = styled.div`
   display: flex;
-  align-items: left;
   flex-direction: column;
-  border-top: 2px solid #ddd;
+  border-top: 1px solid #f0f2f5;
 `;
 
 export const ActionButtonsContainer = styled.div`
   display: flex;
+  justify-content: space-around;
+  padding: 10px;
 `;
 
 export const PostStats = styled.div`
   display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: #f0f2f5;
+  font-size: 14px;
 `;
 
 export const ActionButton = styled.button`
   background-color: transparent;
   border: none;
   cursor: pointer;
-  margin-right: 10px;
-  padding: 10px;
-  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #65676b;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+
   &:hover {
-    text-decoration: underline;
-    background-color: #ddd;
+    background-color: #f0f2f5;
+    border-radius: 20px;
+  }
+
+  svg {
+    margin-right: 5px;
   }
 `;
 
+export const LikesCount = styled.span`
+  color: #4a90e2;
+`;
+
+export const CommentsCount = styled.span`
+  color: #4a90e2;
+`;
+
+export const PostMetadata = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f0f2f5;
+`;
+
+export const SpecialtyTag = styled.span`
+  background-color: #4a90e2;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-right: 10px;
+`;
+
+export const KeywordsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`;
+
+export const KeywordTag = styled.span`
+  background-color: #e4e6eb;
+  color: #050505;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+`;
 
 export const EditButton = styled.button`
   background-color: transparent;
@@ -122,18 +176,6 @@ export const DeleteButton = styled.button`
 `;
 export const CommonStatCount = styled.span`
   padding: 10px;
-`;
-
-export const LikesCount = styled.span`
-  color: #6DAE4F;
-  padding: 10px;
-
-`;
-
-export const CommentsCount = styled.span`
-  color: #378FE9;
-  padding: 10px;
-
 `;
 
 export const CommentsContainer = styled.div`
@@ -206,36 +248,8 @@ export const DoctorPostsTitle = styled.div`
   padding: 20px;
 `;
 
-export const PostMetadata = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
-`;
+export const PostTitle = styled.h2`
 
-export const SpecialtyTag = styled.span`
-  background-color: #007bff;
-  width: fit-content;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.9em;
-  margin-right: 10px;
-`;
-
-export const KeywordsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 5px;
-`;
-
-export const KeywordTag = styled.span`
-  background-color: #f0f0f0;
-  color: #333;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.8em;
-  margin-right: 5px;
-  margin-bottom: 5px;
+  margin: 10px auto;
+  font-size: 20px;
 `;

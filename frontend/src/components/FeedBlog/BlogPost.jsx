@@ -1,4 +1,4 @@
-import react, {useState, useContext} from 'react';
+import React, { useState, useContext } from 'react';
 import axios from './../axiosConfig';
 import CommentsSection from './CommentsSection';
 import {
@@ -7,7 +7,6 @@ import {
     PostAuthorAvatar,
     PostAuthorName,
     PostTimestamp,
-    PostTitle,
     PostContent,
     PostActions,
     ActionButton,
@@ -25,6 +24,7 @@ import {
   } from './styles';
 import { AuthContext } from './../Auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FaThumbsUp, FaComment, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const BlogPost = ({post}) => {
     const [likes, setLikes] = useState(post.likes_count)
@@ -81,14 +81,6 @@ const BlogPost = ({post}) => {
 
     return (
         <PostContainer>
-            <PostMetadata>
-                <SpecialtyTag>{post.specialty}</SpecialtyTag>
-                <KeywordsContainer>
-                {post.keywords.map((keyword, index) => (
-                    <KeywordTag key={index}>{keyword}</KeywordTag>
-                ))}
-                </KeywordsContainer>
-            </PostMetadata>
             <PostHeader>
                 <PostAuthorInfoContainer>
                     <PostAuthorAvatar src={`http://localhost:3001/${post.doctor_avatar}`} alt={`Dr. ${post.doctor_name}`} />
@@ -97,30 +89,43 @@ const BlogPost = ({post}) => {
                         <PostTimestamp>{new Date(post.created_at).toLocaleString()}</PostTimestamp>
                     </PostAuthorInfo>
                 </PostAuthorInfoContainer>
-                
-                <GoToPostActionButton onClick={handleGoToPost} style={{ marginLeft: 'auto' }}>
-                    Go to Post
+                <GoToPostActionButton onClick={handleGoToPost}>
+                    View Full Post
                 </GoToPostActionButton>
             </PostHeader>
+            <PostMetadata>
+                <SpecialtyTag>{post.specialty}</SpecialtyTag>
+                <KeywordsContainer>
+                {post.keywords.map((keyword, index) => (
+                    <KeywordTag key={index}>{keyword}</KeywordTag>
+                ))}
+                </KeywordsContainer>
+            </PostMetadata>
             <PostContent dangerouslySetInnerHTML={{ __html: showMore ? post.content : getSnippet(post.content) }} />
-
             <ActionButton onClick={handleShowMore}>
-                {showMore ? 'Show Less' : 'Show More'}
+                {showMore ? (
+                    <>
+                        Show Less <FaChevronUp />
+                    </>
+                ) : (
+                    <>
+                        Show More <FaChevronDown />
+                    </>
+                )}
             </ActionButton>
             <PostActions>
-                
                 <PostStats>
                     <LikesCount>{likes} Likes</LikesCount>
                     <CommentsCount>{commentsCount} Comments</CommentsCount>
                 </PostStats>
-
                 <ActionButtonsContainer>
-
-                    <ActionButton onClick={handleLike}>{liked ? 'Unlike' : 'Like'}</ActionButton>
-                    <ActionButton onClick={toggleComments}>Comments</ActionButton>
-
+                    <ActionButton onClick={handleLike}>
+                        <FaThumbsUp /> {liked ? 'Unlike' : 'Like'}
+                    </ActionButton>
+                    <ActionButton onClick={toggleComments}>
+                        <FaComment /> Comments
+                    </ActionButton>
                 </ActionButtonsContainer>
-
             </PostActions>
             {showComments && <CommentsSection postId={post.post_id} onCommentAdded={updateCommentsCount} />}
         </PostContainer>
