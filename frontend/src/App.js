@@ -28,7 +28,6 @@ import DoctorPosts from './components/FeedBlog/DoctorPosts';
 import EditPost from './components/FeedBlog/EditPostPage';  
 
 function App() {
-  const { isLoggedIn } = useContext(AuthContext);
 
   return (
       <Router>

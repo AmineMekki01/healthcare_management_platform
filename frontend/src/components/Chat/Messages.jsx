@@ -11,7 +11,7 @@ const Messages = styled.div`
 `;
 
 const MessagesComponent = ({ messages, currentUserId, senderImage, recipientImage }) => {
- 
+    console.log("messages : ", messages)
   return (
       <Messages>
           {messages &&

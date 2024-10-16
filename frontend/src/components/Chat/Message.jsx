@@ -73,16 +73,18 @@ const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientI
     };
 
     const renderMessageContent = (content) => {
-        const imageRegex = /\[Image: (.+)\]\((.+)\)/;
-        const match = content.match(imageRegex);
-
-        if (match) {
-            const [_, altText, imageUrl] = match;
-            return <MessageImage src={imageUrl} alt={altText} />;
+        console.log("content : ", content)
+        if (content) {
+            if (content.startsWith("http")) {
+                return <MessageImage src={content} alt="uploaded image" />;
+            } else {
+                return <p>{content}</p>;
+            }
         }
-
-        return <p>{content}</p>;
+        
     };
+    
+    
 
     return (
         <Message className={isOwner ? 'owner' : 'not-owner'}>

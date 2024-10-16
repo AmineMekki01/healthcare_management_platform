@@ -33,7 +33,8 @@ type Message struct {
 	ID        string    `json:"id"`
 	ChatID    string    `json:"chat_id"`
 	SenderID  string    `json:"sender_id"`
-	Content   string    `json:"content"`
+	Content   *string   `json:"content"`
+	Key       *string   `json:"key"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`

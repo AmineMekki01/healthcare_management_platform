@@ -149,16 +149,16 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			updated_at TIMESTAMP NOT NULL,
 			deleted_at TIMESTAMP
 		)`,
-
 		`CREATE TABLE IF NOT EXISTS messages (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 			chat_id uuid NOT NULL,
 			sender_id uuid NOT NULL,
-			content TEXT NOT NULL,
+			content TEXT,
+			key TEXT,
 			created_at TIMESTAMP NOT NULL,
 			updated_at TIMESTAMP NOT NULL,
 			deleted_at TIMESTAMP
-		)`,
+		);`,
 		`CREATE TABLE IF NOT EXISTS verification_tokens (
 			id SERIAL PRIMARY KEY,
 			email VARCHAR(255) NOT NULL,

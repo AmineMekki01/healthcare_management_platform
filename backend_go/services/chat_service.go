@@ -7,7 +7,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
@@ -26,6 +31,11 @@ type CombinedMessage struct {
 	RecipientID string    `json:"recipient_id"`
 	Content     string    `json:"content"`
 	CreatedAt   time.Time `json:"created_at"`
+	Key         *string   `json:"key"`
+}
+
+type Presigner struct {
+	PresignClient *s3.PresignClient
 }
 
 func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
@@ -139,7 +149,7 @@ func SendMessage(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	err = storeMessage(conn, newMessage.SenderID, newMessage.ChatID, newMessage.Content, newMessage.CreatedAt)
+	err = storeMessage(conn, newMessage.SenderID, newMessage.ChatID, newMessage.Content, newMessage.CreatedAt, newMessage.Key)
 	if err != nil {
 		log.Printf("Failed to store message: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store message"})
@@ -149,10 +159,80 @@ func SendMessage(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent successfully"})
 }
 
-func storeMessage(conn *pgxpool.Conn, senderID, chatID, content string, createdAt time.Time) error {
+func InitS3Client() (*s3.Client, *s3.PresignClient) {
+	region := os.Getenv("S3_BUCKET_REGION")
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
+	}
+
+	s3Client := s3.NewFromConfig(cfg)
+
+	presignClient := s3.NewPresignClient(s3Client)
+
+	return s3Client, presignClient
+}
+
+func GeneratePresignedURL(presignClient *s3.PresignClient, bucket, key string) (string, error) {
+	request, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = time.Minute * 5
+	})
+	if err != nil {
+		log.Println("Error creating the presigned URL:", err)
+		return "", err
+	}
+
+	log.Println("Generated presigned URL:", request.URL)
+	return request.URL, nil
+}
+
+func GetImageURL(c *gin.Context, key string) (string, error) {
+	bucket := os.Getenv("S3_BUCKET_NAME")
+	_, presignClient := InitS3Client()
+	url, err := GeneratePresignedURL(presignClient, bucket, key)
+	if err != nil {
+		log.Println("Failed to generate pre-signed URL : ", err)
+		c.JSON(500, gin.H{"error": "Failed to generate pre-signed URL"})
+		return "", err
+	}
+	return url, nil
+}
+
+func UploadImage(c *gin.Context, pool *pgxpool.Pool) {
+	s3Client, _ := InitS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Println("Invalid file : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file"})
+		return
+	}
+	defer file.Close()
+
+	key := fmt.Sprintf("images/%d_%s", time.Now().Unix(), header.Filename)
+	_, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   file,
+	})
+	if err != nil {
+		log.Println("Failed to upload file : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+		return
+	}
+	_, presignClient := InitS3Client()
+	presignedURL, err := GeneratePresignedURL(presignClient, bucket, key)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully", "presigned_url": presignedURL, "s3_key": key})
+}
+
+func storeMessage(conn *pgxpool.Conn, senderID, chatID, content string, createdAt time.Time, key *string) error {
 	_, err := conn.Exec(context.Background(),
-		`INSERT INTO messages (chat_id, sender_id, content, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW())`,
-		chatID, senderID, content, createdAt)
+		`INSERT INTO messages (chat_id, sender_id, content, key, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW())`,
+		chatID, senderID, content, key, createdAt)
 	return err
 }
 
@@ -216,42 +296,40 @@ func createChat(db *pgx.Conn, user1ID, user2ID int, user1Type, user2Type string)
 		log.Println("Error committing transaction:", err)
 		return 0, err
 	}
-
 	return chatID, nil
 }
 
 func GetMessagesForChat(c *gin.Context, pool *pgxpool.Pool) {
-	conn, err := pool.Acquire(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
-		return
-	}
-	defer conn.Release()
-
 	chatID := c.Param("chatId")
-
-	rows, err := conn.Query(context.Background(), `
-    SELECT id, chat_id, sender_id, content, created_at, updated_at FROM messages 
-    WHERE chat_id = $1 AND deleted_at IS NULL
-    ORDER BY created_at ASC;`, chatID)
+	bucket := os.Getenv("S3_BUCKET_NAME")
+	rows, err := pool.Query(context.Background(), "SELECT id, chat_id, sender_id, content, key, created_at FROM messages WHERE chat_id = $1 AND deleted_at IS NULL", chatID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve messages"})
 		return
 	}
 	defer rows.Close()
-
+	_, presignClient := InitS3Client()
 	var messages []models.Message
 	for rows.Next() {
 		var msg models.Message
-		if err := rows.Scan(&msg.ID, &msg.ChatID, &msg.SenderID, &msg.Content, &msg.CreatedAt, &msg.UpdatedAt); err != nil {
+		var presignedURL string
+		if err := rows.Scan(&msg.ID, &msg.ChatID, &msg.SenderID, &msg.Content, &msg.Key, &msg.CreatedAt); err != nil {
+			log.Println("Failed to scan message:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve messages"})
-			log.Println("Failed to retrieve messages : ", err)
 			return
 		}
+
+		if msg.Key != nil && *msg.Key != "" {
+			presignedURL, err = GeneratePresignedURL(presignClient, bucket, *msg.Key)
+			if err != nil {
+				log.Println("Failed to generate presigned URL:", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve image URL"})
+				return
+			}
+			msg.Content = &presignedURL
+		}
+
 		messages = append(messages, msg)
-	}
-	if len(messages) == 0 {
-		log.Println("No messages found for chat ID:", chatID)
 	}
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }

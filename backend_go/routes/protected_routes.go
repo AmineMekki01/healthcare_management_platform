@@ -43,6 +43,9 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.POST("/api/v1/SendMessage", func(c *gin.Context) {
 		services.SendMessage(c, pool)
 	})
+	r.POST("/api/v1/upload-image", func(c *gin.Context) {
+		services.UploadImage(c, pool)
+	})
 
 	// User Profiles
 	r.GET("/api/v1/users/:userID/image", func(c *gin.Context) {

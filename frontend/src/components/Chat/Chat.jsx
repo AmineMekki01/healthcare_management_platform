@@ -73,18 +73,19 @@ const ChatComponent = ({ currentChat }) => {
         }
     }, [currentChat]);
 
-    const sendMessage = async (content) => {
+    const sendMessage = async (content, key) => {
         if (!currentChat || !websocket || websocket.readyState !== WebSocket.OPEN) {
             console.error("[Client] No chat or WebSocket is not open.");
             return;
         }
-    
+        console.log("key in function sendMessage in chat: ", key)
         const message = {
             chat_id: currentChat.id, 
             sender_id: userId,
             recipient_id: currentChat.recipient_user_id,
             content: content,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            key: key
         };
     
         websocket.send(JSON.stringify(message));

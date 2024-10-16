@@ -97,7 +97,7 @@ const AuthProvider = ({ children, navigate }) => {
         if (isLoggedIn) {
             const refreshInterval = setInterval(() => {
                 refreshAccessToken();
-            }, 14 * 60 * 1000);
+            }, 15 * 60 * 1000);
 
             return () => clearInterval(refreshInterval);
         }
