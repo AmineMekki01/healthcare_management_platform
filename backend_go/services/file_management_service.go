@@ -90,7 +90,7 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 		}
 		folderPath = filepath.Join(folderPath, parentFolderPath)
 	}
-	folderPath = filepath.Join(folderPath, fileFolder.Name) + "/marker.txt"
+	folderPath = filepath.Join("records", folderPath, fileFolder.Name) + "/marker.txt"
 
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
@@ -190,9 +190,9 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileInfo.Path = fmt.Sprintf("%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
+		fileInfo.Path = fmt.Sprintf("records/%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
 	} else {
-		fileInfo.Path = fmt.Sprintf("%s/%s", fileInfo.UserID, fileInfo.Name)
+		fileInfo.Path = fmt.Sprintf("records/%s/%s", fileInfo.UserID, fileInfo.Name)
 	}
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
@@ -299,7 +299,6 @@ func DeleteFolderAndContents(c *gin.Context, pool *pgxpool.Pool) {
             INNER JOIN subfolders s ON s.id = fi.parent_id
         )
         SELECT id, path FROM subfolders;
-
     `
 	rows, err := tx.Query(c.Request.Context(), cteQuery, request.FolderID)
 	if err != nil {
@@ -394,7 +393,7 @@ func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
-	prefix := basePath[:strings.LastIndex(basePath, "/marker.txt")]
+	prefix := filepath.Join("records", basePath[:strings.LastIndex(basePath, "/marker.txt")])
 	resp, err := s3Client.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
@@ -478,9 +477,9 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 	if itemType == "folder" {
 		newPath = strings.Replace(oldPath, "/marker.txt", "", 1)
 		newPath = filepath.Dir(newPath)
-		newPath = filepath.Join(newPath, request.Name) + "/marker.txt"
+		newPath = filepath.Join("records", newPath, request.Name) + "/marker.txt"
 	} else {
-		newPath := filepath.Join(filepath.Dir(oldPath), request.Name)
+		newPath = filepath.Join("records", filepath.Dir(oldPath), request.Name)
 		log.Println("newPath file : ", newPath)
 	}
 

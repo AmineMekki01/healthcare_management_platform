@@ -12,7 +12,7 @@ import {
   CreateFolderButton,
   DeleteFolderButton,
   RenameFolderButton,
-  UploadFolderButton
+  UploadFolderButton,
 } from './StyledComponents/MyDocsStyles';
 import { fileIconMapper } from './Helpers';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
@@ -20,12 +20,19 @@ import FolderDeleteIcon from '@mui/icons-material/FolderDelete';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 
-import { fetchFolders, fetchBreadcrumbs, createFolder, deleteFolder, renameItem, downloadFile } from './routes/api';
+import {
+  fetchFolders,
+  fetchBreadcrumbs,
+  createFolder,
+  deleteFolder,
+  renameItem,
+  downloadFile,
+} from './routes/api';
 
-const API_BASE_URL = 'http://localhost:3001';
+import axios from './../axiosConfig';
 
 function MyUploads() {
-  const { userId, userType  } = useContext(AuthContext);
+  const { userId, userType } = useContext(AuthContext);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [currentPath, setCurrentPath] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -33,15 +40,10 @@ function MyUploads() {
   const { folderId } = useParams();
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState(new Set());
-  const [folderName, setFolderName] = useState('');
-  const fileInputRef = useRef(null);
   const [selectedFileId, setSelectedFileId] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-
-  // const getUserId = () => {
-  //   return userType === 'doctor' ? doctorId : patientId;
-  // };
+  const fileInputRef = useRef(null);
 
   const fetchAllFolder = async (folderId) => {
     if (!userId) {
@@ -66,7 +68,7 @@ function MyUploads() {
     if (!userId) {
       return;
     }
-    const newPath = [...currentPath.filter(id => id !== null)];
+    const newPath = [...currentPath.filter((id) => id !== null)];
     if (folderId && !newPath.includes(folderId)) {
       newPath.push(folderId);
     }
@@ -76,7 +78,7 @@ function MyUploads() {
 
   const navigateToFolder = (subfolderId, file_type) => {
     if (file_type === 'folder') {
-      setCurrentPath(prevPath => {
+      setCurrentPath((prevPath) => {
         const newPath = [...prevPath];
         if (!newPath.includes(subfolderId)) {
           newPath.push(subfolderId);
@@ -90,14 +92,14 @@ function MyUploads() {
 
   function viewFolder(folder) {
     setSelectedFolder(folder.folder_id);
-  };
+  }
 
   const onClickCreateFolder = async () => {
     if (!userId) {
-      alert("User ID not available.");
+      alert('User ID not available.');
       return;
     }
-    const name = prompt("Please enter folder name", "New Folder");
+    const name = prompt('Please enter folder name', 'New Folder');
     if (name) {
       const parent_id = currentPath[currentPath.length - 1] || null;
       try {
@@ -110,14 +112,14 @@ function MyUploads() {
   };
 
   const navigateUp = () => {
-    const newPath = currentPath.slice(0, -1).filter(id => id != null);
+    const newPath = currentPath.slice(0, -1).filter((id) => id != null);
     const parentFolderId = newPath.at(-1) || '';
     navigate(parentFolderId ? `/MyDocs/Upload/${parentFolderId}` : '/MyDocs/Upload');
     setCurrentPath(newPath);
   };
 
   const toggleFileSelection = (folderId) => {
-    setSelectedFiles(prevSelectedFiles => {
+    setSelectedFiles((prevSelectedFiles) => {
       const newSelection = new Set(prevSelectedFiles);
       if (newSelection.has(folderId)) {
         newSelection.delete(folderId);
@@ -132,11 +134,11 @@ function MyUploads() {
 
   const deleteFolderAndContents = async () => {
     if (!userId) {
-      alert("User ID not available.");
+      alert('User ID not available.');
       return;
     }
     const userConfirmation = window.confirm(
-      "Are you sure you want to delete the selected folders and all of their contents? This action cannot be undone."
+      'Are you sure you want to delete the selected folders and all of their contents? This action cannot be undone.'
     );
 
     if (!userConfirmation) {
@@ -146,7 +148,7 @@ function MyUploads() {
     for (const folderId of selectedFiles) {
       try {
         await deleteFolder(folderId);
-        setFolders(prevFolders => prevFolders.filter(folder => folder.folder_id !== folderId));
+        setFolders((prevFolders) => prevFolders.filter((folder) => folder.folder_id !== folderId));
         const parent_id = currentPath[currentPath.length - 1] || null;
         fetchAllFolder(parent_id);
       } catch (error) {
@@ -158,27 +160,29 @@ function MyUploads() {
 
   const onClickRenameItem = async () => {
     if (!userId) {
-      alert("User ID not available.");
+      alert('User ID not available.');
       return;
     }
     if (selectedFiles.size !== 1) {
-      alert("Please select exactly one item to rename.");
+      alert('Please select exactly one item to rename.');
       return;
     }
 
     const itemIdToRename = Array.from(selectedFiles)[0];
-    const currentItemName = folders.find(folder => folder.folder_id === itemIdToRename)?.name;
+    const currentItemName = folders.find((folder) => folder.folder_id === itemIdToRename)?.name;
 
-    const newName = prompt("Please enter the new item name", currentItemName || "New Item Name");
-    if (newName && newName.trim() !== "") {
+    const newName = prompt('Please enter the new item name', currentItemName || 'New Item Name');
+    if (newName && newName.trim() !== '') {
       try {
         await renameItem(itemIdToRename, newName);
-        setFolders(folders.map(folder => {
-          if (folder.folder_id === itemIdToRename) {
-            return { ...folder, name: newName };
-          }
-          return folder;
-        }));
+        setFolders(
+          folders.map((folder) => {
+            if (folder.folder_id === itemIdToRename) {
+              return { ...folder, name: newName };
+            }
+            return folder;
+          })
+        );
         setSelectedFiles(new Set());
       } catch (error) {
         console.error('Error updating item name:', error);
@@ -188,12 +192,12 @@ function MyUploads() {
 
   const handleFileUpload = async (event) => {
     if (!userId) {
-      alert("User ID not available.");
+      alert('User ID not available.');
       return;
     }
     const file = event.target.files[0];
     if (!file) {
-      alert("Please select a file to upload.");
+      alert('Please select a file to upload.');
       return;
     }
 
@@ -204,24 +208,21 @@ function MyUploads() {
     formData.append('userType', userType);
     formData.append('fileType', 'file');
     formData.append('fileName', file.name);
-    formData.append('fileSize', file.size)
-    formData.append('fileExt', file.name.split('.').pop())  
-    console.log("formData :  ", formData)
+    formData.append('fileSize', file.size);
+    formData.append('fileExt', file.name.split('.').pop());
+
     try {
-      const response = await fetch(`${API_BASE_URL}/upload-file`, {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('/api/v1/upload-file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }      
       fetchAllFolder(currentPath[currentPath.length - 1]);
-      alert("File uploaded successfully!");
-      
+      alert('File uploaded successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert("Error uploading file: " + error.message);
+      alert('Error uploading file: ' + error.message);
     }
   };
 
@@ -235,7 +236,7 @@ function MyUploads() {
       const downloadUrl = window.URL.createObjectURL(fileBlob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = "downloadedFile";
+      link.download = 'downloadedFile';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -247,7 +248,7 @@ function MyUploads() {
 
   const shareFolder = async (folderId, doctorId) => {
     if (!userId) {
-      alert("User ID not available.")
+      alert('User ID not available.');
       return;
     }
     if (!doctorId) {
@@ -255,24 +256,14 @@ function MyUploads() {
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          itemIDs: [folderId],
-          sharedWithID: doctorId,
-          userID: userId,
-          userType: userType,
-        }),
+      const response = await axios.post('/api/v1/share', {
+        itemIDs: [folderId],
+        sharedWithID: doctorId,
+        userID: userId,
+        userType: userType,
       });
 
-      if (response.ok) {
-        alert('Folder shared successfully!');
-      } else {
-        throw new Error('Failed to share folder');
-      }
+      alert('Folder shared successfully!');
     } catch (error) {
       console.error('Error sharing folder:', error);
       alert('Error sharing folder: ' + error.message);
@@ -282,17 +273,8 @@ function MyUploads() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/doctors`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch doctors');
-        }
-        const data = await response.json();
+        const response = await axios.get('/api/v1/doctors');
+        const data = response.data;
         setDoctors(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching doctors:', error);
@@ -311,9 +293,7 @@ function MyUploads() {
           {breadcrumbs.map((crumb, index) => (
             <span key={crumb.folder_id}>
               {' > '}
-              <a onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}>
-                {crumb.name}
-              </a>
+              <a onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}>{crumb.name}</a>
             </span>
           ))}
           {breadcrumbs.length > 0 && (
@@ -335,7 +315,8 @@ function MyUploads() {
             />
             <FileUploadIcon onClick={handleIconClick} style={{ cursor: 'pointer' }} />
           </UploadFolderButton>
-          <CreateFolderButton type="button" onClick={onClickCreateFolder}><CreateNewFolderIcon></CreateNewFolderIcon>
+          <CreateFolderButton type="button" onClick={onClickCreateFolder}>
+            <CreateNewFolderIcon></CreateNewFolderIcon>
           </CreateFolderButton>
           <DeleteFolderButton type="button" onClick={() => deleteFolderAndContents(selectedFolder)}>
             <FolderDeleteIcon />
@@ -372,7 +353,7 @@ function MyUploads() {
       <FolderCardContainer>
         {folders.map((folder) => {
           const formattedPath = folder.path.replace(/\\/g, '/').replace('uploads/', '');
-          const imageUrl = `${API_BASE_URL}/files/${formattedPath}`;
+          const imageUrl = `${formattedPath}`; // Update if necessary
 
           return (
             <FolderCard key={folder.folder_id} className="col-md-4">
@@ -381,17 +362,23 @@ function MyUploads() {
                 checked={selectedFiles.has(folder.folder_id)}
                 onChange={() => toggleFileSelection(folder.folder_id)}
               />
-              <div className="card" onClick={() => navigateToFolder(folder.folder_id, folder.file_type)}>
+              <div
+                className="card"
+                onClick={() => navigateToFolder(folder.folder_id, folder.file_type)}
+              >
                 <div className="card-body">
                   <i className="fa fa-folder-o">
-                    {fileIconMapper(folder.file_type === 'folder' ? 'folder' : folder.extension, imageUrl)}
+                    {fileIconMapper(
+                      folder.file_type === 'folder' ? 'folder' : folder.extension,
+                      imageUrl
+                    )}
                   </i>
                 </div>
                 <div className="card-footer">
                   <h3>
                     <a href="#" onClick={() => viewFolder(folder)}>
                       {folder.name.substring(0, 20)}
-                      {folder.name.length > 20 ? "..." : ""}
+                      {folder.name.length > 20 ? '...' : ''}
                     </a>
                   </h3>
                 </div>

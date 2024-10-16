@@ -1,90 +1,81 @@
-const API_BASE_URL = 'http://localhost:3001';
-
-// Helper function to perform the fetch and handle errors
-async function fetchWithErrors(url, options = {}) {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error);
-  }
-  return response.json();
-}
+import axios from "./../../axiosConfig";
 
 export async function fetchFolders(userId, userType, parentId = null) {
-  const url = new URL(`${API_BASE_URL}/folders`);
-  const params = { user_id: userId, user_type: userType};
+  const params = { user_id: userId, user_type: userType };
   if (parentId) params.parent_id = parentId;
-  url.search = new URLSearchParams(params).toString();
-
-  return fetchWithErrors(url);
+  
+  try {
+    const response = await axios.get('/api/v1/folders', { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
+
 
 export async function fetchBreadcrumbs(folderId) {
-  const url = `${API_BASE_URL}/folders/${folderId}/breadcrumbs`;
-  return fetchWithErrors(url);
+  try {
+    const response = await axios.get(`/api/v1/folders/${folderId}/breadcrumbs`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
+
 export async function createFolder(name, userId, userType, parentId = null) {
-  const url = `${API_BASE_URL}/create-folder`;
-  const body = JSON.stringify({
+  const data = {
     name,
     user_id: userId,
     file_type: 'folder',
     user_type: userType,
     parent_id: parentId
-  });
-
-  return fetchWithErrors(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: body
-  });
+  };
+  
+  try {
+    const response = await axios.post('/api/v1/create-folder', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export async function deleteFolder(folderId) {
-  const url = `${API_BASE_URL}/delete-files/${folderId}`;
-  return fetchWithErrors(url, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ folderId })
-  });
+  try {
+    const response = await axios.delete(`/api/v1/delete-files/${folderId}`, {
+      data: { folderId }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
-
 export async function updateFolderName(folderId, name) {
-  const url = `${API_BASE_URL}/update-folder/${folderId}`;
-  const body = JSON.stringify({ name });
-
-  return fetchWithErrors(url, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: body
-  });
+  try {
+    const response = await axios.patch(`/api/v1/update-folder/${folderId}`, { name });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export async function downloadFile(fileId) {
-  const url = `${API_BASE_URL}/download-file/${fileId}`
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-    },
-    redirect: 'follow' // This will follow any redirects
-  });  console.log([...response.headers]); // Log all response headers
-
-  if (!response.ok) {
-    throw new Error('File download failed');
+  try {
+    const response = await axios.get(`/api/v1/download-file/${fileId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-
-  return response.blob();
 }
 
 export async function renameItem(id, name) {
-  const url = `${API_BASE_URL}/rename-item`;
-  const body = JSON.stringify({ id, name });
-
-  return fetchWithErrors(url, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: body
-  });
+  try {
+    const response = await axios.patch('/api/v1/rename-item', { id, name });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
