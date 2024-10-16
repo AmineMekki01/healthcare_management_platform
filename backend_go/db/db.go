@@ -108,8 +108,9 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			appointment_end TIMESTAMP NOT NULL,
 			title VARCHAR(50) NOT NULL,
 			doctor_id uuid REFERENCES doctor_info(doctor_id),
-			patient_id uuid REFERENCES patient_info(patient_id)
-		)`,
+			patient_id uuid,
+			is_doctor_patient BOOLEAN NOT NULL DEFAULT FALSE
+		);`,
 
 		`CREATE TABLE IF NOT EXISTS folder_file_info (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

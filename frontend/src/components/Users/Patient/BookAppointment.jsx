@@ -21,7 +21,7 @@ function BookAppointment({show}) {
 
   maxDate.setDate(currentDate.getDate() + 6);
   const { 
-    userId,
+    userId, userType
   } = useContext(AuthContext);
 
   useEffect(() => {
@@ -76,21 +76,20 @@ function BookAppointment({show}) {
       AppointmentStart: selectedSlot.AvailabilityStart,
       AppointmentEnd: selectedSlot.AvailabilityEnd,
       AppointmentTitle: 'New Appointment',
-      DoctorID: urlDoctorId,  
-      PatientID: userId,  
+      DoctorID: urlDoctorId,
+      PatientID: userId,
       AvailabilityID: selectedSlot.AvailabilityId,
     };    
-
+  
     axios.post('http://localhost:3001/api/v1/reservations', reservationDetails)
     .then(response => {
       alert('Appointment booked successfully!');
-      fetchAvailabilities();  // Refetch the updated availabilities
+      fetchAvailabilities();
       setSelectedSlot(null);
-    
-      
     })
     .catch(error => {
       console.error(error);
+      alert('Failed to book appointment. Please try again.');
     });
   };
 

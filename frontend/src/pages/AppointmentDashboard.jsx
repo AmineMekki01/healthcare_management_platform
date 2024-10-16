@@ -1,29 +1,41 @@
-import React, { useState, useEffect, useContext  } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from './../components/axiosConfig';
-import { Title, Container, Flex } from './../components/Appointments/styles/AppointmentDashboard.styles';
-import CardCom from '../components/Appointments/AppointmentCard';
-import { AuthContext } from './../components/Auth/AuthContext';  
+import { Title, Container, Flex, FilterContainer, FilterInput, SectionTitle} from './styles/AppointmentDashboard.styles';
+import AppointmentCard from '../components/Appointments/AppointmentCard';
+import { AuthContext } from './../components/Auth/AuthContext';
 
 
 export default function Dashboard() {
-  const [reservations, setReservations] = useState([]);
-  const {userType, userId} = useContext(AuthContext);
+  const [doctorReservations, setDoctorReservations] = useState([]);
+  const [patientReservations, setPatientReservations] = useState([]);
+  const [filterText, setFilterText] = useState('');
+  const { userType, userId } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchReservations = async () => {
       try {
+        if (!userId) {
+          return;
+        }
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const params = {
           timezone,
+          user_id: userId,
+          user_type: userType,
         };
-        if (userType === 'doctor') {
-          params.doctor_id = userId;
-        } else {
-          params.patient_id = userId;
-        }
+        console.log("Params: ", params);
 
         const response = await axios.get('/api/v1/reservations', { params });
-        setReservations(response.data);
+        console.log("Reservations: ", response.data);
+        
+        if (userType === 'doctor') {
+          const doctorAppts = response.data.filter(r => !r.is_doctor_patient);
+          const patientAppts = response.data.filter(r => r.is_doctor_patient);
+          setDoctorReservations(doctorAppts);
+          setPatientReservations(patientAppts);
+        } else {
+          setPatientReservations(response.data);
+        }
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
@@ -32,26 +44,53 @@ export default function Dashboard() {
     fetchReservations();
   }, [userId, userType]);
 
+  const filterReservations = (reservations) => {
+    return reservations.filter(reservation => 
+      reservation.doctor_first_name.toLowerCase().includes(filterText.toLowerCase()) ||
+      reservation.doctor_last_name.toLowerCase().includes(filterText.toLowerCase()) ||
+      reservation.patient_first_name.toLowerCase().includes(filterText.toLowerCase()) ||
+      reservation.patient_last_name.toLowerCase().includes(filterText.toLowerCase())
+    );
+  };
+
   return (
-      <Container>
-        <Title>My Upcoming Appointments</Title>
-        <Flex>
-          {reservations && reservations.map(reservation => (
-            <CardCom
-              key={reservation.reservation_id}
-              duration={30} 
-              appointment_start={reservation.reservation_start}
-              appointment_finish={reservation.reservation_end}
-              doctor_name={reservation.doctor_first_name+" "+reservation.doctor_last_name} 
-              doctor_specialty={reservation.specialty} 
-              userName={reservation.patient_first_name+" "+reservation.patient_last_name}
-              userAge={reservation.age}
-              userType={userType}
-              doctorId={reservation.doctor_id}
-            />
-                  
-          ))}
-        </Flex>
-      </Container>
+    <Container>
+      <Title>My Upcoming Appointments</Title>
+      <FilterContainer>
+        <FilterInput
+          type="text"
+          placeholder="Filter by name"
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+        />
+      </FilterContainer>
+      
+      {userType === 'doctor' && (
+        <>
+          <SectionTitle>My Appointments as Doctor</SectionTitle>
+          <Flex>
+            {filterReservations(doctorReservations).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"doctor"}
+              />
+            ))}
+          </Flex>
+          
+          <SectionTitle>My Appointments as Patient</SectionTitle>
+        </>
+      )}
+      
+      <Flex>
+        {filterReservations(patientReservations).map(reservation => (
+          <AppointmentCard
+            key={reservation.reservation_id}
+            reservation={reservation}
+            userType={"patient"}
+          />
+        ))}
+      </Flex>
+    </Container>
   );
 }

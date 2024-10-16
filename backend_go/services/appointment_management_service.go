@@ -64,23 +64,25 @@ func GetAvailabilities(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusOK, availabilities)
 }
 
-type Appointments struct {
-	AppointmentStart time.Time `json:"AppointmentStart"`
-	AppointmentEnd   time.Time `json:"AppointmentEnd"`
-	AppointmentTitle string    `json:"AppointmentTitle"`
-	DoctorID         string    `json:"DoctorID"`
-	PatientID        string    `json:"PatientID"`
-	AvailabilityID   int       `json:"AvailabilityID"`
-}
-
 // Implement POST /api/v1/reservations
 func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
-	var appointment Appointments
+	var appointment models.Appointments
 
 	if err := c.ShouldBindJSON(&appointment); err != nil {
 		log.Println("Bind Error:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
+	}
+
+	userType, exists := c.Get("userType")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User type not found"})
+		return
+	}
+
+	isDoctorPatient := false
+	if userType == "doctor" {
+		isDoctorPatient = true
 	}
 
 	conn, err := pool.Acquire(context.Background())
@@ -99,8 +101,8 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	_, err = tx.Exec(context.Background(),
-		"INSERT INTO appointments (appointment_start, appointment_end, title, doctor_id, patient_id) VALUES ($1::timestamp with time zone, $2::timestamp with time zone, $3, $4, $5)",
-		appointment.AppointmentStart, appointment.AppointmentEnd, appointment.AppointmentTitle, appointment.DoctorID, appointment.PatientID)
+		"INSERT INTO appointments (appointment_start, appointment_end, title, doctor_id, patient_id, is_doctor_patient) VALUES ($1, $2, $3, $4, $5, $6)",
+		appointment.AppointmentStart, appointment.AppointmentEnd, appointment.AppointmentTitle, appointment.DoctorID, appointment.PatientID, isDoctorPatient)
 
 	if err != nil {
 		log.Println("Insert Error:", err)
@@ -121,17 +123,7 @@ func CreateReservation(c *gin.Context, pool *pgxpool.Pool) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Appointment booked and availability removed successfully"})
 }
 
-// Implement GET /api/v1/reservations
-func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
-	doctorID := c.DefaultQuery("doctor_id", "")
-	patientID := c.DefaultQuery("patient_id", "")
-	timezone := c.DefaultQuery("timezone", "UTC")
-
-	if doctorID == "" && patientID == "" {
-		log.Println("Bad Request: doctor_id or patient_id required")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: doctor_id or patient_id required"})
-		return
-	}
+func GetPatientReservations(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string) []models.Reservation {
 
 	query := `
 		SELECT 
@@ -145,30 +137,23 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 			patient_info.last_name AS patient_last_name,
 			patient_info.age,
 			patient_info.patient_id,
-			doctor_info.doctor_id
+			doctor_info.doctor_id,
+			appointments.is_doctor_patient
 		FROM 
 			appointments
 		JOIN
 			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
+		WHERE
+			appointments.patient_id = $1
 	`
-	params := []interface{}{}
-	if doctorID != "" {
-		query += " WHERE appointments.doctor_id = $1"
-		params = append(params, doctorID)
-	} else {
-		query += " WHERE appointments.patient_id = $1"
-		params = append(params, patientID)
-	}
-
-	rows, err := pool.Query(context.Background(), query, params...)
+	rows, err := pool.Query(context.Background(), query, userID)
 	if err != nil {
 		log.Println("Query Error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+		return []models.Reservation{}
 	}
-
 	defer rows.Close()
 
 	var reservations []models.Reservation
@@ -176,17 +161,17 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 		var r models.Reservation
 		err := rows.Scan(&r.ReservationID, &r.ReservationStart, &r.ReservationEnd,
 			&r.DoctorFirstName, &r.DoctorLastName, &r.Specialty,
-			&r.PatientFirstName, &r.PatientLastName, &r.Age, &r.PatientID, &r.DoctorID)
+			&r.PatientFirstName, &r.PatientLastName, &r.Age, &r.PatientID, &r.DoctorID, &r.IsDoctorPatient)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-			return
+			return []models.Reservation{}
 		}
 		location, err := time.LoadLocation(timezone)
 		if err != nil {
 			log.Println("Timezone Error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-			return
+			return []models.Reservation{}
 		}
 
 		r.ReservationStart = r.ReservationStart.In(location)
@@ -194,6 +179,185 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 
 		reservations = append(reservations, r)
 
+	}
+	return reservations
+}
+
+func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string) []models.Reservation {
+
+	query := `
+		SELECT 
+			appointments.appointment_id,
+			appointments.appointment_start,
+			appointments.appointment_end,
+			doctor_info.first_name,
+			doctor_info.last_name,
+			doctor_info.specialty,
+			patient_info.first_name AS patient_first_name,
+			patient_info.last_name AS patient_last_name,
+			patient_info.age,
+			patient_info.patient_id,
+			doctor_info.doctor_id,
+			appointments.is_doctor_patient
+		FROM 
+			appointments
+		JOIN
+			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+		JOIN
+			patient_info ON appointments.patient_id = patient_info.patient_id
+		WHERE
+			appointments.doctor_id = $1
+	`
+	rows, err := pool.Query(context.Background(), query, userID)
+	if err != nil {
+		log.Println("Query Error in GetDoctorReservationsAsDoctor:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return []models.Reservation{}
+	}
+	defer rows.Close()
+
+	var reservations []models.Reservation
+	for rows.Next() {
+		var r models.Reservation
+		err := rows.Scan(&r.ReservationID, &r.ReservationStart, &r.ReservationEnd,
+			&r.DoctorFirstName, &r.DoctorLastName, &r.Specialty,
+			&r.PatientFirstName, &r.PatientLastName, &r.Age, &r.PatientID, &r.DoctorID, &r.IsDoctorPatient)
+		if err != nil {
+			log.Println("Row Scan Error:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			return []models.Reservation{}
+		}
+		location, err := time.LoadLocation(timezone)
+		if err != nil {
+			log.Println("Timezone Error:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			return []models.Reservation{}
+		}
+
+		r.ReservationStart = r.ReservationStart.In(location)
+		r.ReservationEnd = r.ReservationEnd.In(location)
+
+		reservations = append(reservations, r)
+
+	}
+	return reservations
+}
+
+func GetDoctorReservationsAsPatient(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string) []models.Reservation {
+	checkQuery := `
+		SELECT EXISTS (
+			SELECT 1 
+			FROM appointments
+			WHERE appointments.patient_id = $1 AND appointments.is_doctor_patient = true
+		)
+	`
+	var exist bool
+	err := pool.QueryRow(context.Background(), checkQuery, userID).Scan(&exist)
+	if err != nil {
+		log.Println("Query Error in GetDoctorReservationsAsPatient : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return []models.Reservation{}
+	}
+
+	if !exist {
+		log.Println("No reservations found for the patient")
+		return []models.Reservation{}
+	}
+
+	query := `
+        SELECT 
+            appointments.appointment_id,
+            appointments.appointment_start,
+            appointments.appointment_end,
+            doctor_info.first_name AS doctor_first_name,
+            doctor_info.last_name AS doctor_last_name,
+            doctor_info.specialty,
+            CASE 
+				WHEN appointments.is_doctor_patient = true THEN doctor_patient.first_name
+				ELSE NULL
+			END AS patient_first_name,
+			CASE 
+				WHEN appointments.is_doctor_patient = true THEN doctor_patient.last_name
+				ELSE NULL
+			END AS patient_last_name,
+			CASE
+				WHEN appointments.is_doctor_patient = true THEN doctor_patient.age
+				ELSE NULL
+			END AS age,
+			appointments.patient_id,
+			appointments.doctor_id,
+			appointments.is_doctor_patient
+        FROM 
+            appointments
+         JOIN
+        doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+		LEFT JOIN
+			doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
+		WHERE 
+        	appointments.patient_id = $1 AND appointments.is_doctor_patient = true;
+    `
+
+	rows, err := pool.Query(context.Background(), query, userID)
+	if err != nil {
+		log.Println("Query Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return []models.Reservation{}
+	}
+	defer rows.Close()
+
+	var reservations []models.Reservation
+	for rows.Next() {
+		var r models.Reservation
+		err := rows.Scan(
+			&r.ReservationID,
+			&r.ReservationStart,
+			&r.ReservationEnd,
+			&r.DoctorFirstName,
+			&r.DoctorLastName,
+			&r.Specialty,
+			&r.PatientFirstName,
+			&r.PatientLastName,
+			&r.Age,
+			&r.PatientID,
+			&r.DoctorID,
+			&r.IsDoctorPatient,
+		)
+		if err != nil {
+			log.Println("Row Scan Error in GetDoctorReservationsAsPatient :", err)
+			continue
+		}
+
+		reservations = append(reservations, r)
+
+	}
+
+	return reservations
+}
+
+// Implement GET /api/v1/reservations
+func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
+	userID := c.DefaultQuery("user_id", "")
+	userType := c.DefaultQuery("user_type", "")
+	timezone := c.DefaultQuery("timezone", "UTC")
+
+	if userID == "" {
+		log.Println("Bad Request: user_id required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: doctor_id or patient_id required"})
+		return
+	}
+	if userType == "" {
+		log.Println("Bad Request: user_type required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: user_type required"})
+		return
+	}
+
+	var reservations []models.Reservation
+	if userType == "patient" {
+		reservations = GetPatientReservations(c, pool, userID, userType, timezone)
+	} else if userType == "doctor" {
+		regularReservations := GetDoctorReservationsAsDoctor(c, pool, userID, userType, timezone)
+		doctorPatientReservations := GetDoctorReservationsAsPatient(c, pool, userID, userType, timezone)
+		reservations = append(regularReservations, doctorPatientReservations...)
 	}
 
 	c.JSON(http.StatusOK, reservations)

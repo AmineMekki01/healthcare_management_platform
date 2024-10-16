@@ -64,28 +64,28 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	})
 
 	// File Management
-	r.POST("/create-folder", func(c *gin.Context) {
+	r.POST("/api/v1/create-folder", func(c *gin.Context) {
 		services.CreateFolder(c, pool)
 	})
-	r.GET("/folders", func(c *gin.Context) {
+	r.GET("/api/v1/folders", func(c *gin.Context) {
 		services.GetFolders(c, pool)
 	})
-	r.GET("/folders/:folderId/subfolders", func(c *gin.Context) {
+	r.GET("/api/v1/folders/:folderId/subfolders", func(c *gin.Context) {
 		services.GetSubfolders(c, pool)
 	})
-	r.GET("/folders/:folderId/breadcrumbs", func(c *gin.Context) {
+	r.GET("/api/v1/folders/:folderId/breadcrumbs", func(c *gin.Context) {
 		services.GetBreadcrumbs(c, pool)
 	})
-	r.DELETE("/delete-files/:folderId", func(c *gin.Context) {
+	r.DELETE("/api/v1/delete-files/:folderId", func(c *gin.Context) {
 		services.DeleteFolderAndContents(c, pool)
 	})
-	r.PATCH("/rename-item", func(c *gin.Context) {
+	r.PATCH("/api/v1/rename-item", func(c *gin.Context) {
 		services.RenameFileOrFolder(c, pool)
 	})
-	r.POST("/upload-file", func(c *gin.Context) {
+	r.POST("/api/v1/upload-file", func(c *gin.Context) {
 		services.UploadFile(c, pool)
 	})
-	r.GET("/download-file/:fileId", func(c *gin.Context) {
+	r.GET("/api/v1/download-file/:fileId", func(c *gin.Context) {
 		services.DownloadFile(c, pool)
 	})
 

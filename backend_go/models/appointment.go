@@ -25,4 +25,14 @@ type Reservation struct {
 	Age              int       `json:"age"`
 	PatientID        string    `json:"patient_id"`
 	DoctorID         string    `json:"doctor_id"`
+	IsDoctorPatient  bool      `json:"is_doctor_patient"`
+}
+
+type Appointments struct {
+	AppointmentStart time.Time `json:"AppointmentStart"`
+	AppointmentEnd   time.Time `json:"AppointmentEnd"`
+	AppointmentTitle string    `json:"AppointmentTitle"`
+	DoctorID         string    `json:"DoctorID"`
+	PatientID        string    `json:"PatientID"`
+	AvailabilityID   int       `json:"AvailabilityID"`
 }
