@@ -5,37 +5,42 @@ import { Link } from 'react-router-dom';
 const Navbar = styled.nav`
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: #cccccc;
-  position: sticky; // Make navbar sticky
-  top: 0; // Stick to the top of the page
-  z-index: 1000; // Ensure it's above other content
-`;
-const NavItem = styled.li`
-  list-style: none;
-  margin-right: 1rem;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 `;
 
-const NavLink = styled.a`
+const NavItem = styled.li`
+  list-style: none;
+  margin-left: 1.5rem;
+`;
+
+const NavLink = styled(Link)`
   text-decoration: none;
-  color: #000; // Default link color
+  color: #333;
+  font-size: 1.1rem;
+  transition: color 0.3s;
   &:hover {
-    color: #0056b3; // Link hover color
+    color: #4A90E2;
   }
 `;
 
 const NavList = styled.ul`
   display: flex;
-  margin-left: auto; // This will push the nav list to the right
+  margin-left: auto;
 `;
 
-const NavTitle = styled.a`
-  font-size: 1.3rem;
-  color: #000;
+const NavTitle = styled(Link)`
+  font-size: 1.5rem;
+  color: #333;
   text-decoration: none;
-  margin-right: 1rem;
+  font-weight: 600;
   &:hover {
-    color: #0056b3;
+    color: #4A90E2;
   }
 `;
 

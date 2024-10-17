@@ -1,40 +1,55 @@
 import styled from 'styled-components';
 
+
+const primaryColor = "#4A90E2";
+const secondaryColor = "#F5F7FA";
+const accentColor = "#FFC107";
+const dangerColor = "#E94E77";
+const successColor = "#27AE60";
+const textColor = "#333";
+const hoverEffect = "0 10px 20px rgba(0, 0, 0, 0.2)";
+
+
 export const Container = styled.div`
   width: 100%;
-  padding: 20px;
+  padding: 40px;
   box-sizing: border-box;
-  background: #f4f7fa;
+  background: ${secondaryColor};
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const HeaderTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: ${primaryColor};
+  margin-bottom: 30px;
+  text-align: center;
 `;
 
 export const SubHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  max-width: 1200px;
   margin-bottom: 20px;
 `;
 
-export const HeaderTitle = styled.h1`
-  font-size: 32px;
-  font-weight: 600;
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-`;
 
 export const PathContainer = styled.div`
   display: flex;
   align-items: center;
-  font-size: 18px;
-  color: #555;
+  font-size: 1.2rem;
+  color: ${textColor};
   span {
     margin-right: 10px;
     cursor: pointer;
-    color: #007bff;
+    color: ${primaryColor};
     &:hover {
       text-decoration: underline;
-      color: #0056b3;
     }
   }
 `;
@@ -42,19 +57,21 @@ export const PathContainer = styled.div`
 export const FolderHandlingContainer = styled.div`
   display: flex;
   align-items: center;
+
   button {
-    margin-left: 10px;
-    background-color: #007bff;
+    margin-left: 15px;
+    background-color: ${primaryColor};
     border: none;
-    padding: 10px 20px;
-    color: #fff;
-    font-size: 16px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    color: white;
+    font-size: 1rem;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     &:hover {
-      background-color: #0056b3;
+      background-color: darken(${primaryColor}, 10%);
       transform: translateY(-2px);
+      box-shadow: ${hoverEffect};
     }
     &:disabled {
       background-color: #cccccc;
@@ -64,79 +81,74 @@ export const FolderHandlingContainer = styled.div`
 `;
 
 const buttonStyles = `
-  border: none;
   color: white;
-  padding: 10px 15px;
-  border-radius: 5px;
-  font-size: 16px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
   &:hover {
-    background-color: darken($color, 10%);
     transform: translateY(-2px);
+    box-shadow: ${hoverEffect};
   }
 `;
 
 export const CreateFolderButton = styled.button`
   ${buttonStyles}
-  background-color: #28a745;
+  background-color: ${successColor};
 `;
 
 export const DeleteFolderButton = styled.button`
   ${buttonStyles}
-  background-color: #dc3545;
+  background-color: ${dangerColor};
 `;
 
 export const RenameFolderButton = styled.button`
   ${buttonStyles}
-  background-color: #ffc107;
+  background-color: ${accentColor};
 `;
 
 export const UploadFolderButton = styled.button`
   ${buttonStyles}
-  background-color: #007bff;
+  background-color: ${primaryColor};
 `;
 
 export const FolderCardContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  margin-top: 20px;
+  width: 100%;
+  max-width: 1200px;
 `;
 
 export const FolderCard = styled.div`
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: ${hoverEffect};
   }
+
   .card-body {
-    height: 250px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    i {
-      font-size: 100px;
-      color: #f0ad4e;
-    }
+    padding: 30px;
+    font-size: 5rem;
+    color: ${accentColor};
   }
+
   .card-footer {
-    background: #f8f9fa;
+    background: ${secondaryColor};
+    padding: 15px;
     border-top: 1px solid #ddd;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
+    text-align: center;
     h3 {
       margin: 0;
-      font-size: 1.25rem;
-      color: #333;
+      font-size: 1.5rem;
+      color: ${textColor};
       word-break: break-word;
     }
   }

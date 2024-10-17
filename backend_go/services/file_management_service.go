@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -88,10 +89,10 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		folderPath = filepath.Join(folderPath, parentFolderPath)
+		folderPath = fmt.Sprintf("%s/%s", folderPath, parentFolderPath)
 	}
-	folderPath = filepath.Join("records", folderPath, fileFolder.Name) + "/marker.txt"
-
+	folderPath = fmt.Sprintf("records/%s/%s/%s", folderPath, fileFolder.Name, "/marker.txt")
+	folderPath = filepath.ToSlash(folderPath)
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
@@ -196,7 +197,7 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
-
+	fileInfo.Path = filepath.ToSlash(fileInfo.Path)
 	_, err = s3Client.PutObject(&s3.PutObjectInput{
 		Bucket:        aws.String(bucket),
 		Key:           aws.String(fileInfo.Path),
@@ -252,6 +253,8 @@ func DownloadFile(c *gin.Context, pool *pgxpool.Pool) {
 			return
 		}
 		log.Printf("Zip file created: %s", zipFilePath)
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", file.Name))
+		c.Header("Content-Type", "application/zip")
 		c.File(zipFilePath)
 	} else {
 		s3Object, err := s3Client.GetObject(&s3.GetObjectInput{
@@ -366,7 +369,7 @@ func DeleteFolderAndContents(c *gin.Context, pool *pgxpool.Pool) {
 func createZipFromFolder(folderPath string) (string, error) {
 	log.Printf("Creating ZIP from folder: %s", folderPath)
 	zipFileName := fmt.Sprintf("%s.zip", uuid.New().String())
-	zipFilePath := filepath.Join("/tmp", zipFileName)
+	zipFilePath := filepath.Join(os.TempDir(), zipFileName)
 
 	newZipFile, err := os.Create(zipFilePath)
 	if err != nil {
@@ -374,7 +377,6 @@ func createZipFromFolder(folderPath string) (string, error) {
 		return "", err
 	}
 	defer newZipFile.Close()
-
 	zipWriter := zip.NewWriter(newZipFile)
 	defer zipWriter.Close()
 
@@ -390,10 +392,11 @@ func createZipFromFolder(folderPath string) (string, error) {
 // recursively adding files to the zip archive
 func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 	log.Printf("Adding files to ZIP: BasePath: %s, BaseInZip: %s", basePath, baseInZip)
+
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
-	prefix := filepath.Join("records", basePath[:strings.LastIndex(basePath, "/marker.txt")])
+	prefix := strings.TrimSuffix(basePath, "/marker.txt")
 	resp, err := s3Client.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
@@ -412,6 +415,7 @@ func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 
 		relativePath := strings.TrimPrefix(key, prefix+"/")
 		if strings.HasSuffix(key, "/") {
+			// Recursive call for directories
 			newBaseInZip := filepath.Join(baseInZip, relativePath)
 			err = addFilesToZip(zipWriter, key, newBaseInZip)
 			if err != nil {
@@ -419,6 +423,7 @@ func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 				return err
 			}
 		} else {
+			// Retrieve the file from S3
 			obj, err := s3Client.GetObject(&s3.GetObjectInput{
 				Bucket: aws.String(bucket),
 				Key:    aws.String(key),
@@ -429,11 +434,14 @@ func addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 			}
 			defer obj.Body.Close()
 
+			// Create a new file inside the zip
 			f, err := zipWriter.Create(filepath.Join(baseInZip, relativePath))
 			if err != nil {
 				log.Printf("Error creating zip entry: %v", err)
 				return err
 			}
+
+			// Copy the file content to the zip file
 			_, err = io.Copy(f, obj.Body)
 			if err != nil {
 				log.Printf("Error writing to zip entry: %v", err)
@@ -473,15 +481,20 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
+	oldPath = url.PathEscape(filepath.ToSlash(oldPath))
+
 	var newPath string
+
 	if itemType == "folder" {
 		newPath = strings.Replace(oldPath, "/marker.txt", "", 1)
 		newPath = filepath.Dir(newPath)
-		newPath = filepath.Join("records", newPath, request.Name) + "/marker.txt"
+		newPath = filepath.Join(newPath, request.Name) + "/marker.txt"
 	} else {
-		newPath = filepath.Join("records", filepath.Dir(oldPath), request.Name)
-		log.Println("newPath file : ", newPath)
+		newPath = filepath.Join(filepath.Dir(oldPath), request.Name)
 	}
+	newPath = url.PathEscape(filepath.ToSlash(newPath))
+	log.Println("oldPath file:", oldPath)
+	log.Println("newPath file:", newPath)
 
 	_, err = tx.Exec(c.Request.Context(), "UPDATE folder_file_info SET name = $1, path = $2, updated_at = $3 WHERE id = $4", request.Name, newPath, time.Now(), request.ID)
 	if err != nil {
@@ -527,6 +540,8 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 			Key:        aws.String(newPath),
 		})
 		if err != nil {
+			log.Println("final oldPath : ", oldPath)
+			log.Println("final newPath : ", newPath)
 			log.Println("Error renaming file in S3:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not rename file in S3"})
 			return

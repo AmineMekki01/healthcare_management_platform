@@ -137,7 +137,7 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 		// If no items, return an empty array instead of null
 		c.JSON(http.StatusOK, []models.FileFolder{})
 	} else {
-		c.JSON(http.StatusOK, items)
+		c.JSON(http.StatusOK, gin.H{"items": items})
 	}
 }
 
@@ -195,6 +195,6 @@ func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 		// If no items, return an empty array instead of null
 		c.JSON(http.StatusOK, []models.FileFolder{})
 	} else {
-		c.JSON(http.StatusOK, items)
+		c.JSON(http.StatusOK, gin.H{"items": items})
 	}
 }

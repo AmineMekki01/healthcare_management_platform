@@ -5,38 +5,45 @@ import {
   FolderCard
 } from './StyledComponents/MyDocsStyles';
 import { fileIconMapper } from './Helpers';
+import axios from "./../axiosConfig";
+import styled from 'styled-components';
 
-function SharedWithMe() {
+const PageTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #4A90E2;
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
+const SharedWithMe = () => {
   const { userId } = useContext(AuthContext);
   const [sharedItems, setSharedItems] = useState([]);
 
+  
+  const getSharedWithMe = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/v1/shared-with-me?userId=${userId}`);
+      console.log('response:', response);
+      setSharedItems(response.data);
+    } catch (error) {
+      console.error('Error retrieving shared with me docs:', error);
+    }
+  };
   useEffect(() => {
-    fetch(`http://localhost:3001/api/v1/shared-with-me?userId=${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-    .then((data) => {
-      setSharedItems(data);
-    })
-    .catch((error) => {
-      console.error('Error fetching shared items:', error);
-    });
+    if (userId) {
+      getSharedWithMe();
+    }
   }, [userId]);
-  function viewFolder(item) {
+
+
+  const viewFolder = (item) => {
     setSharedItems(item.id); 
   };
 
   return (
       <div>
-        <h1>Shared with Me</h1>
+        <PageTitle>Shared with Me</PageTitle>
         <FolderCardContainer>
         {Array.isArray(sharedItems) && sharedItems?.map((item) => {
           const formattedPath = item.path.replace(/\\/g, '/').replace('uploads/', '');
