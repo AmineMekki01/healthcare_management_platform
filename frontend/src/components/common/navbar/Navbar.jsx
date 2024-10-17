@@ -74,14 +74,14 @@ const MyNavbar = () => {
         />
       </LogoContainer>
       <MenuList>
-        {renderMenuGroup(commonMenus)}
+        {isLoggedIn && renderMenuGroup(commonMenus)}
         {isLoggedIn && userType === 'doctor' && renderMenuGroup(doctorMenus)}
         {!isLoggedIn && renderMenuGroup(guestMenus)}
       </MenuList>
-      
+
       <LowerMenuList>
         {isLoggedIn && (
-          <>  
+          <>
             <LogoutMenuItem>
               <a href="/login" onClick={logout}>
                 <img src={require(`./../../../assets/images/menu_images/logout.png`)} alt="Logout" />
@@ -94,7 +94,7 @@ const MyNavbar = () => {
                 <span>{capitalizeWords(userFullName)}</span>
                 <small>{capitalizeWords(userType)}</small>
               </UserInfo>
-            </UserInfoContainer>    
+            </UserInfoContainer>
           </>
         )}
       </LowerMenuList>
