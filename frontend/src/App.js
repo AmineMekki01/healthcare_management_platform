@@ -44,6 +44,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/reset-password" element={<ResetPasswordForm />} />
                 <Route path="/posts/:postId" element={<FullPost />} />
+                <Route path="/activate_account" element={<AccountVerified />} />
                 <Route
                   path="/patient-appointments"
                   element={
@@ -81,14 +82,6 @@ function App() {
                   element={
                     <PrivateRoute>
                       <FileManager />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/activate_account"
-                  element={
-                    <PrivateRoute>
-                      <AccountVerified />
                     </PrivateRoute>
                   }
                 />
