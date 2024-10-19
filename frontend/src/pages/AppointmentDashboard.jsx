@@ -69,7 +69,7 @@ export default function Dashboard() {
         <>
           <SectionTitle>My Appointments as Doctor</SectionTitle>
           <Flex>
-            {filterReservations(doctorReservations).map(reservation => (
+            {doctorReservations && filterReservations(doctorReservations).map(reservation => (
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
@@ -83,7 +83,7 @@ export default function Dashboard() {
       )}
       
       <Flex>
-        {filterReservations(patientReservations).map(reservation => (
+        {patientReservations && filterReservations(patientReservations).map(reservation => (
           <AppointmentCard
             key={reservation.reservation_id}
             reservation={reservation}

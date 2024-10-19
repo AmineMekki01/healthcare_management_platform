@@ -60,6 +60,8 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			state_name VARCHAR(255) NOT NULL,
 			zip_code VARCHAR(255) NOT NULL,
 			country_name VARCHAR(255) NOT NULL,
+			latitude DOUBLE PRECISION,
+        	longitude DOUBLE PRECISION,
 			birth_date DATE NOT NULL,
 			location VARCHAR(255) NOT NULL,
 			profile_photo_url VARCHAR(255) NOT NULL,

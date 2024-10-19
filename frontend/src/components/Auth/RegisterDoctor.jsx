@@ -65,7 +65,8 @@ const DoctorRegisterPage = () => {
     const [bio, setBio] = useState('');
     const [specialty, setSpecialty] = useState('');
     const [experience, setExperience] = useState('');
-    
+    const [latitude, setLatitude] = useState('');
+    const [longitude, setLongitude] = useState('');
     const [file, setFile] = useState(null);
 
     const handleFileChange = (event) => {
@@ -124,11 +125,13 @@ const DoctorRegisterPage = () => {
         formData.append('StateName', state_name);
         formData.append('ZipCode', zipCode);
         formData.append('CountryName', country_name);
+        formData.append('Latitude', latitude);
+        formData.append('Longitude', longitude);
         formData.append('DoctorBio', bio);
         formData.append('Specialty', specialty);
         formData.append('Experience', experience);
         formData.append('Sex', sex);
-  
+        
         console.log("form data : ", formData)
         try {
             const response = await axios.post('http://localhost:3001/api/v1/doctors/register', formData, {
@@ -145,6 +148,23 @@ const DoctorRegisterPage = () => {
             setErrMsg('Server error');
         }
     };
+    const handleGetCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLatitude(position.coords.latitude);
+                setLongitude(position.coords.longitude);
+            },
+            (error) => {
+                console.error('Error obtaining location:', error);
+                alert('Unable to retrieve your location. Please enter it manually.');
+            }
+            );
+        } else {
+            alert('Geolocation is not supported by this browser. Please enter your location manually.');
+        }
+    };
+
   
     return (
         <>
@@ -401,6 +421,48 @@ const DoctorRegisterPage = () => {
                             onChange={(e) => setCountryName(e.target.value)}
                             placeholder='Your State'
                         />
+                    </div>
+                    <div>
+                        <label htmlFor="latitude">
+                        Latitude:
+                        <span className="text-sm text-gray-500 ml-2">(e.g., 37.4221)</span>
+                        </label>
+                        <Input
+                        type="text"
+                        name="latitude"
+                        value={latitude}
+                        onChange={(e) => setLatitude(e.target.value)}
+                        placeholder="Enter latitude"
+                        required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="longitude">
+                        Longitude:
+                        <span className="text-sm text-gray-500 ml-2">(e.g., -122.0841)</span>
+                        </label>
+                        <Input
+                        type="text"
+                        name="longitude"
+                        value={longitude}
+                        onChange={(e) => setLongitude(e.target.value)}
+                        placeholder="Enter longitude"
+                        required
+                        />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600 mb-2">
+                        You can find your latitude and longitude on Google Maps by right-clicking on your office
+                        location and selecting "What's here?" The coordinates will appear at the bottom.
+                        </p>
+                        <div className='flex justify-center items-center mt-6'>
+                            <Button
+                                type="button"
+                                onClick={handleGetCurrentLocation}
+                            >
+                                Use Current Location
+                            </Button>
+                        </div>
                     </div>
                     <div>
                         <label htmlFor='bio'>Bio : </label>
