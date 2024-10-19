@@ -57,7 +57,7 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 
 	// Doctor Information
 	r.GET("/api/v1/doctors", func(c *gin.Context) {
-		services.GetAllDoctors(c, pool)
+		services.SearchForDoctors(c, pool)
 	})
 	r.GET("/api/v1/doctors/:doctorId", func(c *gin.Context) {
 		services.GetDoctorById(c, pool)

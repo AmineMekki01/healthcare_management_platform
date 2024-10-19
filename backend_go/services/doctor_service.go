@@ -12,7 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,10 +56,16 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	doctor.StateName = c.PostForm("StateName")
 	doctor.ZipCode = c.PostForm("ZipCode")
 	doctor.CountryName = c.PostForm("CountryName")
+
 	doctor.DoctorBio = c.PostForm("DoctorBio")
 	doctor.Specialty = c.PostForm("Specialty")
 	doctor.Experience = c.PostForm("Experience")
 	doctor.Sex = c.PostForm("Sex")
+
+	lat := c.PostForm("Latitude")
+	lon := c.PostForm("Longitude")
+	doctor.Latitude, _ = strconv.ParseFloat(lat, 64)
+	doctor.Longitude, _ = strconv.ParseFloat(lon, 64)
 
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
@@ -192,11 +198,13 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		country_name, 
 		birth_date, 
 		location,
-		profile_photo_url
+		profile_photo_url,
+		latitude,
+        longitude
 	) 
 	VALUES (
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
+		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
 	)`,
 		doctorID,
 		doctor.Username,
@@ -224,6 +232,8 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		doctor.BirthDate,
 		doctor.Location,
 		filePath,
+		doctor.Latitude,
+		doctor.Longitude,
 	)
 
 	if err != nil {
@@ -400,68 +410,4 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	c.JSON(http.StatusOK, doctor)
-}
-
-func GetAllDoctors(c *gin.Context, pool *pgxpool.Pool) {
-	var doctors []models.Doctor
-	query := c.DefaultQuery("query", "")
-	specialty := c.DefaultQuery("specialty", "")
-	location := c.DefaultQuery("location", "")
-
-	sqlQuery := "SELECT doctor_id, username, first_name, last_name, specialty, experience, rating_score,rating_count, location, profile_photo_url FROM doctor_info"
-	var conditions []string
-	var queryParams []interface{}
-	paramIndex := 1
-	if specialty == "undefined" {
-		specialty = ""
-	}
-	if query != "" {
-		conditions = append(conditions, fmt.Sprintf("first_name ILIKE $%d OR last_name ILIKE $%d", paramIndex, paramIndex))
-		queryParams = append(queryParams, "%"+query+"%")
-		paramIndex++
-	}
-	if specialty != "" {
-		conditions = append(conditions, fmt.Sprintf("specialty ILIKE $%d", paramIndex))
-		queryParams = append(queryParams, "%"+specialty+"%")
-		paramIndex++
-	}
-	if location != "" {
-		conditions = append(conditions, fmt.Sprintf("location ILIKE $%d", paramIndex))
-		queryParams = append(queryParams, "%"+location+"%")
-		paramIndex++
-	}
-
-	// Join the conditions with " AND "
-	if len(conditions) > 0 {
-		sqlQuery += " WHERE " + strings.Join(conditions, " AND ")
-	}
-	rows, err := pool.Query(context.Background(), sqlQuery, queryParams...)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var doctor models.Doctor
-		err := rows.Scan(
-			&doctor.DoctorID,
-			&doctor.Username,
-			&doctor.FirstName,
-			&doctor.LastName,
-			&doctor.Specialty,
-			&doctor.Experience,
-			&doctor.RatingScore,
-			&doctor.RatingCount,
-			&doctor.Location,
-			&doctor.ProfilePictureURL,
-		)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-
-			return
-		}
-		doctors = append(doctors, doctor)
-	}
-	c.JSON(http.StatusOK, doctors)
 }

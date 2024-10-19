@@ -14,6 +14,24 @@ const SearchBar = () => {
   const [userQuery, setUserQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '' });
+  const [userLatitude, setUserLatitude] = useState(null);
+  const [userLongitude, setUserLongitude] = useState(null);
+
+useEffect(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLatitude(position.coords.latitude);
+        setUserLongitude(position.coords.longitude);
+      },
+      (error) => {
+        console.error('Error getting user location:', error);
+      }
+    );
+  } else {
+    console.error('Geolocation is not supported by this browser.');
+  }
+}, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -28,18 +46,34 @@ const SearchBar = () => {
 
   const fetchUsers = async () => {
     const { query, specialty, location } = searchParams;
-    if (query || specialty || location) {
+    if (query || specialty || location || (userLatitude && userLongitude)) {
       try {
-        const response = await axios.get(`http://localhost:3001/api/v1/doctors?query=${query}&specialty=${specialty}&location=${location}`);
+        console.log("userLatitude : ", userLatitude)
+        console.log("userLongitude : ", userLongitude)
+
+        const response = await axios.get(
+          `http://localhost:3001/api/v1/doctors`,
+          {
+            params: {
+              query,
+              specialty,
+              location,
+              latitude: userLatitude,
+              longitude: userLongitude,
+            },
+          }
+        );
         if (response.status === 200) {
           setUsers(response.data);
-          console.log("response.data :",response.data)
-
+          console.log('response.data :', response.data);
         } else {
           throw new Error(`Failed to fetch users: ${response.status}`);
         }
       } catch (error) {
-        console.error('API error:', error.response ? error.response.data : error.message);
+        console.error(
+          'API error:',
+          error.response ? error.response.data : error.message
+        );
       }
     }
   };
@@ -50,7 +84,7 @@ const SearchBar = () => {
 
   useEffect(() => {
     debouncedFetchUsers();
-  }, [debouncedFetchUsers]);
+  }, [debouncedFetchUsers, userLatitude, userLongitude]);
 
   useEffect(() => {
     if (searchParams.specialty) {
