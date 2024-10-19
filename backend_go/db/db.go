@@ -111,7 +111,11 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			title VARCHAR(50) NOT NULL,
 			doctor_id uuid REFERENCES doctor_info(doctor_id),
 			patient_id uuid,
-			is_doctor_patient BOOLEAN NOT NULL DEFAULT FALSE
+			is_doctor_patient BOOLEAN NOT NULL DEFAULT FALSE,
+			canceled BOOLEAN DEFAULT FALSE,
+			canceled_by VARCHAR(10),
+			cancellation_reason TEXT,
+			cancellation_timestamp TIMESTAMP
 		);`,
 
 		`CREATE TABLE IF NOT EXISTS folder_file_info (

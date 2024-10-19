@@ -26,6 +26,9 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.GET("/api/v1/reservations", func(c *gin.Context) {
 		services.GetReservations(c, pool)
 	})
+	r.POST("/api/v1/cancel-appointment", func(c *gin.Context) {
+		services.CancelAppointment(c, pool)
+	})
 
 	// Chat
 	r.GET("/api/v1/search/:username/:userId", func(c *gin.Context) {

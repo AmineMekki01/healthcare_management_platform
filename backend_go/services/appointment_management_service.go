@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -146,7 +147,7 @@ func GetPatientReservations(c *gin.Context, pool *pgxpool.Pool, userID string, u
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
 		WHERE
-			appointments.patient_id = $1
+			appointments.patient_id = $1 AND appointments.canceled = false;
 	`
 	rows, err := pool.Query(context.Background(), query, userID)
 	if err != nil {
@@ -206,7 +207,7 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
 		WHERE
-			appointments.doctor_id = $1
+			appointments.doctor_id = $1 AND appointments.canceled = false;
 	`
 	rows, err := pool.Query(context.Background(), query, userID)
 	if err != nil {
@@ -294,7 +295,7 @@ func GetDoctorReservationsAsPatient(c *gin.Context, pool *pgxpool.Pool, userID s
 		LEFT JOIN
 			doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
 		WHERE 
-        	appointments.patient_id = $1 AND appointments.is_doctor_patient = true;
+        	appointments.patient_id = $1 AND appointments.is_doctor_patient = true AND appointments.canceled = false;
     `
 
 	rows, err := pool.Query(context.Background(), query, userID)
@@ -361,4 +362,61 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	c.JSON(http.StatusOK, reservations)
+}
+
+type CancelInfo struct {
+	CanceledBy         string `json:"canceled_by"`
+	CancellationReason string `json:"cancellation_reason"`
+	AppointmentIdStr   string `json:"appointment_id"`
+}
+
+func CancelAppointment(c *gin.Context, pool *pgxpool.Pool) {
+	var cancelInfo CancelInfo
+	if err := c.ShouldBindJSON(&cancelInfo); err != nil {
+		log.Println("Bind Error:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+	log.Println("canceledBy : ", cancelInfo.CanceledBy)
+	log.Println("cancellationReason : ", cancelInfo.CancellationReason)
+	log.Println("appointmentIdStr : ", cancelInfo.AppointmentIdStr)
+	appointmentID, err := uuid.Parse(cancelInfo.AppointmentIdStr)
+	if err != nil {
+		log.Println("Invalid Appointment ID : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+	sqlQuery := `
+	UPDATE appointments
+	SET canceled = TRUE, 
+		canceled_by = $1,
+		cancellation_reason = $2,
+		cancellation_timestamp = NOW()
+	WHERE appointment_id = $3;
+	`
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		log.Println("Connection Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error While Connection to db."})
+		return
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		log.Println("Transaction Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error While Transaction."})
+		return
+	}
+
+	_, err = tx.Exec(context.Background(), sqlQuery,
+		cancelInfo.CanceledBy, cancelInfo.CancellationReason, appointmentID)
+	if err != nil {
+		log.Println("Insert Error:", err)
+		tx.Rollback(context.Background())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error When Executing The Query."})
+		return
+	}
+	tx.Commit(context.Background())
+	c.JSON(http.StatusCreated, gin.H{"message": "Appointment Canceled Successfully"})
 }
