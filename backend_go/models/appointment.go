@@ -14,18 +14,22 @@ type Availability struct {
 }
 
 type Reservation struct {
-	ReservationID    uuid.UUID `json:"reservation_id"`
-	ReservationStart time.Time `json:"reservation_start"`
-	ReservationEnd   time.Time `json:"reservation_end"`
-	DoctorFirstName  string    `json:"doctor_first_name"`
-	DoctorLastName   string    `json:"doctor_last_name"`
-	Specialty        string    `json:"specialty"`
-	PatientFirstName string    `json:"patient_first_name"`
-	PatientLastName  string    `json:"patient_last_name"`
-	Age              int       `json:"age"`
-	PatientID        string    `json:"patient_id"`
-	DoctorID         string    `json:"doctor_id"`
-	IsDoctorPatient  bool      `json:"is_doctor_patient"`
+	ReservationID         uuid.UUID  `json:"reservation_id"`
+	ReservationStart      time.Time  `json:"reservation_start"`
+	ReservationEnd        time.Time  `json:"reservation_end"`
+	DoctorFirstName       string     `json:"doctor_first_name"`
+	DoctorLastName        string     `json:"doctor_last_name"`
+	Specialty             string     `json:"specialty"`
+	PatientFirstName      string     `json:"patient_first_name"`
+	PatientLastName       string     `json:"patient_last_name"`
+	Age                   int        `json:"age"`
+	PatientID             string     `json:"patient_id"`
+	DoctorID              string     `json:"doctor_id"`
+	IsDoctorPatient       bool       `json:"is_doctor_patient"`
+	Canceled              bool       `json:canceled`
+	CanceledBy            *string    `json:canceled_by`
+	CancellationReason    *string    `json:cancellation_reason`
+	CancellationTimestamp *time.Time `json:cancellation_timestamp`
 }
 
 type Appointments struct {

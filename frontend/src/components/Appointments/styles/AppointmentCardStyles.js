@@ -47,3 +47,16 @@ export const IconButton = styled.button`
     text-decoration: underline;
   }
 `;
+
+export const CancelButton = styled.button`
+  display: flex;
+  border: 2px solid #A741BA;
+  color: #A741BA;
+  padding: 5px;
+  margin-bottom: 10px;
+`;
+
+export const CancelButtonContainer = styled.div`
+  display: flex;
+  justify-content: center; 
+`;

@@ -3,7 +3,7 @@ import { createEvent } from 'ics';
 import { Card, CardContent, CardActions, Typography, Button, Chip } from '@mui/material';
 import { EventNote, Share, GetApp, Person, Cancel as CancelIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CardContainer, CardHeader, CardBody, CardFooter, IconButton } from './styles/AppointmentCardStyles';
+import { CardContainer, CardHeader, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer} from './styles/AppointmentCardStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import axios from './../axiosConfig';
 
@@ -117,18 +117,16 @@ export default function AppointmentCard({ reservation, userType }) {
           <Share />
         </IconButton>
       </CardFooter>
-      <div style={{ marginTop: '15px' }}>
-        <Button onClick={() => setShowCancelModal(true)} variant="outlined" color="secondary" startIcon={<CancelIcon />}>
-          Cancel Appointment
-        </Button>
-
-        {/* Cancel modal */}
+      <CancelButtonContainer style={{ marginTop: '15px' }}>
+        <CancelButton onClick={() => setShowCancelModal(true)}>
+        <CancelIcon /> Cancel Appointment
+        </CancelButton>
         <CancelAppointmentModal
           open={showCancelModal}
           handleClose={() => setShowCancelModal(false)}
           handleCancel={handleCancelAppointment}
         />
-      </div>
+      </CancelButtonContainer>
     </CardContainer>
   );
 }
