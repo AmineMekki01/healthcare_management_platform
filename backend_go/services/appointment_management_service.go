@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -138,7 +139,11 @@ func GetPatientReservations(c *gin.Context, pool *pgxpool.Pool, userID string, u
 			patient_info.age,
 			patient_info.patient_id,
 			doctor_info.doctor_id,
-			appointments.is_doctor_patient
+			appointments.is_doctor_patient,
+			appointments.canceled,
+			appointments.canceled_by,
+			appointments.cancellation_reason,
+			appointments.cancellation_timestamp
 		FROM 
 			appointments
 		JOIN
@@ -146,7 +151,7 @@ func GetPatientReservations(c *gin.Context, pool *pgxpool.Pool, userID string, u
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
 		WHERE
-			appointments.patient_id = $1
+			appointments.patient_id = $1;
 	`
 	rows, err := pool.Query(context.Background(), query, userID)
 	if err != nil {
@@ -159,9 +164,24 @@ func GetPatientReservations(c *gin.Context, pool *pgxpool.Pool, userID string, u
 	var reservations []models.Reservation
 	for rows.Next() {
 		var r models.Reservation
-		err := rows.Scan(&r.ReservationID, &r.ReservationStart, &r.ReservationEnd,
-			&r.DoctorFirstName, &r.DoctorLastName, &r.Specialty,
-			&r.PatientFirstName, &r.PatientLastName, &r.Age, &r.PatientID, &r.DoctorID, &r.IsDoctorPatient)
+		err := rows.Scan(
+			&r.ReservationID,
+			&r.ReservationStart,
+			&r.ReservationEnd,
+			&r.DoctorFirstName,
+			&r.DoctorLastName,
+			&r.Specialty,
+			&r.PatientFirstName,
+			&r.PatientLastName,
+			&r.Age,
+			&r.PatientID,
+			&r.DoctorID,
+			&r.IsDoctorPatient,
+			&r.Canceled,
+			&r.CanceledBy,
+			&r.CancellationReason,
+			&r.CancellationTimestamp,
+		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -198,7 +218,11 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 			patient_info.age,
 			patient_info.patient_id,
 			doctor_info.doctor_id,
-			appointments.is_doctor_patient
+			appointments.is_doctor_patient,
+			appointments.canceled,
+			appointments.canceled_by,
+			appointments.cancellation_reason,
+			appointments.cancellation_timestamp
 		FROM 
 			appointments
 		JOIN
@@ -206,7 +230,7 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
 		WHERE
-			appointments.doctor_id = $1
+			appointments.doctor_id = $1;
 	`
 	rows, err := pool.Query(context.Background(), query, userID)
 	if err != nil {
@@ -219,9 +243,24 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 	var reservations []models.Reservation
 	for rows.Next() {
 		var r models.Reservation
-		err := rows.Scan(&r.ReservationID, &r.ReservationStart, &r.ReservationEnd,
-			&r.DoctorFirstName, &r.DoctorLastName, &r.Specialty,
-			&r.PatientFirstName, &r.PatientLastName, &r.Age, &r.PatientID, &r.DoctorID, &r.IsDoctorPatient)
+		err := rows.Scan(
+			&r.ReservationID,
+			&r.ReservationStart,
+			&r.ReservationEnd,
+			&r.DoctorFirstName,
+			&r.DoctorLastName,
+			&r.Specialty,
+			&r.PatientFirstName,
+			&r.PatientLastName,
+			&r.Age,
+			&r.PatientID,
+			&r.DoctorID,
+			&r.IsDoctorPatient,
+			&r.Canceled,
+			&r.CanceledBy,
+			&r.CancellationReason,
+			&r.CancellationTimestamp,
+		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -286,7 +325,11 @@ func GetDoctorReservationsAsPatient(c *gin.Context, pool *pgxpool.Pool, userID s
 			END AS age,
 			appointments.patient_id,
 			appointments.doctor_id,
-			appointments.is_doctor_patient
+			appointments.is_doctor_patient,
+			appointments.canceled,
+			appointments.canceled_by,
+			appointments.cancellation_reason,
+			appointments.cancellation_timestamp
         FROM 
             appointments
          JOIN
@@ -321,6 +364,10 @@ func GetDoctorReservationsAsPatient(c *gin.Context, pool *pgxpool.Pool, userID s
 			&r.PatientID,
 			&r.DoctorID,
 			&r.IsDoctorPatient,
+			&r.Canceled,
+			&r.CanceledBy,
+			&r.CancellationReason,
+			&r.CancellationTimestamp,
 		)
 		if err != nil {
 			log.Println("Row Scan Error in GetDoctorReservationsAsPatient :", err)
@@ -352,13 +399,290 @@ func GetReservations(c *gin.Context, pool *pgxpool.Pool) {
 	}
 
 	var reservations []models.Reservation
+
 	if userType == "patient" {
 		reservations = GetPatientReservations(c, pool, userID, userType, timezone)
+
 	} else if userType == "doctor" {
 		regularReservations := GetDoctorReservationsAsDoctor(c, pool, userID, userType, timezone)
 		doctorPatientReservations := GetDoctorReservationsAsPatient(c, pool, userID, userType, timezone)
+		log.Println("regularReservations :", regularReservations)
+		log.Println("doctorPatientReservations :", doctorPatientReservations)
+
 		reservations = append(regularReservations, doctorPatientReservations...)
 	}
-
+	log.Println("reservations :", reservations)
 	c.JSON(http.StatusOK, reservations)
+}
+
+type CancelInfo struct {
+	CanceledBy         string `json:"canceled_by"`
+	CancellationReason string `json:"cancellation_reason"`
+	AppointmentIdStr   string `json:"appointment_id"`
+}
+
+func CancelAppointment(c *gin.Context, pool *pgxpool.Pool) {
+	var cancelInfo CancelInfo
+	if err := c.ShouldBindJSON(&cancelInfo); err != nil {
+		log.Println("Bind Error:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+	log.Println("canceledBy : ", cancelInfo.CanceledBy)
+	log.Println("cancellationReason : ", cancelInfo.CancellationReason)
+	log.Println("appointmentIdStr : ", cancelInfo.AppointmentIdStr)
+	appointmentID, err := uuid.Parse(cancelInfo.AppointmentIdStr)
+	if err != nil {
+		log.Println("Invalid Appointment ID : ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+	sqlQuery := `
+	UPDATE appointments
+	SET canceled = TRUE, 
+		canceled_by = $1,
+		cancellation_reason = $2,
+		cancellation_timestamp = NOW()
+	WHERE appointment_id = $3;
+	`
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		log.Println("Connection Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error While Connection to db."})
+		return
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		log.Println("Transaction Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error While Transaction."})
+		return
+	}
+
+	_, err = tx.Exec(context.Background(), sqlQuery,
+		cancelInfo.CanceledBy, cancelInfo.CancellationReason, appointmentID)
+	if err != nil {
+		log.Println("Insert Error:", err)
+		tx.Rollback(context.Background())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error When Executing The Query."})
+		return
+	}
+	tx.Commit(context.Background())
+	c.JSON(http.StatusCreated, gin.H{"message": "Appointment Canceled Successfully"})
+}
+
+func GetPatientReservationsCount(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string, appointmentType string) int {
+	var query string
+	var canceledCount int
+
+	currentTime := time.Now().UTC()
+	if appointmentType == "canceled" {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+				doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			JOIN
+				patient_info ON appointments.patient_id = patient_info.patient_id
+			WHERE
+				appointments.patient_id = $1 
+				AND 
+				appointments.canceled = true;
+		`
+		err := pool.QueryRow(context.Background(), query, userID).Scan(&canceledCount)
+
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	} else {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+				doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			JOIN
+				patient_info ON appointments.patient_id = patient_info.patient_id
+			WHERE
+				appointments.patient_id = $1 
+				AND 
+				appointments.canceled = false
+				AND 
+				appointments.appointment_end < $2;
+		`
+		err := pool.QueryRow(context.Background(), query, userID, currentTime).Scan(&canceledCount)
+
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	}
+
+	return canceledCount
+}
+
+func GetDoctorReservationsAsDoctorCount(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string, appointmentType string) int {
+	var query string
+	var canceledCount int
+	currentTime := time.Now().UTC()
+	if appointmentType == "canceled" {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+				doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			JOIN
+				patient_info ON appointments.patient_id = patient_info.patient_id
+			WHERE
+				appointments.doctor_id = $1 
+				AND 
+				appointments.canceled = true;
+		`
+		err := pool.QueryRow(context.Background(), query, userID).Scan(&canceledCount)
+
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	} else {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+				doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			JOIN
+				patient_info ON appointments.patient_id = patient_info.patient_id
+			WHERE
+				appointments.doctor_id = $1 
+				AND 
+				appointments.canceled = false
+				AND 
+				appointments.appointment_end < $2;
+		`
+		err := pool.QueryRow(context.Background(), query, userID, currentTime).Scan(&canceledCount)
+
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	}
+
+	return canceledCount
+}
+
+func GetDoctorReservationsAsPatientCount(c *gin.Context, pool *pgxpool.Pool, userID string, userType string, timezone string, appointmentType string) int {
+
+	checkQuery := `
+		SELECT EXISTS (
+			SELECT 1 
+			FROM appointments
+			WHERE appointments.patient_id = $1 AND appointments.is_doctor_patient = true
+		)
+	`
+	var exist bool
+	err := pool.QueryRow(context.Background(), checkQuery, userID).Scan(&exist)
+	if err != nil {
+		log.Println("Query Error in GetDoctorReservationsAsPatient : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return 0
+	}
+
+	if !exist {
+		log.Println("No reservations found for the patient")
+		return 0
+	}
+	var query string
+	var canceledCount int
+	currentTime := time.Now().UTC()
+	if appointmentType == "canceled" {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			LEFT JOIN
+				doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
+			WHERE 
+				appointments.patient_id = $1 
+				AND 
+				appointments.canceled = true
+				AND 
+				appointments.is_doctor_patient = true;
+		`
+		err = pool.QueryRow(context.Background(), query, userID).Scan(&canceledCount)
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	} else {
+		query = `
+			SELECT 
+				count(*)
+			FROM 
+				appointments
+			JOIN
+			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+			LEFT JOIN
+				doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
+			WHERE 
+				appointments.patient_id = $1 
+				AND 
+				appointments.canceled = false
+				AND 
+				appointments.appointment_end < $2
+				AND 
+				appointments.is_doctor_patient = true;
+		`
+		err = pool.QueryRow(context.Background(), query, userID, currentTime).Scan(&canceledCount)
+		if err != nil {
+			log.Printf("Error fetching canceled appointments for patient: %v", err)
+			return 0
+		}
+	}
+
+	return canceledCount
+
+}
+
+func GetReservationsCount(c *gin.Context, pool *pgxpool.Pool) {
+	userID := c.DefaultQuery("user_id", "")
+	userType := c.DefaultQuery("user_type", "")
+	appointmentType := c.DefaultQuery("appointment_type", "")
+
+	if userID == "" {
+		log.Println("Bad Request: user_id required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: doctor_id or patient_id required"})
+		return
+	}
+	if userType == "" {
+		log.Println("Bad Request: user_type required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: user_type required"})
+		return
+	}
+
+	var asDoctorReservationsCount int = 0
+	var asPatientReservationsCount int = 0
+	if userType == "patient" {
+		asPatientReservationsCount = GetPatientReservationsCount(c, pool, userID, userType, "UTC", appointmentType)
+
+	} else if userType == "doctor" {
+		asDoctorReservationsCount = GetDoctorReservationsAsDoctorCount(c, pool, userID, userType, "UTC", appointmentType)
+		asPatientReservationsCount = GetDoctorReservationsAsPatientCount(c, pool, userID, userType, "UTC", appointmentType)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"as_patient": asPatientReservationsCount,
+		"as_doctor":  asDoctorReservationsCount,
+	})
 }

@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Typography} from '@mui/material';
 
 export const CardContainer = styled.div`
   background-color: #ffffff;
@@ -6,12 +7,17 @@ export const CardContainer = styled.div`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   width: 300px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   transition: transform 0.3s ease-in-out;
 
   &:hover {
     transform: translateY(-5px);
   }
 `;
+
 
 export const CardHeader = styled.div`
   background-color: #4a90e2;
@@ -20,7 +26,17 @@ export const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 60px;
+  overflow: hidden;
 `;
+
+export const TitleText = styled(Typography)`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+`;
+
 
 export const CardBody = styled.div`
   padding: 1rem;
@@ -46,4 +62,17 @@ export const IconButton = styled.button`
   &:hover {
     text-decoration: underline;
   }
+`;
+
+export const CancelButton = styled.button`
+  display: flex;
+  border: 2px solid #A741BA;
+  color: #A741BA;
+  padding: 5px;
+  margin-bottom: 10px;
+`;
+
+export const CancelButtonContainer = styled.div`
+  display: flex;
+  justify-content: center; 
 `;

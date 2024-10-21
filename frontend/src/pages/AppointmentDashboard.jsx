@@ -27,14 +27,21 @@ export default function Dashboard() {
 
         const response = await axios.get('/api/v1/reservations', { params });
         console.log("Reservations: ", response.data);
-        
+
         if (userType === 'doctor') {
-          const doctorAppts = response.data.filter(r => !r.is_doctor_patient);
-          const patientAppts = response.data.filter(r => r.is_doctor_patient);
-          setDoctorReservations(doctorAppts);
-          setPatientReservations(patientAppts);
+          const doctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled);
+          const canceledDoctorAppts = response.data.filter(r => !r.is_doctor_patient && r.Canceled);
+          const patientAppts = response.data.filter(r => r.is_doctor_patient && !r.Canceled);
+          const canceledPatientAppts = response.data.filter(r => r.is_doctor_patient && r.Canceled);
+          setDoctorReservations({ active: doctorAppts, canceled: canceledDoctorAppts });
+          setPatientReservations({ active: patientAppts, canceled: canceledPatientAppts });
         } else {
-          setPatientReservations(response.data);
+          const activePatientAppts = response.data.filter(r => !r.Canceled);
+          const canceledPatientAppts = response.data.filter(r => r.Canceled);
+          console.log("activePatientAppts :", activePatientAppts)
+          console.log("canceledPatientAppts :", canceledPatientAppts)
+
+          setPatientReservations({ active: activePatientAppts, canceled: canceledPatientAppts });
         }
       } catch (error) {
         console.error('Error fetching reservations:', error);
@@ -45,7 +52,7 @@ export default function Dashboard() {
   }, [userId, userType]);
 
   const filterReservations = (reservations) => {
-    return reservations.filter(reservation => 
+    return reservations.filter(reservation =>
       reservation.doctor_first_name.toLowerCase().includes(filterText.toLowerCase()) ||
       reservation.doctor_last_name.toLowerCase().includes(filterText.toLowerCase()) ||
       reservation.patient_first_name.toLowerCase().includes(filterText.toLowerCase()) ||
@@ -55,7 +62,7 @@ export default function Dashboard() {
 
   return (
     <Container>
-      <Title>My Upcoming Appointments</Title>
+      <Title>My Appointments Review : </Title>
       <FilterContainer>
         <FilterInput
           type="text"
@@ -64,12 +71,12 @@ export default function Dashboard() {
           onChange={(e) => setFilterText(e.target.value)}
         />
       </FilterContainer>
-      
+
       {userType === 'doctor' && (
         <>
-          <SectionTitle>My Appointments as Doctor</SectionTitle>
+          <SectionTitle>My Active Appointments as Doctor</SectionTitle>
           <Flex>
-            {doctorReservations && filterReservations(doctorReservations).map(reservation => (
+            {doctorReservations.active && filterReservations(doctorReservations.active).map(reservation => (
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
@@ -77,20 +84,67 @@ export default function Dashboard() {
               />
             ))}
           </Flex>
-          
-          <SectionTitle>My Appointments as Patient</SectionTitle>
+
+          <SectionTitle>My Canceled Appointments as Doctor</SectionTitle>
+          <Flex>
+            {doctorReservations.canceled && filterReservations(doctorReservations.canceled).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"doctor"}
+              />
+            ))}
+          </Flex>
+
+          <SectionTitle>My Active Appointments as Patient</SectionTitle>
+          <Flex>
+            {patientReservations.active && filterReservations(patientReservations.active).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"patient"}
+              />
+            ))}
+          </Flex>
+
+          <SectionTitle>My Canceled Appointments as Patient</SectionTitle>
+          <Flex>
+            {patientReservations.canceled && filterReservations(patientReservations.canceled).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"patient"}
+              />
+            ))}
+          </Flex>
         </>
       )}
-      
-      <Flex>
-        {patientReservations && filterReservations(patientReservations).map(reservation => (
-          <AppointmentCard
-            key={reservation.reservation_id}
-            reservation={reservation}
-            userType={"patient"}
-          />
-        ))}
-      </Flex>
+
+      {userType === 'patient' && (
+        <>
+          <SectionTitle>My Active Appointments</SectionTitle>
+          <Flex>
+            {patientReservations.active && filterReservations(patientReservations.active).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"patient"}
+              />
+            ))}
+          </Flex>
+
+          <SectionTitle>My Canceled Appointments</SectionTitle>
+          <Flex>
+            {patientReservations.canceled && filterReservations(patientReservations.canceled).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"patient"}
+              />
+            ))}
+          </Flex>
+        </>
+      )}
     </Container>
   );
 }

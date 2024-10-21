@@ -26,6 +26,7 @@ import PrivateRoute from './components/ProtectedRoutes/PrivateRoute';
 import FullPost from './components/FeedBlog/FullPost';  
 import DoctorPosts from './components/FeedBlog/DoctorPosts';  
 import EditPost from './components/FeedBlog/EditPostPage';  
+import Dashboard from './pages/Dashboard';
 
 function App() {
 
@@ -101,7 +102,14 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-
+                <Route
+                  path="/dashboard"
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  }
+                />
                 <Route
                   path="/create-post"
                   element={

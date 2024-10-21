@@ -1,13 +1,15 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { createEvent } from 'ics';
 import { Card, CardContent, CardActions, Typography, Button, Chip } from '@mui/material';
-import { EventNote, Share, GetApp, Person } from '@mui/icons-material';
+import { EventNote, Share, GetApp, Person, Cancel as CancelIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CardContainer, CardHeader, CardBody, CardFooter, IconButton } from './styles/AppointmentCardStyles';
-import { AuthContext } from './../Auth/AuthContext';
+import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer} from './styles/AppointmentCardStyles';
+import CancelAppointmentModal from './CancelAppointmentModal';
+import axios from './../axiosConfig';
 
 export default function AppointmentCard({ reservation, userType }) {
   const navigate = useNavigate();
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const formatDate = (dateString) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -55,12 +57,32 @@ export default function AppointmentCard({ reservation, userType }) {
       alert('Sharing is not supported on this browser');
     }
   };
+  const handleCancelAppointment = async (reason) => {
+    try {
+      console.log("appointment_id : ", reservation.reservation_id)
+      console.log("userType : ", userType)
+
+      console.log("reason : ", reason)
+
+      await axios.post('/api/v1/cancel-appointment', {
+        appointment_id: reservation.reservation_id,
+        canceled_by: userType,
+        cancellation_reason: reason,
+      });
+      alert('Appointment canceled successfully.');
+      setShowCancelModal(false);
+
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+      alert('An error occurred while canceling the appointment.');
+    }
+  };
   return (
     <CardContainer>
       <CardHeader>
-        <Typography variant="h6">
+        <TitleText variant="h6">
           {userType === 'patient' ? `Dr. ${reservation.doctor_first_name} ${reservation.doctor_last_name}` : `${reservation.patient_first_name} ${reservation.patient_last_name}`}
-        </Typography>
+        </TitleText>
         {
           userType === 'patient' ? <Chip label={reservation.specialty} color="primary" /> : <></>
         }
@@ -95,6 +117,16 @@ export default function AppointmentCard({ reservation, userType }) {
           <Share />
         </IconButton>
       </CardFooter>
+      <CancelButtonContainer style={{ marginTop: '15px' }}>
+        <CancelButton onClick={() => setShowCancelModal(true)}>
+        <CancelIcon /> Cancel Appointment
+        </CancelButton>
+        <CancelAppointmentModal
+          open={showCancelModal}
+          handleClose={() => setShowCancelModal(false)}
+          handleCancel={handleCancelAppointment}
+        />
+      </CancelButtonContainer>
     </CardContainer>
   );
 }
