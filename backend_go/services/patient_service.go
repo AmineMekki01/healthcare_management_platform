@@ -26,7 +26,7 @@ func GetPatientById(c *gin.Context, pool *pgxpool.Pool) {
 	var location string
 
 	// Fetching the patient from the database based on the email
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), patient_bio, sex, location  FROM patient_info WHERE patient_id = $1", patientId).Scan(
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), patient_bio, sex, location, profile_photo_url FROM patient_info WHERE patient_id = $1", patientId).Scan(
 		&patient.Email,
 		&patient.PhoneNumber,
 		&patient.FirstName,
@@ -35,6 +35,7 @@ func GetPatientById(c *gin.Context, pool *pgxpool.Pool) {
 		&patient.PatientBio,
 		&patient.Sex,
 		&location,
+		&patient.ProfilePictureURL,
 	)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
