@@ -3,7 +3,7 @@ import { createEvent } from 'ics';
 import { Card, CardContent, CardActions, Typography, Button, Chip } from '@mui/material';
 import { EventNote, Share, GetApp, Person, Cancel as CancelIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CardContainer, CardHeader, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer} from './styles/AppointmentCardStyles';
+import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer} from './styles/AppointmentCardStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import axios from './../axiosConfig';
 
@@ -80,9 +80,9 @@ export default function AppointmentCard({ reservation, userType }) {
   return (
     <CardContainer>
       <CardHeader>
-        <Typography variant="h6">
+        <TitleText variant="h6">
           {userType === 'patient' ? `Dr. ${reservation.doctor_first_name} ${reservation.doctor_last_name}` : `${reservation.patient_first_name} ${reservation.patient_last_name}`}
-        </Typography>
+        </TitleText>
         {
           userType === 'patient' ? <Chip label={reservation.specialty} color="primary" /> : <></>
         }

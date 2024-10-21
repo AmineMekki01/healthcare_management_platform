@@ -62,7 +62,7 @@ export default function Dashboard() {
 
   return (
     <Container>
-      <Title>My Upcoming Appointments</Title>
+      <Title>My Appointments Review : </Title>
       <FilterContainer>
         <FilterInput
           type="text"
@@ -72,10 +72,8 @@ export default function Dashboard() {
         />
       </FilterContainer>
 
-      {/* For Doctors: Active and Canceled Appointments */}
       {userType === 'doctor' && (
         <>
-          {/* Doctor's Appointments */}
           <SectionTitle>My Active Appointments as Doctor</SectionTitle>
           <Flex>
             {doctorReservations.active && filterReservations(doctorReservations.active).map(reservation => (
@@ -98,7 +96,6 @@ export default function Dashboard() {
             ))}
           </Flex>
 
-          {/* Doctor as a Patient */}
           <SectionTitle>My Active Appointments as Patient</SectionTitle>
           <Flex>
             {patientReservations.active && filterReservations(patientReservations.active).map(reservation => (
@@ -123,7 +120,6 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* For Patients: Active and Canceled Appointments */}
       {userType === 'patient' && (
         <>
           <SectionTitle>My Active Appointments</SectionTitle>

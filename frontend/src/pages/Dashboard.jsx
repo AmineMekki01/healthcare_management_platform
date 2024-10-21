@@ -1,24 +1,43 @@
 import React, { useContext } from 'react';
-import AttendedAppointmentsChart from './../components/Appointments/AttendedAppointmentsChart';
-import CanceledAppointmentsChart from './../components/Appointments/CanceledAppointmentsChart';
+import AppointmentsChart from './../components/Appointments/AppointmentsChart';
 import { AuthContext } from './../components/Auth/AuthContext';
-import { DashboardContainer, ChartContainer, Title } from './styles/DashboardStyles';
+import { DashboardContainer, AppointmentsWrapper, AppointmentsCard, Title } from './styles/DashboardStyles';
+import { faCalendarCheck, faCalendarTimes } from '@fortawesome/free-solid-svg-icons';
 
 export default function Dashboard() {
   const { userId, userType } = useContext(AuthContext);
 
   return (
     <DashboardContainer>
-      <Title>Appointments Dashboard</Title>
+      <Title>Dashboard</Title>
       
-      <ChartContainer>
-        <AttendedAppointmentsChart userId={userId} userType={userType} />
-      </ChartContainer>
+      <AppointmentsWrapper>
+        <AppointmentsCard>
+          <AppointmentsChart 
+            userId={userId} 
+            userType={userType}
+            appointmentType="attended"
+            apiType="attended"
+            label="Attended Appointments"
+            icon={faCalendarCheck}
+            color="#4CAF50"
+            pieTitle="Attended Appointments"
+          />
+        </AppointmentsCard>
 
-      <ChartContainer>
-        <CanceledAppointmentsChart userId={userId} userType={userType}/>
-      </ChartContainer>
-
+        <AppointmentsCard>
+          <AppointmentsChart 
+            userId={userId} 
+            userType={userType}
+            appointmentType="canceled"
+            apiType="canceled"
+            label="Canceled Appointments"
+            icon={faCalendarTimes}
+            color="#FF6F61"
+            pieTitle="Canceled Appointments"
+          />
+        </AppointmentsCard>
+      </AppointmentsWrapper>
     </DashboardContainer>
   );
 }

@@ -655,7 +655,6 @@ func GetDoctorReservationsAsPatientCount(c *gin.Context, pool *pgxpool.Pool, use
 
 }
 
-// Implement GET /api/v1/reservations
 func GetReservationsCount(c *gin.Context, pool *pgxpool.Pool) {
 	userID := c.DefaultQuery("user_id", "")
 	userType := c.DefaultQuery("user_type", "")
@@ -672,14 +671,18 @@ func GetReservationsCount(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	var reservationsCount int
+	var asDoctorReservationsCount int = 0
+	var asPatientReservationsCount int = 0
 	if userType == "patient" {
-		reservationsCount = GetPatientReservationsCount(c, pool, userID, userType, "UTC", appointmentType)
+		asPatientReservationsCount = GetPatientReservationsCount(c, pool, userID, userType, "UTC", appointmentType)
+
 	} else if userType == "doctor" {
-		regularReservationsCount := GetDoctorReservationsAsDoctorCount(c, pool, userID, userType, "UTC", appointmentType)
-		doctorPatientReservationsCount := GetDoctorReservationsAsPatientCount(c, pool, userID, userType, "UTC", appointmentType)
-		reservationsCount = regularReservationsCount + doctorPatientReservationsCount
+		asDoctorReservationsCount = GetDoctorReservationsAsDoctorCount(c, pool, userID, userType, "UTC", appointmentType)
+		asPatientReservationsCount = GetDoctorReservationsAsPatientCount(c, pool, userID, userType, "UTC", appointmentType)
 	}
 
-	c.JSON(http.StatusOK, reservationsCount)
+	c.JSON(http.StatusOK, gin.H{
+		"as_patient": asPatientReservationsCount,
+		"as_doctor":  asDoctorReservationsCount,
+	})
 }

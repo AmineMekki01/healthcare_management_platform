@@ -8,13 +8,23 @@ export const DashboardContainer = styled.div`
   margin: 0 auto;
 `;
 
+export const AppointmentsWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 20px;
+  max-width: 1200px;
+`;
+
 export const Title = styled.h1`
   font-size: 28px;
   text-align: center;
   margin-bottom: 20px;
 `;
 
-export const ChartContainer = styled.div`
+export const AppointmentsCard = styled.div`
+  width: 450px;
+  height: 450px;
   margin: 20px 0;
   padding: 20px;
   background-color: #f9f9f9;
