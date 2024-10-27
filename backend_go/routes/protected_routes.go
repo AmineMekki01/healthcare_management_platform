@@ -122,6 +122,17 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		services.GetUserFollowings(c, pool)
 	})
 
+	// diag
+	r.GET("/api/v1/patients/medical-history/:patientId", func(c *gin.Context) {
+		services.GetPatientMedicalHistory(c, pool)
+	})
+	r.GET("/api/v1/patients/medications/:patientId", func(c *gin.Context) {
+		services.GetPatientMedications(c, pool)
+	})
+	r.GET("/api/v1/patients/diagnosis-info/:diagnosisId", func(c *gin.Context) {
+		services.GetDiagnosisPage(c, pool)
+	})
+
 	// Sharing
 	r.POST("/api/v1/share", func(c *gin.Context) {
 		services.ShareItem(c, pool)

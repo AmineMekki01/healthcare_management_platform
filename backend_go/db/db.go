@@ -210,6 +210,25 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			liked_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			UNIQUE (post_id, user_id, user_type)
 		);`,
+		`CREATE TABLE IF NOT EXISTS medical_diagnosis_history (
+			diag_history_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			diagnosis_name VARCHAR(50) NOT NULL,
+			diagnosis_details TEXT,
+			diagnosis_doctor_name VARCHAR(50) NOT NULL,
+			diagnosis_doctor_id UUID,
+			diagnosis_patient_id UUID,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+		);`,
+
+		`CREATE TABLE IF NOT EXISTS prescribed_medications (
+			medication_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			medication_name VARCHAR(255) NOT NULL,
+			prescribing_doctor_name VARCHAR(50) NOT NULL,
+			prescribing_doctor_id UUID,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+		);`,
 	}
 
 	for _, query := range sqlQueries {

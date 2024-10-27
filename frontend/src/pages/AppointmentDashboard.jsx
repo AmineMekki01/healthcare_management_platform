@@ -23,25 +23,27 @@ export default function Dashboard() {
           user_id: userId,
           user_type: userType,
         };
-        console.log("Params: ", params);
 
         const response = await axios.get('/api/v1/reservations', { params });
-        console.log("Reservations: ", response.data);
+        const now = new Date();
 
         if (userType === 'doctor') {
-          const doctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled);
+          const activeDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) > now);
+          const passedDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) <= now);
           const canceledDoctorAppts = response.data.filter(r => !r.is_doctor_patient && r.Canceled);
-          const patientAppts = response.data.filter(r => r.is_doctor_patient && !r.Canceled);
-          const canceledPatientAppts = response.data.filter(r => r.is_doctor_patient && r.Canceled);
-          setDoctorReservations({ active: doctorAppts, canceled: canceledDoctorAppts });
-          setPatientReservations({ active: patientAppts, canceled: canceledPatientAppts });
-        } else {
-          const activePatientAppts = response.data.filter(r => !r.Canceled);
-          const canceledPatientAppts = response.data.filter(r => r.Canceled);
-          console.log("activePatientAppts :", activePatientAppts)
-          console.log("canceledPatientAppts :", canceledPatientAppts)
 
-          setPatientReservations({ active: activePatientAppts, canceled: canceledPatientAppts });
+          const activePatientAppts = response.data.filter(r => r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) > now);
+          const passedPatientAppts = response.data.filter(r => r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) <= now);
+          const canceledPatientAppts = response.data.filter(r => r.is_doctor_patient && r.Canceled);
+
+          setDoctorReservations({ active: activeDoctorAppts, passed: passedDoctorAppts, canceled: canceledDoctorAppts });
+          setPatientReservations({ active: activePatientAppts, passed: passedPatientAppts, canceled: canceledPatientAppts });
+        } else {
+          const activePatientAppts = response.data.filter(r => !r.Canceled && new Date(r.reservation_end) > now);
+          const passedPatientAppts = response.data.filter(r => !r.Canceled && new Date(r.reservation_end) <= now);
+          const canceledPatientAppts = response.data.filter(r => r.Canceled);
+
+          setPatientReservations({ active: activePatientAppts, passed: passedPatientAppts, canceled: canceledPatientAppts });
         }
       } catch (error) {
         console.error('Error fetching reservations:', error);
@@ -85,6 +87,17 @@ export default function Dashboard() {
             ))}
           </Flex>
 
+          <SectionTitle>My Passed Appointments as Doctor</SectionTitle>
+          <Flex>
+            {doctorReservations.passed && filterReservations(doctorReservations.passed).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"doctor"}
+              />
+            ))}
+          </Flex>
+
           <SectionTitle>My Canceled Appointments as Doctor</SectionTitle>
           <Flex>
             {doctorReservations.canceled && filterReservations(doctorReservations.canceled).map(reservation => (
@@ -103,6 +116,17 @@ export default function Dashboard() {
                 key={reservation.reservation_id}
                 reservation={reservation}
                 userType={"patient"}
+              />
+            ))}
+          </Flex>
+
+          <SectionTitle>My Passed Appointments as Patient</SectionTitle>
+          <Flex>
+            {patientReservations.passed && filterReservations(patientReservations.passed).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"doctor"}
               />
             ))}
           </Flex>
@@ -129,6 +153,17 @@ export default function Dashboard() {
                 key={reservation.reservation_id}
                 reservation={reservation}
                 userType={"patient"}
+              />
+            ))}
+          </Flex>
+
+          <SectionTitle>My Passed Appointments</SectionTitle>
+          <Flex>
+            {patientReservations.passed && filterReservations(patientReservations.passed).map(reservation => (
+              <AppointmentCard
+                key={reservation.reservation_id}
+                reservation={reservation}
+                userType={"doctor"}
               />
             ))}
           </Flex>

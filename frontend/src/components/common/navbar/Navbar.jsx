@@ -36,6 +36,7 @@ const MyNavbar = () => {
     { title: 'MyDocs', src: 'Folder', href: '/MyDocs' },
     { title: 'Messages', src: 'Chat', href: '/Messages' },
     { title: 'Feed', src: 'feed_logo', href: '/feed' },
+    { title: 'Setting', src: 'settings', href: `/Settings/${userId}` },
   ];
 
   const doctorMenus = [
@@ -89,7 +90,7 @@ const MyNavbar = () => {
               </a>
             </LogoutMenuItem>
             <UserInfoContainer>
-              <UserInfoImage src={`http://localhost:3001/${userProfilePhotoUrl}`} alt="User" />
+              <UserInfoImage src={userProfilePhotoUrl} alt="User" />
               <UserInfo>
                 <span>{capitalizeWords(userFullName)}</span>
                 <small>{capitalizeWords(userType)}</small>

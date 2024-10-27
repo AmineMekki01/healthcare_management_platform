@@ -39,7 +39,7 @@ const NavbarComponent = () => {
     <Navbar>
         <Logo className='logo'>TBIBI Chat</Logo>
         <User className='user'>
-            <ProfileImg src={`http://localhost:3001/${userProfilePhotoUrl}`} alt=""/>
+            <ProfileImg src={userProfilePhotoUrl} alt=""/>
             <span>{userFullName && userFullName.split(' ')[0] || ''}</span>
         </User>
     </Navbar>
