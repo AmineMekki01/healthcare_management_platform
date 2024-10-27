@@ -1,139 +1,138 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from './../../axiosConfig';
 import {
-    Card,
-    CardContent,
-    CardMedia,
-    Typography,
-    Button,
-    Container,
-    Grid,
-  } from '@mui/material';
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, FollowButton, DoctorInfoContainer, DoctorName, DoctorInfo
+} from './../Doctor/styles/DoctorProfileStyles';
 
 import { useParams } from 'react-router-dom';
-import { AuthContext } from './../../Auth/AuthContext';  
+import { AuthContext } from './../../Auth/AuthContext';
 
 export default function PatientProfile() {
-
   const { patientId } = useParams();
-  const [patientInfo, setPatientInfo] = useState([]);
-  const [loading, setLoading] = useState([]);
-  const [error, setError] = useState([]);
-  const { userProfilePhotoUrl } = useContext(AuthContext);
+  const [patientInfo, setPatientInfo] = useState({});
+  const [userFollowings, setUserFollowings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const { userType, userId } = useContext(AuthContext);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isProcessingFollow, setIsProcessingFollow] = useState(false);
+  console.log("userId : ", userId)
+  const fetchPatientInfo = async () => {
 
+    try {
+      const response = await axios.get(`http://localhost:3001/api/v1/patients/${patientId}`);
+      setPatientInfo(response.data)
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+      setError('An error occurred while fetching the patient information.');
+    }
+  };
+
+  const fetchFollowings = async () => {
+    const response = await axios.get(`http://localhost:3001/api/v1/patient-followings/${patientId}`);
+    setUserFollowings(response.data.following_users)
+
+    try {
+      
+    } catch (error) {
+      console.log("Error while getting users followings :", error)
+    }
+  };
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/api/v1/patients/${patientId}`)
-        .then(response => {
-            setPatientInfo(response.data);
-            setLoading(false);
-        })
-        .catch(error => {
-          console.error(error);
-          setLoading(false);  
-          setError('An error occurred while fetching the patient information.');
+    fetchPatientInfo()
+    fetchFollowings()
+  }, [patientId]);
+
+  const handleFollowClick = () => {
+    setIsProcessingFollow(true);
+    axios.post('http://localhost:3001/api/v1/follow-patient', {
+        patient_id: patientId,
+        follower_id: userId,
+        follower_type: userType,
+      })
+      .then(response => {
+        setIsFollowing(true);
+      })
+      .catch(error => {
+        console.error(error);
+        alert('An error occurred while trying to follow the patient.');
+      })
+      .finally(() => {
+        setIsProcessingFollow(false);
       });
-}, [patientId]);
+  };
 
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
+  const capitalizeText = (text) => {
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+  console.log("userFollowings : ", userFollowings)
   return (
-    <section style={{ backgroundColor: '#eee', padding:"20px", height:"100vh"}}>
-      {loading && <p>Loading...</p>}
-        {error && <p>{error}</p>}
-        {patientInfo && (
-      <Container className="py-5" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <MainContainer>
+      <Header>
+        <ProfileImage src={`http://localhost:3001/${patientInfo.ProfilePictureUrl}`} alt="Profile avatar" />
+        <DoctorInfoContainer>
+          <DoctorName>{capitalizeText(patientInfo.FirstName)} {patientInfo.LastName ? patientInfo.LastName.toUpperCase() : ''}</DoctorName>
+          <DoctorInfo>{capitalizeText(patientInfo.CityName)} , {patientInfo.CountryName}</DoctorInfo>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {userId && userId !== patientId && (
+              <FollowButton onClick={handleFollowClick} disabled={isProcessingFollow || isFollowing}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </FollowButton>
+            )}
+          </div>
+        </DoctorInfoContainer>
+      </Header>
 
+      <BodyContainer>
+        <LeftColumn>
+          <Section>
+            <Title>Medical History</Title>
+            <Text>{patientInfo.MedicalHistory || 'No Medical History Provided'}</Text>
+          </Section>
+          <Section>
+            <Title>Current Medications</Title>
+            <List>
+              {patientInfo.Medications && patientInfo.Medications.length > 0 ? (
+                patientInfo.Medications.map((medication, index) => <ListItem key={index}>{medication}</ListItem>)
+              ) : (
+                <Text>No Medications Provided.</Text>
+              )}
+            </List>
+          </Section>
+          <Section>
+            <Title>Doctors Following</Title>
+            <List>
+              {userFollowings && userFollowings.length > 0 ? (
+                userFollowings.map((doctor, index) => <ListItem key={index}>{doctor.FirstName} {doctor.LastName}</ListItem>)
+              ) : (
+                <Text>No Doctors Following.</Text>
+              )}
+            </List>
+          </Section>
+        </LeftColumn>
 
-        <Grid container spacing={3} style={{ justifyContent: 'center' }}>
-          <Grid item lg={4}>
-            <Card className="mb-2">
-              <CardContent className="text-center">
-                <CardMedia
-                  component="img"
-                  image={`http://localhost:3001/${userProfilePhotoUrl}`}
-                  title="avatar"
-                  className="rounded-circle"
-                  style={{ width: '150px', margin: 'auto' }}
-                />
-               
-                    <Typography className="text-muted mb-1" variant="subtitle1">
-                      Name : {patientInfo.FirstName} {patientInfo.LastName}
-                    </Typography>
-                    <Typography className="text-muted mb-1" variant="subtitle1">
-                      BirthDay : {patientInfo.BirthDate}
-                    </Typography>
-                    
-                    
-
-                    <div className="d-flex justify-content-center mb-2">
-                      <Button variant="contained">Follow</Button>
-                      <Button variant="outlined" className="ms-1">Message</Button>
-                    </div>
-                 
-              </CardContent>
-            </Card>
-
-          
-          </Grid>
-          <Grid item lg={8}>
-                <Card className="mb-2">
-                  <CardContent>
-                              <Grid container spacing={3}>
-                                  <Grid item sm={3}>
-                                      <Typography>Full Name</Typography>
-                                  </Grid>
-                                  <Grid item sm={9}>
-                                      <Typography className="text-muted">
-                                          {patientInfo.FirstName} {patientInfo.LastName}
-                                      </Typography>
-                                  </Grid>
-                              </Grid>
-                              <Grid container spacing={3}>
-                                  <Grid item sm={3}>
-                                      <Typography>Email</Typography>
-                                  </Grid>
-                                  <Grid item sm={9}>
-                                      <Typography className="text-muted">
-                                          {patientInfo.Email}
-                                      </Typography>
-                                  </Grid>
-                              </Grid>
-                              <Grid container spacing={3}>
-                                  <Grid item sm={3}>
-                                      <Typography>Phone</Typography>
-                                  </Grid>
-                                  <Grid item sm={9}>
-                                      <Typography className="text-muted">
-                                          {patientInfo.PhoneNumber}
-                                      </Typography>
-                                  </Grid>
-                              </Grid>
-                             
-                              <Grid container spacing={3}>
-                                  <Grid item sm={3}>
-                                      <Typography>Address</Typography>
-                                  </Grid>
-                                  <Grid item sm={9}>
-                                      <Typography className="text-muted">
-                                          {patientInfo.location}  
-                                      </Typography>
-                                  </Grid>
-                              </Grid>
-                  </CardContent>
-                </Card>
-                
-                <Card className='mb-2'>
-                  <CardContent>
-                    <Typography variant="h5" className="mb-3">Get to know me : </Typography>
-                    <Typography className="text-muted mb-3">
-                      {patientInfo.PatientBio}
-                    </Typography>
-                  </CardContent>
-                </Card>
-            </Grid>
-        </Grid>
-      </Container>
-      )}
-    </section>
+        <RightColumn>
+          <Section>
+            <Title>Statistics</Title>
+            <Statistic>
+              <StatBox>
+                <Subtitle>Appointments</Subtitle>
+                <Text>{patientInfo.AppointmentCount || 0}</Text>
+              </StatBox>
+              <StatBox>
+                <Subtitle>Doctors Visited</Subtitle>
+                <Text>{patientInfo.DoctorsVisited || 0}</Text>
+              </StatBox>
+            </Statistic>
+          </Section>
+        </RightColumn>
+      </BodyContainer>
+    </MainContainer>
   );
 }
