@@ -1,27 +1,51 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from './../../axiosConfig';
 import {
-  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, FollowButton, DoctorInfoContainer, DoctorName, DoctorInfo
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, FollowButton, DoctorInfoContainer, DoctorName, DoctorInfo,
+  HistoryItem,
+  DiagnosisName,
+  DiagnosisDate, DiagnosisLink
 } from './../Doctor/styles/DoctorProfileStyles';
-
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from './../../Auth/AuthContext';
+
+import styled from 'styled-components';
+
+export const IconButton = styled.button`
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4a90e2;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 0.5rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 
 export default function PatientProfile() {
   const { patientId } = useParams();
   const [patientInfo, setPatientInfo] = useState({});
+  const [medicalHistoryInfo, setMedicalHistoryInfo] = useState({});
+  const [medications, setMedications] = useState({});
+
   const [userFollowings, setUserFollowings] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { userType, userId } = useContext(AuthContext);
+  const { userType, userId, userProfilePhotoUrl } = useContext(AuthContext);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isProcessingFollow, setIsProcessingFollow] = useState(false);
-  console.log("userId : ", userId)
   const fetchPatientInfo = async () => {
 
     try {
       const response = await axios.get(`http://localhost:3001/api/v1/patients/${patientId}`);
       setPatientInfo(response.data)
+      console.log("patient_info : ",response.data )
+
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -33,7 +57,6 @@ export default function PatientProfile() {
   const fetchFollowings = async () => {
     const response = await axios.get(`http://localhost:3001/api/v1/patient-followings/${patientId}`);
     setUserFollowings(response.data.following_users)
-
     try {
       
     } catch (error) {
@@ -41,9 +64,40 @@ export default function PatientProfile() {
     }
   };
 
+
+  const getMedicalHistory = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/v1/patients/medical-history/${patientId}`);
+      setMedicalHistoryInfo(response.data)
+      console.log("medical history : ",response )
+
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+      setError('An error occurred while fetching the patient medical history.');
+    }
+  };
+
+  const getMedications = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/v1/patients/medications/${patientId}`);
+      setMedications(response.data)
+      console.log("medications : ",response.data )
+
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+      setError('An error occurred while fetching the patient medications info.');
+    }
+  };
+
   useEffect(() => {
     fetchPatientInfo()
     fetchFollowings()
+    getMedicalHistory()
+    getMedications()
   }, [patientId]);
 
   const handleFollowClick = () => {
@@ -69,16 +123,24 @@ export default function PatientProfile() {
   if (error) return <div>{error}</div>;
 
   const capitalizeText = (text) => {
+    if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
-  console.log("userFollowings : ", userFollowings)
+  
   return (
     <MainContainer>
       <Header>
-        <ProfileImage src={`http://localhost:3001/${patientInfo.ProfilePictureUrl}`} alt="Profile avatar" />
+        <ProfileImage src={userProfilePhotoUrl} alt="Profile avatar" />
         <DoctorInfoContainer>
-          <DoctorName>{capitalizeText(patientInfo.FirstName)} {patientInfo.LastName ? patientInfo.LastName.toUpperCase() : ''}</DoctorName>
-          <DoctorInfo>{capitalizeText(patientInfo.CityName)} , {patientInfo.CountryName}</DoctorInfo>
+          <DoctorName>
+            {patientInfo.FirstName ? capitalizeText(patientInfo.FirstName) : ''} {patientInfo.LastName ? patientInfo.LastName.toUpperCase() : ''}
+          </DoctorName>
+          <DoctorInfo>
+            {patientInfo.Age ? patientInfo.Age : 'N/A'}
+          </DoctorInfo>
+          <DoctorInfo>
+            {patientInfo.CityName ? capitalizeText(patientInfo.CityName) : 'Unknown City'}, {patientInfo.CountryName ? capitalizeText(patientInfo.CountryName) : 'Unknown Country'}
+          </DoctorInfo>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {userId && userId !== patientId && (
               <FollowButton onClick={handleFollowClick} disabled={isProcessingFollow || isFollowing}>
@@ -87,23 +149,63 @@ export default function PatientProfile() {
             )}
           </div>
         </DoctorInfoContainer>
+          
+        
       </Header>
 
       <BodyContainer>
         <LeftColumn>
           <Section>
             <Title>Medical History</Title>
-            <Text>{patientInfo.MedicalHistory || 'No Medical History Provided'}</Text>
+            {medicalHistoryInfo && medicalHistoryInfo.length > 0 ? (
+              medicalHistoryInfo.map((medical_history, index) => {
+                const formattedDate = new Date(medical_history.CreatedAt).toLocaleDateString(
+                  'en-GB',
+                  {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  }
+                );
+
+                return (
+                  <HistoryItem key={index}>
+                    <DiagnosisName>
+                      <DiagnosisLink to={`/diagnosis/${medical_history.DiagnosisHistoryID}`}>
+                        {medical_history.DiagnosisName}
+                      </DiagnosisLink>
+                    </DiagnosisName>
+                    <DiagnosisDate>{formattedDate}</DiagnosisDate>
+                  </HistoryItem>
+                );
+              })
+            ) : (
+              <Text>No Medical History Was Found.</Text>
+            )}
           </Section>
           <Section>
-            <Title>Current Medications</Title>
-            <List>
-              {patientInfo.Medications && patientInfo.Medications.length > 0 ? (
-                patientInfo.Medications.map((medication, index) => <ListItem key={index}>{medication}</ListItem>)
-              ) : (
-                <Text>No Medications Provided.</Text>
-              )}
-            </List>
+            <Title>Medications</Title>
+            {medications && medications.length > 0 ? (
+              medications.map((medication, index) => {
+                const formattedDate = new Date(medication.CreatedAt).toLocaleDateString(
+                  'en-GB',
+                  {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  }
+                );
+
+                return (
+                  <HistoryItem key={index}>
+                    <DiagnosisName>{medication.MedicationName}</DiagnosisName>
+                    <DiagnosisDate>{formattedDate}</DiagnosisDate>
+                  </HistoryItem>
+                );
+              })
+            ) : (
+              <Text>No Medical History Was Found.</Text>
+            )}
           </Section>
           <Section>
             <Title>Doctors Following</Title>

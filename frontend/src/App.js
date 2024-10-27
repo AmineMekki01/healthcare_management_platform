@@ -27,6 +27,8 @@ import FullPost from './components/FeedBlog/FullPost';
 import DoctorPosts from './components/FeedBlog/DoctorPosts';  
 import EditPost from './components/FeedBlog/EditPostPage';  
 import Dashboard from './pages/Dashboard';
+import DiagnosisPage from './pages/DiagnosisPage';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
 
@@ -107,6 +109,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <Dashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/diagnosis/:diagnosisId"
+                  element={
+                    <PrivateRoute>
+                      <DiagnosisPage />
                     </PrivateRoute>
                   }
                 />

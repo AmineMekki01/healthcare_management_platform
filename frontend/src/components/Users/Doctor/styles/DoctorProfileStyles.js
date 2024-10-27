@@ -1,6 +1,7 @@
 // StyledComponents.js
 import styled from 'styled-components';
 
+import { Link } from 'react-router-dom';
 
 export const MainContainer = styled.div`
   background-color: #f0f2f5;
@@ -14,7 +15,7 @@ export const Header = styled.header`
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-around;
   @media (max-width: 450px) {
     flex-direction: column;
     align-items: center;
@@ -282,3 +283,34 @@ export const BreakingLine = styled.hr`
   margin: 20px 0;
 `;
 
+
+export const HistoryItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eaeaea;
+`;
+
+export const DiagnosisName = styled.span`
+  font-size: 16px;
+  color: #444;
+  flex: 1;
+`;
+
+export const DiagnosisDate = styled.span`
+  font-size: 14px;
+  color: #888;
+  flex-shrink: 0;
+  margin-left: 20px;
+`;
+
+export const DiagnosisLink = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    text-decoration: underline;
+    color: #6DC8B7; /* Optional hover color */
+  }
+`;

@@ -15,6 +15,16 @@ const CounterContainer = styled.div`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: fit-content;
   margin: 20px auto;
+  flex-direction: column;
+
+  @media (max-width: 500px) {
+    padding: 5px;
+  }
+`;
+
+const IconNumberDisplay = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const NumberDisplay = styled.div`
@@ -22,6 +32,9 @@ const NumberDisplay = styled.div`
   font-weight: bold;
   color: #333;
   margin-left: 15px;
+  @media (max-width: 500px) {
+    font-size: 50px;
+  }
 `;
 
 const Label = styled.div`
@@ -29,11 +42,16 @@ const Label = styled.div`
   font-weight: 600;
   color: #555;
   margin-left: 15px;
+  text-align: center;
 `;
 
 const Icon = styled.div`
   font-size: 48px;
   color: ${props => props.color || '#333'};
+
+  @media (max-width: 500px) {
+    font-size: 38px;
+  }
 `;
 
 export default function AppointmentsChart({
@@ -134,10 +152,12 @@ export default function AppointmentsChart({
         <p>Loading...</p>
       ) : userType === 'patient' ? (
         <CounterContainer>
-          <Icon color={color}>
-            <FontAwesomeIcon icon={icon} />
-          </Icon>
-          <NumberDisplay>{countAsPatient}</NumberDisplay>
+          <IconNumberDisplay>
+            <Icon color={color}>
+              <FontAwesomeIcon icon={icon} />
+            </Icon>
+            <NumberDisplay>{countAsPatient}</NumberDisplay>
+          </IconNumberDisplay>
           <Label>{label}</Label>
         </CounterContainer>
       ) : (

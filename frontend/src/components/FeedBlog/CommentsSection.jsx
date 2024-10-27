@@ -44,7 +44,7 @@ const CommentsSection = ({ postId, onCommentAdded }) => {
             { content: newComment },
             { params: { userId, userType } }
         );
-        setComments((prevComments) => [...prevComments, response.data.comment]);
+        setComments((prevComments) => [...prevComments || [], response.data.comment]);
         setNewComment('');
 
         if (onCommentAdded) {
