@@ -239,18 +239,23 @@ func storeMessage(conn *pgxpool.Conn, senderID, chatID, content string, createdA
 func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 	inputName := c.Param("username")
 	currentUserId := c.Param("userId")
+	currentUserType := c.Query("userType")
 
 	var combinedUsers []CombinedUser
 
-	queries := map[string]string{
-		"patient": `SELECT patient_id, first_name, last_name FROM patient_info WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1) AND patient_id != $2`,
-		"doctor":  `SELECT doctor_id, first_name, last_name FROM doctor_info WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1) AND doctor_id != $2`,
-	}
+	if currentUserType == "patient" {
+		query := `
+			SELECT di.doctor_id, di.first_name, di.last_name 
+			FROM doctor_info di
+			JOIN followers f ON di.doctor_id = f.doctor_id
+			WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+			  AND f.follower_id = $2
+			  AND di.doctor_id != $2
+		`
 
-	for userType, query := range queries {
 		rows, err := pool.Query(context.Background(), query, inputName+"%", currentUserId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying " + userType + " table"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying doctors for patient"})
 			return
 		}
 		defer rows.Close()
@@ -263,6 +268,42 @@ func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 			}
 			combinedUsers = append(combinedUsers, user)
 		}
+	} else if currentUserType == "doctor" {
+		queries := map[string]string{
+			"patient": `
+				SELECT pi.patient_id, pi.first_name, pi.last_name 
+				FROM patient_info pi
+				WHERE LOWER(pi.first_name || ' ' || pi.last_name) LIKE LOWER($1)
+				  AND pi.patient_id != $2
+			`,
+			"doctor": `
+				SELECT di.doctor_id, di.first_name, di.last_name 
+				FROM doctor_info di
+				WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+				  AND di.doctor_id != $2
+			`,
+		}
+
+		for userType, query := range queries {
+			rows, err := pool.Query(context.Background(), query, inputName+"%", currentUserId)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying " + userType + " table"})
+				return
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var user CombinedUser
+				err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName)
+				if err != nil {
+					continue
+				}
+				combinedUsers = append(combinedUsers, user)
+			}
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user type"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"users": combinedUsers})
