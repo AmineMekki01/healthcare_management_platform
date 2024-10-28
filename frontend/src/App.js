@@ -121,6 +121,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/settings/:userId"
+                  element={
+                    <PrivateRoute>
+                      <SettingsPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
                   path="/create-post"
                   element={
                     <DoctorRoute>
