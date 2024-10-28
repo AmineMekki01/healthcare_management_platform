@@ -60,6 +60,9 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.GET("/api/v1/patients/:patientId", func(c *gin.Context) {
 		services.GetPatientById(c, pool)
 	})
+	r.PUT("/api/v1/patients/profile/:userId", func(c *gin.Context) {
+		services.UpdatePatientInfo(c, pool)
+	})
 
 	// Doctor Information
 	r.GET("/api/v1/doctors", func(c *gin.Context) {
@@ -111,6 +114,9 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	// Following Doctors
 	r.POST("/api/v1/follow-doctor", func(c *gin.Context) {
 		services.FollowDoctor(pool, c)
+	})
+	r.DELETE("/api/v1/unfollow-doctor", func(c *gin.Context) {
+		services.UnFollowDoctor(pool, c)
 	})
 	r.GET("/api/v1/is-following/:doctorId", func(c *gin.Context) {
 		services.IsFollowingDoctor(pool, c)

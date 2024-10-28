@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -93,7 +94,7 @@ func GetUserFollowings(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	sqlQuery := `
 		SELECT 
-			di.first_name, di.last_name
+			di.first_name, di.last_name, fl.doctor_id
 		FROM 
 			followers fl
 		Join 
@@ -115,6 +116,7 @@ func GetUserFollowings(c *gin.Context, pool *pgxpool.Pool) {
 		err := rows.Scan(
 			&doctor.FirstName,
 			&doctor.LastName,
+			&doctor.DoctorID,
 		)
 		if err != nil {
 			log.Println("Failed to get scan user's following results : ", err)
@@ -124,4 +126,45 @@ func GetUserFollowings(c *gin.Context, pool *pgxpool.Pool) {
 		doctors = append(doctors, doctor)
 	}
 	c.JSON(http.StatusOK, gin.H{"following_users": doctors})
+}
+
+func UnFollowDoctor(db *pgxpool.Pool, c *gin.Context) {
+	userID := c.Query("userId")
+	doctorID := c.Query("doctorId")
+	log.Println("userID :", userID)
+	log.Println("doctorID :", doctorID)
+	tx, err := db.BeginTx(c.Request.Context(), pgx.TxOptions{})
+	if err != nil {
+		log.Printf("Error starting transaction: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+				log.Printf("Error rolling back transaction: %v", rbErr)
+			}
+			return
+		}
+		if cmErr := tx.Commit(context.Background()); cmErr != nil {
+			log.Printf("Error committing transaction: %v", cmErr)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete request"})
+		}
+	}()
+
+	_, err = tx.Exec(context.Background(),
+		`
+        DELETE FROM followers 
+        WHERE doctor_id = $1 AND follower_id = $2
+        `, doctorID, userID)
+
+	if err != nil {
+		log.Printf("Error deleting follower relationship: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unfollow doctor"})
+		return
+	}
+
+	log.Printf("User %s successfully unfollowed doctor %s", userID, doctorID)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully unfollowed the doctor"})
 }
