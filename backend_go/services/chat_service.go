@@ -23,6 +23,7 @@ type CombinedUser struct {
 	UserID    string `json:"user_id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	UserType  string `json:"user_type"`
 }
 
 type CombinedMessage struct {
@@ -38,62 +39,80 @@ type Presigner struct {
 	PresignClient *s3.PresignClient
 }
 
-func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
+func GetChatsForUser(conn *pgxpool.Conn, userID string, c *gin.Context) ([]models.Chat, error) {
 	const query = `
-    SELECT
-        c.id,
-        MAX(c.updated_at) AS updated_at,
-        $1 AS sender_user_id,
-        CASE 
-            WHEN curr_p.user_id::text = $1 THEN other_p.user_id 
-            ELSE curr_p.user_id 
-        END AS recipient_user_id,
-        MAX(CASE 
-            WHEN curr_p.user_id::text = $1 THEN other_user.first_name 
-            ELSE curr_user.first_name 
-        END) AS first_name_recipient,
-        MAX(CASE 
-            WHEN curr_p.user_id::text = $1 THEN other_user.last_name 
-            ELSE curr_user.last_name 
-        END) AS last_name_recipient,
-        MAX(lm.content) AS latest_message_content,
-        MAX(lm.created_at) AS latest_message_time,
-        MAX(CASE 
-            WHEN curr_p.user_id::text = $1 THEN other_user.profile_photo_url 
-            ELSE curr_user.profile_photo_url 
-        END) AS recipient_image_url
-    FROM
-        chats c
-    JOIN
-        participants curr_p ON c.id = curr_p.chat_id
-    JOIN
-        participants other_p ON c.id = other_p.chat_id AND curr_p.user_id != other_p.user_id
-    LEFT JOIN
-        (SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url FROM doctor_info
-        UNION
-        SELECT patient_id AS user_id, first_name, last_name, profile_photo_url FROM patient_info) curr_user ON curr_p.user_id = curr_user.user_id
-    LEFT JOIN
-        (SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url FROM doctor_info
-        UNION
-        SELECT patient_id AS user_id, first_name, last_name, profile_photo_url FROM patient_info) other_user ON other_p.user_id = other_user.user_id
-    LEFT JOIN
-        (SELECT
-            chat_id,
-            content,
-            created_at,
-            ROW_NUMBER() OVER(PARTITION BY chat_id ORDER BY created_at DESC) as rn
-        FROM
-            messages) lm ON c.id = lm.chat_id AND lm.rn = 1
-    WHERE
-        (curr_p.user_id::text = $1 OR other_p.user_id::text = $1)
-    AND
-        curr_p.deleted_at IS NULL 
-    AND
-       c.deleted_at IS NULL 
-    GROUP BY
-        c.id, recipient_user_id
-    ORDER BY
-        latest_message_time DESC;
+	SELECT
+		c.id,
+		MAX(c.updated_at) AS updated_at,
+		$1 AS sender_user_id,
+		CASE
+			WHEN curr_p.user_id::text = $1 THEN other_p.user_id
+			ELSE curr_p.user_id
+		END AS recipient_user_id,
+		MAX(
+			CASE
+				WHEN curr_p.user_id::text = $1 THEN other_user.first_name
+				ELSE curr_user.first_name
+			END
+		) AS first_name_recipient,
+		MAX(
+			CASE
+				WHEN curr_p.user_id::text = $1 THEN other_user.last_name
+				ELSE curr_user.last_name
+			END
+		) AS last_name_recipient,
+		MAX(lm.content) AS latest_message_content,
+		MAX(lm.created_at) AS latest_message_time,
+		MAX(
+			CASE
+				WHEN curr_p.user_id::text = $1 THEN other_user.profile_photo_url
+				ELSE curr_user.profile_photo_url
+			END
+		) AS recipient_image_url,
+		MAX(
+			CASE
+				WHEN curr_p.user_id::text = $1 THEN other_user.user_type
+				ELSE curr_user.user_type
+			END
+		) AS recipient_user_type
+	FROM
+		chats c
+	JOIN
+		participants curr_p ON c.id = curr_p.chat_id
+	JOIN
+		participants other_p ON c.id = other_p.chat_id AND curr_p.user_id != other_p.user_id
+	LEFT JOIN (
+		SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url, 'doctor' AS user_type
+		FROM doctor_info
+		UNION
+		SELECT patient_id AS user_id, first_name, last_name, profile_photo_url, 'patient' AS user_type
+		FROM patient_info
+	) curr_user ON curr_p.user_id = curr_user.user_id
+	LEFT JOIN (
+		SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url, 'doctor' AS user_type
+		FROM doctor_info
+		UNION
+		SELECT patient_id AS user_id, first_name, last_name, profile_photo_url, 'patient' AS user_type
+		FROM patient_info
+	) other_user ON other_p.user_id = other_user.user_id
+	LEFT JOIN (
+		SELECT
+			chat_id,
+			content,
+			created_at,
+			ROW_NUMBER() OVER (PARTITION BY chat_id ORDER BY created_at DESC) AS rn
+		FROM
+			messages
+	) lm ON c.id = lm.chat_id AND lm.rn = 1
+	WHERE
+		(curr_p.user_id::text = $1 OR other_p.user_id::text = $1)
+		AND curr_p.deleted_at IS NULL
+		AND c.deleted_at IS NULL
+	GROUP BY
+		c.id, recipient_user_id
+	ORDER BY
+		latest_message_time DESC;
+
     `
 	rows, err := conn.Query(context.Background(), query, userID)
 	if err != nil {
@@ -104,10 +123,13 @@ func GetChatsForUser(conn *pgxpool.Conn, userID string) ([]models.Chat, error) {
 	var chats []models.Chat
 	for rows.Next() {
 		var chat models.Chat
-		if err := rows.Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt, &chat.RecipientImageURL); err != nil {
+		if err := rows.Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID, &chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt, &chat.RecipientImageURL, &chat.RecipientUserType); err != nil {
 			log.Println("error scanning chat row: ", err)
 			return nil, fmt.Errorf("error scanning chat row: %v", err)
 		}
+
+		chat.RecipientImageURL, err = GetImageURL(c, chat.RecipientImageURL)
+
 		chats = append(chats, chat)
 	}
 
@@ -127,7 +149,7 @@ func ListChatsForUser(c *gin.Context, pool *pgxpool.Pool) {
 	defer conn.Release()
 
 	userID := c.Query("userID")
-	chats, err := GetChatsForUser(conn, userID)
+	chats, err := GetChatsForUser(conn, userID, c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve chats"})
 		return
@@ -245,16 +267,17 @@ func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 
 	if currentUserType == "patient" {
 		query := `
-			SELECT di.doctor_id, di.first_name, di.last_name 
+            SELECT DISTINCT di.doctor_id, di.first_name, di.last_name
 			FROM doctor_info di
-			JOIN followers f ON di.doctor_id = f.doctor_id
+			LEFT JOIN followers f ON di.doctor_id = f.doctor_id AND f.follower_id = $2
+			LEFT JOIN appointments apt ON di.doctor_id = apt.doctor_id AND apt.patient_id = $2 AND apt.canceled = FALSE
 			WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
-			  AND f.follower_id = $2
-			  AND di.doctor_id != $2
-		`
-
+			AND di.doctor_id != $2
+			AND (f.follower_id IS NOT NULL OR apt.patient_id IS NOT NULL)
+        `
 		rows, err := pool.Query(context.Background(), query, inputName+"%", currentUserId)
 		if err != nil {
+			log.Println("Error querying doctors for patient : ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying doctors for patient"})
 			return
 		}
@@ -264,8 +287,10 @@ func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 			var user CombinedUser
 			err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName)
 			if err != nil {
+				log.Println("Error Scanning users : ", err)
 				continue
 			}
+			user.UserType = "doctor"
 			combinedUsers = append(combinedUsers, user)
 		}
 	} else if currentUserType == "doctor" {
@@ -287,6 +312,7 @@ func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 		for userType, query := range queries {
 			rows, err := pool.Query(context.Background(), query, inputName+"%", currentUserId)
 			if err != nil {
+				log.Println("Error querying "+userType+" table : ", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying " + userType + " table"})
 				return
 			}
@@ -296,12 +322,15 @@ func SearchUsers(c *gin.Context, pool *pgxpool.Pool) {
 				var user CombinedUser
 				err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName)
 				if err != nil {
+					log.Println("Error Scanning users : ", err)
 					continue
 				}
+				user.UserType = userType
 				combinedUsers = append(combinedUsers, user)
 			}
 		}
 	} else {
+		log.Println("Invalid user type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user type"})
 		return
 	}
@@ -532,6 +561,20 @@ func FindOrCreateChatWithUser(c *gin.Context, pool *pgxpool.Pool) {
 
 	currentUserID := c.Query("currentUserId")
 	selectedUserID := c.Query("selectedUserId")
+	currentUserType := c.Query("currentUserType")
+	selectedUserType := c.Query("selectedUserType")
+
+	if currentUserType == "patient" && selectedUserType == "doctor" {
+		hasAppointment, err := checkPatientDoctorConnection(conn, currentUserID, selectedUserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check appointments"})
+			return
+		}
+		if !hasAppointment {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You cannot message this doctor without an appointment"})
+			return
+		}
+	}
 
 	chats, err := findOrCreateChatWithUser(conn, currentUserID, selectedUserID)
 	if err != nil {
@@ -541,30 +584,95 @@ func FindOrCreateChatWithUser(c *gin.Context, pool *pgxpool.Pool) {
 
 	c.JSON(http.StatusOK, gin.H{"chats": chats})
 }
+
+func isPatientFollowingDoctor(conn *pgxpool.Conn, patientID, doctorID string) (bool, error) {
+	var count int
+	err := conn.QueryRow(context.Background(), `
+        SELECT COUNT(*) FROM followers
+        WHERE follower_id = $1 AND doctor_id = $2
+    `, patientID, doctorID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func hasPatientDoctorAppointment(conn *pgxpool.Conn, patientID, doctorID string) (bool, error) {
+	var count int
+	err := conn.QueryRow(context.Background(), `
+        SELECT COUNT(*) FROM reservations
+        WHERE patient_id = $1 AND doctor_id = $2 AND canceled = FALSE
+    `, patientID, doctorID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func checkPatientDoctorConnection(conn *pgxpool.Conn, patientID, doctorID string) (bool, error) {
+	follows, err := isPatientFollowingDoctor(conn, patientID, doctorID)
+	if err != nil {
+		return false, err
+	}
+	if !follows {
+		return false, nil
+	}
+
+	hasAppointment, err := hasPatientDoctorAppointment(conn, patientID, doctorID)
+	if err != nil {
+		return false, err
+	}
+	return hasAppointment, nil
+}
+
 func GetUserImage(c *gin.Context, pool *pgxpool.Pool) {
 	conn, err := pool.Acquire(c.Request.Context())
 	if err != nil {
+		log.Println("Failed to acquire a database connection :", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to acquire a database connection"})
 		return
 	}
 	defer conn.Release()
 
-	userID := c.Param("userID")
+	userID := c.Param("userId")
+	userType := c.Query("userType")
+
+	log.Printf("GetUserImage called with userID: %s, userType: %s", userID, userType)
 
 	var imageUrl string
 
-	err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM doctor_info WHERE doctor_id = $1`, userID).Scan(&imageUrl)
-	if err == nil {
-		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
+	if userType == "doctor" {
+		err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM doctor_info WHERE doctor_id = $1`, userID).Scan(&imageUrl)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				log.Println("Doctor not found:", err)
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			} else {
+				log.Println("Error fetching doctor image:", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			}
+			return
+		}
+
+	} else if userType == "patient" {
+		err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`, userID).Scan(&imageUrl)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				log.Println("Patient not found:", err)
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			} else {
+				log.Println("Error fetching patient image:", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			}
+			return
+		}
+
+	} else {
+		log.Println("Invalid userType:", userType)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user type"})
 		return
 	}
-
-	err = conn.QueryRow(c.Request.Context(), `SELECT profile_photo_url FROM patient_info WHERE patient_id = $1`, userID).Scan(&imageUrl)
-	if err == nil {
-		log.Println("Error fetching user image:", err)
-		c.JSON(http.StatusOK, gin.H{"imageUrl": imageUrl})
-		return
-	}
-
-	c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	presignedUrl, err := GetImageURL(c, imageUrl)
+	c.JSON(http.StatusOK, gin.H{"imageUrl": presignedUrl})
+	return
 }

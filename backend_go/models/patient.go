@@ -17,7 +17,7 @@ type Patient struct {
 	StateName         string    `json:"StateName"`
 	ZipCode           string    `json:"ZipCode"`
 	CountryName       string    `json:"CountryName"`
-	PatientBio        string    `json:"PatientBio"`
+	Bio               string    `json:"Bio"`
 	Sex               string    `json:"sex"`
 	Location          string    `json:"location"`
 	ProfilePictureURL string    `json:"ProfilePictureUrl"`

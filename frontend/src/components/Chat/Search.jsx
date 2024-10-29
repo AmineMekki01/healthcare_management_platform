@@ -99,7 +99,10 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
             const response = await axios.get(`http://localhost:3001/api/findOrCreateChat`, {
                 params : {
                     currentUserId: userId,
-                    selectedUserId: selectedUser.user_id
+                    selectedUserId: selectedUser.user_id,
+                    currentUserType: userType,
+                    selectedUserType: selectedUser.user_type,
+
                 }
             });
         

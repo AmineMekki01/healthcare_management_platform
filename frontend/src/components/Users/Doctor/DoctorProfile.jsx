@@ -98,7 +98,7 @@ export default function DoctorProfile() {
   return (
     <MainContainer>
       <Header>
-        <ProfileImage src={`http://localhost:3001/${doctorInfo.ProfilePictureUrl}`} alt="Profile avatar" />
+        <ProfileImage src={`${doctorInfo.ProfilePictureUrl}`} alt="Profile avatar" />
         
         <DoctorInfoContainer>
           <DoctorName>Dr. {capitalizeText(doctorInfo.FirstName)} {doctorInfo.LastName && doctorInfo.LastName.toUpperCase()}</DoctorName>
@@ -121,7 +121,7 @@ export default function DoctorProfile() {
         
           <Section>
             <Title>Intro</Title>
-            <Text>{doctorInfo.DoctorBio}</Text>
+            <Text>{doctorInfo.Bio}</Text>
           </Section>
           <LocationContainer>
             <Title>I'm Located At</Title>

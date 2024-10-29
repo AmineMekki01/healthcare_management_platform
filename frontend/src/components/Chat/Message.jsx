@@ -1,6 +1,7 @@
-import React from 'react'
+import React, {useContext} from 'react'
 import styled from 'styled-components'
 import moment from 'moment';
+import { AuthContext } from '../Auth/AuthContext';
 
 const Message = styled.div`
     display: flex;
@@ -53,11 +54,15 @@ const MessageContent = styled.div`
 `;
 
 const MessageImage = styled.img`
+    width: 100px;
+    height: 100px;
     max-width: 300px;
     border-radius: 10px;
 `;
 
 const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientImage }) => {
+    const {userProfilePhotoUrl } = useContext(AuthContext);
+
     const formatMessageDate = (dateString) => {
         if (!dateString) {
             return 'just now';
@@ -90,7 +95,7 @@ const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientI
         <Message className={isOwner ? 'owner' : 'not-owner'}>
             <MessageInfo>
 
-                <UserImg src={isOwner ? `http://localhost:3001/${senderImage}` : `http://localhost:3001/${recipientImage}` } alt=""/>
+                <UserImg src={isOwner ? `${senderImage}` : `${recipientImage}`} alt=""/>
 
             </MessageInfo>
             <MessageContent className={isOwner ? 'owner' : 'not-owner'}>

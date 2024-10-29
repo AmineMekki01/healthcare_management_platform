@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -42,7 +41,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 		return
 	}
-
+	doctor.DoctorID = uuid.New()
 	doctor.Username = c.PostForm("Username")
 	doctor.Password = c.PostForm("Password")
 	doctor.Email = c.PostForm("Email")
@@ -57,7 +56,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	doctor.ZipCode = c.PostForm("ZipCode")
 	doctor.CountryName = c.PostForm("CountryName")
 
-	doctor.DoctorBio = c.PostForm("DoctorBio")
+	doctor.Bio = c.PostForm("DoctorBio")
 	doctor.Specialty = c.PostForm("Specialty")
 	doctor.Experience = c.PostForm("Experience")
 	doctor.Sex = c.PostForm("Sex")
@@ -67,7 +66,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	doctor.Latitude, _ = strconv.ParseFloat(lat, 64)
 	doctor.Longitude, _ = strconv.ParseFloat(lon, 64)
 
-	file, _, err := c.Request.FormFile("file")
+	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
 		log.Println("Failed to upload file : ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload file"})
@@ -75,31 +74,13 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer file.Close()
 
-	fileName := fmt.Sprintf("%s_%d", doctor.Username, time.Now().Unix())
-	filePath := fmt.Sprintf("user_photos/%s.jpg", fileName)
-
-	if _, err := os.Stat("user_photos"); os.IsNotExist(err) {
-		if err := os.MkdirAll("user_photos", os.ModePerm); err != nil {
-			log.Println("Could not create directory : ", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create directory"})
-			return
-		}
-	}
-
-	out, err := os.Create(filePath)
+	fileName := fmt.Sprintf("images/profile_photos/%s.jpg", doctor.DoctorID)
+	err = UploadToS3(file, handler, fileName)
 	if err != nil {
-		log.Println("Failed to create file : ", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload profile photo"})
 		return
 	}
-	defer out.Close()
-
-	_, err = io.Copy(out, file)
-	if err != nil {
-		log.Println("Failed to save file : ", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
-		return
-	}
+	doctor.ProfilePictureURL = fileName
 
 	conn, err := pool.Acquire(c)
 	if err != nil {
@@ -109,7 +90,6 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	// checking if the gmail already exists
 	exists, err := emailExists(conn, doctor.Email, c)
 	if err != nil {
 		log.Printf("Error checking email: %v", err)
@@ -123,7 +103,6 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	// checking if username already exists
 	var username string
 	err = conn.QueryRow(c, "SELECT username FROM doctor_info WHERE username = $1", doctor.Username).Scan(&username)
 	if err != nil {
@@ -169,8 +148,6 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 	// Location
 	doctor.Location = fmt.Sprintf("%s, %s, %s, %s, %s", doctor.StreetAddress, doctor.ZipCode, doctor.CityName, doctor.StateName, doctor.CountryName)
 
-	doctorID := uuid.New()
-
 	_, err = conn.Exec(c, `
 	INSERT INTO doctor_info (
 		doctor_id, 
@@ -188,7 +165,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		create_at, 
 		update_at, 
 		medical_license, 
-		doctor_bio, 
+		bio, 
 		email, 
 		phone_number, 
 		street_address, 
@@ -206,7 +183,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
 		$14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
 	)`,
-		doctorID,
+		doctor.DoctorID,
 		doctor.Username,
 		doctor.FirstName,
 		doctor.LastName,
@@ -221,7 +198,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		time.Now(),
 		time.Now(),
 		doctor.MedicalLicense,
-		doctor.DoctorBio,
+		doctor.Bio,
 		doctor.Email,
 		doctor.PhoneNumber,
 		doctor.StreetAddress,
@@ -231,7 +208,7 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		doctor.CountryName,
 		doctor.BirthDate,
 		doctor.Location,
-		filePath,
+		doctor.ProfilePictureURL,
 		doctor.Latitude,
 		doctor.Longitude,
 	)
@@ -241,8 +218,8 @@ func RegisterDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
-
-	if err = generateDoctorAvailability(conn, doctorID, c); err != nil {
+	if err = generateDoctorAvailability(conn,
+		doctor.DoctorID, c); err != nil {
 		log.Printf("Failed to generating doctor availability : %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generating doctor availability"})
 		return
@@ -358,6 +335,10 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
+	_, presignClient := InitS3Client()
+	bucket := os.Getenv("S3_BUCKET_NAME")
+	presignedURL, err := GeneratePresignedURL(presignClient, bucket, doctor.ProfilePictureURL)
+
 	response := gin.H{
 		"success":             true,
 		"accessToken":         token,
@@ -365,7 +346,7 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 		"doctor_id":           doctor.DoctorID,
 		"first_name":          doctor.FirstName,
 		"last_name":           doctor.LastName,
-		"profile_picture_url": doctor.ProfilePictureURL,
+		"profile_picture_url": presignedURL,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -375,15 +356,14 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	doctorId := c.Param("doctorId")
 	var doctor models.Doctor
-	doctor.DoctorID = doctorId
-
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), doctor_bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, hospitals, organizations, awards, certifications, languages, city_name, country_name FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
+	doctor.DoctorID, _ = uuid.Parse(doctorId)
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, hospitals, organizations, awards, certifications, languages, city_name, country_name FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
 		&doctor.Email,
 		&doctor.PhoneNumber,
 		&doctor.FirstName,
 		&doctor.LastName,
 		&doctor.BirthDate,
-		&doctor.DoctorBio,
+		&doctor.Bio,
 		&doctor.Sex,
 		&doctor.Location,
 		&doctor.Specialty,
@@ -398,6 +378,7 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		&doctor.CityName,
 		&doctor.CountryName,
 	)
+	doctor.ProfilePictureURL, err = GetImageURL(c, doctor.ProfilePictureURL)
 
 	if err != nil {
 		if err.Error() == "no rows in result set" {

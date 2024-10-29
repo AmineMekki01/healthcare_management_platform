@@ -33,6 +33,7 @@ const LoginForm = () => {
             });
             const text = await response.text();
             const data = JSON.parse(text);
+            console.log("data : ", data)
         
             if(data.success) {
                 localStorage.setItem('token', data.token);
