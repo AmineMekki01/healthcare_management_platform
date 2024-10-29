@@ -99,14 +99,17 @@ export default function PersonalInfo({ userId }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const { userProfilePhotoUrl, setUserProfilePhotoUrl } = useContext(AuthContext);
+  const { userProfilePhotoUrl, setUserProfilePhotoUrl, userType } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!userId) return;
 
       try {
-        const response = await axios.get(`/api/v1/patients/${userId}`);
+        const response = await axios.get(`/api/v1/user/${userId}`, {params : {
+          userType : userType,
+          userId : userId,
+        }});
         setProfile(response.data);
         console.log("response:", response.data)
       } catch (error) {
@@ -134,7 +137,7 @@ export default function PersonalInfo({ userId }) {
     formData.append('LastName', profile.LastName);
     formData.append('Email', profile.Email);
     formData.append('PhoneNumber', profile.PhoneNumber);
-    formData.append('PatientBio', profile.PatientBio);
+    formData.append('Bio', profile.PatientBio);
     formData.append('CityName', profile.CityName);
     formData.append('ZipCode', profile.ZipCode);
     formData.append('CountryName', profile.CountryName);
@@ -142,11 +145,18 @@ export default function PersonalInfo({ userId }) {
     formData.append('profilePhoto', selectedFile);
 
     try {
-      const response = await axios.put(`/api/v1/patients/profile/${userId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.put(
+        `/api/v1/user/profile/${userId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          params: {
+            userType: userType,
+          },
+        }
+      );
       setSuccess(true);
       setUserProfilePhotoUrl(response.data.userProfilePhotoUrl)
     } catch (error) {
@@ -229,10 +239,10 @@ export default function PersonalInfo({ userId }) {
       />
 
     <TextArea
-        name="PatientBio"
+        name="Bio"
         placeholder="Bio"
         rows="3"
-        value={profile.PatientBio}
+        value={profile.Bio}
         onChange={handleChange}
       />
 

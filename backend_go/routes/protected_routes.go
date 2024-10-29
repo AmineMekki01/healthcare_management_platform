@@ -54,14 +54,15 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	})
 
 	// User Profiles
-	r.GET("/api/v1/users/:userID/image", func(c *gin.Context) {
+	r.GET("/api/v1/users/image/:userId", func(c *gin.Context) {
 		services.GetUserImage(c, pool)
 	})
-	r.GET("/api/v1/patients/:patientId", func(c *gin.Context) {
-		services.GetPatientById(c, pool)
+
+	r.GET("/api/v1/user/:userId", func(c *gin.Context) {
+		services.GetUserById(c, pool)
 	})
-	r.PUT("/api/v1/patients/profile/:userId", func(c *gin.Context) {
-		services.UpdatePatientInfo(c, pool)
+	r.PUT("/api/v1/user/profile/:userId", func(c *gin.Context) {
+		services.UpdateUserInfo(c, pool)
 	})
 
 	// Doctor Information
