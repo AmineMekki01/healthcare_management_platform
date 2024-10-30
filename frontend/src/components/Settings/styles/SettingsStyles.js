@@ -71,3 +71,89 @@ export const NoDoctorsMessage = styled.p`
   color: #888;
   margin-top: 20px;
 `;
+
+
+export const FormSection = styled.div`
+  margin-bottom: 40px;
+`;
+
+export const AddButton = styled.button`
+  padding: 10px 20px;
+  background-color: #6dc8b7;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+
+  &:hover {
+    background-color: #5ab3a1;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+export const ItemList = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+export const Item = styled.div`
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+`;
+
+export const RemoveButton = styled.button`
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #ff6b6b;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #ff4b4b;
+  }
+`;
+
+export const InputField = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+`;
+
+export const TextArea = styled.textarea`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  resize: vertical;
+  box-sizing: border-box;
+`;
+
+export const DateField = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+`;

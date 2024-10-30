@@ -1,6 +1,6 @@
 // PersonalInfo.js
 import React, { useState, useEffect, useContext } from 'react';
-import axios from './../axiosConfig';
+import axios from '../axiosConfig';
 import { CircularProgress } from '@mui/material';
 import styled from 'styled-components';
 import { AuthContext } from '../Auth/AuthContext';
@@ -237,6 +237,9 @@ export default function PersonalInfo({ userId }) {
         value={profile.PhoneNumber}
         onChange={handleChange}
       />
+
+    
+    
 
     <TextArea
         name="Bio"
