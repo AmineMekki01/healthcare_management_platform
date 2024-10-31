@@ -1,6 +1,8 @@
 import React, { useContext, useState } from 'react';
-import PersonalInfo from './../components/Settings/PersonalInfo';
+import PersonalInfo from '../components/Settings/PersonalInfo';
 import DoctorFollowSettings from './../components/Settings/DoctorFollowSettings';
+import DoctorAdditionalInfo from './../components/Settings/DoctorAdditionalInfo';
+
 import { AuthContext } from './../components/Auth/AuthContext';
 import { SettingsContainer, SectionTitle, SectionContainer } from './../components/Settings/styles/SettingsStyles';
 
@@ -12,7 +14,10 @@ export default function SettingsPage() {
     <SettingsContainer>
       <SectionContainer>
         <button onClick={() => setActiveSection('personal')}>Personal Information</button>
-        <button onClick={() => setActiveSection('doctors')}>Doctors I Follow</button>
+        <button onClick={() => setActiveSection('doctors')}>Follow Settings</button>
+        {userType === 'doctor' && (
+          <button onClick={() => setActiveSection('additionalDoctorsInfo')}>Additional Doctors Info</button>
+        )}
       </SectionContainer>
 
       {activeSection === 'personal' && (
@@ -26,6 +31,12 @@ export default function SettingsPage() {
         <>
           <SectionTitle>Doctors I Follow</SectionTitle>
           <DoctorFollowSettings userId={userId} />
+        </>
+      )}
+      {activeSection === 'additionalDoctorsInfo' && userType === 'doctor' && (
+        <>
+          <SectionTitle>Additional Doctor Info</SectionTitle>
+          <DoctorAdditionalInfo userId={userId} />
         </>
       )}
     </SettingsContainer>

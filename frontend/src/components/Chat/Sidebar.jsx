@@ -6,12 +6,12 @@ import ChatsComponent from './Chats';
 import { ChatContext } from './ChatContext'; 
 
 const Sidebar = styled.div`
-    flex: 1;
-    width: 35%; 
-    background-color: #29355b;
-    color: white;
+  flex: 1;
+  width: 35%;
+  background-color: #29355b;
+  color: white;
+  transition: transform 0.3s ease;
 `;
-
 
 const SidebarComponent = ({onChatSelect }) => {
   const [selectedUser, setSelectedUser] = useState(null);

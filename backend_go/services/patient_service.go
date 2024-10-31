@@ -26,13 +26,13 @@ func GetPatientById(c *gin.Context, pool *pgxpool.Pool) {
 	var patient models.Patient
 
 	// Fetching the patient from the database based on the email
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), patient_bio, sex, location, profile_photo_url, street_address, city_name, zip_code, country_name, age FROM patient_info WHERE patient_id = $1", patientId).Scan(
+	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, profile_photo_url, street_address, city_name, zip_code, country_name, age FROM patient_info WHERE patient_id = $1", patientId).Scan(
 		&patient.Email,
 		&patient.PhoneNumber,
 		&patient.FirstName,
 		&patient.LastName,
 		&patient.BirthDate,
-		&patient.PatientBio,
+		&patient.Bio,
 		&patient.Sex,
 		&patient.Location,
 		&patient.ProfilePictureURL,
@@ -110,7 +110,7 @@ func UpdatePatientInfo(c *gin.Context, pool *pgxpool.Pool) {
         UPDATE patient_info 
         SET first_name = $1, last_name = $2, email = $3, phone_number = $4, 
             street_address = $5, city_name = $6, zip_code = $7, country_name = $8, 
-            patient_bio = $9, update_at = NOW()
+            bio = $9, update_at = NOW()
         WHERE patient_id = $10
     `
 	_, err = pool.Exec(context.Background(), query,
@@ -157,7 +157,7 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
 	patient.ZipCode = c.PostForm("ZipCode")
 	patient.CountryName = c.PostForm("CountryName")
 	patient.Sex = c.PostForm("Sex")
-	patient.PatientBio = c.PostForm("PatientBio")
+	patient.Bio = c.PostForm("PatientBio")
 
 	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
@@ -254,7 +254,7 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
         salt, 
         create_at, 
         update_at, 
-        patient_bio, 
+        bio, 
         email, 
         phone_number, 
         street_address, 
@@ -280,7 +280,7 @@ func RegisterPatient(c *gin.Context, pool *pgxpool.Pool) {
 		salt,
 		time.Now(),
 		time.Now(),
-		patient.PatientBio,
+		patient.Bio,
 		patient.Email,
 		patient.PhoneNumber,
 		patient.StreetAddress,

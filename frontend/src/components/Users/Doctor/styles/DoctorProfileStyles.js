@@ -314,3 +314,49 @@ export const DiagnosisLink = styled(Link)`
     color: #6DC8B7; /* Optional hover color */
   }
 `;
+
+export const SectionContainer = styled.div`
+  margin-bottom: 20px;
+`;
+
+export const SectionTitle = styled.h2`
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #6DC8B7;
+  padding-bottom: 10px;
+`;
+
+export const Card = styled.div`
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+export const CardTitle = styled.h3`
+  font-size: 20px;
+  color: #444;
+  margin-bottom: 10px;
+`;
+
+export const CardContent = styled.div`
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+
+  p {
+    margin: 5px 0;
+  }
+
+  strong {
+    color: #333;
+  }
+`;

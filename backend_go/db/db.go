@@ -52,7 +52,7 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			update_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			medical_license VARCHAR(50) NOT NULL,
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-			doctor_bio TEXT,
+			bio TEXT,
 			email VARCHAR(255) NOT NULL,
 			phone_number VARCHAR(255) NOT NULL,
 			street_address VARCHAR(255) NOT NULL,
@@ -64,12 +64,53 @@ func InitDatabase() (*pgxpool.Pool, error) {
         	longitude DOUBLE PRECISION,
 			birth_date DATE NOT NULL,
 			location VARCHAR(255) NOT NULL,
-			profile_photo_url VARCHAR(255) NOT NULL,
-			hospitals TEXT[],
-			organizations TEXT[],
-			awards TEXT[],
-			certifications TEXT[],
-			languages TEXT[]
+			profile_photo_url VARCHAR(255) NOT NULL
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_hospitals (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			hospital_name TEXT NOT NULL,
+			position TEXT,
+			start_date DATE,
+			end_date DATE,
+			description TEXT
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_organizations (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			organization_name TEXT NOT NULL,
+			role TEXT,
+			start_date DATE,
+			end_date DATE,
+			description TEXT
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_awards (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			award_name TEXT NOT NULL,
+			date_awarded DATE,
+			issuing_organization TEXT,
+			description TEXT
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_certifications (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			certification_name TEXT NOT NULL,
+			issued_by TEXT,
+			issue_date DATE,
+			expiration_date DATE,
+			description TEXT
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_languages (
+			id SERIAL PRIMARY KEY,
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			language_name TEXT NOT NULL,
+			proficiency_level TEXT
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS patient_info (
@@ -84,7 +125,7 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			create_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			update_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-			patient_bio TEXT NOT NULL,
+			bio TEXT NOT NULL,
 			email VARCHAR(255) NOT NULL,
 			phone_number VARCHAR(50) NOT NULL,
 			street_address VARCHAR(255) NOT NULL,

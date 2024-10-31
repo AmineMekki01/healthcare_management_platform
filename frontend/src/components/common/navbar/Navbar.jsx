@@ -21,6 +21,7 @@ function capitalizeWords(str) {
 
 const MyNavbar = () => {
   const { isLoggedIn, logout, userId, userType, userFullName, userProfilePhotoUrl } = useContext(AuthContext);
+  console.log("userProfilePhotoUrl : ", userProfilePhotoUrl)
   const location = useLocation();
 
   const profileHref = userType === 'doctor'

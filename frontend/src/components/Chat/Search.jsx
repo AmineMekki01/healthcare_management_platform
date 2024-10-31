@@ -58,14 +58,18 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
     const [username, setUsername] = useState('')
     const [users, setUsers] = useState([])
     const [error, setError] = useState(false)
-    const { userId } = useContext(AuthContext);
+    const { userId, userType } = useContext(AuthContext);
     const { state, dispatch } = useContext(ChatContext);
 
 
     const handleSearch = async () => {
 
         try {
-            const response = await axios.get(`http://localhost:3001/api/v1/search/${username}/${userId}`)
+            const response = await axios.get(`http://localhost:3001/api/v1/search/${username}/${userId}`, {
+                params : {
+                    userType : userType
+                }
+            })
             setUsers(response.data.users); 
             setError(false)
         } catch(err) {
@@ -95,7 +99,10 @@ const SearchComponent = ({onUserSelect, onSelectChat }) => {
             const response = await axios.get(`http://localhost:3001/api/findOrCreateChat`, {
                 params : {
                     currentUserId: userId,
-                    selectedUserId: selectedUser.user_id
+                    selectedUserId: selectedUser.user_id,
+                    currentUserType: userType,
+                    selectedUserType: selectedUser.user_type,
+
                 }
             });
         

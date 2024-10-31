@@ -80,6 +80,7 @@ const ChatsComponent = ({onChatSelect}) => {
                     userID: userId
                 }
             });
+            console.log("response.data : ", response.data)
             dispatch({ type: 'SET_CHATS', payload: response.data });
           } catch (error) {
             console.error("Failed to fetch chats: ", error);
@@ -116,7 +117,7 @@ const ChatsComponent = ({onChatSelect}) => {
                     onClick={() => handleSelectChat(chat)}
                     $isSelected={selectedChatId === chat.id}
                 >                
-                    <UserChatImg src={`http://localhost:3001/${chat.recipient_image_url}`} alt="" />
+                    <UserChatImg src={`${chat.recipient_image_url}`} alt="" />
                     
                     <UserChatInfo>
                         <span>{chat.first_name_recipient} {chat.last_name_recipient}</span>
