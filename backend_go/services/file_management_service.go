@@ -689,7 +689,7 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 }
 
 // get subfolders
-func GetSubfolders(c *gin.Context, pool *pgxpool.Pool) {
+func GetSubFolders(c *gin.Context, pool *pgxpool.Pool) {
 	parentID := c.Param("folderId")
 
 	conn, err := pool.Acquire(c.Request.Context())

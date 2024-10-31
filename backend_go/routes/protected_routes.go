@@ -81,7 +81,7 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		services.GetFolders(c, pool)
 	})
 	r.GET("/api/v1/folders/:folderId/subfolders", func(c *gin.Context) {
-		services.GetSubfolders(c, pool)
+		services.GetSubFolders(c, pool)
 	})
 	r.GET("/api/v1/folders/:folderId/breadcrumbs", func(c *gin.Context) {
 		services.GetBreadcrumbs(c, pool)

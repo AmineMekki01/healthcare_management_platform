@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -357,7 +358,12 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	doctorId := c.Param("doctorId")
 	var doctor models.Doctor
 	doctor.DoctorID, _ = uuid.Parse(doctorId)
-	err := pool.QueryRow(context.Background(), "SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, hospitals, organizations, awards, certifications, languages, city_name, country_name FROM doctor_info WHERE doctor_id = $1", doctor.DoctorID).Scan(
+
+	// Fetch basic doctor info
+	err := pool.QueryRow(context.Background(), `
+        SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, city_name, country_name, latitude, longitude
+        FROM doctor_info WHERE doctor_id = $1
+    `, doctor.DoctorID).Scan(
 		&doctor.Email,
 		&doctor.PhoneNumber,
 		&doctor.FirstName,
@@ -370,18 +376,13 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		&doctor.RatingScore,
 		&doctor.RatingCount,
 		&doctor.ProfilePictureURL,
-		&doctor.Hospitals,
-		&doctor.Organizations,
-		&doctor.Awards,
-		&doctor.Certifications,
-		&doctor.Languages,
 		&doctor.CityName,
 		&doctor.CountryName,
+		&doctor.Latitude,
+		&doctor.Longitude,
 	)
-	doctor.ProfilePictureURL, err = GetImageURL(c, doctor.ProfilePictureURL)
-
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if err == pgx.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
 		} else {
 			log.Println("Database error:", err)
@@ -389,6 +390,191 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		}
 		return
 	}
+
+	// Get the presigned URL for the profile picture
+	doctor.ProfilePictureURL, err = GetImageURL(c, doctor.ProfilePictureURL)
+	if err != nil {
+		log.Println("Error getting profile picture URL:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	// Fetch hospitals
+	hospitals := []models.DoctorHospital{}
+	rows, err := pool.Query(context.Background(), `
+        SELECT hospital_name, position, start_date, end_date, description
+        FROM doctor_hospitals WHERE doctor_id = $1
+    `, doctor.DoctorID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var hospital models.DoctorHospital
+			var startDate, endDate *time.Time
+			err = rows.Scan(
+				&hospital.HospitalName,
+				&hospital.Position,
+				&startDate,
+				&endDate,
+				&hospital.Description,
+			)
+			if err != nil {
+				log.Printf("Error scanning hospital row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving hospitals"})
+				return
+			}
+			layout := "2006-01-02"
+			if startDate != nil {
+				str := startDate.Format(layout)
+				hospital.StartDate = &str
+			}
+			if endDate != nil {
+				str := endDate.Format(layout)
+				hospital.EndDate = &str
+			}
+			hospitals = append(hospitals, hospital)
+		}
+	} else {
+		log.Printf("Error querying hospitals: %v", err)
+	}
+	doctor.Hospitals = hospitals
+
+	// Fetch organizations
+	organizations := []models.DoctorOrganization{}
+	rows, err = pool.Query(context.Background(), `
+        SELECT organization_name, role, start_date, end_date, description
+        FROM doctor_organizations WHERE doctor_id = $1
+    `, doctor.DoctorID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var organization models.DoctorOrganization
+			var startDate, endDate *time.Time
+			err = rows.Scan(
+				&organization.OrganizationName,
+				&organization.Role,
+				&startDate,
+				&endDate,
+				&organization.Description,
+			)
+			if err != nil {
+				log.Printf("Error scanning organization row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving organizations"})
+				return
+			}
+			layout := "2006-01-02"
+			if startDate != nil {
+				str := startDate.Format(layout)
+				organization.StartDate = &str
+			}
+			if endDate != nil {
+				str := endDate.Format(layout)
+				organization.EndDate = &str
+			}
+			organizations = append(organizations, organization)
+		}
+	} else {
+		log.Printf("Error querying organizations: %v", err)
+	}
+	doctor.Organizations = organizations
+
+	// Fetch awards
+	awards := []models.DoctorAward{}
+	rows, err = pool.Query(context.Background(), `
+        SELECT award_name, date_awarded, issuing_organization, description
+        FROM doctor_awards WHERE doctor_id = $1
+    `, doctor.DoctorID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var award models.DoctorAward
+			var dateAwarded *time.Time
+			err = rows.Scan(
+				&award.AwardName,
+				&dateAwarded,
+				&award.IssuingOrganization,
+				&award.Description,
+			)
+			if err != nil {
+				log.Printf("Error scanning award row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving awards"})
+				return
+			}
+			layout := "2006-01-02"
+			if dateAwarded != nil {
+				str := dateAwarded.Format(layout)
+				award.DateAwarded = &str
+			}
+			awards = append(awards, award)
+		}
+	} else {
+		log.Printf("Error querying awards: %v", err)
+	}
+	doctor.Awards = awards
+
+	// Fetch certifications
+	certifications := []models.DoctorCertification{}
+	rows, err = pool.Query(context.Background(), `
+        SELECT certification_name, issued_by, issue_date, expiration_date, description
+        FROM doctor_certifications WHERE doctor_id = $1
+    `, doctor.DoctorID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var certification models.DoctorCertification
+			var issueDate, expirationDate *time.Time
+			err = rows.Scan(
+				&certification.CertificationName,
+				&certification.IssuedBy,
+				&issueDate,
+				&expirationDate,
+				&certification.Description,
+			)
+			if err != nil {
+				log.Printf("Error scanning certification row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving certifications"})
+				return
+			}
+			layout := "2006-01-02"
+			if issueDate != nil {
+				str := issueDate.Format(layout)
+				certification.IssueDate = &str
+			}
+			if expirationDate != nil {
+				str := expirationDate.Format(layout)
+				certification.ExpirationDate = &str
+			}
+			certifications = append(certifications, certification)
+		}
+	} else {
+		log.Printf("Error querying certifications: %v", err)
+	}
+	doctor.Certifications = certifications
+
+	// Fetch languages
+	languages := []models.DoctorLanguage{}
+	rows, err = pool.Query(context.Background(), `
+        SELECT language_name, proficiency_level
+        FROM doctor_languages WHERE doctor_id = $1
+    `, doctor.DoctorID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var language models.DoctorLanguage
+			err = rows.Scan(
+				&language.LanguageName,
+				&language.ProficiencyLevel,
+			)
+			if err != nil {
+				log.Printf("Error scanning language row: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving languages"})
+				return
+			}
+			languages = append(languages, language)
+		}
+	} else {
+		log.Printf("Error querying languages: %v", err)
+	}
+	doctor.Languages = languages
 
 	c.JSON(http.StatusOK, doctor)
 }

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from './../../axiosConfig';
 import {
-  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, DoctorInfo, DoctorName, FollowButton, DoctorInfoContainer
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, DoctorInfo, DoctorName, FollowButton, DoctorInfoContainer, SocialIcon, SectionContainer, SectionTitle, Card, CardTitle, CardContent
 } from './styles/DoctorProfileStyles';
 
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { Instagram as InstagramIcon, Twitter as TwitterIcon, Facebook as FacebookIcon, Language as GlobeIcon } from '@mui/icons-material';
+import { Instagram as InstagramIcon, Twitter as TwitterIcon, Facebook as FacebookIcon, Language as GlobeIcon, LocationOn as LocationIcon, Star as StarIcon } from '@mui/icons-material';
+
 
 import { useParams } from 'react-router-dom';
 import BookAppointment from '../Patient/BookAppointment';
@@ -66,9 +67,10 @@ export default function DoctorProfile() {
   if (error) return <div>{error}</div>;
 
   const capitalizeText = (text) => {
-      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-    };
-
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+  
   const doctorFullName = `${capitalizeText(doctorInfo.FirstName)} ${doctorInfo.LastName ? doctorInfo.LastName.toUpperCase() : ''}`;
 
   const handleFollowClick = () => {
@@ -97,91 +99,131 @@ export default function DoctorProfile() {
 
   return (
     <MainContainer>
-      <Header>
+           <Header>
         <ProfileImage src={`${doctorInfo.ProfilePictureUrl}`} alt="Profile avatar" />
-        
+
         <DoctorInfoContainer>
-          <DoctorName>Dr. {capitalizeText(doctorInfo.FirstName)} {doctorInfo.LastName && doctorInfo.LastName.toUpperCase()}</DoctorName>
-          <DoctorInfo>{capitalizeText(doctorInfo.Specialty)} - {doctorInfo.RatingScore} ({ doctorInfo.RatingCount })</DoctorInfo>
-          <DoctorInfo>{doctorInfo.CityName} , { doctorInfo.CountryName }</DoctorInfo>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <DoctorName>{doctorFullName}</DoctorName>
+          <DoctorInfo>
+            <StarIcon style={{ color: '#FFD700', verticalAlign: 'middle' }} />{' '}
+            {doctorInfo.RatingScore || 'N/A'} ({doctorInfo.RatingCount || 0} reviews)
+          </DoctorInfo>
+          <DoctorInfo>
+            <LocationIcon style={{ verticalAlign: 'middle' }} />{' '}
+            {doctorInfo.CityName}, {doctorInfo.CountryName}
+          </DoctorInfo>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px' }}>
             {notCurrentUser && (
               <FollowButton onClick={handleFollowClick} disabled={isProcessingFollow || isFollowing}>
                 {isFollowing ? 'Following' : 'Follow'}
               </FollowButton>
             )}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <SocialIcon href="#" target="_blank">
+                <FacebookIcon />
+              </SocialIcon>
+              <SocialIcon href="#" target="_blank">
+                <TwitterIcon />
+              </SocialIcon>
+              <SocialIcon href="#" target="_blank">
+                <InstagramIcon />
+              </SocialIcon>
+              <SocialIcon href="#" target="_blank">
+                <GlobeIcon />
+              </SocialIcon>
+            </div>
           </div>
         </DoctorInfoContainer>
-
-       
       </Header>
 
       <BodyContainer>
         <LeftColumn>
-        
           <Section>
             <Title>Intro</Title>
             <Text>{doctorInfo.Bio}</Text>
           </Section>
-          <LocationContainer>
-            <Title>I'm Located At</Title>
-            <LocationInfo>{doctorInfo.Location}</LocationInfo>
-            <div ref={mapContainerRef} style={{ width: '100%', 'maxWidth': '400px', maxHeight: '400px' }}>
-              <LoadScript googleMapsApiKey="YOUR_API_KEY">
-                <GoogleMap
-                  mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={{ lat: doctorInfo.Latitude, lng: doctorInfo.Longitude }}
-                  zoom={14}
-                >
-                  <Marker position={{ lat: doctorInfo.Latitude, lng: doctorInfo.Longitude }} />
-                </GoogleMap>
-              </LoadScript>
-            </div>
-          </LocationContainer>
-          <Section>
-            <Title>My Education</Title>
-            <List>
-              {doctorInfo.Education && doctorInfo.Education.length > 0 ? (
-                doctorInfo.Education.map((education, index) => <ListItem key={index}>{education}</ListItem>)
-              ) : (
-                <Text>No Education Information Provided.</Text>
-              )}
-            </List>
-          </Section>
-          <Section>
-            <Title>My Experience</Title>
-            <List>
-              {doctorInfo.Experience && doctorInfo.Experience.length > 0 ? (
-                doctorInfo.Experience.map((experience, index) => <ListItem key={index}>{experience}</ListItem>)
-              ) : (
-                <Text>No Experience Information Provided.</Text>
-              )}
-            </List>
-          </Section>
-          <Section>
-            <Title>Certifications</Title>
-            <List>
-              {doctorInfo.Certifications && doctorInfo.Certifications.length > 0 ? (
-                doctorInfo.Certifications.map((Certification, index) => <ListItem key={index}>{Certification}</ListItem>)
-              ) : (
-                <Text>No Certifications Information Provided.</Text>
-              )}
-            </List>
-          </Section>
-          <Section>
-            <Title>Awards</Title>
-            <List>
+
+          <SectionContainer>
+            <SectionTitle>Hospitals</SectionTitle>
+            {doctorInfo.Hospitals && doctorInfo.Hospitals.length > 0 ? (
+              doctorInfo.Hospitals.map((hospital, index) => (
+                <Card key={index}>
+                  <CardTitle>{hospital.hospital_name}</CardTitle>
+                  <CardContent>
+                    <p><strong>Role : </strong> {hospital.position}</p>
+                    <p><strong>Dates : </strong> {hospital.start_date} <strong>To</strong> {hospital.end_date || 'Present'}</p>
+                    <p><strong>Description : </strong> {hospital.description}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <CardContent>No affiliated hospitals listed.</CardContent>
+            )}
+          </SectionContainer>
+
+          <SectionContainer>
+            <SectionTitle>Organizations</SectionTitle>
+            {doctorInfo.Organizations && doctorInfo.Organizations.length > 0 ? (
+              doctorInfo.Organizations.map((organization, index) => (
+                <Card key={index}>
+                  <CardTitle>{organization.organization_name}</CardTitle>
+                  <CardContent>
+                    <p><strong>Role : </strong> {organization.role}</p>
+                    <p><strong>Dates : </strong> {organization.start_date} <strong>To</strong> {organization.end_date || 'Present'}</p>
+                    <p><strong>Description : </strong> {organization.description}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <CardContent>No affiliated organizations listed.</CardContent>
+            )}
+          </SectionContainer>
+
+          <SectionContainer>
+            <SectionTitle>Awards</SectionTitle>
               {doctorInfo.Awards && doctorInfo.Awards.length > 0 ? (
-                doctorInfo.Awards.map((Award, index) => <ListItem key={index}>{Award}</ListItem>)
+                doctorInfo.Awards.map((award, index) => (
+                  <Card key={index}>
+                    <CardTitle>{award.award_name}</CardTitle>
+                    <CardContent>
+                      <p><strong>Awarded on : </strong>{award.date_awarded}</p>
+                      <p><strong>Issued by : </strong>{award.issuing_organization}</p>
+                      <p><strong>Description : </strong>{award.description}</p>
+                    </CardContent>
+                  </Card>
+                ))
               ) : (
-                <Text>No Awards Information Provided.</Text>
+                <CardContent>No Awards Information Provided.</CardContent>
               )}
-            </List>
-          </Section>
+          </SectionContainer>
+
+          <SectionContainer>
+            <SectionTitle>Certifications</SectionTitle>
+              {doctorInfo.Certifications && doctorInfo.Certifications.length > 0 ? (
+                doctorInfo.Certifications.map((certification, index) => (
+                  <Card key={index}>
+                    <CardTitle>{certification.certification_name}</CardTitle>
+                    <CardContent>
+                      <p><strong>Issued by : </strong>{certification.issued_by}</p>
+                      <p><strong>Issued on : </strong>{certification.issue_date}</p>
+                      {certification.expiration_date ? 
+                      <p><strong>Expires on : </strong> {certification.expiration_date}</p> : <p></p>
+                      }
+
+
+                      <p><strong>Description : </strong>{certification.description}</p>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <CardContent>No Certifications Information Provided.</CardContent>
+              )}
+          </SectionContainer>
 
         </LeftColumn>
+
         <RightColumn>
-          <Section>
+          {/* <Section>
             <Title>Statistics</Title>
             <Statistic>
               <StatBox>
@@ -201,45 +243,25 @@ export default function DoctorProfile() {
                 <Text>{"500,654"}</Text>
               </StatBox>
             </Statistic>
-          </Section>
+          </Section> */}
           <Section>
-            <Title>I'm Affiliated With</Title>
-            <Subtitle>Hospitals</Subtitle>
-            <List>
-              {doctorInfo.Hospitals && doctorInfo.Hospitals.length > 0 ? (
-                doctorInfo.Hospitals.map((hospital, index) => <ListItem key={index}>{hospital}</ListItem>)
-              ) : (
-                <Text>No affiliated Hospitals.</Text>
-              )}
-            </List>
-            <BreakingLine />
-            <Subtitle>Organizations</Subtitle>
-            <List>
-              {doctorInfo.Organizations && doctorInfo.Organizations.length > 0 ? (
-                doctorInfo.Organizations.map((organization, index) => <ListItem key={index}>{organization}</ListItem>)
-              ) : (
-                <Text>No affiliated organizations.</Text>
-              )}
-            </List>
-          </Section>
-
-          <Section>  
             <Title>Languages</Title>
             <List>
               {doctorInfo.Languages && doctorInfo.Languages.length > 0 ? (
-                doctorInfo.Languages.map((language, index) => <ListItem key={index}>{language}</ListItem>)
+                doctorInfo.Languages.map((language, index) => (
+                  <ListItem key={index}>
+                    {language.language_name} - {language.proficiency_level}
+                  </ListItem>
+                ))
               ) : (
                 <Text>No Languages Provided.</Text>
               )}
             </List>
-
           </Section>
-          
         </RightColumn>
-      </BodyContainer> 
+      </BodyContainer>
 
       {notCurrentUser && <AvailableAppointments doctorId={doctorId} doctorFullName={doctorFullName} />}
-
     </MainContainer>
   );
 }
