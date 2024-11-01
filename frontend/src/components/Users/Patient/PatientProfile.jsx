@@ -6,14 +6,12 @@ import {
   DiagnosisName,
   DiagnosisDate, DiagnosisLink
 } from './../Doctor/styles/DoctorProfileStyles';
-import SettingsIcon from '@mui/icons-material/Settings';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from './../../Auth/AuthContext';
 
 import styled from 'styled-components';
 
 export const IconButton = styled.button`
-
   background: none;
   border: none;
   cursor: pointer;
@@ -42,7 +40,11 @@ export default function PatientProfile() {
   const fetchPatientInfo = async () => {
 
     try {
-      const response = await axios.get(`http://localhost:3001/api/v1/patients/${patientId}`);
+      const response = await axios.get(`http://localhost:3001/api/v1/user/${patientId}`, {
+        params: {
+          userType: "patient",
+        },
+      });
       setPatientInfo(response.data)
       console.log("patient_info : ",response.data )
 
@@ -63,7 +65,6 @@ export default function PatientProfile() {
       console.log("Error while getting users followings :", error)
     }
   };
-
 
   const getMedicalHistory = async () => {
     try {

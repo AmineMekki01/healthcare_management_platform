@@ -44,6 +44,8 @@ const MyNavbar = () => {
     { title: 'Create Post', src: 'create_post', href: '/create-post' },
     { title: 'ChatBot', src: 'chatbot', href: '/ChatBot' },
     { title: 'My Posts', src: 'doctor_feed', href: '/doctor-posts' },
+    { title: 'My Reports', src: 'doctor_feed', href:`/medical-report/${userId}` },
+
   ];
 
   const guestMenus = [

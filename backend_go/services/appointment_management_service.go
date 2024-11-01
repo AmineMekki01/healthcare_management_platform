@@ -686,3 +686,283 @@ func GetReservationsCount(c *gin.Context, pool *pgxpool.Pool) {
 		"as_doctor":  asDoctorReservationsCount,
 	})
 }
+
+func CreateReport(c *gin.Context, pool *pgxpool.Pool) {
+	var report models.MedicalReport
+
+	if err := c.ShouldBindJSON(&report); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	reportID := uuid.New()
+	report.ReportID = reportID
+	report.CreatedAt = time.Now()
+
+	_, err := pool.Exec(
+		context.Background(),
+		`INSERT INTO medical_reports (report_id, appointment_id, doctor_id, patient_id, patient_first_name, patient_last_name, doctor_first_name, doctor_last_name, report_content, diagnosis_made, diagnosis_name, diagnosis_details, referral_needed, referral_specialty, referral_doctor_name, referral_message, created_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+		reportID, report.AppointmentID, report.DoctorID, report.PatientID, report.PatientFirstName, report.PatientLastName, report.DoctorFirstName, report.DoctorLastName, report.ReportContent, report.DiagnosisMade, report.DiagnosisName, report.DiagnosisDetails, report.ReferralNeeded, report.ReferralSpecialty, report.ReferralDoctorName, report.ReferralMessage, report.CreatedAt,
+	)
+	if err != nil {
+		log.Println("Failed to create report : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create report"})
+		return
+	}
+
+	if report.DiagnosisMade {
+		AddDiagnosis(c, pool, report)
+	}
+
+	if report.ReferralNeeded {
+		AddReferral(c, pool, report)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Report created successfully", "report_id": reportID})
+}
+
+func GetDoctorName(c *gin.Context, pool *pgxpool.Pool, DoctorID uuid.UUID) string {
+
+	var FirstName, LastName string
+	err := pool.QueryRow(context.Background(),
+		`SELECT 
+			first_name, last_name 
+		FROM 
+			doctor_info
+		WHERE
+			doctor_id = $1
+		`, DoctorID,
+	).Scan(&FirstName, &LastName)
+	if err != nil {
+		log.Println("Failed to scan doctor First Name and Last Name :", err)
+		return ""
+	}
+	DoctorFullName := FirstName + LastName
+	return DoctorFullName
+}
+
+func AddDiagnosis(c *gin.Context, pool *pgxpool.Pool, report models.MedicalReport) {
+
+	DoctorFullName := GetDoctorName(c, pool, report.DoctorID)
+
+	_, err := pool.Exec(
+		context.Background(),
+		`INSERT INTO medical_diagnosis_history ( diagnosis_name, diagnosis_details, diagnosis_doctor_name, diagnosis_doctor_id, diagnosis_patient_id) 
+		VALUES ($1, $2, $3, $4, $5)`,
+		report.DiagnosisName, report.DiagnosisDetails, DoctorFullName, report.DoctorID, report.PatientID,
+	)
+	if err != nil {
+		log.Println("Failed to insert medical diagnosis history info : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert medical diagnosis history info."})
+		return
+	}
+	log.Println("Data was successfully inserted into medical diagnosis history table.")
+}
+
+func AddReferral(c *gin.Context, pool *pgxpool.Pool, report models.MedicalReport) {
+	_, err := pool.Exec(
+		context.Background(),
+		`INSERT INTO medical_referrals ( referring_doctor_id, referred_patient_id)
+		VALUES ($1, $2)`,
+		report.DoctorID, report.PatientID,
+	)
+	if err != nil {
+		log.Println("Failed to insert referral info : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert referral info."})
+		return
+	}
+	log.Println("Data was successfully inserted into referral info.")
+}
+
+func SendReportNotification(c *gin.Context, pool *pgxpool.Pool) {
+	var emailData struct {
+		ReportID  uuid.UUID `json:"report_id"`
+		PatientID string    `json:"patient_id"`
+	}
+
+	if err := c.ShouldBindJSON(&emailData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Fetch patient email and report details
+	var patientEmail, reportContent string
+	err := pool.QueryRow(context.Background(),
+		`SELECT email, report_content 
+		FROM patient_info JOIN medical_reports ON patient_info.patient_id = medical_reports.patient_id 
+		WHERE medical_reports.report_id = $1`, emailData.ReportID,
+	).Scan(&patientEmail, &reportContent)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve report details"})
+		return
+	}
+
+	// (Pseudo code) Send email
+	// email.SendEmail(patientEmail, "Your Medical Report", reportContent)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Report notification sent successfully"})
+}
+
+func GetReports(c *gin.Context, pool *pgxpool.Pool) {
+
+	userID := c.Param("userId")
+
+	query := `
+		SELECT 
+			report_id, appointment_id, doctor_id, patient_id, patient_first_name, patient_last_name, doctor_first_name, doctor_last_name, report_content, diagnosis_made, diagnosis_name, diagnosis_details, referral_needed, referral_specialty, referral_doctor_name, referral_message, created_at
+		FROM 
+			medical_reports
+		WHERE
+			doctor_id = $1
+		ORDER BY  created_at DESC
+	`
+
+	rows, err := pool.Query(context.Background(), query, userID)
+	if err != nil {
+		log.Println("Failed To Query Reports : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed To Query Reports."})
+	}
+
+	defer rows.Close()
+
+	var reports []models.MedicalReport
+	for rows.Next() {
+		var report models.MedicalReport
+
+		err := rows.Scan(
+			&report.ReportID,
+			&report.AppointmentID,
+			&report.DoctorID,
+			&report.PatientID,
+			&report.PatientFirstName,
+			&report.PatientLastName,
+			&report.DoctorFirstName,
+			&report.DoctorLastName,
+			&report.ReportContent,
+			&report.DiagnosisMade,
+			&report.DiagnosisName,
+			&report.DiagnosisDetails,
+			&report.ReferralNeeded,
+			&report.ReferralSpecialty,
+			&report.ReferralDoctorName,
+			&report.ReferralMessage,
+			&report.CreatedAt,
+		)
+		if err != nil {
+			log.Println("Failed to scan report information : ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan report information."})
+
+		}
+
+		reports = append(reports, report)
+
+	}
+
+	c.JSON(http.StatusOK, reports)
+}
+
+func GetReport(c *gin.Context, pool *pgxpool.Pool) {
+	reportID := c.Param("reportId")
+
+	var report models.MedicalReport
+	err := pool.QueryRow(context.Background(),
+		`SELECT 
+			report_id, 
+			appointment_id, 
+			doctor_id, 
+			patient_id, 
+			patient_first_name, 
+			patient_last_name, 
+			doctor_first_name, 
+			doctor_last_name, 
+			report_content,
+			diagnosis_made, 
+			diagnosis_name, 
+			diagnosis_details, 
+			referral_needed,
+			referral_specialty, 
+			referral_doctor_name, 
+			referral_message, 
+			created_at
+		FROM 
+			medical_reports 
+		WHERE 
+			report_id = $1`, reportID,
+	).Scan(
+		&report.ReportID,
+		&report.AppointmentID,
+		&report.DoctorID,
+		&report.PatientID,
+		&report.PatientFirstName,
+		&report.PatientLastName,
+		&report.DoctorFirstName,
+		&report.DoctorLastName,
+		&report.ReportContent,
+		&report.DiagnosisMade,
+		&report.DiagnosisName,
+		&report.DiagnosisDetails,
+		&report.ReferralNeeded,
+		&report.ReferralSpecialty,
+		&report.ReferralDoctorName,
+		&report.ReferralMessage,
+		&report.CreatedAt,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve report"})
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+
+func GetAnAppointment(c *gin.Context, pool *pgxpool.Pool) {
+	AppointmentID := c.Param("appointmentId")
+	var appointment models.Reservation
+	if AppointmentID == "" {
+		log.Println("Bad Request: appointmentId required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request: doctor_id or appointmentId required"})
+		return
+	}
+
+	query := `
+		SELECT 
+			apt.appointment_id,
+			apt.appointment_start,
+			apt.appointment_end,
+			apt.doctor_id,
+			apt.patient_id,
+			di.first_name as doctor_first_name,
+			di.last_name as doctor_last_name,
+			pi.first_name as patient_first_name,
+			pi.last_name as patient_last_name		
+		FROM 
+			appointments apt
+		JOIN 
+			doctor_info di on di.doctor_id = apt.doctor_id
+		JOIN 
+			patient_info pi on pi.patient_id = apt.patient_id
+		WHERE
+			apt.appointment_id = $1;
+	`
+	err := pool.QueryRow(context.Background(), query, AppointmentID).Scan(
+		&appointment.ReservationID,
+		&appointment.ReservationStart,
+		&appointment.ReservationEnd,
+		&appointment.DoctorID,
+		&appointment.PatientID,
+		&appointment.DoctorFirstName,
+		&appointment.DoctorLastName,
+		&appointment.PatientFirstName,
+		&appointment.PatientLastName,
+	)
+	if err != nil {
+		log.Println("Query Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+
+	}
+	c.JSON(http.StatusOK, appointment)
+}

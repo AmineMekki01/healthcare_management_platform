@@ -29,6 +29,9 @@ import EditPost from './components/FeedBlog/EditPostPage';
 import Dashboard from './pages/Dashboard';
 import DiagnosisPage from './pages/DiagnosisPage';
 import SettingsPage from './pages/SettingsPage';
+import DoctorReport from './components/Appointments/DoctorReport';  
+import DoctorReports from './pages/MyReports';
+import ReportDetail from './pages/ReportDetail';
 
 function App() {
 
@@ -157,6 +160,32 @@ function App() {
                   element={
                     <DoctorRoute>
                       <EditPost />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/DoctorReport/:appointmentId"
+                  element={
+                    <DoctorRoute>
+                      <DoctorReport />
+                    </DoctorRoute>
+                  }
+                />
+
+                <Route
+                  path="/medical-report/:userId"
+                  element={
+                    <DoctorRoute>
+                      <DoctorReports />
+                    </DoctorRoute>
+                  }
+                />
+
+                <Route
+                  path="/doctor-report/:reportId"
+                  element={
+                    <DoctorRoute>
+                      <ReportDetail />
                     </DoctorRoute>
                   }
                 />

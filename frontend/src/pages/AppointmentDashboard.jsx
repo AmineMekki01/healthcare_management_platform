@@ -115,7 +115,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"patient"}
+                userType={"doctor"}
               />
             ))}
           </Flex>
@@ -137,7 +137,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"patient"}
+                userType={"doctor"}
               />
             ))}
           </Flex>
@@ -163,7 +163,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"doctor"}
+                userType={"patient"}
               />
             ))}
           </Flex>

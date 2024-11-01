@@ -270,6 +270,33 @@ func InitDatabase() (*pgxpool.Pool, error) {
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		);`,
+
+		`CREATE TABLE IF NOT EXISTS medical_reports (
+			report_id UUID PRIMARY KEY,
+			appointment_id UUID REFERENCES appointments(appointment_id),
+			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			patient_id UUID REFERENCES patient_info(patient_id),
+			patient_first_name VARCHAR(100), 
+			patient_last_name VARCHAR(100), 
+			doctor_first_name VARCHAR(100), 
+			doctor_last_name VARCHAR(100),
+			diagnosis_made boolean,
+			diagnosis_name VARCHAR(255),
+			diagnosis_details TEXT,
+			referral_needed boolean,
+			referral_specialty VARCHAR(255),
+			referral_doctor_name VARCHAR(255),
+			referral_message TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			);
+		`,
+		`CREATE TABLE IF NOT EXISTS medical_referrals (
+			referral_id UUID PRIMARY KEY,
+			referring_doctor_id UUID REFERENCES doctor_info(doctor_id),
+			referred_patient_id UUID REFERENCES patient_info(patient_id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			);
+		`,
 	}
 
 	for _, query := range sqlQueries {
