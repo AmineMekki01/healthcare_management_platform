@@ -30,6 +30,7 @@ type Reservation struct {
 	CanceledBy            *string    `json:canceled_by`
 	CancellationReason    *string    `json:cancellation_reason`
 	CancellationTimestamp *time.Time `json:cancellation_timestamp`
+	ReportExists          bool       `json:"report_exist"`
 }
 
 type Appointments struct {

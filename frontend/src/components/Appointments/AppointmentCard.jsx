@@ -8,9 +8,10 @@ import CancelAppointmentModal from './CancelAppointmentModal';
 import axios from './../axiosConfig';
 
 export default function AppointmentCard({ reservation, userType }) {
+  console.log("reservation : ", reservation)
   const navigate = useNavigate();
   const [showCancelModal, setShowCancelModal] = useState(false);
-  console.log("userType : ", userType)
+
   const formatDate = (dateString) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -130,7 +131,7 @@ export default function AppointmentCard({ reservation, userType }) {
         </CancelButtonContainer>
       )}
       
-      {userType === 'doctor' && (
+      {userType === 'doctor' && !reservation.report_exist && !reservation.is_doctor_patient &&  (
           <Button onClick={() => navigate(`/DoctorReport/${reservation.reservation_id}`)}>
             Create Report
           </Button>

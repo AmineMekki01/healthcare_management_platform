@@ -3,8 +3,10 @@ package services
 import (
 	"backend_go/models"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -222,13 +224,16 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 			appointments.canceled,
 			appointments.canceled_by,
 			appointments.cancellation_reason,
-			appointments.cancellation_timestamp
+			appointments.cancellation_timestamp,
+			COALESCE(medical_reports.report_id IS NOT NULL, false) AS report_exists
 		FROM 
 			appointments
 		JOIN
 			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
+		LEFT JOIN 
+			medical_reports ON appointments.appointment_id = medical_reports.appointment_id
 		WHERE
 			appointments.doctor_id = $1;
 	`
@@ -260,6 +265,7 @@ func GetDoctorReservationsAsDoctor(c *gin.Context, pool *pgxpool.Pool, userID st
 			&r.CanceledBy,
 			&r.CancellationReason,
 			&r.CancellationTimestamp,
+			&r.ReportExists,
 		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
@@ -806,25 +812,91 @@ func SendReportNotification(c *gin.Context, pool *pgxpool.Pool) {
 }
 
 func GetReports(c *gin.Context, pool *pgxpool.Pool) {
-
 	userID := c.Param("userId")
 
+	// Get optional query parameters for filtering
+	year := c.DefaultQuery("year", "")
+	month := c.DefaultQuery("month", "")
+	day := c.DefaultQuery("day", "")
+	patientName := c.DefaultQuery("patientName", "")
+	diagnosisName := c.DefaultQuery("diagnosisName", "")
+	referralDoctor := c.DefaultQuery("referralDoctor", "")
+
+	// Construct the base query
 	query := `
 		SELECT 
-			report_id, appointment_id, doctor_id, patient_id, patient_first_name, patient_last_name, doctor_first_name, doctor_last_name, report_content, diagnosis_made, diagnosis_name, diagnosis_details, referral_needed, referral_specialty, referral_doctor_name, referral_message, created_at
+			report_id, 
+			appointment_id, 
+			doctor_id, 
+			patient_id, 
+			patient_first_name, 
+			patient_last_name, 
+			doctor_first_name, 
+			doctor_last_name, 
+			report_content, 
+			diagnosis_made, 
+			diagnosis_name, 
+			diagnosis_details, 
+			referral_needed, 
+			referral_specialty, 
+			referral_doctor_name, 
+			referral_message, 
+			created_at
 		FROM 
 			medical_reports
-		WHERE
-			doctor_id = $1
-		ORDER BY  created_at DESC
-	`
+		WHERE 
+			doctor_id = $1`
 
-	rows, err := pool.Query(context.Background(), query, userID)
+	// Prepare a slice for query arguments
+	args := []interface{}{userID}
+	argCount := 2
+
+	// Apply filters based on user input while ensuring correct hierarchy
+	if year != "" {
+		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM created_at) = $%d", argCount)
+		args = append(args, year)
+		argCount++
+
+		if month != "" {
+			query += fmt.Sprintf(" AND EXTRACT(MONTH FROM created_at) = $%d", argCount)
+			args = append(args, month)
+			argCount++
+
+			if day != "" {
+				query += fmt.Sprintf(" AND EXTRACT(DAY FROM created_at) = $%d", argCount)
+				args = append(args, day)
+				argCount++
+			}
+		}
+	}
+
+	// Apply additional filters if they are provided
+	if patientName != "" {
+		query += fmt.Sprintf(" AND LOWER(patient_first_name || ' ' || patient_last_name) LIKE $%d", argCount)
+		args = append(args, "%"+strings.ToLower(patientName)+"%")
+		argCount++
+	}
+	if diagnosisName != "" {
+		query += fmt.Sprintf(" AND LOWER(diagnosis_name) LIKE $%d", argCount)
+		args = append(args, "%"+strings.ToLower(diagnosisName)+"%")
+		argCount++
+	}
+	if referralDoctor != "" {
+		query += fmt.Sprintf(" AND LOWER(referral_doctor_name) LIKE $%d", argCount)
+		args = append(args, "%"+strings.ToLower(referralDoctor)+"%")
+		argCount++
+	}
+
+	// Order by creation date in descending order
+	query += " ORDER BY created_at DESC"
+
+	// Execute the query
+	rows, err := pool.Query(context.Background(), query, args...)
 	if err != nil {
 		log.Println("Failed To Query Reports : ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed To Query Reports."})
+		return
 	}
-
 	defer rows.Close()
 
 	var reports []models.MedicalReport
@@ -853,11 +925,10 @@ func GetReports(c *gin.Context, pool *pgxpool.Pool) {
 		if err != nil {
 			log.Println("Failed to scan report information : ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan report information."})
-
+			return
 		}
 
 		reports = append(reports, report)
-
 	}
 
 	c.JSON(http.StatusOK, reports)

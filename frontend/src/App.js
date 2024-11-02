@@ -38,9 +38,9 @@ function App() {
   return (
       <Router>
         <NavigationProvider>
-          <div className="flex">
+          <div className="flex flex-col min-h-screen">
             <MyNavbar />
-            <div className="ml-auto w-full scrollable-div">
+            <div className="flex-grow scrollable-div">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />

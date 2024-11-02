@@ -26,7 +26,6 @@ export default function Dashboard() {
 
         const response = await axios.get('/api/v1/reservations', { params });
         const now = new Date();
-
         if (userType === 'doctor') {
           const activeDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) > now);
           const passedDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) <= now);
