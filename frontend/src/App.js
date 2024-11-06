@@ -29,15 +29,18 @@ import EditPost from './components/FeedBlog/EditPostPage';
 import Dashboard from './pages/Dashboard';
 import DiagnosisPage from './pages/DiagnosisPage';
 import SettingsPage from './pages/SettingsPage';
+import DoctorReport from './components/Appointments/DoctorReport';  
+import DoctorReports from './pages/MyReports';
+import ReportDetail from './pages/ReportDetail';
 
 function App() {
 
   return (
       <Router>
         <NavigationProvider>
-          <div className="flex">
+          <div className="flex flex-col min-h-screen">
             <MyNavbar />
-            <div className="ml-auto w-full scrollable-div">
+            <div className="flex-grow scrollable-div">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />
@@ -157,6 +160,32 @@ function App() {
                   element={
                     <DoctorRoute>
                       <EditPost />
+                    </DoctorRoute>
+                  }
+                />
+                <Route
+                  path="/DoctorReport/:appointmentId"
+                  element={
+                    <DoctorRoute>
+                      <DoctorReport />
+                    </DoctorRoute>
+                  }
+                />
+
+                <Route
+                  path="/medical-report/:userId"
+                  element={
+                    <DoctorRoute>
+                      <DoctorReports />
+                    </DoctorRoute>
+                  }
+                />
+
+                <Route
+                  path="/doctor-report/:reportId"
+                  element={
+                    <DoctorRoute>
+                      <ReportDetail />
                     </DoctorRoute>
                   }
                 />

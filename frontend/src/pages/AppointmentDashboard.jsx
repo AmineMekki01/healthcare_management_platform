@@ -26,7 +26,6 @@ export default function Dashboard() {
 
         const response = await axios.get('/api/v1/reservations', { params });
         const now = new Date();
-
         if (userType === 'doctor') {
           const activeDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) > now);
           const passedDoctorAppts = response.data.filter(r => !r.is_doctor_patient && !r.Canceled && new Date(r.reservation_end) <= now);
@@ -115,7 +114,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"patient"}
+                userType={"doctor"}
               />
             ))}
           </Flex>
@@ -137,7 +136,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"patient"}
+                userType={"doctor"}
               />
             ))}
           </Flex>
@@ -163,7 +162,7 @@ export default function Dashboard() {
               <AppointmentCard
                 key={reservation.reservation_id}
                 reservation={reservation}
-                userType={"doctor"}
+                userType={"patient"}
               />
             ))}
           </Flex>

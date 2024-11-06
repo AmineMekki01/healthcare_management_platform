@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import { createEvent } from 'ics';
 import { Card, CardContent, CardActions, Typography, Button, Chip } from '@mui/material';
 import { EventNote, Share, GetApp, Person, Cancel as CancelIcon } from '@mui/icons-material';
@@ -8,6 +8,7 @@ import CancelAppointmentModal from './CancelAppointmentModal';
 import axios from './../axiosConfig';
 
 export default function AppointmentCard({ reservation, userType }) {
+  console.log("reservation : ", reservation)
   const navigate = useNavigate();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -19,6 +20,9 @@ export default function AppointmentCard({ reservation, userType }) {
   const formatTime = (dateString) => {
     return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const isPastAppointment = new Date(reservation.reservation_end) < new Date();
+  const isCanceledAppointment = reservation.Canceled;
 
   const createICSFile = () => {
     const start = new Date(reservation.reservation_start);
@@ -57,13 +61,9 @@ export default function AppointmentCard({ reservation, userType }) {
       alert('Sharing is not supported on this browser');
     }
   };
+
   const handleCancelAppointment = async (reason) => {
     try {
-      console.log("appointment_id : ", reservation.reservation_id)
-      console.log("userType : ", userType)
-
-      console.log("reason : ", reason)
-
       await axios.post('/api/v1/cancel-appointment', {
         appointment_id: reservation.reservation_id,
         canceled_by: userType,
@@ -117,16 +117,26 @@ export default function AppointmentCard({ reservation, userType }) {
           <Share />
         </IconButton>
       </CardFooter>
-      <CancelButtonContainer style={{ marginTop: '15px' }}>
-        <CancelButton onClick={() => setShowCancelModal(true)}>
-        <CancelIcon /> Cancel Appointment
-        </CancelButton>
-        <CancelAppointmentModal
-          open={showCancelModal}
-          handleClose={() => setShowCancelModal(false)}
-          handleCancel={handleCancelAppointment}
-        />
-      </CancelButtonContainer>
+
+      {!isPastAppointment && !isCanceledAppointment && (
+        <CancelButtonContainer style={{ marginTop: '15px' }}>
+          <CancelButton onClick={() => setShowCancelModal(true)}>
+          <CancelIcon /> Cancel Appointment
+          </CancelButton>
+          <CancelAppointmentModal
+            open={showCancelModal}
+            handleClose={() => setShowCancelModal(false)}
+            handleCancel={handleCancelAppointment}
+          />
+        </CancelButtonContainer>
+      )}
+      
+      {userType === 'doctor' && !reservation.report_exist && !reservation.is_doctor_patient &&  (
+          <Button onClick={() => navigate(`/DoctorReport/${reservation.reservation_id}`)}>
+            Create Report
+          </Button>
+        )}
+
     </CardContainer>
   );
 }
