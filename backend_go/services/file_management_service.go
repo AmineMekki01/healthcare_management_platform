@@ -9,9 +9,10 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -81,7 +82,7 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 	var ext *string
 	fileFolder.Ext = ext
 
-	folderPath := filepath.Join(fileFolder.UserID)
+	var folderPath string
 	if fileFolder.ParentID != nil && *fileFolder.ParentID != "" {
 		parentFolderPath, err := getParentFolderPath(*fileFolder.ParentID, pool)
 		if err != nil {
@@ -89,10 +90,11 @@ func CreateFolder(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		folderPath = fmt.Sprintf("%s/%s", folderPath, parentFolderPath)
+		folderPath = path.Join(fileFolder.UserID, parentFolderPath, fileFolder.Name, "marker.txt")
+	} else {
+		folderPath = path.Join(fileFolder.UserID, fileFolder.Name, "marker.txt")
 	}
-	folderPath = fmt.Sprintf("records/%s/%s/%s", folderPath, fileFolder.Name, "/marker.txt")
-	folderPath = filepath.ToSlash(folderPath)
+	folderPath = path.Join("records", "my-records", folderPath)
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
 
@@ -191,9 +193,9 @@ func UploadFile(c *gin.Context, pool *pgxpool.Pool) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fileInfo.Path = fmt.Sprintf("records/%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
+		fileInfo.Path = fmt.Sprintf("records/my-records/%s/%s/%s", fileInfo.UserID, parentFolderPath, fileInfo.Name)
 	} else {
-		fileInfo.Path = fmt.Sprintf("records/%s/%s", fileInfo.UserID, fileInfo.Name)
+		fileInfo.Path = fmt.Sprintf("records/my-records/%s/%s", fileInfo.UserID, fileInfo.Name)
 	}
 	s3Client := createS3Client()
 	bucket := os.Getenv("S3_BUCKET_NAME")
@@ -481,18 +483,20 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 		return
 	}
 
-	oldPath = url.PathEscape(filepath.ToSlash(oldPath))
-
 	var newPath string
 
 	if itemType == "folder" {
-		newPath = strings.Replace(oldPath, "/marker.txt", "", 1)
-		newPath = filepath.Dir(newPath)
-		newPath = filepath.Join(newPath, request.Name) + "/marker.txt"
+		oldFolderPath := strings.TrimSuffix(oldPath, "/marker.txt")
+		parentPath := path.Dir(oldFolderPath)
+		newFolderPath := path.Join(parentPath, request.Name)
+		newPath = path.Join(newFolderPath, "marker.txt")
+
+		log.Println("oldFolderPath:", oldFolderPath)
+		log.Println("newFolderPath:", newFolderPath)
 	} else {
-		newPath = filepath.Join(filepath.Dir(oldPath), request.Name)
+		newPath = path.Join(path.Dir(oldPath), request.Name)
+		log.Println("newPath file else :", newPath)
 	}
-	newPath = url.PathEscape(filepath.ToSlash(newPath))
 	log.Println("oldPath file:", oldPath)
 	log.Println("newPath file:", newPath)
 
@@ -518,8 +522,8 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 			SET path = regexp_replace(path, $2, $3)
 			WHERE id IN (SELECT id FROM subfolders);
 		`
-		oldPathPattern := "^" + strings.Replace(filepath.Dir(oldPath), "/", "\\/", -1) + "\\/"
-		newPathPattern := strings.Replace(filepath.Dir(newPath), "/", "\\/", -1) + "/"
+		oldPathPattern := "^" + regexp.QuoteMeta(path.Dir(oldPath)) + "/"
+		newPathPattern := path.Dir(newPath) + "/"
 		_, err = tx.Exec(c.Request.Context(), cteQuery, request.ID, oldPathPattern, newPathPattern)
 		if err != nil {
 			log.Println("Error updating nested paths:", err)
@@ -527,7 +531,7 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 			return
 		}
 
-		err = renameS3Folder(s3Client, bucket, filepath.Dir(oldPath), filepath.Dir(newPath))
+		err = renameS3Folder(s3Client, bucket, path.Dir(oldPath), path.Dir(newPath))
 		if err != nil {
 			log.Println("Error renaming folder in S3:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not rename folder in S3"})
@@ -569,23 +573,40 @@ func RenameFileOrFolder(c *gin.Context, pool *pgxpool.Pool) {
 
 // rename the folder in s3
 func renameS3Folder(s3Client *s3.S3, bucket, oldPath, newPath string) error {
+	log.Println("renameS3Folder called with:")
+	log.Println("oldPath:", oldPath)
+	log.Println("newPath:", newPath)
+
+	// Ensure the prefix uses forward slashes
+	prefix := oldPath + "/"
+	log.Println("Listing objects with prefix:", prefix)
+
 	resp, err := s3Client.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
-		Prefix: aws.String(oldPath + "/"),
+		Prefix: aws.String(prefix),
 	})
 	if err != nil {
+		log.Println("Error listing S3 objects:", err)
 		return fmt.Errorf("error listing S3 objects: %w", err)
+	}
+
+	if len(resp.Contents) == 0 {
+		log.Println("No objects found with prefix:", prefix)
+	} else {
+		log.Printf("Found %d objects to rename", len(resp.Contents))
 	}
 
 	for _, item := range resp.Contents {
 		oldKey := *item.Key
 		newKey := strings.Replace(oldKey, oldPath, newPath, 1)
+		log.Printf("Renaming %s to %s", oldKey, newKey)
 		_, err = s3Client.CopyObject(&s3.CopyObjectInput{
 			Bucket:     aws.String(bucket),
 			CopySource: aws.String(bucket + "/" + oldKey),
 			Key:        aws.String(newKey),
 		})
 		if err != nil {
+			log.Println("Error copying S3 object:", err)
 			return fmt.Errorf("error copying S3 object: %w", err)
 		}
 
@@ -594,6 +615,7 @@ func renameS3Folder(s3Client *s3.S3, bucket, oldPath, newPath string) error {
 			Key:    aws.String(oldKey),
 		})
 		if err != nil {
+			log.Println("Error deleting old S3 object:", err)
 			return fmt.Errorf("error deleting old S3 object: %w", err)
 		}
 	}
@@ -635,6 +657,10 @@ func getParentFolders(folderID string, pool *pgxpool.Pool) ([]models.FileFolder,
 
 // get folders
 func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
+	userID := c.Query("user_id")
+	parentID := c.Query("parent_id")
+	isSharedWithMe := c.Query("shared_with_me")
+
 	conn, err := pool.Acquire(c.Request.Context())
 	if err != nil {
 		log.Println("Error acquiring connection:", err)
@@ -643,18 +669,38 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 	}
 	defer conn.Release()
 
-	userID := c.DefaultQuery("user_id", "")
-	userType := c.DefaultQuery("user_type", "")
-	parentID := c.Query("parent_id")
-
-	baseQuery := "SELECT id, name, created_at, updated_at, type, extension, path FROM folder_file_info WHERE user_id = $1 AND user_type = $2"
-	args := []interface{}{userID, userType}
-
-	if parentID != "" {
-		baseQuery += " AND parent_id = $3"
-		args = append(args, parentID)
+	var baseQuery string
+	var args []interface{}
+	if isSharedWithMe == "true" {
+		baseQuery = `
+		SELECT 
+			id, name, created_at, updated_at, type, extension, path 
+		FROM 
+			folder_file_info 
+		WHERE 
+			user_id = $1 
+		AND 
+			shared_by_id IS NOT NULL
+		`
+		args = []interface{}{userID}
+		if parentID != "" {
+			baseQuery += " AND parent_id = $2"
+			args = append(args, parentID)
+		} else {
+			baseQuery += " AND parent_id IS NULL"
+		}
 	} else {
-		baseQuery += " AND parent_id IS NULL"
+		baseQuery = `
+		SELECT 
+			id, name, created_at, updated_at, type, extension, path 
+		FROM 
+			folder_file_info 
+		WHERE 
+			user_id = $1 
+		AND 
+			parent_id  = $2
+		`
+		args = []interface{}{userID, parentID}
 	}
 
 	rows, err := conn.Query(c.Request.Context(), baseQuery, args...)

@@ -45,25 +45,25 @@ const NavTitle = styled(Link)`
 `;
 
 function FileUploadHeader() {
-    return (
-      <Navbar>
-        <NavTitle to="/MyDocs">File Manager</NavTitle>
-        <NavList>
-          <NavItem>
-            <Link to="/MyDocs">Home</Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/MyDocs/Upload">My Upload</Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/MyDocs/SharedWithMe">Shared with me</Link>
-          </NavItem>
-          <NavItem>
-            <Link to="/MyDocs/ISharedWith">I shared with</Link>
-          </NavItem>
-        </NavList>
-      </Navbar>
-    );
-  }
-  
-  export default FileUploadHeader;
+  return (
+    <Navbar>
+      <NavTitle to="/MyDocs">File Manager</NavTitle>
+      <NavList>
+        <NavItem>
+          <Link to="/MyDocs">Home</Link>
+        </NavItem>
+        <NavItem>
+          <Link to="/MyDocs/Upload">My Upload</Link>
+        </NavItem>
+        <NavItem>
+          <Link to="/MyDocs/SharedWithMe">Shared with me</Link>
+        </NavItem>
+        <NavItem>
+          <Link to="/MyDocs/ISharedWith">I shared with</Link>
+        </NavItem>
+      </NavList>
+    </Navbar>
+  );
+}
+
+export default FileUploadHeader;

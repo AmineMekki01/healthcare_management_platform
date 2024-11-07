@@ -39,10 +39,6 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		services.CreateReport(c, pool)
 	})
 
-	r.POST("/api/v1/reports/notify", func(c *gin.Context) {
-		services.SendReportNotification(c, pool)
-	})
-
 	r.GET("/api/v1/doctor-report/:reportId", func(c *gin.Context) {
 		services.GetReport(c, pool)
 	})
