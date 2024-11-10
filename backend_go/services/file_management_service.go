@@ -683,12 +683,7 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 			shared_by_id IS NOT NULL
 		`
 		args = []interface{}{userID}
-		if parentID != "" {
-			baseQuery += " AND parent_id = $2"
-			args = append(args, parentID)
-		} else {
-			baseQuery += " AND parent_id IS NULL"
-		}
+
 	} else {
 		baseQuery = `
 		SELECT 
@@ -697,10 +692,15 @@ func GetFolders(c *gin.Context, pool *pgxpool.Pool) {
 			folder_file_info 
 		WHERE 
 			user_id = $1 
-		AND 
-			parent_id  = $2
 		`
-		args = []interface{}{userID, parentID}
+		args = []interface{}{userID}
+
+	}
+	if parentID != "" {
+		baseQuery += " AND parent_id = $2"
+		args = append(args, parentID)
+	} else {
+		baseQuery += " AND parent_id IS NULL"
 	}
 
 	rows, err := conn.Query(c.Request.Context(), baseQuery, args...)
