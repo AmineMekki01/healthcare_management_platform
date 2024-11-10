@@ -4,14 +4,23 @@ import (
 	"backend_go/models"
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"net/smtp"
+	"net/textproto"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jung-kurt/gofpdf"
 )
 
 func GetAvailabilities(c *gin.Context, pool *pgxpool.Pool) {
@@ -725,7 +734,55 @@ func CreateReport(c *gin.Context, pool *pgxpool.Pool) {
 		AddReferral(c, pool, report)
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Report created successfully", "report_id": reportID})
+	pdfFilePath, err := GenerateReportPDF(report)
+	if err != nil {
+		log.Println("Failed to create report PDF : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create report PDF"})
+	}
+
+	fileID := uuid.New().String()
+	file, err := os.Open(pdfFilePath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return
+	}
+
+	doctorFullNameFolder, doctorFolderID, err := ShareReportWithPatient(pool, report, fileID, fileInfo)
+	if err != nil {
+		log.Println("Failed to share the report with patient : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to share the report with patient "})
+	}
+
+	s3Path, fileHandler, err := UploadReportPDFToS3(pdfFilePath, report, doctorFullNameFolder, file, fileInfo)
+	if err != nil {
+		log.Println("Failed to upload report PDF to s3 : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload report PDF to s3"})
+	}
+
+	err = InsertReportFileInfo(pool, report, s3Path, fileHandler.Size, fileID, doctorFolderID)
+	if err != nil {
+		log.Println("Failed to insert file info to database : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert file info to database"})
+	}
+
+	var patientEmail string
+	err = pool.QueryRow(context.Background(), "SELECT email FROM patient_info WHERE patient_id = $1", report.PatientID).Scan(&patientEmail)
+	if err != nil {
+		log.Println("Failed to create report PDF : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create report PDF"})
+	}
+
+	err = SendEmailNotification(patientEmail, report)
+	if err != nil {
+		log.Println("Failed to send email:", err)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Report created and shared successfully", "report_id": reportID})
 }
 
 func GetDoctorName(c *gin.Context, pool *pgxpool.Pool, DoctorID uuid.UUID) string {
@@ -781,34 +838,159 @@ func AddReferral(c *gin.Context, pool *pgxpool.Pool, report models.MedicalReport
 	log.Println("Data was successfully inserted into referral info.")
 }
 
-func SendReportNotification(c *gin.Context, pool *pgxpool.Pool) {
-	var emailData struct {
-		ReportID  uuid.UUID `json:"report_id"`
-		PatientID string    `json:"patient_id"`
-	}
+func GenerateReportPDF(report models.MedicalReport) (string, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
 
-	if err := c.ShouldBindJSON(&emailData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
+	pdf.Cell(40, 10, "Medical Report")
+	pdf.Ln(12)
+	pdf.SetFont("Arial", "", 12)
+	pdf.MultiCell(0, 10, fmt.Sprintf("Patient Name: %s %s", report.PatientFirstName, report.PatientLastName), "", "", false)
 
-	// Fetch patient email and report details
-	var patientEmail, reportContent string
-	err := pool.QueryRow(context.Background(),
-		`SELECT email, report_content 
-		FROM patient_info JOIN medical_reports ON patient_info.patient_id = medical_reports.patient_id 
-		WHERE medical_reports.report_id = $1`, emailData.ReportID,
-	).Scan(&patientEmail, &reportContent)
-
+	pdfFileName := fmt.Sprintf("report_%s.pdf", report.ReportID.String())
+	pdfFilePath := filepath.Join(os.TempDir(), pdfFileName)
+	err := pdf.OutputFileAndClose(pdfFilePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve report details"})
-		return
+		return "", err
+	}
+	return pdfFilePath, nil
+}
+
+func ShareReportWithPatient(pool *pgxpool.Pool, report models.MedicalReport, fileID string, fileInfo fs.FileInfo) (string, string, error) {
+	var doctorFolderID string
+	doctorFullNameFolder := report.DoctorFirstName + " " + report.DoctorLastName
+	log.Println(" doctorFullNameFolder : ", doctorFullNameFolder)
+
+	err := pool.QueryRow(context.Background(),
+		`SELECT id FROM folder_file_info WHERE user_id = $1  AND name = $2 AND type = 'folder'  AND parent_id IS NULL AND shared_by_id = $3`,
+		report.PatientID, doctorFullNameFolder, report.DoctorID,
+	).Scan(&doctorFolderID)
+	log.Println("err :", err)
+	log.Println("doctorFolderID : ", doctorFolderID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			doctorFolderID = uuid.New().String()
+			now := time.Now()
+			_, err = pool.Exec(context.Background(),
+				`INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, user_id, user_type, parent_id, path, shared_by_id)
+                 VALUES ($1, $2, $3, $4, 'folder', $5, $6, 'patient', NULL, $7, $8)`,
+				doctorFolderID, doctorFullNameFolder, now, now, fileInfo.Size(), report.PatientID, fmt.Sprintf("records/shared-with-me/%s/%s", report.PatientID, doctorFullNameFolder), report.DoctorID,
+			)
+			if err != nil {
+				log.Println("Failed to insert file info into folder_file_info : ", err)
+				return "", "", err
+			}
+		} else {
+			log.Println("Failed to get folder id : ", err)
+			return "", "", err
+		}
 	}
 
-	// (Pseudo code) Send email
-	// email.SendEmail(patientEmail, "Your Medical Report", reportContent)
+	return doctorFullNameFolder, doctorFolderID, nil
+}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Report notification sent successfully"})
+func UploadReportPDFToS3(pdfFilePath string, report models.MedicalReport, doctorFullNameFolder string, file *os.File, fileInfo fs.FileInfo) (string, *multipart.FileHeader, error) {
+
+	fileHeader := &multipart.FileHeader{
+		Filename: fileInfo.Name(),
+		Size:     fileInfo.Size(),
+		Header:   textproto.MIMEHeader{},
+	}
+	fileHeader.Header.Set("Content-Type", "application/pdf")
+
+	s3Path := fmt.Sprintf("records/shared-with-me/%s/%s/%s.pdf", report.PatientID, doctorFullNameFolder, report.ReportID.String())
+
+	err := UploadToS3(file, fileHeader, s3Path)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to upload PDF to S3: %v", err)
+	}
+	return s3Path, fileHeader, nil
+}
+
+func InsertReportFileInfo(pool *pgxpool.Pool, report models.MedicalReport, s3Path string, fileSize int64, fileID string, doctorFolderID string) error {
+	now := time.Now()
+
+	fileFolder := models.FileFolder{
+		ID:        fileID,
+		Name:      fmt.Sprintf("Report_%s.pdf", report.ReportID.String()),
+		CreatedAt: now,
+		UpdatedAt: now,
+		Type:      "file",
+		Size:      fileSize,
+		Ext:       aws.String("pdf"),
+		UserID:    report.PatientID,
+		UserType:  "patient",
+		ParentID:  &doctorFolderID,
+		Path:      s3Path,
+	}
+
+	_, err := pool.Exec(
+		context.Background(),
+		`INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path, shared_by_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+		fileFolder.ID, fileFolder.Name, fileFolder.CreatedAt, fileFolder.UpdatedAt, fileFolder.Type,
+		fileFolder.Size, fileFolder.Ext, fileFolder.UserID, fileFolder.UserType, fileFolder.ParentID, fileFolder.Path, report.DoctorID,
+	)
+	if err != nil {
+		return err
+	}
+
+	sharedItem := models.SharedItem{
+		ItemID:     fileID,
+		SharedBy:   report.DoctorID.String(),
+		SharedWith: report.PatientID,
+		SharedAt:   time.Now(),
+	}
+
+	sql := `INSERT INTO shared_items (item_id, shared_by_id, shared_with_id, shared_at)
+            VALUES ($1, $2, $3, $4)`
+	_, err = pool.Exec(context.Background(), sql, sharedItem.ItemID, sharedItem.SharedBy, sharedItem.SharedWith, sharedItem.SharedAt)
+	if err != nil {
+		log.Println("Failed to insert row into shared_items  : ", err)
+		return err
+	}
+
+	return nil
+}
+
+func SendEmailNotification(patientEmail string, report models.MedicalReport) error {
+	from := os.Getenv("SMTP_EMAIL")
+	password := os.Getenv("SMTP_EMAIL_PASSWORD")
+	to := []string{patientEmail}
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+
+	subject := fmt.Sprintf("Tbibi: New Appointment Report from Dr. %s %s", report.DoctorFirstName, report.DoctorLastName)
+
+	appointmentDate := report.CreatedAt.Format("Monday, January 2, 2006 at 3:04 PM")
+
+	body := fmt.Sprintf(
+		"Dear %s %s,\n\n"+
+			"This is a reminder of your recent appointment with Dr. %s %s on %s.\n\n"+
+			"A copy of your appointment report is now available in your file manager under the 'Shared with Me' section.\n\n"+
+			"Best regards,\nTbibi App",
+		report.PatientFirstName,
+		report.PatientLastName,
+		report.DoctorFirstName,
+		report.DoctorLastName,
+		appointmentDate,
+	)
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	message := []byte(
+		"From: " + from + "\n" +
+			"To: " + patientEmail + "\n" +
+			"Subject: " + subject + "\n\n" +
+			body,
+	)
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetReports(c *gin.Context, pool *pgxpool.Pool) {

@@ -14,10 +14,12 @@ function FileManager() {
                 <Route path="/Upload" element={<MyUploads />} />
                 <Route path="/Upload/:folderId" element={<MyUploads />} />
                 <Route path="/SharedWithMe" element={<SharedWithMe />} />
+                <Route path="/SharedWithMe/:folderId" element={<SharedWithMe />} />
                 <Route path="/ISharedWith" element={<ISharedWith />} />
+                <Route path="/ISharedWith/:folderId" element={<ISharedWith />} />
             </Routes>
         </>
     );
-}   
+}
 
 export default FileManager;

@@ -1,9 +1,11 @@
 import axios from "./../../axiosConfig";
 
-export async function fetchFolders(userId, userType, parentId = null) {
+export async function fetchFolders(userId, userType, parentId = null, isSharedWithMe = false) {
   const params = { user_id: userId, user_type: userType };
-  if (parentId) params.parent_id = parentId;
-  
+  params.parent_id = parentId;
+  params.shared_with_me = isSharedWithMe;
+
+  console.log("params : ", params)
   try {
     const response = await axios.get('/api/v1/folders', { params });
     return response.data;
@@ -11,7 +13,6 @@ export async function fetchFolders(userId, userType, parentId = null) {
     throw error;
   }
 }
-
 
 export async function fetchBreadcrumbs(folderId) {
   try {
