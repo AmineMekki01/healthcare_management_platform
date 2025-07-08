@@ -8,13 +8,14 @@ import PatientRegisterPage from './components/Auth/RegisterPatient';
 import RegisterPage from './components/Auth/RegisterPage';
 import AppointmentDashboard from './pages/AppointmentDashboard';
 import SearchBar from './components/Search/SearchBar';
-import MyNavbar from './components/common/navbar/Navbar'; 
 import DoctorProfile from './components/Users/Doctor/DoctorProfile';
 import PatientProfile from './components/Users/Patient/PatientProfile';
 import FileManager from './pages/FileManager';
 import AccountVerified from './pages/AccountVerified';
 import './App.css';
 import NavigationProvider from './components/Auth/NavigationProvider';
+import { SidebarProvider } from './contexts/SidebarContext';
+import Layout from './components/common/layout/Layout';
 import ChatbotChat from './pages/Chatbot';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/Auth/ResetPasswordPage';
@@ -38,9 +39,8 @@ function App() {
   return (
       <Router>
         <NavigationProvider>
-          <div className="flex flex-col min-h-screen">
-            <MyNavbar />
-            <div className="flex-grow scrollable-div">
+          <SidebarProvider>
+            <Layout>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginForm />} />
@@ -190,8 +190,8 @@ function App() {
                   }
                 />
               </Routes>
-            </div>
-          </div>
+            </Layout>
+          </SidebarProvider>
         </NavigationProvider>
       </Router>
   );
