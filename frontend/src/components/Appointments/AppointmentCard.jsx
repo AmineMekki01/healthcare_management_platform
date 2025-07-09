@@ -1,9 +1,9 @@
 import React, {useContext, useState} from 'react';
 import { createEvent } from 'ics';
 import { Card, CardContent, CardActions, Typography, Button, Chip } from '@mui/material';
-import { EventNote, Share, GetApp, Person, Cancel as CancelIcon } from '@mui/icons-material';
+import { EventNote, Share, GetApp, Person, Cancel as CancelIcon, AccessTime, CalendarToday, MedicalServices } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer} from './styles/AppointmentCardStyles';
+import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer, StatusChip, CreateReportButton} from './styles/AppointmentCardStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import axios from './../axiosConfig';
 
@@ -77,39 +77,51 @@ export default function AppointmentCard({ reservation, userType }) {
       alert('An error occurred while canceling the appointment.');
     }
   };
+  const getAppointmentStatus = () => {
+    if (isCanceledAppointment) return 'canceled';
+    if (isPastAppointment) return 'passed';
+    return 'active';
+  };
+
+  const getStatusText = () => {
+    if (isCanceledAppointment) return 'Canceled';
+    if (isPastAppointment) return 'Completed';
+    return 'Upcoming';
+  };
+
   return (
     <CardContainer>
       <CardHeader>
         <TitleText variant="h6">
           {userType === 'patient' ? `Dr. ${reservation.doctor_first_name} ${reservation.doctor_last_name}` : `${reservation.patient_first_name} ${reservation.patient_last_name}`}
         </TitleText>
-        {
-          userType === 'patient' ? <Chip label={reservation.specialty} color="primary" /> : <></>
-        }
+        <StatusChip status={getAppointmentStatus()}>
+          {getStatusText()}
+        </StatusChip>
       </CardHeader>
       <CardBody>
         <Typography variant="body1">
-          <EventNote /> {formatDate(reservation.reservation_start)}
+          <CalendarToday /> {formatDate(reservation.reservation_start)}
         </Typography>
         <Typography variant="body1">
-          {formatTime(reservation.reservation_start)} - {formatTime(reservation.reservation_end)}
+          <AccessTime /> {formatTime(reservation.reservation_start)} - {formatTime(reservation.reservation_end)}
         </Typography>
+        {userType === 'patient' && (
+          <Typography variant="body1">
+            <MedicalServices /> {reservation.specialty}
+          </Typography>
+        )}
         {userType === 'doctor' && (
           <Typography variant="body2">
             <Person /> Patient Age: {reservation.age}
           </Typography>
         )}
+        
       </CardBody>
       <CardFooter>
-        {userType === 'patient' ? (
-          <IconButton onClick={() => navigate(`/DoctorProfile/${reservation.doctor_id}`)}>
-            View Profile
-          </IconButton>
-        ) : (
-          <IconButton onClick={() => navigate(`/PatientProfile/${reservation.patient_id}`)}>
-            View Profile
-          </IconButton>
-        )}
+        <IconButton onClick={() => navigate(userType === 'patient' ? `/DoctorProfile/${reservation.doctor_id}` : `/PatientProfile/${reservation.patient_id}`)}>
+          View Profile
+        </IconButton>
         <IconButton onClick={createICSFile}>
           <GetApp />
         </IconButton>
@@ -119,9 +131,9 @@ export default function AppointmentCard({ reservation, userType }) {
       </CardFooter>
 
       {!isPastAppointment && !isCanceledAppointment && (
-        <CancelButtonContainer style={{ marginTop: '15px' }}>
+        <CancelButtonContainer>
           <CancelButton onClick={() => setShowCancelModal(true)}>
-          <CancelIcon /> Cancel Appointment
+            <CancelIcon /> Cancel
           </CancelButton>
           <CancelAppointmentModal
             open={showCancelModal}
@@ -131,11 +143,11 @@ export default function AppointmentCard({ reservation, userType }) {
         </CancelButtonContainer>
       )}
       
-      {userType === 'doctor' && !reservation.report_exist && !reservation.is_doctor_patient &&  (
-          <Button onClick={() => navigate(`/DoctorReport/${reservation.reservation_id}`)}>
-            Create Report
-          </Button>
-        )}
+      {userType === 'doctor' && !reservation.report_exist && !reservation.is_doctor_patient && isPastAppointment && (
+        <CreateReportButton onClick={() => navigate(`/DoctorReport/${reservation.reservation_id}`)}>
+          Create Report
+        </CreateReportButton>
+      )}
 
     </CardContainer>
   );

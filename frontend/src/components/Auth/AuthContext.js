@@ -27,10 +27,17 @@ const AuthProvider = ({ children, navigate }) => {
             setPatientId(localStorage.getItem('patientId'));
             setRefreshToken(localStorage.getItem('refreshToken'));
 
-            if (localStorage.getItem('userType') === 'doctor') {
-                setUserId(localStorage.getItem('doctorId'));
+            const userType = localStorage.getItem('userType');
+            if (userType === 'doctor') {
+                const doctorId = localStorage.getItem('doctorId');
+                if (doctorId && doctorId !== 'null' && doctorId !== 'undefined') {
+                    setUserId(doctorId);
+                }
             } else {
-                setUserId(localStorage.getItem('patientId'));
+                const patientId = localStorage.getItem('patientId');
+                if (patientId && patientId !== 'null' && patientId !== 'undefined') {
+                    setUserId(patientId);
+                }
             }
         }
     }, []);
