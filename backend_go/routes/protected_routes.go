@@ -53,7 +53,7 @@ func SetupProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.GET("/api/v1/messages/:chatId", func(c *gin.Context) {
 		services.GetMessagesForChat(c, pool)
 	})
-	r.GET("/api/findOrCreateChat", func(c *gin.Context) {
+	r.GET("/api/v1/findOrCreateChat", func(c *gin.Context) {
 		services.FindOrCreateChatWithUser(c, pool)
 	})
 	r.GET("/api/v1/chats", func(c *gin.Context) {
