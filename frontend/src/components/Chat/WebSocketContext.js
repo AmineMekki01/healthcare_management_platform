@@ -1,4 +1,3 @@
-// WebSocketContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { ChatContext } from './ChatContext'; 
 import { AuthContext } from '../Auth/AuthContext';
