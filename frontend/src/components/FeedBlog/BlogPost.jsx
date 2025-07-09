@@ -3,6 +3,7 @@ import axios from './../axiosConfig';
 import CommentsSection from './CommentsSection';
 import {
     PostContainer,
+    PostTitle,
     PostHeader,
     PostAuthorAvatar,
     PostAuthorName,
@@ -101,18 +102,32 @@ const BlogPost = ({post}) => {
                 ))}
                 </KeywordsContainer>
             </PostMetadata>
+            <div style={{ padding: '20px 28px 16px' }}>
+                <PostTitle>{post.title}</PostTitle>
+            </div>
             <PostContent dangerouslySetInnerHTML={{ __html: showMore ? post.content : getSnippet(post.content) }} />
-            <ActionButton onClick={handleShowMore}>
-                {showMore ? (
-                    <>
-                        Show Less <FaChevronUp />
-                    </>
-                ) : (
-                    <>
-                        Show More <FaChevronDown />
-                    </>
-                )}
-            </ActionButton>
+            {post.content.length > 250 && (
+                <ActionButton 
+                    onClick={handleShowMore}
+                    style={{ 
+                        margin: '0 28px 16px', 
+                        background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                        border: '2px solid rgba(102, 126, 234, 0.2)',
+                        color: '#667eea',
+                        fontWeight: '600'
+                    }}
+                >
+                    {showMore ? (
+                        <>
+                            Show Less <FaChevronUp />
+                        </>
+                    ) : (
+                        <>
+                            Show More <FaChevronDown />
+                        </>
+                    )}
+                </ActionButton>
+            )}
             <PostActions>
                 <PostStats>
                     <LikesCount>{likes} Likes</LikesCount>
