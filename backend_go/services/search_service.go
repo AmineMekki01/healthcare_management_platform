@@ -50,14 +50,16 @@ func SearchForDoctors(c *gin.Context, pool *pgxpool.Pool) {
         rating_count, 
         location, 
         profile_photo_url,
-        latitude,
-        longitude,
-        CASE WHEN $1::float8 IS NOT NULL AND $2::float8 IS NOT NULL THEN
-            (6371 * acos(
-                cos(radians($1::float8)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2::float8)) + 
-                sin(radians($1::float8)) * sin(radians(latitude))
-            ))
-        ELSE NULL END AS distance
+        COALESCE(latitude, 0) as latitude,
+        COALESCE(longitude, 0) as longitude,
+        CASE 
+            WHEN $1::float8 IS NOT NULL AND $2::float8 IS NOT NULL AND latitude IS NOT NULL AND longitude IS NOT NULL THEN
+                (6371 * acos(
+                    cos(radians($1::float8)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2::float8)) + 
+                    sin(radians($1::float8)) * sin(radians(latitude))
+                ))
+            ELSE NULL 
+        END AS distance
     FROM doctor_info
     `
 	queryParams := []interface{}{userLatitude, userLongitude}

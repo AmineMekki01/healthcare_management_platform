@@ -356,12 +356,20 @@ func LoginDoctor(c *gin.Context, pool *pgxpool.Pool) {
 
 func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	doctorId := c.Param("doctorId")
+	log.Printf("Getting doctor by ID: %s", doctorId)
+
 	var doctor models.Doctor
-	doctor.DoctorID, _ = uuid.Parse(doctorId)
+	var err error
+	doctor.DoctorID, err = uuid.Parse(doctorId)
+	if err != nil {
+		log.Printf("Invalid doctor ID format: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid doctor ID format"})
+		return
+	}
 
 	// Fetch basic doctor info
-	err := pool.QueryRow(context.Background(), `
-        SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, rating_score, rating_count, profile_photo_url, city_name, country_name, latitude, longitude
+	err = pool.QueryRow(context.Background(), `
+        SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, experience, rating_score, rating_count, profile_photo_url, city_name, country_name, COALESCE(latitude, 0), COALESCE(longitude, 0)
         FROM doctor_info WHERE doctor_id = $1
     `, doctor.DoctorID).Scan(
 		&doctor.Email,
@@ -373,6 +381,7 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 		&doctor.Sex,
 		&doctor.Location,
 		&doctor.Specialty,
+		&doctor.Experience,
 		&doctor.RatingScore,
 		&doctor.RatingCount,
 		&doctor.ProfilePictureURL,
@@ -383,20 +392,25 @@ func GetDoctorById(c *gin.Context, pool *pgxpool.Pool) {
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
+			log.Printf("Doctor not found with ID: %s", doctorId)
 			c.JSON(http.StatusNotFound, gin.H{"error": "Doctor not found"})
 		} else {
-			log.Println("Database error:", err)
+			log.Printf("Database error when fetching doctor: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		}
 		return
 	}
 
+	log.Printf("Successfully fetched basic doctor info for: %s %s", doctor.FirstName, doctor.LastName)
+
 	// Get the presigned URL for the profile picture
-	doctor.ProfilePictureURL, err = GetImageURL(c, doctor.ProfilePictureURL)
-	if err != nil {
-		log.Println("Error getting profile picture URL:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
+	if doctor.ProfilePictureURL != "" {
+		doctor.ProfilePictureURL, err = GetImageURL(c, doctor.ProfilePictureURL)
+		if err != nil {
+			log.Printf("Error getting profile picture URL: %v", err)
+			// Don't fail the entire request for profile picture issues
+			doctor.ProfilePictureURL = ""
+		}
 	}
 
 	// Fetch hospitals

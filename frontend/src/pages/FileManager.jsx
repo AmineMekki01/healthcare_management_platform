@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import FileUploadHeader from '../components/MedicalRecords/Header';
 import MyUploads from '../components/MedicalRecords/MyUploads';
 import SharedWithMe from '../components/MedicalRecords/SharedWithMe';
@@ -10,7 +10,7 @@ function FileManager() {
         <>
             <FileUploadHeader />
             <Routes>
-                <Route path="/" element={<></>} />
+                <Route path="/" element={<Navigate to="/MyDocs/Upload" replace />} />
                 <Route path="/Upload" element={<MyUploads />} />
                 <Route path="/Upload/:folderId" element={<MyUploads />} />
                 <Route path="/SharedWithMe" element={<SharedWithMe />} />

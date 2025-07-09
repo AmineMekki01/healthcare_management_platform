@@ -221,7 +221,7 @@ func copyItemRecursively(item models.FileFolder, recipientID string, sharedByID 
 func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 	userID := c.Query("userId")
 	var items []models.FileFolder
-	// SQL query to retrieve the items shared with the user
+	// SQL query to retrieve the items shared with the user with sharer info
 	sql := `SELECT 
     f.id, 
     f.name, 
@@ -233,9 +233,18 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
     f.user_id, 
     f.user_type, 
     f.parent_id, 
-    f.path 
+    f.path,
+    s.shared_by_id,
+    CASE 
+        WHEN f.user_type = 'doctor' THEN CONCAT(d.first_name, ' ', d.last_name)
+        WHEN f.user_type = 'patient' THEN CONCAT(p.first_name, ' ', p.last_name)
+        ELSE 'Unknown User'
+    END as shared_by_name,
+    f.user_type as shared_by_type
 	FROM shared_items s 
 	JOIN folder_file_info f ON s.item_id = f.id 
+	LEFT JOIN doctor_info d ON f.user_id = d.doctor_id AND f.user_type = 'doctor'
+	LEFT JOIN patient_info p ON f.user_id = p.patient_id AND f.user_type = 'patient'
 	WHERE s.shared_with_id = $1`
 
 	rows, err := db.Query(context.Background(), sql, userID)
@@ -249,6 +258,7 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 
 	for rows.Next() {
 		var item models.FileFolder
+		var sharedByID, sharedByName, sharedByType string
 		if err := rows.Scan(
 			&item.ID,
 			&item.Name,
@@ -261,10 +271,17 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 			&item.UserType,
 			&item.ParentID,
 			&item.Path,
+			&sharedByID,
+			&sharedByName,
+			&sharedByType,
 		); err != nil {
 			log.Printf("Unable to scan the row. %v\n", err)
 			return
 		}
+		// Add the shared by information to the item
+		item.SharedByID = sharedByID
+		item.SharedByName = sharedByName
+		item.SharedByType = sharedByType
 		items = append(items, item)
 	}
 
@@ -280,7 +297,7 @@ func GetSharedWithMe(c *gin.Context, db *pgxpool.Pool) {
 func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 	userID := c.Query("userId")
 	var items []models.FileFolder
-	// SQL query to retrieve the items shared with the user
+	// SQL query to retrieve the items shared by the user with shared-with info
 	sql := `SELECT 
     f.id, 
     f.name, 
@@ -292,7 +309,20 @@ func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
     f.user_id, 
     f.user_type, 
     f.parent_id, 
-    f.path 
+    f.path,
+    s.shared_with_id,
+    CASE 
+        WHEN s.shared_with_id IN (SELECT doctor_id::text FROM doctor_info) THEN 
+            (SELECT CONCAT(first_name, ' ', last_name) FROM doctor_info WHERE doctor_id::text = s.shared_with_id)
+        WHEN s.shared_with_id IN (SELECT patient_id::text FROM patient_info) THEN 
+            (SELECT CONCAT(first_name, ' ', last_name) FROM patient_info WHERE patient_id::text = s.shared_with_id)
+        ELSE 'Unknown User'
+    END as shared_with_name,
+    CASE 
+        WHEN s.shared_with_id IN (SELECT doctor_id::text FROM doctor_info) THEN 'doctor'
+        WHEN s.shared_with_id IN (SELECT patient_id::text FROM patient_info) THEN 'patient'
+        ELSE 'unknown'
+    END as shared_with_type
 	FROM shared_items s 
 	JOIN folder_file_info f ON s.item_id = f.id 
 	WHERE s.shared_by_id = $1`
@@ -308,6 +338,7 @@ func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 
 	for rows.Next() {
 		var item models.FileFolder
+		var sharedWithID, sharedWithName, sharedWithType string
 		if err := rows.Scan(
 			&item.ID,
 			&item.Name,
@@ -320,10 +351,17 @@ func GetSharedByMe(c *gin.Context, db *pgxpool.Pool) {
 			&item.UserType,
 			&item.ParentID,
 			&item.Path,
+			&sharedWithID,
+			&sharedWithName,
+			&sharedWithType,
 		); err != nil {
 			log.Printf("Unable to scan the row. %v\n", err)
 			return
 		}
+		// Add the shared with information to the item
+		item.SharedWithID = sharedWithID
+		item.SharedWithName = sharedWithName
+		item.SharedWithType = sharedWithType
 		items = append(items, item)
 	}
 	if len(items) == 0 {

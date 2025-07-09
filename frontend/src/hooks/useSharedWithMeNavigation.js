@@ -16,6 +16,7 @@ export const useSharedWithMeNavigation = (userId, folderId) => {
             parent_id: folderId || '',
           },
         });
+        console.log('Fetched shared folders:', response.data);
         setFolders(response.data);
 
         if (folderId) {
