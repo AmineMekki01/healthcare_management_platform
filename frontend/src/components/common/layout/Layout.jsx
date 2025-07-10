@@ -18,9 +18,7 @@ const Layout = ({ children }) => {
     return (
       <Box sx={{ minHeight: '100vh' }}>
         <PublicNavbar />
-        <Box sx={{ padding: '24px' }}>
-          {children}
-        </Box>
+        {children}
       </Box>
     );
   }
