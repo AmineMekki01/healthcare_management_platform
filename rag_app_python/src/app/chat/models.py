@@ -17,10 +17,6 @@ class BaseMessage(BaseModel):
     augmented_message: str = Field(default="")
 
 
-class Message(TimestampAbstractModel, BaseMessage):
-    role: Optional[ChatRolesEnum] = None
-
-
 class Message(BaseMessage):
     role: Optional[ChatRolesEnum] = None
 
@@ -34,10 +30,22 @@ class ChatSummary(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
+class ChatCreateResponse(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    model: str
+    agent_role: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class FileSummary(BaseModel):
     id: str
     chat_id: str
     file_name: str
+
 
 class DocumentResponse(BaseModel):
     documents: List[FileSummary]
