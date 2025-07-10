@@ -74,6 +74,7 @@ class ChatServices:
             return chat
         except Exception as e:
             logger.error(f"Error creating chat: {e}")
+            raise  # Re-raise the exception instead of returning None
 
     @classmethod
     def create_message(cls, message) -> Message:

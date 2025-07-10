@@ -1,11 +1,13 @@
 import React from 'react';
-
 import { DocumentContainer, DocumentElement } from './styles/DocumentListStyles';  
-
 
 const DocumentList = ({ documents, onSelectDocument }) => {
   if (!Array.isArray(documents) || documents.length === 0) {
-    return <DocumentElement>No documents available.</DocumentElement>;
+    return (
+      <DocumentContainer>
+        <DocumentElement>No documents available</DocumentElement>
+      </DocumentContainer>
+    );
   }
   
   return (
@@ -20,7 +22,6 @@ const DocumentList = ({ documents, onSelectDocument }) => {
       })}
     </DocumentContainer>
   );
-  
 };
 
 export default DocumentList;

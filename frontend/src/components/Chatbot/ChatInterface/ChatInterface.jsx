@@ -3,14 +3,15 @@ import { AuthContext } from './../../Auth/AuthContext';
 import remarkGfm from 'remark-gfm';
 import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadButton, FileUploadContainer, FilesUploadTitle, ChatInputContainer, FileUpload, Header, BackButton, ChatTitle} from './ChatInterfaceStyles';
 import ReactMarkdown from 'react-markdown';
-
 import DocumentList from '../DocumentUpload/DocumentList';
+import FileUploadComponent from '../DocumentUpload/FileUpload';
 
 const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isSmallScreen }) => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const fileInputRef = useRef();
+  const fileUploadRef = useRef();
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [error, setError] = useState(null);
   const [chats, setChats] = useState([]);
@@ -34,17 +35,21 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
   const chat_id = chatId;
 
   const handleSelectDocument = (document) => {
-    
     setSelectedDocument(document);
   };
 
-  const handleFileSelect = (event) => {
-    const selectedFiles = event.target.files;
-    if (selectedFiles.length) {
-      setFile(selectedFiles[0]);
-      onFileSelect(selectedFiles);
-    }
+  const handleFileSelect = (selectedFiles) => {
+    setFiles(selectedFiles);
+    onFileSelect(selectedFiles);
   };
+
+  // Clear files when chat changes
+  useEffect(() => {
+    setFiles([]);
+    if (fileUploadRef.current) {
+      fileUploadRef.current.clearFiles();
+    }
+  }, [chatId]);
 
   const handleButtonClick = () => {
     fileInputRef.current.click(); 
@@ -53,6 +58,12 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
   const handleSendMessage = async (event) => {
     event.preventDefault();
     if (!userInput.trim()) return;
+
+    // Check if userId is valid before sending message
+    if (!userId || userId === 'null' || userId === null || userId === undefined) {
+      alert('Please log in to send messages');
+      return;
+    }
   
     const userMessage = { agent_role: 'user', user_message: userInput };
     setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -91,24 +102,25 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
 
   useEffect(() => {
     const fetchMessages = async () => {
-      if (chatId) {
+      if (chatId && userId && userId !== 'null' && userId !== null && userId !== undefined) {
         try {
           const response = await fetch(`http://localhost:8000/v1/chat/${chatId}/messages`);
           if (response.ok) {
             const messagesData = await response.json();
             setMessages(messagesData);
           } else {
-            console.error('Failed to fetch messages');
+            console.error('Failed to fetch messages - Response not ok:', response.status);
           }
         } catch (error) {
           console.error('Error fetching messages:', error);
         }
+      } else {
+        setMessages([]); // Clear messages if no valid chatId or userId
       }
     };
 
-    setMessages([]);
     fetchMessages();
-  }, [chatId]); 
+  }, [chatId, userId]); // Add userId as dependency 
   
   return (
     <ChatInterfaceContainer>
@@ -121,8 +133,11 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
         </Header>
       )}
       <FileUploadContainer>
-                <FilesUploadTitle></FilesUploadTitle>
-                <DocumentList documents={documents} onSelectDocument={handleSelectDocument} />
+        <FilesUploadTitle>Documents</FilesUploadTitle>
+        <DocumentList documents={documents} onSelectDocument={handleSelectDocument} />
+        <div style={{ marginTop: '12px' }}>
+          <FileUploadComponent ref={fileUploadRef} onFileSelect={handleFileSelect} />
+        </div>
       </FileUploadContainer>
       <ChatInterfaceMessages>
         {messages.map((msg, index) => (
@@ -146,28 +161,16 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
 
       
       <ChatInputContainer>
-        <FileUpload htmlFor="file-upload">
-          <FileUploadButton onClick={handleButtonClick}>+</FileUploadButton>
-          <input 
-          type="file" 
-          onChange={handleFileSelect}
-          multiple 
-          ref={fileInputRef}
-          style={{ display: 'none' }} 
-          id="file-upload" 
-        />
-        </FileUpload>
-       
-
         <ChatInterfaceForm onSubmit={handleSendMessage}>
           <ChatInterfaceInput
             type="text"
             value={userInput}
             onChange={handleInputChange}
             placeholder="Type your message..."
-            
           />
-          <ChatInterfaceSubmitButton type="submit"><span className='span1'>{'>'}</span></ChatInterfaceSubmitButton>
+          <ChatInterfaceSubmitButton type="submit">
+            <span className='span1'>→</span>
+          </ChatInterfaceSubmitButton>
         </ChatInterfaceForm>
       </ChatInputContainer>
       
