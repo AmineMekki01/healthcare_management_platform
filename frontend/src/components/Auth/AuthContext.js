@@ -64,7 +64,16 @@ const AuthProvider = ({ children, navigate }) => {
         setUserId(null);
         setRefreshToken(null);
 
-        navigate('/login');
+        try {
+            if (navigate && typeof navigate === 'function') {
+                navigate('/login');
+            } else {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Navigation error during logout:', error);
+            window.location.href = '/login';
+        }
     }, [navigate]);
 
 

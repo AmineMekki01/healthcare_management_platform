@@ -688,8 +688,6 @@ const MyNavbar = () => {
               logout();
               isMobile && setMobileOpen(false);
             }}
-            component={Link}
-            to="/login"
             sx={{
               borderRadius: '12px',
               margin: '4px 0',
