@@ -1,275 +1,418 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import {RecoilRoot} from "recoil";
+import React, { useState, useEffect, Suspense, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { RecoilRoot } from "recoil";
+import { Box, Container, Typography, Grid, Card, CardContent, Button, Paper, useTheme, useMediaQuery } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { 
+  LocalHospital, 
+  Schedule, 
+  Chat, 
+  PersonalVideo, 
+  Security, 
+  Speed,
+  ArrowForward,
+  Star
+} from '@mui/icons-material';
+import { AuthContext } from '../components/Auth/AuthContext';
 import Testimonials from "../components/Testimonals/Testimonals";
-import stetoImage from "./../assets/images/no_background_doc_steto.png";
-import stetoImageSized from "./../assets/images/no_small_background_doc_steto.png";
-import styled from 'styled-components';
 import AgePieChart from '../components/common/Charts/AgePieChart';
+import stetoImage from "./../assets/images/no_background_doc_steto.png";
 
-const PageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  width: 100%;
-  padding-top: 0;
-`;
+// Styled components
+const HeroSection = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  padding: theme.spacing(8, 0),
+  textAlign: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.1)',
+    zIndex: 1,
+  },
+}));
 
-const HeaderContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: none;
-`;
+const HeroContent = styled(Container)(({ theme }) => ({
+  position: 'relative',
+  zIndex: 2,
+}));
 
-const HeaderText = styled.div`
-  width: 50%;
-  padding: 1rem;
-  height: 100%;
-  @media (max-width: 700px) {
-    width: 90%;
-    margin-top: 1rem;
-    background : rgba(218, 224, 222, 0.6) ;
-  }
-`;
+const ServiceCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-8px)',
+    boxShadow: theme.shadows[8],
+  },
+  borderRadius: theme.spacing(2),
+  overflow: 'hidden',
+}));
 
-const HeaderMedia = styled.div`
-  width: 50%;
-  height: 100%;
+const FeatureIcon = styled(Box)(({ theme }) => ({
+  width: 80,
+  height: 80,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  margin: '0 auto',
+  marginBottom: theme.spacing(2),
+  color: 'white',
+  '& svg': {
+    fontSize: 40,
+  },
+}));
 
-  .header-image {
-    max-width: 90%;  
-    height: auto;     
-  }
+const StatsSection = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+  padding: theme.spacing(6, 0),
+}));
 
-  @media (max-width: 700px) {
-    display: none;
-  }
-`;
+const StatCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  textAlign: 'center',
+  height: '100%',
+  background: 'rgba(255,255,255,0.9)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: theme.spacing(2),
+  transition: 'transform 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.05)',
+  },
+}));
 
-const MainTitle = styled.p`
-  width: 90%;
-  margin: 0 auto;
-  font-size: 3vw;
-  @media (max-width: 750px) {
-    font-size: 1.5rem;
-  }
-`;
+const CTASection = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  padding: theme.spacing(8, 0),
+  textAlign: 'center',
+}));
 
-const Mainpara = styled.p`
-  width: 90%;
-  margin: 0 auto;
-  font-size: 1.5vw;
-  @media (max-width: 750px) {
-    font-size: 1rem;
-
-  }
-`;
-
-const Services = styled.div`
-  display: flex;  
-  width: 100%;
-  justify-content: center;  
-  align-items: stretch;
-  flex-wrap: wrap;  
-  padding: 1rem;
-  height: 100%;
-  min-height: 500px;
-
-`;
-
-const Service = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1rem;
- 
-`;
-
-const ServiceIcon = styled.div`
-  width: 200px;
-  height: 200px;
-  min-width: 200px;
-  min-height: 200px;
-  max-width: 200px;
-  max-height: 200px;
-  .service-image {
-    max-width: 200px;  
-    height: 200px;     
-  }
-`;
-
-const ServiceTitle = styled.p`
-  max-width: 200px;
-  font-size: 2rem; 
-  font-weight: bold;  
-  text-align: center;
-`;
-
-const ServiceDescription = styled.p`
-  width: 100%;
-  max-width: 200px;
-  font-size: 1rem;
-  min-font-size: 1rem;
-  text-align: center;
-`;
-
-const ChartsContainer = styled.div`
-  display : flex;
-  flex-direction: column;
-
-`;
-
-const Charts = styled.div`
-  display : flex;
-  align-items: center;
-  @media (max-width: 720px) {
-    flex-direction: column;
-  }
-
-`;
-
-const TestimonialContainer = styled.div`
-  width : 90%;
-  height: 450px;
-  max-width: 600px;
-
-`;
-
-const TestimonialBox = styled.div`
-  height: 100%;
-`;
-
+const ModernButton = styled(Button)(({ theme }) => ({
+  borderRadius: theme.spacing(3),
+  padding: theme.spacing(1.5, 4),
+  fontSize: '1.1rem',
+  fontWeight: 'bold',
+  textTransform: 'none',
+  transition: 'all 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[8],
+  },
+}));
 
 function HomePage() {
-  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 550);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { isLoggedIn } = useContext(AuthContext);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsSmallScreen(window.innerWidth < 550);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  const services = [
+    {
+      icon: <LocalHospital />,
+      title: "Expert Medical Care",
+      description: "Access to qualified healthcare professionals and specialists for comprehensive medical treatment."
+    },
+    {
+      icon: <Schedule />,
+      title: "Easy Appointment Booking",
+      description: "Schedule your appointments online with just a few clicks. No more waiting in long queues."
+    },
+    {
+      icon: <Chat />,
+      title: "24/7 Medical Chat",
+      description: "Get instant medical advice and support through our AI-powered chatbot available round the clock."
+    },
+    {
+      icon: <PersonalVideo />,
+      title: "Telemedicine",
+      description: "Consult with doctors remotely through secure video calls from the comfort of your home."
+    },
+    {
+      icon: <Security />,
+      title: "Secure & Private",
+      description: "Your medical data is protected with enterprise-grade security and privacy measures."
+    },
+    {
+      icon: <Speed />,
+      title: "Fast & Efficient",
+      description: "Quick access to medical services with minimal waiting time and streamlined processes."
+    }
+  ];
 
-  const imageSource = isSmallScreen ? stetoImageSized : stetoImage;
+  const stats = [
+    { value: "10,000+", label: "Happy Patients" },
+    { value: "500+", label: "Expert Doctors" },
+    { value: "50+", label: "Medical Specialties" },
+    { value: "24/7", label: "Emergency Support" }
+  ];
 
+  // Sample data for charts
   const patientData = {
-    labels: ['0-18', '19-30', '31-45', '46-60', '61+'],
-    values: [10, 20, 30, 20, 20],
+    labels: ['18-25', '26-35', '36-45', '46-60', '60+'],
+    values: [20, 30, 25, 15, 10]
   };
 
   const doctorData = {
-    labels: ['0-18', '19-30', '31-45', '46-60', '61+'],
-    values: [5, 10, 15, 30, 40],
+    labels: ['General', 'Specialist', 'Surgeon', 'Consultant'],
+    values: [35, 40, 15, 10]
   };
 
   return (
-    <PageContainer className='pt-6 space-y-4'>
+    <Box sx={{ bgcolor: 'background.default' }}>
+      {/* Hero Section */}
+      <HeroSection>
+        <HeroContent maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold', fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
+                Your Health, Our Priority
+              </Typography>
+              <Typography variant="h5" component="p" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
+                Experience modern healthcare with our comprehensive medical platform. 
+                Book appointments, consult with doctors, and manage your health records all in one place.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center' }}>
+                {!isLoggedIn ? (
+                  <>
+                    <ModernButton
+                      variant="contained"
+                      size="large"
+                      component={Link}
+                      to="/register"
+                      sx={{
+                        bgcolor: 'white',
+                        color: '#667eea',
+                        '&:hover': {
+                          bgcolor: 'rgba(255,255,255,0.9)',
+                        },
+                      }}
+                      endIcon={<ArrowForward />}
+                    >
+                      Get Started
+                    </ModernButton>
+                    <ModernButton
+                      variant="outlined"
+                      size="large"
+                      component={Link}
+                      to="/login"
+                      sx={{
+                        borderColor: 'white',
+                        color: 'white',
+                        '&:hover': {
+                          borderColor: 'white',
+                          bgcolor: 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Sign In
+                    </ModernButton>
+                  </>
+                ) : (
+                  <ModernButton
+                    variant="contained"
+                    size="large"
+                    component={Link}
+                    to="/patient-appointments"
+                    sx={{
+                      bgcolor: 'white',
+                      color: '#667eea',
+                      '&:hover': {
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                      },
+                    }}
+                    endIcon={<ArrowForward />}
+                  >
+                    Go to Dashboard
+                  </ModernButton>
+                )}
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ textAlign: 'center', display: { xs: 'none', md: 'block' } }}>
+                <img 
+                  src={stetoImage} 
+                  alt="Healthcare Professional" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    height: 'auto',
+                    filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.3))'
+                  }} 
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </HeroContent>
+      </HeroSection>
 
-      <HeaderContainer>
-        <HeaderText>
-          <MainTitle>Finding a doctor you can build a good relationship with is good for your health.</MainTitle>
-          <Mainpara>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. </Mainpara> 
-        </HeaderText>
+      {/* Services Section */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
+          Why Choose Our Platform?
+        </Typography>
+        <Grid container spacing={4}>
+          {services.map((service, index) => (
+            <Grid item xs={12} md={6} lg={4} key={index}>
+              <ServiceCard>
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <FeatureIcon>
+                    {service.icon}
+                  </FeatureIcon>
+                  <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    {service.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {service.description}
+                  </Typography>
+                </CardContent>
+              </ServiceCard>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
 
-        <HeaderMedia>
-          <img class="header-image"src={imageSource} alt="Doctor" />
+      {/* Stats Section */}
+      <StatsSection>
+        <Container maxWidth="lg">
+          <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
+            Trusted by Thousands
+          </Typography>
+          <Grid container spacing={4}>
+            {stats.map((stat, index) => (
+              <Grid item xs={6} md={3} key={index}>
+                <StatCard elevation={3}>
+                  <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: '#667eea', mb: 1 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="h6" component="div" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                </StatCard>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </StatsSection>
 
-        </HeaderMedia>
+      {/* Charts Section */}
+      <Box sx={{ bgcolor: 'background.paper', py: 8 }}>
+        <Container maxWidth="lg">
+          <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
+            Our Community
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} md={6}>
+              <Paper 
+                elevation={4} 
+                sx={{ 
+                  p: 4, 
+                  borderRadius: 3, 
+                  minHeight: 450, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                  border: '1px solid #e3f2fd'
+                }}
+              >
+                <AgePieChart data={patientData} title="Patient Demographics" />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper 
+                elevation={4} 
+                sx={{ 
+                  p: 4, 
+                  borderRadius: 3, 
+                  minHeight: 450, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white'
+                }}
+              >
+                <AgePieChart data={doctorData} title="Doctor Specializations" textColor="white" />
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
-      </HeaderContainer>
-      
-      <Services>
+      {/* Testimonials Section */}
+      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
+        <Container maxWidth="lg">
+          <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
+            What Our Users Say
+          </Typography>
+          <Box sx={{ maxWidth: 800, margin: '0 auto' }}>
+            <RecoilRoot>
+              <Suspense fallback={<Typography textAlign="center">Loading testimonials...</Typography>}>
+                <Testimonials />
+              </Suspense>
+            </RecoilRoot>
+          </Box>
+        </Container>
+      </Box>
 
-        <MainTitle className='flex justify-center'>What We Have For You</MainTitle>
-
-        <Service>
-          <ServiceIcon>
-            <img class="service-image" src={stetoImageSized} alt="Doctor" />
-          </ServiceIcon>
-          <ServiceTitle>Service 1</ServiceTitle>
-          <ServiceDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            malesuada lorem maximus mauris scelerisque, at rutrum nulla
-            dictum.
-          </ServiceDescription>
-        </Service>
-
-        <Service>
-          <ServiceIcon>
-            <img class="service-image" src={stetoImageSized} alt="Doctor" />
-          </ServiceIcon>
-          <ServiceTitle>Service 2</ServiceTitle>
-          <ServiceDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            malesuada lorem maximus mauris scelerisque, at rutrum nulla
-            dictum.
-          </ServiceDescription>
-        </Service>
-        
-        <Service>
-          <ServiceIcon>
-            <img class="service-image" src={stetoImageSized} alt="Doctor" />
-          </ServiceIcon>
-          <ServiceTitle>Service 3</ServiceTitle>
-          <ServiceDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            malesuada lorem maximus mauris scelerisque, at rutrum nulla
-            dictum.
-          </ServiceDescription>
-        </Service>
-
-        <Service>
-          <ServiceIcon>
-            <img class="service-image" src={stetoImageSized} alt="Doctor" />
-          </ServiceIcon>
-          <ServiceTitle>Service 4</ServiceTitle>
-          <ServiceDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            malesuada lorem maximus mauris scelerisque, at rutrum nulla
-            dictum.
-          </ServiceDescription>
-        </Service>
-
-        <Service>
-          <ServiceIcon>
-            <img class="service-image" src={stetoImageSized} alt="Doctor" />
-          </ServiceIcon>
-          <ServiceTitle>Service 5</ServiceTitle>
-          <ServiceDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            malesuada lorem maximus mauris scelerisque, at rutrum nulla
-            dictum.
-          </ServiceDescription>
-        </Service>
-      </Services>
-
-      <ChartsContainer>
-        <MainTitle className='flex justify-center'>People That Trusts Us</MainTitle>
-        <Charts>
-          <AgePieChart data={patientData} title='Patients' />
-          <AgePieChart data={doctorData} title='Doctors' />
-        </Charts>
-      </ChartsContainer>
-
-      <TestimonialContainer>
-
-        <MainTitle className='flex justify-center'>Testimonials</MainTitle>
-        <TestimonialBox >
-          <RecoilRoot>
-            <Suspense fallback={<span>Loading...</span>}>
-            <Testimonials />
-            </Suspense>
-          </RecoilRoot>
-            <p />
-        </TestimonialBox>
-      </TestimonialContainer>
-
-    </PageContainer>
+      {/* CTA Section */}
+      {!isLoggedIn && (
+        <CTASection>
+          <Container maxWidth="md">
+            <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Ready to Transform Your Healthcare Experience?
+            </Typography>
+            <Typography variant="h6" component="p" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
+              Join thousands of satisfied patients and healthcare professionals on our platform.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center' }}>
+              <ModernButton
+                variant="contained"
+                size="large"
+                component={Link}
+                to="/register"
+                sx={{
+                  bgcolor: 'white',
+                  color: '#667eea',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.9)',
+                  },
+                }}
+                endIcon={<ArrowForward />}
+              >
+                Get Started Today
+              </ModernButton>
+              <ModernButton
+                variant="outlined"
+                size="large"
+                component={Link}
+                to="/login"
+                sx={{
+                  borderColor: 'white',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                  },
+                }}
+              >
+                Sign In
+              </ModernButton>
+            </Box>
+          </Container>
+        </CTASection>
+      )}
+    </Box>
   );
 }
 
