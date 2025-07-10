@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from './../../axiosConfig';
 import {
-  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, LocationContainer, LocationInfo, BreakingLine, FollowButton, DoctorInfoContainer, DoctorName, DoctorInfo,
+  Header, Section, Title, Subtitle, Statistic, StatBox, Text, List, ListItem, ProfileImage, LeftColumn, RightColumn, MainContainer, BodyContainer, FollowButton, DoctorInfoContainer, DoctorName, DoctorInfo,
   HistoryItem,
   DiagnosisName,
   DiagnosisDate, DiagnosisLink
@@ -38,67 +38,75 @@ export default function PatientProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isProcessingFollow, setIsProcessingFollow] = useState(false);
   const fetchPatientInfo = async () => {
-
     try {
       const response = await axios.get(`http://localhost:3001/api/v1/user/${patientId}`, {
         params: {
           userType: "patient",
         },
       });
-      setPatientInfo(response.data)
-      console.log("patient_info : ",response.data )
-
-      setLoading(false);
+      setPatientInfo(response.data);
+      console.log("patient_info : ", response.data);
     } catch (error) {
-      console.error(error);
-      setLoading(false);
+      console.error("Error fetching patient info:", error);
       setError('An error occurred while fetching the patient information.');
     }
   };
 
   const fetchFollowings = async () => {
-    const response = await axios.get(`http://localhost:3001/api/v1/patient-followings/${patientId}`);
-    setUserFollowings(response.data.following_users)
     try {
-      
+      const response = await axios.get(`http://localhost:3001/api/v1/patient-followings/${patientId}`);
+      setUserFollowings(response.data.following_users);
     } catch (error) {
-      console.log("Error while getting users followings :", error)
+      console.log("Error while getting users followings:", error);
+      setUserFollowings([]);
     }
   };
 
   const getMedicalHistory = async () => {
     try {
       const response = await axios.get(`http://localhost:3001/api/v1/patients/medical-history/${patientId}`);
-      setMedicalHistoryInfo(response.data)
-      console.log("medical history : ",response )
-
-      setLoading(false);
+      setMedicalHistoryInfo(response.data);
+      console.log("medical history : ", response);
     } catch (error) {
-      console.error(error);
-      setLoading(false);
-      setError('An error occurred while fetching the patient medical history.');
+      console.error("Error fetching medical history:", error);
+      setMedicalHistoryInfo([]);
     }
   };
 
   const getMedications = async () => {
     try {
       const response = await axios.get(`http://localhost:3001/api/v1/patients/medications/${patientId}`);
-      setMedications(response.data)
-      console.log("medications : ",response.data )
-
-      setLoading(false);
+      setMedications(response.data);
+      console.log("medications : ", response.data);
     } catch (error) {
-      console.error(error);
-      setLoading(false);
-      setError('An error occurred while fetching the patient medications info.');
+      console.error("Error fetching medications:", error);
+      setMedications([]);
+      setError('');
     }
   };
 
   useEffect(() => {
-    fetchPatientInfo()
-    fetchFollowings()
-    getMedicalHistory()
-    getMedications()
+    const loadPatientData = async () => {
+      setLoading(true);
+      setError('');
+      
+      try {
+        await Promise.all([
+          fetchPatientInfo(),
+          fetchFollowings(),
+          getMedicalHistory(),
+          getMedications()
+        ]);
+      } catch (error) {
+        console.error("Error loading patient data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (patientId) {
+      loadPatientData();
+    }
   }, [patientId]);
 
   const handleFollowClick = () => {
@@ -120,8 +128,21 @@ export default function PatientProfile() {
       });
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return (
+    <MainContainer>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div>Loading patient information...</div>
+      </div>
+    </MainContainer>
+  );
+  
+  if (error) return (
+    <MainContainer>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px', color: 'red' }}>
+        <div>{error}</div>
+      </div>
+    </MainContainer>
+  );
 
   const capitalizeText = (text) => {
     if (!text) return '';
@@ -131,13 +152,13 @@ export default function PatientProfile() {
   return (
     <MainContainer>
       <Header>
-        <ProfileImage src={userProfilePhotoUrl} alt="Profile avatar" />
+        <ProfileImage src={patientInfo.ProfilePictureUrl || userProfilePhotoUrl} alt="Profile avatar" />
         <DoctorInfoContainer>
           <DoctorName>
             {patientInfo.FirstName ? capitalizeText(patientInfo.FirstName) : ''} {patientInfo.LastName ? patientInfo.LastName.toUpperCase() : ''}
           </DoctorName>
           <DoctorInfo>
-            {patientInfo.Age ? patientInfo.Age : 'N/A'}
+            Age: {patientInfo.Age ? patientInfo.Age : 'N/A'}
           </DoctorInfo>
           <DoctorInfo>
             {patientInfo.CityName ? capitalizeText(patientInfo.CityName) : 'Unknown City'}, {patientInfo.CountryName ? capitalizeText(patientInfo.CountryName) : 'Unknown Country'}
@@ -145,7 +166,7 @@ export default function PatientProfile() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {userId && userId !== patientId && (
               <FollowButton onClick={handleFollowClick} disabled={isProcessingFollow || isFollowing}>
-                {isFollowing ? 'Following' : 'Follow'}
+                {isProcessingFollow ? 'Processing...' : (isFollowing ? 'Following' : 'Follow')}
               </FollowButton>
             )}
           </div>
@@ -205,7 +226,7 @@ export default function PatientProfile() {
                 );
               })
             ) : (
-              <Text>No Medical History Was Found.</Text>
+              <Text>No Medications Found.</Text>
             )}
           </Section>
           <Section>
