@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import { AuthContext } from '../../Auth/AuthContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
 import MyNavbar from '../navbar/Navbar';
+import PublicNavbar from '../navbar/PublicNavbar';
 
 const Layout = ({ children }) => {
   const { isLoggedIn } = useContext(AuthContext);
@@ -16,7 +17,10 @@ const Layout = ({ children }) => {
   if (!isLoggedIn) {
     return (
       <Box sx={{ minHeight: '100vh' }}>
-        {children}
+        <PublicNavbar />
+        <Box sx={{ padding: '24px' }}>
+          {children}
+        </Box>
       </Box>
     );
   }
