@@ -5,7 +5,6 @@ const SidebarContext = createContext();
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (!context) {
-    // Provide fallback values when provider is not available
     return {
       sidebarOpen: true,
       setSidebarOpen: () => {},

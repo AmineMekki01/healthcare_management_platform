@@ -1,6 +1,4 @@
 from src.constants import LIST_OF_SPECIALTIES, ChatRolesEnum, ModelsEnum
-import os
-import psycopg2
 import requests
 from openai import OpenAI
 from dotenv import load_dotenv

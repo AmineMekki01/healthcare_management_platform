@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { AuthContext } from '../../Auth/AuthContext';
+import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
 import MyNavbar from '../navbar/Navbar';
 import PublicNavbar from '../navbar/PublicNavbar';
+import BottomNavbar from '../navbar/BottomNavbar';
+import MobileHeader from '../navbar/MobileHeader';
 
 const Layout = ({ children }) => {
   const { isLoggedIn } = useContext(AuthContext);
@@ -25,10 +27,10 @@ const Layout = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
-      <MyNavbar />
+      {isMobile && <MobileHeader />}
       
-      {/* Main Content */}
+      {!isMobile && <MyNavbar />}
+      
       <Box
         component="main"
         sx={{
@@ -41,12 +43,16 @@ const Layout = ({ children }) => {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
           }),
+          paddingTop: isMobile ? '64px' : 0,
+          paddingBottom: isMobile ? '70px' : 0,
         }}
       >
         <Box sx={{ padding: '24px' }}>
           {children}
         </Box>
       </Box>
+      
+      <BottomNavbar />
     </Box>
   );
 };

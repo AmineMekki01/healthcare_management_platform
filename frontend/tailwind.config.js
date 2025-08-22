@@ -7,21 +7,12 @@ module.exports = {
     extend: {
       width: {
         '01vw': '10vw',
-        // You can add more here
       },
     },
   },
   plugins: [
     require('flowbite/plugin'), 
-    // function ({ addUtilities }) {
-    //   const newUtilities = {
-    //     'ul::after': {
-    //       content: "''",
-    //       flexGrow: '1000000000',
-    //     },
-    //   }
-    //   addUtilities(newUtilities, ['responsive', 'hover'])
-    // },
-],
+
+  ],
 }
 
