@@ -1,69 +1,34 @@
 package main
 
 import (
-	"backend_go/db"
-	"backend_go/middlewares"
-	"backend_go/routes"
-	"fmt"
 	"log"
-	"time"
+	"net/http"
 
-	"github.com/gin-contrib/cors"
+	"healthcare_backend/pkg/config"
+	"healthcare_backend/pkg/database"
+	"healthcare_backend/pkg/routes"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
-	r.Static("/user_photos", "./user_photos")
-	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://10.188.27.252:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}
-	r.Use(cors.New(config))
+	cfg := config.Load()
 
-	r.Use(func(c *gin.Context) {
-		log.Printf("Incoming request: %s %s", c.Request.Method, c.Request.URL.Path)
-		log.Println("CORS Middleware triggered")
-		log.Printf("Origin: %s", c.GetHeader("Origin"))
-		fmt.Printf("Request %v Headers:\n", c.Request.Method)
-		for k, v := range c.Request.Header {
-			fmt.Println(k, v)
-		}
-		c.Next()
-
-		fmt.Printf("Response Headers:\n")
-		for k, v := range c.Writer.Header() {
-			fmt.Println(k, v)
-		}
-	})
-
-	conn, err := db.InitDatabase()
-
+	db, err := database.Initialize(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
+	defer db.Close()
 
-	defer conn.Close()
+	router := gin.Default()
 
-	public := r.Group("/")
-	routes.SetupPublicRoutes(public, conn)
+	routes.SetupRoutes(router, db, cfg)
 
-	protected := r.Group("/")
-	protected.Use(middlewares.AuthMiddleware())
-	routes.SetupProtectedRoutes(protected, conn)
-
-	doctorOnly := protected.Group("/")
-	doctorOnly.Use(middlewares.DoctorOnly())
-	routes.SetupDoctorOnlyRoutes(doctorOnly, conn)
-
-	r.Use(func(c *gin.Context) {
-		for k, v := range c.Writer.Header() {
-			fmt.Println(k, v)
-		}
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
-	r.Run(":3001")
+
+	if err := router.Run(":" + cfg.ServerPort); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }

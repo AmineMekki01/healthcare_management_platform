@@ -10,34 +10,45 @@ import {
   Box,
   Avatar,
   Typography,
-  Divider,
   IconButton,
   Tooltip,
   useMediaQuery,
-  Paper,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   Home as HomeIcon,
-  Search as SearchIcon,
   Person as PersonIcon,
-  Event as EventIcon,
-  Description as DescriptionIcon,
-  Chat as ChatIcon,
   Feed as FeedIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  PostAdd as PostAddIcon,
-  Article as ArticleIcon,
-  ChatBubble as ChatBubbleIcon,
   Menu as MenuIcon,
   ExpandLess,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
+  Badge as BadgeIcon,
+  PersonOutline as PersonOutlineIcon,
+  LocalHospital as HospitalIcon,
+  MedicalServices as MedicalIcon,
+  Dashboard as DashboardIcon,
+  Assignment as ReportsIcon,
+  Groups as StaffIcon,
+  Create as CreateIcon,
+  Newspaper as NewsIcon,
+  PersonSearch as DoctorSearchIcon,
+  CalendarMonth as CalendarIcon,
+  Textsms as MessagesIcon,
+  ManageAccounts as ManageIcon,
+  FolderShared as DocumentsIcon,
+  SmartToy as ChatBotIcon,
+  Business as TalentPoolIcon,
+  SupervisorAccount as StaffManagementIcon,
 } from '@mui/icons-material';
-import { AuthContext } from './../../Auth/AuthContext';
+import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
+import { useRoleMode } from '../../../contexts/RoleModeContext';
 import logo from '../../../assets/images/logo_doc_app_white.png';
 
 function capitalizeWords(str) {
@@ -52,122 +63,204 @@ const MyNavbar = () => {
     userId,
     userType,
     userFullName,
-    userProfilePhotoUrl,
+    userProfilePictureUrl,
   } = useContext(AuthContext);
   
   const { sidebarOpen, handleSidebarToggle } = useSidebar();
+  const { activeMode, canSwitchModes, handleModeToggle } = useRoleMode();
   const location = useLocation();
 
   const profileHref =
     userType === 'doctor'
-      ? `/DoctorProfile/${userId}`
-      : `/PatientProfile/${userId}`;
+      ? `/doctor-profile/${userId}`
+      : userType === 'patient' ? `/patient-profile/${userId}` : `/receptionist-profile/${userId}`;
 
-  // Mobile drawer state
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [hovering, setHovering] = React.useState(false);
 
-  // Expandable tabs state
-  const [postsOpen, setPostsOpen] = React.useState(false);
-  const [documentsOpen, setDocumentsOpen] = React.useState(false);
+  const [expandedMenus, setExpandedMenus] = React.useState({});
+
+  const handleMenuClick = (menuLabel) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuLabel]: !prev[menuLabel]
+    }));
+  };
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Resetting mobile drawer when switching to desktop
   React.useEffect(() => {
     if (!isMobile && mobileOpen) {
       setMobileOpen(false);
     }
   }, [isMobile, mobileOpen]);
 
-  // Mobile drawer toggle
+  React.useEffect(() => {
+    setExpandedMenus({});
+  }, [userId, userType, activeMode]);
+
   const handleMobileToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Handle tabs list expansions
-  const handlePostsClick = () => {
-    setPostsOpen(!postsOpen);
+  const hasAccess = (requiredRoles) => {
+    if (!requiredRoles || !Array.isArray(requiredRoles)) {
+      return false;
+    }
+
+    if (requiredRoles.includes(activeMode)) {
+      return true;
+    }
+
+    if (requiredRoles.includes(userType)) {
+      return true;
+    }
+
+    return false;
   };
 
-  const handleDocumentsClick = () => {
-    setDocumentsOpen(!documentsOpen);
-  };
-
-  // Nav items
-  const navItems = [
+  const baseNavItems = [
     {
       label: 'Home',
       href: '/',
       icon: <HomeIcon />,
+      roles: ['doctor', 'patient', 'receptionist'],
     },
     {
-      label: 'Posts',
-      icon: <FeedIcon />,
-      hasSubItems: true,
-      subItems: [
-        { label: 'Feed', href: '/feed', icon: <FeedIcon /> },
-        ...(userType === 'doctor'
-          ? [
-              { label: 'Create Post', href: '/create-post', icon: <PostAddIcon /> },
-              { label: 'My Posts', href: '/doctor-posts', icon: <ArticleIcon /> },
-            ]
-          : []),
-      ],
-    },
-    {
-      label: 'Appointments',
-      href: '/patient-appointments',
-      icon: <EventIcon />,
-    },
-    {
-      label: 'Documents',
-      icon: <DescriptionIcon />,
-      hasSubItems: true,
-      subItems: [
-        { label: 'MyDocs', href: '/MyDocs', icon: <DescriptionIcon /> },
-        ...(userType === 'doctor'
-          ? [
-              {
-                label: 'My Reports',
-                href: `/medical-report/${userId}`,
-                icon: <DescriptionIcon />,
-              },
-            ]
-          : []),
-      ],
+      label: 'Find Doctors',
+      href: '/SearchBar',
+      icon: <DoctorSearchIcon />,
+      roles: ['doctor', 'patient', 'receptionist'],
     },
     {
       label: 'Messages',
       href: '/Messages',
-      icon: <ChatIcon />,
+      icon: <MessagesIcon />,
+      roles: ['doctor', 'patient', 'receptionist'],
     },
-    ...(userType === 'doctor'
-      ? [
-          {
-            label: 'ChatBot',
-            href: '/ChatBot',
-            icon: <ChatBubbleIcon />,
-          },
-        ]
-      : []),
     {
-      label: 'Search',
-      href: '/SearchBar',
-      icon: <SearchIcon />,
+      label: 'Health Feed',
+      href: '/feed',
+      icon: <FeedIcon />,
+      roles: ['patient', 'receptionist'],
     },
   ];
 
+  const patientNavItems = [
+    {
+      label: 'My Appointments',
+      href: '/appointments',
+      icon: <CalendarIcon />,
+      roles: ['patient'],
+    },{ 
+      label: 'My Documents',
+      href: '/MyDocs',
+      icon: <DocumentsIcon />,
+      roles: ['patient']
+    },
+  ];
+
+  // Professional role-specific navigation items
+  const professionalNavItems = {
+    receptionist: [
+      {
+        label: 'Receptionist Dashboard',
+        href: '/receptionist-dashboard',
+        icon: <DashboardIcon />,
+        roles: ['receptionist'],
+      },
+      {
+        label: 'Patient Management',
+        icon: <ManageIcon />,
+        hasSubItems: true,
+        roles: ['receptionist'],
+        subItems: [
+          { label: 'Patient Search', href: '/receptionist/patients', icon: <DoctorSearchIcon />, roles: ['receptionist'] },
+          { label: 'Create Patient', href: '/receptionist/create-patient', icon: <PersonIcon />, roles: ['receptionist'] },
+          { label: 'Schedule Appointment', href: '/receptionist/create-appointment', icon: <CalendarIcon />, roles: ['receptionist'] },
+        ],
+      },
+    ],
+    doctor: [
+      {
+        label: 'Medical Tools',
+        icon: <MedicalIcon />,
+        hasSubItems: true,
+        roles: ['doctor'],
+        subItems: [
+          { label: 'AI Assistant', href: '/ChatBot', icon: <ChatBotIcon />, roles: ['doctor'] },
+        ],
+      },
+      {
+        label: 'Practice Management',
+        icon: <HospitalIcon />,
+        hasSubItems: true,
+        roles: ['doctor'],
+        subItems: [
+          { label: 'My Schedule', href: '/appointments', icon: <CalendarIcon />, roles: ['doctor'] },
+          { label: 'Medical Reports', href: `/medical-report/${userId}`, icon: <ReportsIcon />, roles: ['doctor'] },
+        ],
+      },
+      {
+        label: 'Staff Management',
+        icon: <StaffIcon />,
+        hasSubItems: true,
+        roles: ['doctor'],
+        subItems: [
+          { label: 'Talent Pool', href: '/receptionist-talent-pool', icon: <TalentPoolIcon />, roles: ['doctor'] },
+          { label: 'Staff Management', href: '/staff-management', icon: <StaffManagementIcon />, roles: ['doctor'] },
+        ],
+      },
+      {
+        label: 'Content Management',
+        icon: <CreateIcon />,
+        hasSubItems: true,
+        roles: ['doctor'],
+        subItems: [
+          { label: 'Create Article', href: '/create-post', icon: <CreateIcon />, roles: ['doctor'] },
+          { label: 'My Articles', href: '/doctor-posts', icon: <NewsIcon />, roles: ['doctor'] },
+          { label: 'Health Feed', href: '/feed', icon: <FeedIcon />, roles: ['doctor'] },
+        ],
+      },
+    ],
+  };
+
+  const getAllNavItems = () => {
+    let allItems = [...baseNavItems];
+
+    if (activeMode === 'patient') {
+      allItems = [...allItems, ...patientNavItems];
+    } else if (activeMode === 'doctor' || activeMode === 'receptionist') {
+      const professionalItems = professionalNavItems[activeMode] || [];
+      allItems = [...allItems, ...professionalItems];
+    }
+    
+    return allItems.filter(item => {
+      if (!item.roles || !Array.isArray(item.roles)) {
+        return false;
+      }
+      return item.roles.includes(activeMode) || item.roles.includes(userType);
+    });
+  };
+
+  const navItems = React.useMemo(() => {
+    const allItems = getAllNavItems();
+    const filteredItems = allItems.filter(item => hasAccess(item.roles));
+    
+    return filteredItems;
+  }, [userId, userType, activeMode]); 
+
   const drawerWidth = sidebarOpen ? 280 : 72;
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !userId || !userType) {
     return null;
   }
 
   return (
     <>
-      {isMobile && !mobileOpen && (
+      {/* Mobile menu button - Hidden when using bottom navbar */}
+      {isMobile && !mobileOpen && false && (
         <IconButton
           onClick={handleMobileToggle}
           sx={{
@@ -191,47 +284,48 @@ const MyNavbar = () => {
         </IconButton>
       )}
 
-      <Drawer
-      variant={isMobile ? "temporary" : "permanent"}
-      open={isMobile ? mobileOpen : true}
-      onClose={() => setMobileOpen(false)}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: drawerWidth,
-          boxSizing: 'border-box',
-          background: 'linear-gradient(145deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%)',
-          color: 'white',
-          transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-          overflowX: 'hidden',
-          position: 'fixed',
-          height: '100vh',
-          top: 0,
-          left: 0,
-          zIndex: theme.zIndex.drawer,
-          boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15)',
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'rgba(255,255,255,0.05)',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: '3px',
-            '&:hover': {
-              background: 'rgba(255,255,255,0.3)',
+      {/* Main Drawer - Only show on desktop */}
+      {!isMobile && (
+        <Drawer
+          variant="permanent"
+          open={true}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              background: 'linear-gradient(145deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%)',
+              color: 'white',
+              transition: theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              overflowX: 'hidden',
+              position: 'fixed',
+              height: '100vh',
+              top: 0,
+              left: 0,
+              zIndex: theme.zIndex.drawer,
+              boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15)',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(255,255,255,0.05)',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '3px',
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.3)',
+                },
+              },
             },
-          },
-        },
-      }}
-    >
+          }}
+        >
       {/* Header with Logo and Toggle */}
       <Box
         sx={{
@@ -280,43 +374,137 @@ const MyNavbar = () => {
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           background: 'rgba(255,255,255,0.02)',
           display: 'flex',
-          alignItems: 'center',
-          gap: 2,
+          flexDirection: 'column',
+          gap: 1,
         }}
       >
-        <Avatar 
-          src={userProfilePhotoUrl} 
-          alt="User"
-          sx={{ 
-            width: 48, 
-            height: 48,
-            border: '2px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
           }}
-        />
-        {sidebarOpen && (
-          <Box sx={{ overflow: 'hidden' }}>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+        >
+          <Avatar 
+            src={userProfilePictureUrl} 
+            alt="User"
+            sx={{ 
+              width: 48, 
+              height: 48,
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          />
+          {sidebarOpen && (
+            <Box sx={{ overflow: 'hidden' }}>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {capitalizeWords(userFullName)}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  opacity: 0.8,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {userType}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* Mode Toggle for Multi-role Users */}
+        {canSwitchModes && sidebarOpen && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 12px',
+              backgroundColor: activeMode === userType 
+                ? 'rgba(96, 165, 250, 0.1)' 
+                : 'rgba(52, 211, 153, 0.1)',
+              border: `1px solid ${activeMode === userType ? 'rgba(96, 165, 250, 0.3)' : 'rgba(52, 211, 153, 0.3)'}`,
+              borderRadius: '8px',
+              marginTop: '8px',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BadgeIcon sx={{ fontSize: '16px', opacity: 0.8 }} />
+              <Typography variant="caption" sx={{ fontSize: '0.75rem', opacity: 0.9 }}>
+                Viewing as:
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  fontSize: '0.75rem', 
+                  fontWeight: 600,
+                  textTransform: 'capitalize',
+                  color: activeMode === userType ? '#60a5fa' : '#34d399'
+                }}
+              >
+                {activeMode}
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={handleModeToggle}
+              sx={{
+                color: 'white',
+                padding: '4px',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out',
               }}
             >
-              {capitalizeWords(userFullName)}
-            </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                opacity: 0.8,
-                textTransform: 'capitalize',
-              }}
-            >
-              {userType}
-            </Typography>
+              {activeMode === userType ? 
+                <ToggleOnIcon sx={{ color: '#60a5fa', fontSize: '20px' }} /> : 
+                <ToggleOffIcon sx={{ color: '#34d399', fontSize: '20px' }} />
+              }
+            </IconButton>
           </Box>
+        )}
+
+        {/* Compact Mode Toggle for Collapsed Sidebar */}
+        {canSwitchModes && !sidebarOpen && (
+          <Tooltip 
+            title={`Switch to ${activeMode === userType ? 'Patient' : capitalizeWords(userType)} Mode`}
+            placement="right"
+            arrow
+          >
+            <IconButton
+              onClick={handleModeToggle}
+              sx={{
+                color: 'white',
+                padding: '4px',
+                alignSelf: 'center',
+                backgroundColor: activeMode === userType 
+                  ? 'rgba(96, 165, 250, 0.15)' 
+                  : 'rgba(52, 211, 153, 0.15)',
+                '&:hover': {
+                  backgroundColor: activeMode === userType 
+                    ? 'rgba(96, 165, 250, 0.25)' 
+                    : 'rgba(52, 211, 153, 0.25)',
+                },
+                width: '32px',
+                height: '32px',
+              }}
+            >
+              {activeMode === userType ? 
+                <PersonIcon sx={{ fontSize: '16px', color: '#60a5fa' }} /> : 
+                <PersonOutlineIcon sx={{ fontSize: '16px', color: '#34d399' }} />
+              }
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
 
@@ -331,7 +519,7 @@ const MyNavbar = () => {
                   <>
                     <ListItem
                       button
-                      onClick={item.label === 'Posts' ? handlePostsClick : handleDocumentsClick}
+                      onClick={() => handleMenuClick(item.label)}
                       sx={{
                         borderRadius: '12px',
                         margin: '4px 0',
@@ -361,19 +549,18 @@ const MyNavbar = () => {
                           }
                         }}
                       />
-                      {item.label === 'Posts' ? 
-                        (postsOpen ? <ExpandLess /> : <ExpandMore />) : 
-                        (documentsOpen ? <ExpandLess /> : <ExpandMore />)
-                      }
+                      {expandedMenus[item.label] ? <ExpandLess /> : <ExpandMore />}
                     </ListItem>
                     
                     <Collapse 
-                      in={item.label === 'Posts' ? postsOpen : documentsOpen} 
+                      in={expandedMenus[item.label] || false} 
                       timeout="auto" 
                       unmountOnExit
                     >
                       <List component="div" disablePadding>
-                        {item.subItems.map((subItem, subIndex) => (
+                        {item.subItems
+                          .filter(subItem => hasAccess(subItem.roles))
+                          .map((subItem, subIndex) => (
                           <ListItem
                             button
                             key={subIndex}
@@ -418,7 +605,7 @@ const MyNavbar = () => {
                     </Collapse>
                   </>
                 ) : (
-                  // Collapsed sidebar -> we show tooltip with sub-menu items
+                  // Collapsed sidebar -> we show tooltip with sub menu items
                   <Tooltip 
                     title={
                       <Box sx={{ p: 1 }}>
@@ -435,7 +622,9 @@ const MyNavbar = () => {
                         >
                           {item.label}
                         </Typography>
-                        {item.subItems.map((subItem, subIndex) => (
+                        {item.subItems
+                          .filter(subItem => hasAccess(subItem.roles))
+                          .map((subItem, subIndex) => (
                           <Box
                             key={subIndex}
                             component={Link}
@@ -722,7 +911,8 @@ const MyNavbar = () => {
           </ListItem>
         </Tooltip>
       </Box>
-    </Drawer>
+        </Drawer>
+      )}
     </>
   );
 };

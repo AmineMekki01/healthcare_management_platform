@@ -13,12 +13,11 @@ import {
   ArrowForward,
   Star
 } from '@mui/icons-material';
-import { AuthContext } from '../components/Auth/AuthContext';
+import { AuthContext } from '../features/auth/context/AuthContext';
 import Testimonials from "../components/Testimonals/Testimonals";
 import AgePieChart from '../components/common/Charts/AgePieChart';
 import stetoImage from "./../assets/images/no_background_doc_steto.png";
 
-// Styled components
 const HeroSection = styled(Box)(({ theme }) => ({
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   color: 'white',
@@ -155,7 +154,6 @@ function HomePage() {
     { value: "24/7", label: "Emergency Support" }
   ];
 
-  // Sample data for charts
   const patientData = {
     labels: ['18-25', '26-35', '36-45', '46-60', '60+'],
     values: [20, 30, 25, 15, 10]

@@ -22,7 +22,6 @@ const ContentContainer = styled.div`
 
   @media (max-width: 350px) {
     max-height: 200px;
-    // overflow: hidden;
   }
 `;
 

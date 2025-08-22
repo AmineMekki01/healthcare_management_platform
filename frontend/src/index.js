@@ -5,7 +5,7 @@ import 'tailwindcss/tailwind.css';
 
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import AuthProvider from './components/Auth/AuthContext';
+import AuthProvider from './features/auth/context/AuthContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

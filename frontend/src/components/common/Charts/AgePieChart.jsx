@@ -1,6 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Pie } from 'react-chartjs-2';
-import { Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { Typography, Box, Alert } from '@mui/material';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -12,7 +13,6 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 const AgePieChart = ({ data, title, textColor = '#333' }) => {
-    // Check if data is valid
     if (!data || !data.labels || !data.values || data.labels.length === 0 || data.values.length === 0) {
         return (
             <Box sx={{ 
@@ -33,7 +33,6 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
         );
     }
 
-    // Fallback component in case Chart.js fails
     const SimpleFallback = () => (
         <Box sx={{ 
             width: '100%', 
@@ -178,4 +177,19 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
     }
 };
 
-export default AgePieChart;
+AgePieChart.propTypes = {
+    data: PropTypes.shape({
+        labels: PropTypes.arrayOf(PropTypes.string),
+        values: PropTypes.arrayOf(PropTypes.number),
+    }),
+    title: PropTypes.string,
+    textColor: PropTypes.string,
+};
+
+AgePieChart.defaultProps = {
+    data: { labels: [], values: [] },
+    title: 'Age Distribution',
+    textColor: '#333',
+};
+
+export default React.memo(AgePieChart);

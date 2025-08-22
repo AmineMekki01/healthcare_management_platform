@@ -72,7 +72,6 @@ const PublicNavbar = () => {
 
         {/* Navigation Items */}
         {isMobile ? (
-          // Mobile Menu
           <Box>
             <IconButton
               size="large"
