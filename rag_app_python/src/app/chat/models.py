@@ -10,11 +10,12 @@ class BaseMessage(BaseModel):
     id: str = Field(default="")
     chat_id: str = Field(default="")
     model: ModelsEnum = Field(default=ModelsEnum.GPT4.value)
-    userId: Optional[str] = None
+    user_id: Optional[str] = None
     agent_role: str = Field(default=ChatRolesEnum.ASSISTANT.value)
     user_message: str = Field(default="")
     answer: str = Field(default="")
     augmented_message: str = Field(default="")
+    patient_id: Optional[str] = None
 
 
 class Message(BaseMessage):
@@ -44,8 +45,10 @@ class ChatCreateResponse(BaseModel):
 class FileSummary(BaseModel):
     id: str
     chat_id: str
+    user_id: str
     file_name: str
-
+    file_size: str
+    file_type: str
 
 class DocumentResponse(BaseModel):
     documents: List[FileSummary]

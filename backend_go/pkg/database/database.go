@@ -309,23 +309,25 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS prescribed_medications (
-			medication_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			medication_name VARCHAR(255) NOT NULL,
-			prescribing_doctor_name VARCHAR(50) NOT NULL,
-			prescribing_doctor_id UUID,
-			patient_id UUID,
-			prescription_date TIMESTAMP NOT NULL DEFAULT NOW(),
-			dosage VARCHAR(50) NOT NULL,
-			frequency VARCHAR(50),
-			duration_days TEXT,
-			side_effects TEXT,
-			precautions TEXT,
-			instructions TEXT,
-			notes TEXT,
-			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-		);`,
+		`CREATE TABLE IF NOT EXISTS public.medications(
+			medication_id uuid NOT NULL DEFAULT gen_random_uuid(),
+			patient_id uuid NOT NULL,
+			medication_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+			dosage character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			frequency character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			duration character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			instructions text COLLATE pg_catalog."default",
+			prescribing_doctor_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+			prescribing_doctor_id uuid NOT NULL,
+			report_id uuid,
+			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+			updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT medications_pkey PRIMARY KEY (medication_id),
+			CONSTRAINT medications_report_id_fkey FOREIGN KEY (report_id)
+				REFERENCES public.medical_reports (report_id) MATCH SIMPLE
+				ON UPDATE NO ACTION
+				ON DELETE CASCADE
+		)`,
 
 		`CREATE TABLE IF NOT EXISTS medical_reports (
 			report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -436,20 +438,6 @@ func createTables(conn *pgxpool.Pool) error {
 			severity VARCHAR(20) CHECK (severity IN ('mild', 'moderate', 'severe')),
 			status VARCHAR(20) CHECK (status IN ('active', 'resolved', 'chronic')),
 			notes TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-		)`,
-
-		`CREATE TABLE IF NOT EXISTS prescribed_medicines (
-			id SERIAL PRIMARY KEY,
-			appointment_id UUID NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
-			medicine_name VARCHAR(255) NOT NULL,
-			dosage VARCHAR(100) NOT NULL,
-			frequency VARCHAR(100) NOT NULL,
-			duration VARCHAR(100) NOT NULL,
-			instructions TEXT,
-			prescribed_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			doctor_name VARCHAR(255) NOT NULL,
-			is_active BOOLEAN DEFAULT true,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
