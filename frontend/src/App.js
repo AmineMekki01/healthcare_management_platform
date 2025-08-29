@@ -230,6 +230,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/chatbot/:chatId"
+                  element={
+                    <DoctorRoutes>
+                      <ChatbotPage />
+                    </DoctorRoutes>
+                  }
+                />
+                <Route
                   path="/doctor-posts"
                   element={
                     <DoctorRoutes>

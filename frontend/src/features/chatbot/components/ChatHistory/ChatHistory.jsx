@@ -103,7 +103,7 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
       
       };
       try {
-        const response = await fetch('http://localhost:8000/v1/chat-create', {
+        const response = await fetch('http://localhost:8000/v1/chatbot/chat-create', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
 
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:8000/v1/chats/${userId}`);
+        const response = await fetch(`http://localhost:8000/v1/chatbot/chats/${userId}`);
     
         if (response.ok) {
           const data = await response.json();
@@ -162,6 +162,14 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
       setView('chat');
     }
   };
+
+  const handleDeleteChat = (chatId) => {
+    setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+    
+    if (selectedChatId === chatId) {
+      onChatSelect(null);
+    }
+  };
   return (
     <ChatHist>
       <ChatHistoryHeader>
@@ -178,7 +186,13 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
           {isLoading ? (
             <LoadingMessage>Loading chats...</LoadingMessage>
           ) : (
-            <ChatList chats={chats} onSelectChat={handleSelectChat} selectedChatId={selectedChatId} />
+            <ChatList 
+              chats={chats} 
+              onSelectChat={handleSelectChat} 
+              selectedChatId={selectedChatId}
+              onDeleteChat={handleDeleteChat}
+              userId={userId}
+            />
           )}
         </>
       )}

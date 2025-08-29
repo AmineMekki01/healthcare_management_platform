@@ -1,4 +1,5 @@
-import React, { useState, useContext, useEffect  } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../../components/axiosConfig';
 import { AuthContext } from '../../auth/context/AuthContext';
 import ChatInterface from '../components/ChatInterface/ChatInterface';
@@ -7,12 +8,14 @@ import ChatHistory from '../components/ChatHistory/ChatHistory';
 
 
 function ChatbotPage() {
+  const { chatId } = useParams();
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState(null);
-  const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentChatId, setCurrentChatId] = useState(chatId || null);
   const [chats, setChats] = useState([]);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 650);
-  const [view, setView] = useState('history');
+  const [view, setView] = useState(chatId ? 'chat' : 'history');
 
   const {userId} = useContext(AuthContext);
 
@@ -39,7 +42,7 @@ function ChatbotPage() {
     formData.append('chat_id', currentChatId);
   
     try {
-      const response = await axios.post('http://localhost:8000/v1/upload-document', formData, {
+      const response = await axios.post('http://localhost:8000/v1/chatbot/upload-document', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json',
@@ -56,11 +59,12 @@ function ChatbotPage() {
     }
   };
 
-  const handleChatSelect = async (chatId, shouldSetView = true) => {
+  const handleChatSelect = useCallback(async (chatId, shouldSetView = true) => {
     setCurrentChatId(chatId);
     setView('chat');
+    navigate(`/chatbot/${chatId}`);
     try {
-      const response = await axios.get(`http://localhost:8000/v1/documents/${chatId}`);
+      const response = await axios.get(`http://localhost:8000/v1/chatbot/documents/${chatId}`);
       if (response.status === 200) {
         const fileNames = response.data.documents.map(doc => doc.file_name);
         setDocuments(fileNames);
@@ -69,13 +73,19 @@ function ChatbotPage() {
       setError('Error fetching documents for the selected chat.');
       console.error('Error fetching documents:', error);
     }
-  };
+  }, [navigate]);
 
   const toggleChatHistory = () => {
     if (isSmallScreen) {
       setView((prevView) => (prevView === 'chat' ? 'history' : 'chat'));
     }
   };
+
+  useEffect(() => {
+    if (currentChatId && currentChatId !== chatId) {
+      handleChatSelect(currentChatId);
+    }
+  }, [currentChatId, chatId, handleChatSelect]);
 
   useEffect(() => {
     const handleResize = () => {

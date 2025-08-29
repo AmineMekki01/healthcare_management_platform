@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
 
+const ChatContainer = styled.div`
+  position: relative;
+  margin: 0 20px 8px;
+  
+  &:hover .delete-button {
+    opacity: 1;
+  }
+`;
+
 const Chat = styled.button`
   padding: 16px 20px;
-  margin: 0 20px 8px;
+  padding-right: 50px;
+  width: 100%;
   border-radius: 12px;
   border: none;
   color: ${props => props.isSelected ? '#ffffff' : '#cbd5e1'};
@@ -42,6 +52,36 @@ const Chat = styled.button`
 
   &:active {
     transform: translateY(0);
+  }
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(239, 68, 68, 0.8);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 10;
+  
+  &:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  &:active {
+    transform: translateY(-50%) scale(0.95);
   }
 `;
 
@@ -101,7 +141,8 @@ const MessageTime = styled.span`
   font-weight: 400;
 `;
 
-const ChatList = ({ chats, onSelectChat, selectedChatId }) => {
+const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId }) => {
+  const [deletingChatId, setDeletingChatId] = useState(null);
   
   const formatMessageDate = (dateString) => {
     if (!dateString) {
@@ -117,21 +158,58 @@ const ChatList = ({ chats, onSelectChat, selectedChatId }) => {
     });
   };
 
+  const handleDeleteChat = async (e, chatId, chatTitle) => {
+    e.stopPropagation();
+
+    if (!window.confirm(`Are you sure you want to delete "${chatTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    setDeletingChatId(chatId);
+    
+    try {
+      const response = await fetch(`http://localhost:8000/v1/chatbot/chat-delete${chatId}?user_id=${userId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        onDeleteChat(chatId);
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete chat: ${error.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      alert('Failed to delete chat. Please try again.');
+    } finally {
+      setDeletingChatId(null);
+    }
+  };
+
   const sortedChat = [...chats].sort((a,b) => new Date(b.last_message_date) - new Date(a.last_message_date));
 
   return (
     <ChatsList>
       {sortedChat.map((chat) => (
-        <Chat
-          key={chat.id}
-          onClick={() => onSelectChat(chat.id)}
-          isSelected={selectedChatId === chat.id} 
-        >
-          <MessageAndTime>
-            <MessageContent>{chat.title}</MessageContent>
-            <MessageTime>{formatMessageDate(chat.last_message_date)}</MessageTime>
-          </MessageAndTime>
-        </Chat>
+        <ChatContainer key={chat.id}>
+          <Chat
+            onClick={() => onSelectChat(chat.id)}
+            isSelected={selectedChatId === chat.id} 
+          >
+            <MessageAndTime>
+              <MessageContent>{chat.title}</MessageContent>
+              <MessageTime>{formatMessageDate(chat.last_message_date)}</MessageTime>
+            </MessageAndTime>
+          </Chat>
+          <DeleteButton
+            className="delete-button"
+            onClick={(e) => handleDeleteChat(e, chat.id, chat.title)}
+            disabled={deletingChatId === chat.id}
+            title="Delete conversation"
+          >
+            {deletingChatId === chat.id ? '...' : '×'}
+          </DeleteButton>
+        </ChatContainer>
       ))}
     </ChatsList>
   );
