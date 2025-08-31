@@ -134,6 +134,12 @@ const MyNavbar = () => {
       roles: ['doctor', 'patient', 'receptionist'],
     },
     {
+      label: 'My Documents',
+      href: '/records',
+      icon: <DocumentsIcon />,
+      roles: ['patient', 'doctor', 'receptionist']
+    },
+    {
       label: 'Messages',
       href: '/Messages',
       icon: <MessagesIcon />,
@@ -155,7 +161,7 @@ const MyNavbar = () => {
       roles: ['patient'],
     },{ 
       label: 'My Documents',
-      href: '/MyDocs',
+      href: '/records',
       icon: <DocumentsIcon />,
       roles: ['patient']
     },

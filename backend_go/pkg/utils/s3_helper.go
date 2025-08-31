@@ -125,6 +125,8 @@ func GeneratePresignedObjectURL(key string) (string, error) {
 }
 
 func UploadToS3WithReader(filePath string, content io.Reader, contentLength int64, contentType string) error {
+	filePath = filepath.ToSlash(filePath)
+
 	s3Client, err := createS3Client()
 	if err != nil {
 		log.Printf("Warning: Failed to create S3 client: %v", err)

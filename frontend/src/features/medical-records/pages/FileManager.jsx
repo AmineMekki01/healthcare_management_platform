@@ -1,25 +1,43 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import FileUploadHeader from '../components/Header';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import Header from '../components/Header';
 import MyUploads from '../components/MyUploads';
 import SharedWithMe from '../components/SharedWithMe';
 import ISharedWith from '../components/ISharedWith';
+import MedicalRecordsView from '../components/MedicalRecordsView';
+import UploadAndShareView from '../components/UploadAndShareView';
 
-const FileManager = () => {
+function FileManager() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getCurrentTab = () => {
+    const path = location.pathname.split('/');
+    const tab = path[path.length - 1];
+    return ['my-docs', 'medical-records', 'upload', 'shared-with-me', 'i-shared-with'].includes(tab) 
+      ? tab 
+      : 'my-docs';
+  };
+
+  const activeView = getCurrentTab();
+
+  const handleViewChange = (view) => {
+    navigate(view);
+  };
+
   return (
-    <>
-      <FileUploadHeader />
+    <div>
+      <Header activeView={activeView} onViewChange={handleViewChange} />
       <Routes>
-        <Route path="/" element={<Navigate to="/MyDocs/Upload" replace />} />
-        <Route path="/Upload" element={<MyUploads />} />
-        <Route path="/Upload/:folderId" element={<MyUploads />} />
-        <Route path="/SharedWithMe" element={<SharedWithMe />} />
-        <Route path="/SharedWithMe/:folderId" element={<SharedWithMe />} />
-        <Route path="/ISharedWith" element={<ISharedWith />} />
-        <Route path="/ISharedWith/:folderId" element={<ISharedWith />} />
+        <Route path="/" element={<MyUploads />} />
+        <Route path="/:folderId" element={<MyUploads />} />
+        <Route path="medical-records" element={<MedicalRecordsView />} />
+        <Route path="upload" element={<UploadAndShareView />} />
+        <Route path="shared-with-me/*" element={<SharedWithMe />} />
+        <Route path="i-shared-with/*" element={<ISharedWith />} />
       </Routes>
-    </>
+    </div>
   );
-};
+}
 
 export default FileManager;

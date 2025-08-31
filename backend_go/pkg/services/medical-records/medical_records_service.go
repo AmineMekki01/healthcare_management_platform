@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -47,6 +48,14 @@ func (s *MedicalRecordsService) CreateFolder(fileFolder *models.FileFolder) erro
 	fileFolder.UpdatedAt = time.Now()
 	fileFolder.Size = 0
 	fileFolder.Ext = nil
+	fileFolder.FolderType = models.FolderTypePersonal
+	fileFolder.Category = nil
+	fileFolder.OwnerUserID = &fileFolder.UserID
+	fileFolder.PatientID = &fileFolder.UserID
+	fileFolder.UploadedByUserID = &fileFolder.UserID
+	patientRole := "patient"
+	fileFolder.UploadedByRole = &patientRole
+	fileFolder.IncludedInRAG = false
 
 	var folderPath string
 	if fileFolder.ParentID != nil && *fileFolder.ParentID != "" {
@@ -59,6 +68,7 @@ func (s *MedicalRecordsService) CreateFolder(fileFolder *models.FileFolder) erro
 		folderPath = path.Join(fileFolder.UserID, fileFolder.Name, "marker.txt")
 	}
 	folderPath = path.Join("records", "my-records", folderPath)
+	folderPath = filepath.ToSlash(folderPath)
 
 	if err := s.uploadMarkerFile(folderPath); err != nil {
 		return fmt.Errorf("failed to upload marker file to S3: %v", err)
@@ -77,8 +87,8 @@ func (s *MedicalRecordsService) CreateFolder(fileFolder *models.FileFolder) erro
 	defer tx.Rollback(context.Background())
 
 	_, err = tx.Exec(context.Background(),
-		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, user_id, user_type, parent_id, size, extension, path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-		fileFolder.ID, fileFolder.Name, fileFolder.CreatedAt, fileFolder.UpdatedAt, fileFolder.Type, fileFolder.UserID, fileFolder.UserType, fileFolder.ParentID, fileFolder.Size, fileFolder.Ext, folderPath)
+		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, user_id, user_type, parent_id, size, extension, path, folder_type, category, owner_user_id, patient_id, uploaded_by_user_id, uploaded_by_role, included_in_rag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+		fileFolder.ID, fileFolder.Name, fileFolder.CreatedAt, fileFolder.UpdatedAt, fileFolder.Type, fileFolder.UserID, fileFolder.UserType, fileFolder.ParentID, fileFolder.Size, fileFolder.Ext, folderPath, fileFolder.FolderType, fileFolder.Category, fileFolder.OwnerUserID, fileFolder.PatientID, fileFolder.UploadedByUserID, fileFolder.UploadedByRole, fileFolder.IncludedInRAG)
 	if err != nil {
 		return fmt.Errorf("could not insert folder info: %v", err)
 	}
@@ -113,13 +123,25 @@ func (s *MedicalRecordsService) UploadFile(fileInfo *models.FileFolder, file io.
 		return fmt.Errorf("failed to upload file to S3: %v", err)
 	}
 
+	if fileInfo.FolderType == "" {
+		fileInfo.FolderType = models.FolderTypePersonal
+	}
+
+	if fileInfo.OwnerUserID == nil {
+		fileInfo.OwnerUserID = &fileInfo.UserID
+	}
+	if fileInfo.FolderType == models.FolderTypeClinical && fileInfo.PatientID == nil {
+		fileInfo.PatientID = &fileInfo.UserID
+	}
+
+	fileInfo.IncludedInRAG = (fileInfo.FolderType == models.FolderTypeClinical)
+
 	_, err := s.db.Exec(context.Background(),
-		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-		fileInfo.ID, fileInfo.Name, fileInfo.CreatedAt, fileInfo.UpdatedAt, fileInfo.Type, fileInfo.Size, fileInfo.Ext, fileInfo.UserID, fileInfo.UserType, fileInfo.ParentID, fileInfo.Path)
+		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path, folder_type, category, owner_user_id, patient_id, uploaded_by_user_id, uploaded_by_role, included_in_rag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+		fileInfo.ID, fileInfo.Name, fileInfo.CreatedAt, fileInfo.UpdatedAt, fileInfo.Type, fileInfo.Size, fileInfo.Ext, fileInfo.UserID, fileInfo.UserType, fileInfo.ParentID, fileInfo.Path, fileInfo.FolderType, fileInfo.Category, fileInfo.OwnerUserID, fileInfo.PatientID, fileInfo.UploadedByUserID, fileInfo.UploadedByRole, fileInfo.IncludedInRAG)
 	if err != nil {
 		return fmt.Errorf("failed to insert file info: %v", err)
 	}
-
 	return nil
 }
 
@@ -131,11 +153,17 @@ func (s *MedicalRecordsService) DownloadFile(fileID string) (*models.FileFolder,
 	defer conn.Release()
 
 	var file models.FileFolder
+	var ext *string
 	err = conn.QueryRow(context.Background(),
-		"SELECT id, name, path, type FROM folder_file_info WHERE id = $1", fileID).Scan(&file.ID, &file.Name, &file.Path, &file.Type)
+		"SELECT id, name, path, type, extension FROM folder_file_info WHERE id = $1", fileID).Scan(&file.ID, &file.Name, &file.Path, &file.Type, &ext)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil, fmt.Errorf("file not found with ID: %s", fileID)
+		}
 		return nil, nil, fmt.Errorf("could not retrieve file information: %v", err)
 	}
+
+	file.Ext = ext
 
 	if file.Type == "folder" {
 		zipFilePath, err := s.createZipFromFolder(file.Path)
@@ -156,6 +184,48 @@ func (s *MedicalRecordsService) DownloadFile(fileID string) (*models.FileFolder,
 		}
 		return &file, fileReader, nil
 	}
+}
+
+func (s *MedicalRecordsService) DownloadMultipleFiles(fileIDs []string) (io.ReadCloser, error) {
+	conn, err := s.db.Acquire(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("could not acquire database connection: %v", err)
+	}
+	defer conn.Release()
+
+	var files []models.FileFolder
+	for _, fileID := range fileIDs {
+		var file models.FileFolder
+		var ext *string
+
+		err = conn.QueryRow(context.Background(),
+			"SELECT id, name, path, type, extension FROM folder_file_info WHERE id = $1", fileID).Scan(&file.ID, &file.Name, &file.Path, &file.Type, &ext)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				log.Printf("File not found with ID: %s, skipping", fileID)
+				continue
+			}
+			return nil, fmt.Errorf("could not retrieve file information for ID %s: %v", fileID, err)
+		}
+		file.Ext = ext
+		files = append(files, file)
+	}
+
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no valid files found")
+	}
+
+	zipFilePath, err := s.createZipFromMultipleFiles(files)
+	if err != nil {
+		return nil, fmt.Errorf("could not create zip file: %v", err)
+	}
+
+	zipFile, err := os.Open(zipFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("could not open zip file: %v", err)
+	}
+
+	return zipFile, nil
 }
 
 func (s *MedicalRecordsService) DeleteFolderAndContents(folderID string) error {
@@ -303,23 +373,31 @@ func (s *MedicalRecordsService) GetFolders(userID, parentID string, isSharedWith
 	if isSharedWithMe {
 		baseQuery = `
 		SELECT 
-			id, name, created_at, updated_at, type, extension, path 
+			id, name, created_at, updated_at, type, extension, path,
+			folder_type, category, owner_user_id, patient_id, 
+			uploaded_by_user_id, uploaded_by_role, included_in_rag
 		FROM 
 			folder_file_info 
 		WHERE 
 			user_id = $1 
 		AND 
-			shared_by_id IS NOT NULL
+			shared_by_id IS NOT NULL 
+		AND
+			folder_type = 'PERSONAL'
 		`
 		args = []interface{}{userID}
 	} else {
 		baseQuery = `
 		SELECT 
-			id, name, created_at, updated_at, type, extension, path 
+			id, name, created_at, updated_at, type, extension, path,
+			folder_type, category, owner_user_id, patient_id, 
+			uploaded_by_user_id, uploaded_by_role, included_in_rag
 		FROM 
 			folder_file_info 
 		WHERE 
-			user_id = $1 
+			user_id = $1  
+		AND
+			folder_type = 'PERSONAL'
 		`
 		args = []interface{}{userID}
 	}
@@ -341,15 +419,35 @@ func (s *MedicalRecordsService) GetFolders(userID, parentID string, isSharedWith
 	for rows.Next() {
 		var folder models.FileFolder
 		var path *string
-		err := rows.Scan(&folder.ID, &folder.Name, &folder.CreatedAt, &folder.UpdatedAt, &folder.Type, &folder.Ext, &path)
+		var folderTypeStr *string
+		var categoryStr *string
+
+		err := rows.Scan(
+			&folder.ID, &folder.Name, &folder.CreatedAt, &folder.UpdatedAt,
+			&folder.Type, &folder.Ext, &path, &folderTypeStr, &categoryStr,
+			&folder.OwnerUserID, &folder.PatientID, &folder.UploadedByUserID,
+			&folder.UploadedByRole, &folder.IncludedInRAG)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
+
 		if path != nil {
 			folder.Path = *path
 		} else {
 			folder.Path = ""
 		}
+
+		if folderTypeStr != nil {
+			folder.FolderType = models.FolderType(*folderTypeStr)
+		} else {
+			folder.FolderType = models.FolderTypePersonal
+		}
+
+		if categoryStr != nil {
+			category := models.Category(*categoryStr)
+			folder.Category = &category
+		}
+
 		folders = append(folders, folder)
 	}
 
@@ -385,6 +483,221 @@ func (s *MedicalRecordsService) GetSubFolders(parentID string) ([]models.FileFol
 	}
 
 	return subfolders, nil
+}
+
+func (s *MedicalRecordsService) GetAllUsers() ([]models.User, error) {
+	conn, err := s.db.Acquire(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("could not acquire database connection: %v", err)
+	}
+	defer conn.Release()
+
+	var users []models.User
+
+	doctorQuery := `
+		SELECT 
+			doctor_id as id,
+			first_name,
+			last_name,
+			email,
+			'doctor' as role
+		FROM doctor_info
+	`
+	docRows, err := conn.Query(context.Background(), doctorQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching doctors: %v", err)
+	}
+	defer docRows.Close()
+
+	for docRows.Next() {
+		var user models.User
+		var firstName, lastName string
+		err := docRows.Scan(&user.ID, &firstName, &lastName, &user.Email, &user.Role)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning doctor row: %v", err)
+		}
+		user.Name = fmt.Sprintf("%s %s", firstName, lastName)
+		users = append(users, user)
+	}
+
+	if err = docRows.Err(); err != nil {
+		return nil, fmt.Errorf("error processing doctor rows: %v", err)
+	}
+
+	patientQuery := `
+		SELECT 
+			patient_id as id,
+			first_name,
+			last_name,
+			email,
+			'patient' as role
+		FROM patient_info
+	`
+
+	patientRows, err := conn.Query(context.Background(), patientQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching patients: %v", err)
+	}
+	defer patientRows.Close()
+
+	for patientRows.Next() {
+		var user models.User
+		var firstName, lastName string
+		err := patientRows.Scan(&user.ID, &firstName, &lastName, &user.Email, &user.Role)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning patient row: %v", err)
+		}
+		user.Name = fmt.Sprintf("%s %s", firstName, lastName)
+		users = append(users, user)
+	}
+
+	if err = patientRows.Err(); err != nil {
+		return nil, fmt.Errorf("error processing patient rows: %v", err)
+	}
+
+	receptionistQuery := `
+		SELECT 
+			receptionist_id as id,
+			first_name,
+			last_name,
+			email,
+			'receptionist' as role
+		FROM receptionists
+	`
+
+	receptionistRows, err := conn.Query(context.Background(), receptionistQuery)
+
+	defer receptionistRows.Close()
+
+	for receptionistRows.Next() {
+		var user models.User
+		var firstName, lastName string
+		err := receptionistRows.Scan(&user.ID, &firstName, &lastName, &user.Email, &user.Role)
+		if err != nil {
+			log.Printf("Error scanning receptionist row: %v", err)
+			continue
+		}
+		user.Name = fmt.Sprintf("%s %s", firstName, lastName)
+		users = append(users, user)
+	}
+
+	if err = receptionistRows.Err(); err != nil {
+		log.Printf("Error processing receptionist rows: %v", err)
+	}
+
+	return users, nil
+}
+
+func (s *MedicalRecordsService) GetMedicalRecordsByCategory(userID, userType, category, patientID string) ([]models.FileFolder, error) {
+	conn, err := s.db.Acquire(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("could not acquire database connection: %v", err)
+	}
+	defer conn.Release()
+
+	var baseQuery string
+	var args []interface{}
+
+	baseQuery = `
+	SELECT 
+		id, name, created_at, updated_at, type, size, extension, path,
+		folder_type, category, owner_user_id, patient_id, 
+		uploaded_by_user_id, uploaded_by_role, included_in_rag
+	FROM 
+		folder_file_info 
+	WHERE 
+		(patient_id = $1 AND folder_type = 'CLINICAL')
+	`
+	args = []interface{}{userID}
+
+	if category != "" {
+		baseQuery += " AND category = $" + fmt.Sprintf("%d", len(args)+1)
+		args = append(args, category)
+	}
+
+	baseQuery += " ORDER BY created_at DESC"
+
+	rows, err := conn.Query(context.Background(), baseQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	var records []models.FileFolder
+	for rows.Next() {
+		var record models.FileFolder
+		var path *string
+		var folderTypeStr *string
+		var categoryStr *string
+
+		err := rows.Scan(
+			&record.ID, &record.Name, &record.CreatedAt, &record.UpdatedAt,
+			&record.Type, &record.Size, &record.Ext, &path, &folderTypeStr, &categoryStr, &record.OwnerUserID, &record.PatientID, &record.UploadedByUserID, &record.UploadedByRole, &record.IncludedInRAG)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		if path != nil {
+			record.Path = *path
+		}
+
+		if folderTypeStr != nil {
+			record.FolderType = models.FolderType(*folderTypeStr)
+		}
+
+		if categoryStr != nil {
+			category := models.Category(*categoryStr)
+			record.Category = &category
+		}
+
+		records = append(records, record)
+	}
+
+	return records, nil
+}
+
+func (s *MedicalRecordsService) ShareDocumentToPatient(fileInfo *models.FileFolder, file io.Reader, folderName string, fileSize int64, contentType string) error {
+	id, _ := uuid.NewRandom()
+	fileInfo.ID = id.String()
+	fileInfo.CreatedAt = time.Now()
+	fileInfo.UpdatedAt = time.Now()
+	fileInfo.Size = fileSize
+
+	fileInfo.Path = fmt.Sprintf("records/medical-records/%s/%s/%s", fileInfo.UserID, folderName, fileInfo.Name)
+	fileInfo.Path = filepath.ToSlash(fileInfo.Path)
+
+	if err := s.uploadFileToS3(fileInfo.Path, file, fileSize, contentType); err != nil {
+		return fmt.Errorf("failed to upload file to S3: %v", err)
+	}
+
+	if fileInfo.FolderType == "" {
+		fileInfo.FolderType = models.FolderTypePersonal
+	}
+
+	if fileInfo.OwnerUserID == nil {
+		fileInfo.OwnerUserID = &fileInfo.UserID
+	}
+	if fileInfo.FolderType == models.FolderTypeClinical && fileInfo.PatientID == nil {
+		fileInfo.PatientID = &fileInfo.UserID
+	}
+
+	fileInfo.IncludedInRAG = (fileInfo.FolderType == models.FolderTypeClinical)
+
+	_, err := s.db.Exec(context.Background(),
+		"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, user_id, user_type, parent_id, path, folder_type, category, owner_user_id, patient_id, uploaded_by_user_id, uploaded_by_role, included_in_rag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+		fileInfo.ID, fileInfo.Name, fileInfo.CreatedAt, fileInfo.UpdatedAt, fileInfo.Type, fileInfo.Size, fileInfo.Ext, fileInfo.UserID, fileInfo.UserType, fileInfo.ParentID, fileInfo.Path, fileInfo.FolderType, fileInfo.Category, fileInfo.OwnerUserID, fileInfo.PatientID, fileInfo.UploadedByUserID, fileInfo.UploadedByRole, fileInfo.IncludedInRAG)
+	if err != nil {
+		return fmt.Errorf("failed to insert file info: %v", err)
+	}
+
+	_, err = s.db.Exec(context.Background(),
+		`INSERT INTO shared_items (shared_by_id, shared_with_id, shared_at, item_id) 
+		 VALUES ($1, $2, $3, $4)`,
+		fileInfo.UploadedByUserID, fileInfo.PatientID, time.Now(), fileInfo.ID)
+	if err != nil {
+		return fmt.Errorf("could not insert shared item: %v", err)
+	}
+	return nil
 }
 
 func (s *MedicalRecordsService) getParentFolderPath(folderID string) (string, error) {
@@ -505,9 +818,58 @@ func (s *MedicalRecordsService) createZipFromFolder(folderPath string) (string, 
 	return zipFilePath, nil
 }
 
+func (s *MedicalRecordsService) createZipFromMultipleFiles(files []models.FileFolder) (string, error) {
+	zipFileName := fmt.Sprintf("multiple_files_%s.zip", uuid.New().String())
+	zipFilePath := filepath.Join(os.TempDir(), zipFileName)
+
+	newZipFile, err := os.Create(zipFilePath)
+	if err != nil {
+		return "", err
+	}
+	defer newZipFile.Close()
+
+	zipWriter := zip.NewWriter(newZipFile)
+	defer zipWriter.Close()
+
+	for _, file := range files {
+
+		if file.Type == "folder" {
+			err = s.addFilesToZip(zipWriter, file.Path, file.Name)
+			if err != nil {
+				log.Printf("Error adding folder %s to zip: %v", file.Name, err)
+				continue
+			}
+		} else {
+			fileReader, err := s.downloadFileFromS3(file.Path)
+			if err != nil {
+				log.Printf("Error downloading file %s from S3: %v", file.Name, err)
+				continue
+			}
+
+			f, err := zipWriter.Create(file.Name)
+			if err != nil {
+				fileReader.Close()
+				log.Printf("Error creating zip entry for %s: %v", file.Name, err)
+				continue
+			}
+
+			_, err = io.Copy(f, fileReader)
+			fileReader.Close()
+
+			if err != nil {
+				log.Printf("Error writing file %s to zip: %v", file.Name, err)
+				continue
+			}
+		}
+	}
+
+	return zipFilePath, nil
+}
+
 func (s *MedicalRecordsService) addFilesToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
 	bucket := os.Getenv("S3_BUCKET_NAME")
-	prefix := strings.TrimSuffix(basePath, "/marker.txt")
+	normalizedBasePath := filepath.ToSlash(basePath)
+	prefix := strings.TrimSuffix(normalizedBasePath, "/marker.txt")
 
 	cfg, err := utils.GetAWSConfig()
 	if err != nil {
@@ -524,13 +886,16 @@ func (s *MedicalRecordsService) addFilesToZip(zipWriter *zip.Writer, basePath, b
 		return fmt.Errorf("error listing S3 objects: %v", err)
 	}
 
+	filesAdded := 0
 	for _, item := range resp.Contents {
 		key := *item.Key
-		if key == prefix+"/marker.txt" {
+
+		if strings.HasSuffix(key, "/marker.txt") || strings.HasSuffix(key, "marker.txt") {
 			continue
 		}
 
 		relativePath := strings.TrimPrefix(key, prefix+"/")
+
 		if strings.HasSuffix(key, "/") {
 			newBaseInZip := filepath.Join(baseInZip, relativePath)
 			err = s.addFilesToZip(zipWriter, key, newBaseInZip)
@@ -542,19 +907,21 @@ func (s *MedicalRecordsService) addFilesToZip(zipWriter *zip.Writer, basePath, b
 			if err != nil {
 				return fmt.Errorf("error getting S3 object: %v", err)
 			}
-			defer fileReader.Close()
 
 			f, err := zipWriter.Create(filepath.Join(baseInZip, relativePath))
 			if err != nil {
+				fileReader.Close()
 				return fmt.Errorf("error creating zip entry: %v", err)
 			}
 
 			_, err = io.Copy(f, fileReader)
+			fileReader.Close()
+
 			if err != nil {
 				return fmt.Errorf("error writing to zip entry: %v", err)
 			}
+			filesAdded++
 		}
 	}
-
 	return nil
 }
