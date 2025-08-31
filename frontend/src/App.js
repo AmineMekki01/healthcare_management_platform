@@ -180,15 +180,16 @@ function App() {
                       <ReceptionistProfilePage />
                     </PrivateRoute>
                   }
-                />
+                />                
                 <Route
-                  path="/MyDocs/*"
+                  path="/records/*"
                   element={
                     <PrivateRoute>
                       <FileManager />
                     </PrivateRoute>
                   }
                 />
+
                 <Route
                   path="/Messages"
                   element={

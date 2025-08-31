@@ -1,28 +1,85 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
   Tabs, 
   Tab, 
   Paper,
-  Container 
+  Container
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
   FolderShared as FolderSharedIcon,
   Share as ShareIcon,
   Description as DescriptionIcon,
+  LocalHospital as MedicalIcon
 } from '@mui/icons-material';
+import { AuthContext } from '../../auth/context/AuthContext';
 
 function FileUploadHeader() {
+  const { userType } = useContext(AuthContext);
+  const navigate = useNavigate();
   const location = useLocation();
   
+  const getCurrentTab = () => {
+    const path = location.pathname.split('/');
+    const tab = path[path.length - 1];
+    return ['my-docs', 'medical-records', 'upload', 'shared-with-me', 'i-shared-with'].includes(tab) 
+      ? tab 
+      : 'my-docs';
+  };
+
+  const activeView = getCurrentTab();
+  
   const getActiveTab = () => {
-    if (location.pathname.includes('/Upload')) return 0;
-    if (location.pathname.includes('/SharedWithMe')) return 1;
-    if (location.pathname.includes('/ISharedWith')) return 2;
+    if (activeView === 'medical-records') return 1;
+    if (activeView === 'upload') return 2;
+    if (activeView === 'shared-with-me') return 3;
+    if (activeView === 'i-shared-with') return 4;
     return 0;
+  };
+
+  const getVisibleTabs = () => {
+    const baseTabs = [
+      {
+        icon: <CloudUploadIcon sx={{ mb: 1 }} />,
+        label: "My Docs",
+        onClick: () => navigate('/records'),
+        description: "Personal documents (not used by Chatbot)"
+      },
+      {
+        icon: <MedicalIcon sx={{ mb: 1 }} />,
+        label: "Medical Records",
+        onClick: () => navigate('medical-records'),
+        description: "Clinical documents organized by category"
+      },
+    ];
+
+    if (userType === 'doctor' || userType === 'receptionist') {
+      baseTabs.push(
+        {
+          icon: <ShareIcon sx={{ mb: 1 }} />,
+          label: "Upload & Share",
+          onClick: () => navigate('upload'),
+          description: "Upload files and share with patients"
+        },
+        {
+          icon: <FolderSharedIcon sx={{ mb: 1 }} />,
+          label: "Shared with Me",
+          onClick: () => navigate('shared-with-me'),
+          description: "Documents shared by colleagues"
+        },
+        {
+          icon: <ShareIcon sx={{ mb: 1 }} />,
+          label: "I Shared With",
+          onClick: () => navigate('i-shared-with'),
+          description: "Documents I've shared with others"
+        }
+      );
+    }
+
+    return baseTabs;
   };
 
   return (
@@ -101,28 +158,20 @@ function FileUploadHeader() {
             }
           }}
         >
-          <Tab 
-            icon={<CloudUploadIcon sx={{ mb: 1 }} />}
-            label="My Uploads" 
-            component={Link} 
-            to="/MyDocs/Upload"
-            iconPosition="top"
-          />
-          <Tab 
-            icon={<FolderSharedIcon sx={{ mb: 1 }} />}
-            label="Shared with Me" 
-            component={Link} 
-            to="/MyDocs/SharedWithMe"
-            iconPosition="top"
-          />
-          <Tab 
-            icon={<ShareIcon sx={{ mb: 1 }} />}
-            label="I Shared With" 
-            component={Link} 
-            to="/MyDocs/ISharedWith"
-            iconPosition="top"
-          />
+          {getVisibleTabs().map((tab, index) => (
+            <Tab 
+              key={index}
+              icon={tab.icon}
+              label={tab.label} 
+              onClick={tab.onClick}
+              iconPosition="top"
+              title={tab.description}
+              component="div"
+              sx={{ cursor: 'pointer' }}
+            />
+          ))}
         </Tabs>
+
       </Paper>
     </Container>
   );

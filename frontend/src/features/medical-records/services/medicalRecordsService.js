@@ -1,5 +1,19 @@
 import axios from "../../../components/axiosConfig";
 
+
+const CATEGORY_MAPPING = {
+  'lab_results': 'LAB_RESULTS',
+  'ct_scan': 'IMAGING_CT',
+  'x_ray': 'IMAGING_XRAY',
+  'ultrasound': 'IMAGING_US',
+  'mammography': 'IMAGING_MAMMO',
+  'mri': 'IMAGING_MRI',
+  'pet_scan': 'IMAGING_PET',
+  'clinical_reports': 'CLINICAL_REPORT',
+  'discharge': 'DISCHARGE',
+  'other': 'OTHER'
+};
+
 class MedicalRecordsService {
   async fetchFolders(userId, userType, parentId = null, isSharedWithMe = false) {
     try {
@@ -7,8 +21,7 @@ class MedicalRecordsService {
       params.parent_id = parentId;
       params.shared_with_me = isSharedWithMe;
 
-      console.log("Fetching folders with params:", params);
-      const response = await axios.get('/api/v1/folders', { params });
+      const response = await axios.get('/api/v1/records/folders', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching folders:', error);
@@ -18,7 +31,7 @@ class MedicalRecordsService {
 
   async fetchBreadcrumbs(folderId) {
     try {
-      const response = await axios.get(`/api/v1/folders/${folderId}/breadcrumbs`);
+      const response = await axios.get(`/api/v1/records/folders/${folderId}/breadcrumbs`);
       return response.data;
     } catch (error) {
       console.error('Error fetching breadcrumbs:', error);
@@ -36,7 +49,7 @@ class MedicalRecordsService {
         parent_id: parentId
       };
       
-      const response = await axios.post('/api/v1/create-folder', data);
+      const response = await axios.post('/api/v1/records/create-folder', data);
       return response.data;
     } catch (error) {
       console.error('Error creating folder:', error);
@@ -46,7 +59,7 @@ class MedicalRecordsService {
 
   async deleteFolder(folderId) {
     try {
-      const response = await axios.delete(`/api/v1/delete-files/${folderId}`, {
+      const response = await axios.delete(`/api/v1/records/delete-files/${folderId}`, {
         data: { folderId }
       });
       return response.data;
@@ -58,7 +71,7 @@ class MedicalRecordsService {
 
   async updateFolderName(folderId, name) {
     try {
-      const response = await axios.patch(`/api/v1/update-folder/${folderId}`, { name });
+      const response = await axios.patch(`/api/v1/records/update-folder/${folderId}`, { name });
       return response.data;
     } catch (error) {
       console.error('Error updating folder name:', error);
@@ -68,7 +81,7 @@ class MedicalRecordsService {
 
   async renameItem(id, name) {
     try {
-      const response = await axios.patch('/api/v1/rename-item', { id, name });
+      const response = await axios.patch('/api/v1/records/rename-item', { id, name });
       return response.data;
     } catch (error) {
       console.error('Error renaming item:', error);
@@ -80,15 +93,15 @@ class MedicalRecordsService {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('userId', userId);
+      formData.append('user_id', userId);
       formData.append('parentFolderId', parentFolderId || '');
-      formData.append('userType', userType);
-      formData.append('fileType', 'file');
-      formData.append('fileName', file.name);
-      formData.append('fileSize', file.size);
-      formData.append('fileExt', file.name.split('.').pop());
-
-      const response = await axios.post('/api/v1/upload-file', formData, {
+      formData.append('user_type', userType);
+      formData.append('file_type', 'file');
+      formData.append('file_name', file.name);
+      formData.append('file_size', file.size);
+      formData.append('file_ext', file.name.split('.').pop());
+      
+      const response = await axios.post('/api/v1/records/upload-file', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -102,7 +115,7 @@ class MedicalRecordsService {
 
   async downloadFile(fileId) {
     try {
-      const response = await axios.get(`/api/v1/download-file/${fileId}`, {
+      const response = await axios.get(`/api/v1/records/download-file/${fileId}`, {
         responseType: 'blob',
       });
       return response.data;
@@ -112,9 +125,26 @@ class MedicalRecordsService {
     }
   }
 
+  async downloadMultipleFiles(fileIds, folderName = null) {
+    try {
+      const requestData = { file_ids: fileIds };
+      if (folderName) {
+        requestData.folder_name = folderName;
+      }
+      
+      const response = await axios.post('/api/v1/records/download-multiple-files', requestData, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error downloading multiple files:', error);
+      throw error;
+    }
+  }
+
   async fetchSharedWithMe(userId) {
     try {
-      const response = await axios.get(`/api/v1/share/shared-with-me?userId=${userId}`);
+      const response = await axios.get(`/api/v1/records/share/shared-with-me?userId=${userId}`);
       return response.data.items || response.data || [];
     } catch (error) {
       console.error('Error fetching shared with me items:', error);
@@ -124,7 +154,7 @@ class MedicalRecordsService {
 
   async fetchSharedByMe(userId) {
     try {
-      const response = await axios.get(`/api/v1/share/shared-by-me?userId=${userId}`);
+      const response = await axios.get(`/api/v1/records/share/shared-by-me?userId=${userId}`);
       return response.data.items || [];
     } catch (error) {
       console.error('Error fetching shared by me items:', error);
@@ -134,11 +164,11 @@ class MedicalRecordsService {
 
   async shareItems(itemIDs, sharedWithID, userID, userType) {
     try {
-      const response = await axios.post('/api/v1/share/items', {
-        itemIDs,
-        sharedWithID,
-        userID,
-        userType,
+      const response = await axios.post('/api/v1/records/share/items', {
+        item_ids: itemIDs,
+        shared_with_id: sharedWithID,
+        user_id: userID,
+        user_type: userType,
       });
       return response.data;
     } catch (error) {
@@ -149,7 +179,7 @@ class MedicalRecordsService {
 
   async fetchDoctors() {
     try {
-      const response = await axios.get('/api/v1/doctors');
+      const response = await axios.get('/api/v1/records/doctors');
       const data = response.data;
       return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -157,7 +187,24 @@ class MedicalRecordsService {
       throw error;
     }
   }
-
+  async fetchUsers() {
+    try {
+      const response = await axios.get(`/api/v1/records/medical-records/all-users`, {
+        params: {
+          limit: 100,
+          offset: 0
+        },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = response.data;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  }
   getFileExtension(filename) {
     return filename.split('.').pop().toLowerCase();
   }
@@ -197,6 +244,104 @@ class MedicalRecordsService {
     if (this.isAudioFile(filename)) return 'audio';
     return 'other';
   }
+
+  async uploadClinicalDocument(file, patientId, category, uploadedByUserId, uploadedByRole, folderName) {
+    try {
+      const dbCategory = CATEGORY_MAPPING[category] || category.toUpperCase();
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('patient_id', patientId);
+      formData.append('category', dbCategory);
+      formData.append('uploaded_by_user_id', uploadedByUserId);
+      formData.append('uploaded_by_role', uploadedByRole);
+      formData.append('folder_name', folderName);
+
+      const response = await axios.post('/api/v1/records/medical-records/upload-clinical', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading clinical document:', error);
+      throw error;
+    }
+  }
+
+  async shareDocumentToPatient(documentId, patientId, category, uploadedByUserId, uploadedByRole) {
+    try {
+      const dbCategory = CATEGORY_MAPPING[category] || category.toUpperCase();
+      
+      const response = await axios.post('/api/v1/records/medical-records/share-to-patient', {
+        document_id: documentId,
+        patient_id: patientId,
+        category: dbCategory,
+        uploaded_by_user_id: uploadedByUserId,
+        uploaded_by_role: uploadedByRole
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sharing document to patient:', error);
+      throw error;
+    }
+  }
+
+  async getMedicalRecordsByCategory(userId, userType, category = '', patientId = '') {
+    try {      
+      const params = new URLSearchParams({
+        user_id: userId,
+        user_type: userType
+      });
+      
+      if (category) {
+        const dbCategory = CATEGORY_MAPPING[category] || category.toUpperCase();
+        params.append('category', dbCategory);
+      }
+      if (patientId) params.append('patient_id', patientId);
+
+      const url = `/api/v1/records/medical-records/by-category?${params}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+            
+      const records = response.data || [];
+      const convertedRecords = records.map(record => ({
+        ...record,
+        category: this.convertDbCategoryToFrontend(record.category)
+      }));
+      
+      return convertedRecords;
+    } catch (error) {
+      console.error('Error fetching medical records by category:', error);
+      console.error('Error details:', error.response?.data);
+      throw error;
+    }
+  }
+
+  convertDbCategoryToFrontend(dbCategory) {
+    const reverseMapping = {
+      'LAB_RESULTS': 'lab_results',
+      'IMAGING_CT': 'ct_scan',
+      'IMAGING_XRAY': 'x_ray',
+      'IMAGING_US': 'ultrasound',
+      'IMAGING_MAMMO': 'mammography',
+      'IMAGING_MRI': 'mri',
+      'IMAGING_PET': 'pet_scan',
+      'CLINICAL_REPORT': 'clinical_reports',
+      'DISCHARGE': 'discharge',
+      'OTHER': 'other'
+    };
+    return reverseMapping[dbCategory] || dbCategory?.toLowerCase();
+  }
 }
 
 const medicalRecordsService = new MedicalRecordsService();
@@ -224,6 +369,9 @@ export const uploadFile = (file, userId, userType, parentFolderId) =>
 export const downloadFile = (fileId) => 
   medicalRecordsService.downloadFile(fileId);
 
+export const downloadMultipleFiles = (fileIds, folderName) => 
+  medicalRecordsService.downloadMultipleFiles(fileIds, folderName);
+
 export const fetchSharedWithMe = (userId) => 
   medicalRecordsService.fetchSharedWithMe(userId);
 
@@ -235,5 +383,17 @@ export const shareItems = (itemIDs, sharedWithID, userID, userType) =>
 
 export const fetchDoctors = () => 
   medicalRecordsService.fetchDoctors();
+
+export const fetchUsers = () => 
+  medicalRecordsService.fetchUsers();
+
+export const uploadClinicalDocument = (file, patientId, category, uploadedByUserId, uploadedByRole, folderName) =>
+  medicalRecordsService.uploadClinicalDocument(file, patientId, category, uploadedByUserId, uploadedByRole, folderName);
+
+export const shareDocumentToPatient = (documentId, patientId, category, uploadedByUserId, uploadedByRole) =>
+  medicalRecordsService.shareDocumentToPatient(documentId, patientId, category, uploadedByUserId, uploadedByRole);
+
+export const getMedicalRecordsByCategory = (userId, userType, category, patientId) =>
+  medicalRecordsService.getMedicalRecordsByCategory(userId, userType, category, patientId);
 
 export default medicalRecordsService;

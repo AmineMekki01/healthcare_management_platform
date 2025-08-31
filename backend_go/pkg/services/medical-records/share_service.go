@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"path/filepath"
 	"time"
 
@@ -51,15 +52,16 @@ func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 func (s *ShareService) ShareItems(req models.ShareRequest) error {
 	for _, itemID := range req.ItemIDs {
 		var item models.FileFolder
-		err := s.db.QueryRow(context.Background(),
-			"SELECT id, name, type, path, size, extension FROM folder_file_info WHERE id = $1", itemID).
-			Scan(&item.ID, &item.Name, &item.Type, &item.Path, &item.Size, &item.Ext)
+		err := s.db.QueryRow(context.Background(), "SELECT id, name, type, path, size, extension, user_id, user_type, parent_id, shared_by_id, created_at, updated_at, folder_type, category, owner_user_id, patient_id, uploaded_by_user_id, uploaded_by_role, included_in_rag FROM folder_file_info WHERE id = $1", itemID).
+			Scan(&item.ID, &item.Name, &item.Type, &item.Path, &item.Size, &item.Ext, &item.UserID, &item.UserType, &item.ParentID, &item.SharedByID, &item.CreatedAt, &item.UpdatedAt, &item.FolderType, &item.Category, &item.OwnerUserID, &item.PatientID, &item.UploadedByUserID, &item.UploadedByRole, &item.IncludedInRAG)
 		if err != nil {
+			log.Println("Error retrieving item", itemID, err)
 			return fmt.Errorf("error retrieving item %s: %v", itemID, err)
 		}
 
 		err = s.copyFileOrFolder(item, req)
 		if err != nil {
+			log.Println("Error copying item", itemID, err)
 			return fmt.Errorf("error copying item %s: %v", itemID, err)
 		}
 
@@ -69,10 +71,11 @@ func (s *ShareService) ShareItems(req models.ShareRequest) error {
 			SharedWith: req.SharedWithID,
 			SharedAt:   time.Now(),
 		}
-
+		log.Println("req", req)
 		sql := `INSERT INTO shared_items (item_id, shared_by_id, shared_with_id, shared_at) VALUES ($1, $2, $3, $4)`
 		_, err = s.db.Exec(context.Background(), sql, sharedItem.ItemID, sharedItem.SharedBy, sharedItem.SharedWith, sharedItem.SharedAt)
 		if err != nil {
+			log.Println("Error inserting shared item record", itemID, err)
 			return fmt.Errorf("unable to insert shared item record: %v", err)
 		}
 	}
@@ -236,7 +239,7 @@ func (s *ShareService) GetSharedWithMe(userID string) ([]models.FileFolder, erro
 			return nil, fmt.Errorf("unable to scan row: %v", err)
 		}
 
-		item.SharedByID = sharedByID
+		item.SharedByID = &sharedByID
 		item.SharedByName = sharedByName
 		item.SharedByType = sharedByType
 		items = append(items, item)
@@ -264,11 +267,14 @@ func (s *ShareService) GetSharedByMe(userID string) ([]models.FileFolder, error)
             (SELECT CONCAT(first_name, ' ', last_name) FROM doctor_info WHERE doctor_id::text = s.shared_with_id)
         WHEN s.shared_with_id IN (SELECT patient_id::text FROM patient_info) THEN 
             (SELECT CONCAT(first_name, ' ', last_name) FROM patient_info WHERE patient_id::text = s.shared_with_id)
+        WHEN s.shared_with_id IN (SELECT receptionist_id::text FROM receptionists) THEN 
+            (SELECT CONCAT(first_name, ' ', last_name) FROM receptionists WHERE receptionist_id::text = s.shared_with_id)
         ELSE 'Unknown User'
     END as shared_with_name,
     CASE 
         WHEN s.shared_with_id IN (SELECT doctor_id::text FROM doctor_info) THEN 'doctor'
         WHEN s.shared_with_id IN (SELECT patient_id::text FROM patient_info) THEN 'patient'
+        WHEN s.shared_with_id IN (SELECT receptionist_id::text FROM receptionists) THEN 'receptionist'
         ELSE 'unknown'
     END as shared_with_type
 	FROM shared_items s 

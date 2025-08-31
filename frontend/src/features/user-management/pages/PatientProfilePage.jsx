@@ -252,7 +252,7 @@ const PatientProfilePage = () => {
               ...(canViewMedicalRecords ? [{
                 label: 'View Medical Records',
                 variant: 'secondary',
-                onClick: () => navigate(`/medical-records/${patientId}`),
+                onClick: () => navigate(`/records/${patientId}`),
                 small: true
               }] : []),
               ...(currentUser && currentUser.userId !== patientId && currentUser.userType === 'doctor' ? [{

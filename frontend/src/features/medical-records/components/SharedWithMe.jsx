@@ -44,7 +44,6 @@ import {
 
 const SharedWithMe = () => {
   const { userId } = useContext(AuthContext);
-  const { folderId } = useParams();
   const navigate = useNavigate();
   
   const [folders, setFolders] = useState([]);
@@ -223,7 +222,6 @@ const SharedWithMe = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
-      {/* Search Bar */}
       <Paper 
         elevation={0}
         sx={{ 
@@ -265,7 +263,6 @@ const SharedWithMe = () => {
         />
       </Paper>
 
-      {/* Breadcrumb Navigation */}
       <Paper 
         elevation={0}
         sx={{ 
@@ -283,7 +280,7 @@ const SharedWithMe = () => {
           <Link
             component="button"
             variant="body1"
-            onClick={() => navigate('/MyDocs/SharedWithMe')}
+            onClick={() => navigate('/SharedWithMe')}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -312,7 +309,6 @@ const SharedWithMe = () => {
           ))}
         </Breadcrumbs>
 
-        {/* Action Buttons */}
         {selectedFiles.size > 0 && (
           <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
             <Button
@@ -375,7 +371,6 @@ const SharedWithMe = () => {
         )}
       </Paper>
 
-      {/* Grouped Files Display */}
       {loading ? (
         <Box display="flex" justifyContent="center" py={8}>
           <CircularProgress size={60} sx={{ color: '#10b981' }} />
@@ -425,7 +420,6 @@ const SharedWithMe = () => {
                 </Typography>
               </Box>
             ) : (
-              /* Grouped Files */
               Object.values(getFilteredGroups()).map((group, groupIndex) => (
                 <Fade in timeout={1200 + groupIndex * 100} key={group.id}>
                   <Paper
@@ -567,7 +561,6 @@ const SharedWithMe = () => {
                                       />
                                     </Box>
 
-                                    {/* File/Folder Icon */}
                                     <Box 
                                       display="flex" 
                                       justifyContent="center" 
@@ -589,7 +582,6 @@ const SharedWithMe = () => {
                                       </Avatar>
                                     </Box>
 
-                                    {/* File/Folder Name */}
                                     <Box textAlign="center">
                                       <Typography 
                                         variant="subtitle1" 

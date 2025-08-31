@@ -214,6 +214,16 @@ func createTables(conn *pgxpool.Pool) error {
 			user_type VARCHAR(50) NOT NULL,
 			parent_id uuid REFERENCES folder_file_info(id),
 			shared_by_id uuid,
+			folder_type VARCHAR(20) DEFAULT 'PERSONAL' CHECK (folder_type IN ('PERSONAL', 'CLINICAL')),
+			category VARCHAR(50) CHECK (category IN ('LAB_RESULTS', 'IMAGING_CT', 'IMAGING_XRAY', 'IMAGING_US', 'IMAGING_MAMMO', 'IMAGING_MRI', 'IMAGING_PET', 'CLINICAL_REPORT', 'DISCHARGE', 'OTHER')),
+			body_part VARCHAR(50) CHECK (body_part IN ('HEAD', 'NECK', 'CHEST', 'ABDOMEN', 'PELVIS', 'SPINE', 'ARM', 'HAND', 'LEG', 'FOOT', 'BRAIN', 'HEART', 'LUNGS', 'KIDNEY', 'LIVER', 'KNEE', 'SHOULDER', 'HIP', 'ANKLE', 'WRIST', 'FULL_BODY', 'OTHER')),
+			study_date TIMESTAMP WITH TIME ZONE,
+			doctor_name VARCHAR(255),
+			owner_user_id uuid,
+			patient_id uuid,
+			uploaded_by_user_id uuid,
+			uploaded_by_role VARCHAR(50),
+			included_in_rag BOOLEAN DEFAULT FALSE,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 
@@ -440,18 +450,6 @@ func createTables(conn *pgxpool.Pool) error {
 			notes TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
-
-		`ALTER TABLE appointments 
-		ADD COLUMN IF NOT EXISTS appointment_type VARCHAR(50) DEFAULT 'consultation',
-		ADD COLUMN IF NOT EXISTS notes TEXT,
-		ADD COLUMN IF NOT EXISTS created_by UUID,
-		ADD COLUMN IF NOT EXISTS no_show BOOLEAN DEFAULT false,
-		ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-		ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
-
-		`ALTER TABLE patient_info 
-		ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-		ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
 	}
 
 	for _, query := range sqlQueries {

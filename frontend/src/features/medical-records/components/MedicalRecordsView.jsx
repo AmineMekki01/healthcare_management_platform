@@ -1,0 +1,510 @@
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  Chip,
+  Avatar,
+  Divider,
+  Container,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  ListItemSecondaryAction
+} from '@mui/material';
+import {
+  Description as FileIcon,
+  Person as PersonIcon,
+  Download as DownloadIcon,
+  Science as LabIcon,
+  Visibility as RadiologyIcon,
+  Assignment as ReportIcon,
+  ExitToApp as DischargeIcon,
+  Folder as FolderIcon
+} from '@mui/icons-material';
+import { AuthContext } from '../../auth/context/AuthContext';
+import { getMedicalRecordsByCategory, downloadFile, downloadMultipleFiles } from '../services/medicalRecordsService';
+
+const MEDICAL_CATEGORIES = {
+  'lab_results': { 
+    icon: <LabIcon />, 
+    label: 'Lab Results', 
+    color: '#4caf50',
+    description: 'Blood tests, urine tests, and other laboratory analyses'
+  },
+  'ct_scan': { 
+    icon: <RadiologyIcon />, 
+    label: 'CT Scan', 
+    color: '#2196f3',
+    description: 'Computed tomography scans and reports'
+  },
+  'x_ray': { 
+    icon: <RadiologyIcon />, 
+    label: 'X-Ray', 
+    color: '#2196f3',
+    description: 'X-ray images and radiological reports'
+  },
+  'ultrasound': { 
+    icon: <RadiologyIcon />, 
+    label: 'Ultrasound', 
+    color: '#2196f3',
+    description: 'Ultrasound images and diagnostic reports'
+  },
+  'mri': { 
+    icon: <RadiologyIcon />, 
+    label: 'MRI', 
+    color: '#2196f3',
+    description: 'Magnetic resonance imaging scans'
+  },
+  'clinical_reports': { 
+    icon: <ReportIcon />, 
+    label: 'Clinical Reports', 
+    color: '#ff9800',
+    description: 'Doctor consultations and clinical assessments'
+  },
+  'discharge': { 
+    icon: <DischargeIcon />, 
+    label: 'Discharge', 
+    color: '#9c27b0',
+    description: 'Hospital discharge summaries and instructions'
+  },
+  'other': { 
+    icon: <FileIcon />, 
+    label: 'Other', 
+    color: '#607d8b',
+    description: 'Other medical documents and records'
+  }
+};
+
+function MedicalRecordsView({ onBackToMyDocs }) {
+  const { userId } = useContext(AuthContext);
+  const [medicalRecords, setMedicalRecords] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryDocuments, setCategoryDocuments] = useState([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const fetchMedicalRecords = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      const data = await getMedicalRecordsByCategory(userId, 'patient');
+      
+      const groupedRecords = {};
+      data?.forEach(doc => {
+        const category = doc.category || 'other';
+        if (!groupedRecords[category]) {
+          groupedRecords[category] = [];
+        }
+        
+        const folderInfo = extractFolderInfo(doc);
+        doc.folderInfo = folderInfo;
+        
+        groupedRecords[category].push(doc);
+      });
+      
+      Object.keys(groupedRecords).forEach(category => {
+        const folderGroups = {};
+        groupedRecords[category].forEach(doc => {
+          const folderName = doc.folderInfo?.folderName || 'Ungrouped';
+          if (!folderGroups[folderName]) {
+            folderGroups[folderName] = {
+              folderName,
+              doctorName: doc.folderInfo?.doctorName,
+              studyDate: doc.folderInfo?.studyDate,
+              bodyPart: doc.folderInfo?.bodyPart,
+              files: []
+            };
+          }
+          folderGroups[folderName].files.push(doc);
+        });
+        groupedRecords[category] = Object.values(folderGroups);
+      });
+      
+      setMedicalRecords(groupedRecords);
+    } catch (error) {
+      console.error('Error fetching medical records:', error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchMedicalRecords();
+  }, [fetchMedicalRecords]);
+
+  const handleCategoryClick = (categoryKey) => {
+    setSelectedCategory(categoryKey);
+    setCategoryDocuments(medicalRecords[categoryKey] || []);
+    setDialogOpen(true);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const extractFolderInfo = (doc) => {
+    const path = doc.path || '';
+    const pathParts = path.split('/');
+    
+    const folderPattern = /Dr\.([^_]+)_(\d{4}-\d{2}-\d{2})_([^_]+)(?:_(.+))?/;
+    
+    for (let i = pathParts.length - 1; i >= 0; i--) {
+      const part = pathParts[i];
+      const match = part.match(folderPattern);
+      if (match) {
+        return {
+          folderName: part,
+          doctorName: match[1],
+          studyDate: match[2],
+          category: match[3],
+          bodyPart: match[4] || null
+        };
+      }
+    }
+    
+    const doctorName = doc.doctor_name || doc.uploader_name || 'Doctor';
+    const studyDate = doc.study_date || doc.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+    const category = MEDICAL_CATEGORIES[doc.category]?.label || 'Other';
+    const bodyPart = doc.body_part;
+    
+    let folderName = `Dr.${doctorName.replace(/\s+/g, '')}_${studyDate}_${category}`;
+    if (bodyPart && bodyPart !== 'OTHER') {
+      folderName += `_${bodyPart}`;
+    }
+    
+    return {
+      folderName,
+      doctorName,
+      studyDate,
+      category,
+      bodyPart
+    };
+  };
+
+  const handleDownload = async (documentId, filename) => {
+    try {
+      const blob = await downloadFile(documentId);
+      
+      if (blob.size === 0) {
+        console.error('Downloaded file is empty');
+        alert('Downloaded file is empty');
+        return;
+      }
+      
+      let finalFilename = filename || `document_${documentId}`;
+      if (!finalFilename.includes('.')) {
+        finalFilename = `${finalFilename}.bin`;
+      }
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = finalFilename;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert(`Download error: ${error.message}`);
+    }
+  };
+
+  const handleFolderDownload = async (folderGroup) => {
+    try {
+      const fileIds = folderGroup.files.map(file => file.folder_id || file.id);
+      
+      const blob = await downloadMultipleFiles(fileIds, folderGroup.folderName);
+      
+      if (blob.size === 0) {
+        alert('Downloaded folder is empty');
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${folderGroup.folderName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error downloading folder:', error);
+      alert(`Folder download error: ${error.message}`);
+    }
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Grid container spacing={3}>
+        {Object.entries(MEDICAL_CATEGORIES).map(([categoryKey, category]) => {
+          const documentsCount = medicalRecords[categoryKey]?.length || 0;
+          const hasDocuments = documentsCount > 0;
+          
+          return (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={categoryKey}>
+              <Card 
+                sx={{
+                  height: '100%',
+                  cursor: hasDocuments ? 'pointer' : 'default',
+                  opacity: hasDocuments ? 1 : 0.6,
+                  transition: 'all 0.3s ease',
+                  border: `2px solid ${category.color}20`,
+                  '&:hover': hasDocuments ? {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 8px 25px ${category.color}30`,
+                    borderColor: `${category.color}60`
+                  } : {}
+                }}
+                onClick={() => hasDocuments && handleCategoryClick(categoryKey)}
+              >
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  <Box 
+                    sx={{ 
+                      color: category.color, 
+                      mb: 2,
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {React.cloneElement(category.icon, { sx: { fontSize: 48 } })}
+                  </Box>
+                  
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      mb: 1,
+                      color: category.color
+                    }}
+                  >
+                    {category.label}
+                  </Typography>
+                  
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ mb: 2, minHeight: 40 }}
+                  >
+                    {category.description}
+                  </Typography>
+                  
+                  <Chip
+                    label={`${documentsCount} document${documentsCount !== 1 ? 's' : ''}`}
+                    sx={{
+                      bgcolor: hasDocuments ? `${category.color}15` : '#f5f5f5',
+                      color: hasDocuments ? category.color : '#999',
+                      fontWeight: 600
+                    }}
+                  />
+                </CardContent>
+                
+                {hasDocuments && (
+                  <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                    <Button
+                      size="small"
+                      sx={{ 
+                        color: category.color,
+                        fontWeight: 600,
+                        textTransform: 'none'
+                      }}
+                    >
+                      View Documents
+                    </Button>
+                  </CardActions>
+                )}
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          bgcolor: selectedCategory ? `${MEDICAL_CATEGORIES[selectedCategory]?.color}10` : 'transparent'
+        }}>
+          {selectedCategory && (
+            <>
+              <Box sx={{ color: MEDICAL_CATEGORIES[selectedCategory]?.color }}>
+                {MEDICAL_CATEGORIES[selectedCategory]?.icon}
+              </Box>
+              <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
+                {MEDICAL_CATEGORIES[selectedCategory]?.label}
+              </Typography>
+            </>
+          )}
+        </DialogTitle>
+        
+        <DialogContent>
+          {categoryDocuments.map((folderGroup, folderIndex) => (
+            <Box key={folderGroup.folderName || folderIndex} sx={{ mb: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2, 
+                mb: 2, 
+                p: 2, 
+                bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}10`,
+                borderRadius: 2,
+                border: `1px solid ${MEDICAL_CATEGORIES[selectedCategory]?.color}30`
+              }}>
+                <FolderIcon sx={{ color: MEDICAL_CATEGORIES[selectedCategory]?.color }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: MEDICAL_CATEGORIES[selectedCategory]?.color }}>
+                    {folderGroup.folderName}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Dr. {folderGroup.doctorName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      •
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(folderGroup.studyDate).toLocaleDateString()}
+                    </Typography>
+                    {folderGroup.bodyPart && (
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          •
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {folderGroup.bodyPart}
+                        </Typography>
+                      </>
+                    )}
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip 
+                    label={`${folderGroup.files.length} file${folderGroup.files.length !== 1 ? 's' : ''}`}
+                    size="small"
+                    sx={{ 
+                      bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}20`,
+                      color: MEDICAL_CATEGORIES[selectedCategory]?.color 
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleFolderDownload(folderGroup)}
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      width: 28,
+                      height: 28,
+                      '&:hover': {
+                        bgcolor: 'primary.dark'
+                      }
+                    }}
+                    title="Download entire folder"
+                  >
+                    <DownloadIcon sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              <List sx={{ pl: 2 }}>
+                {folderGroup.files.map((doc, fileIndex) => [
+                  <ListItem key={doc.id || fileIndex} sx={{ py: 1.5 }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}20`, width: 32, height: 32 }}>
+                        <FileIcon sx={{ color: MEDICAL_CATEGORIES[selectedCategory]?.color, fontSize: 16 }} />
+                      </Avatar>
+                    </ListItemAvatar>
+                    
+                    <ListItemText
+                      primary={
+                        <Typography variant="body1" component="span" sx={{ fontWeight: 500 }}>
+                          {doc.filename || doc.name || 'Untitled Document'}
+                        </Typography>
+                      }
+                      secondary={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <PersonIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {doc.uploader_name} ({doc.uploaded_by_role})
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(doc.created_at).toLocaleDateString()}
+                            </Typography>
+                            {doc.size && (
+                              <>
+                                <Typography variant="caption" color="text.secondary">•</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatFileSize(doc.size)}
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                      }
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton 
+                        onClick={() => handleDownload(doc.folder_id, doc.name)}
+                        size="small"
+                        sx={{ 
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: 'primary.dark'
+                          }
+                        }}
+                      >
+                        <DownloadIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>,
+                  fileIndex < folderGroup.files.length - 1 && <Divider key={`file-divider-${doc.id || fileIndex}`} sx={{ ml: 6 }} />
+                ]).flat().filter(Boolean)}
+              </List>
+            </Box>
+          ))}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+    </Container>
+  );
+}
+
+export default MedicalRecordsView;

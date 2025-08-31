@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -43,6 +43,7 @@ import {
   deleteFolder,
   renameItem,
   downloadFile,
+  downloadMultipleFiles,
   uploadFile,
   shareItems,
   fetchDoctors,
@@ -56,13 +57,12 @@ function MyUploads() {
   const { folderId } = useParams();
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState(new Set());
-  const [selectedFileId, setSelectedFileId] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const fetchAllFolder = async (folderId) => {
+  const fetchAllFolder = useCallback(async (folderId) => {
     if (!userId) {
       return;
     }
@@ -82,60 +82,80 @@ function MyUploads() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, userType]);
 
   useEffect(() => {
     if (!userId) {
       return;
     }
-    const newPath = [...currentPath.filter((id) => id !== null)];
-    if (folderId && !newPath.includes(folderId)) {
-      newPath.push(folderId);
-    }
-    setCurrentPath(newPath);
-    fetchAllFolder(folderId);
-  }, [folderId, userId]);
-
-  const navigateToFolder = (subfolderId, file_type) => {
-    if (file_type === 'folder') {
-      setCurrentPath((prevPath) => {
-        const newPath = [...prevPath];
-        if (!newPath.includes(subfolderId)) {
-          newPath.push(subfolderId);
+    
+    const initializeFolder = async () => {
+      if (folderId) {
+        try {
+          const breadcrumbData = await fetchBreadcrumbs(folderId);
+          
+          if (Array.isArray(breadcrumbData) && breadcrumbData.length > 0) {
+            setBreadcrumbs(breadcrumbData);
+            const fullPath = [...breadcrumbData.map(crumb => crumb.folder_id), folderId];
+            setCurrentPath(fullPath);
+          } else {
+            setBreadcrumbs([]);
+            setCurrentPath([folderId]);
+          }
+          
+          fetchAllFolder(folderId);
+        } catch (error) {
+          console.error('Error initializing folder:', error);
+          setCurrentPath([]);
+          setBreadcrumbs([]);
+          navigate('/records');
+          fetchAllFolder(null);
         }
-        return newPath;
-      });
-      navigate(`/MyDocs/Upload/${subfolderId}`);
-      fetchAllFolder(subfolderId);
+      } else {
+        setCurrentPath([]);
+        setBreadcrumbs([]);
+        fetchAllFolder(null);
+      }
+    };
+    
+    initializeFolder();
+  }, [folderId, userId, userType, navigate, fetchAllFolder]);
+
+  const navigateToFolder = (subfolderId, fileType) => {
+    if (fileType === 'folder') {
+
+      navigate(`/records/${subfolderId}`);
     }
+  };
+
+  const navigateToBreadcrumb = (targetFolderId) => {
+    navigate(`/records/${targetFolderId}`);
   };
 
   const onClickCreateFolder = async () => {
-    if (!userId) {
-      alert('User ID not available.');
-      return;
-    }
-    const name = prompt('Please enter folder name', 'New Folder');
-    if (name && name.trim()) {
-      const parent_id = currentPath[currentPath.length - 1] || null;
-      try {
-        await createFolder(name, userId, userType, parent_id);
-        fetchAllFolder(parent_id);
-      } catch (error) {
-        console.error('Error creating folder:', error);
-      }
+    const folderName = prompt('Enter folder name:');
+    if (folderName && folderName.trim()) {
+      await handleCreateFolder(folderName.trim());
     }
   };
+
+  const handleCreateFolder = async (folderName) => {
+    try {
+      const parent_id = folderId || null;
+      await createFolder(folderName, userId, userType, parent_id);
+      fetchAllFolder(parent_id);
+    } catch (error) {
+      console.error('Error creating template folders:', error);
+    }
+  };      
 
   const toggleFileSelection = (folderId) => {
     setSelectedFiles((prevSelectedFiles) => {
       const newSelection = new Set(prevSelectedFiles);
       if (newSelection.has(folderId)) {
         newSelection.delete(folderId);
-        setSelectedFileId(null);
       } else {
         newSelection.add(folderId);
-        setSelectedFileId(folderId);
       }
       return newSelection;
     });
@@ -153,16 +173,16 @@ function MyUploads() {
 
     if (!userConfirmation) return;
 
-    for (const folderId of selectedFiles) {
+    for (const folderIdToDelete of selectedFiles) {
       try {
-        await deleteFolder(folderId);
-        setFolders((prevFolders) => prevFolders.filter((folder) => folder.folder_id !== folderId));
-        const parent_id = currentPath[currentPath.length - 1] || null;
-        fetchAllFolder(parent_id);
+        await deleteFolder(folderIdToDelete);
+        setFolders((prevFolders) => prevFolders.filter((folder) => folder.folder_id !== folderIdToDelete));
       } catch (error) {
         console.error('Error deleting folder:', error);
       }
     }
+    const parent_id = folderId || null;
+    fetchAllFolder(parent_id);
     setSelectedFiles(new Set());
   };
 
@@ -207,8 +227,9 @@ function MyUploads() {
 
     try {
       setLoading(true);
-      await uploadFile(file, userId, userType, currentPath[currentPath.length - 1] || null);
-      fetchAllFolder(currentPath[currentPath.length - 1]);
+      const parent_id = folderId || null;
+      await uploadFile(file, userId, userType, parent_id);
+      fetchAllFolder(parent_id);
       alert('File uploaded successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -235,6 +256,37 @@ function MyUploads() {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Error during file download:', error);
+    }
+  };
+
+  const handleMultipleDownload = async () => {
+    if (selectedFiles.size === 0) {
+      alert('Please select files to download.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const selectedFileIds = Array.from(selectedFiles);
+      
+      if (selectedFileIds.length === 1) {
+        await handleDownload(selectedFileIds[0]);
+      } else {
+        const fileBlob = await downloadMultipleFiles(selectedFileIds);
+        const downloadUrl = window.URL.createObjectURL(fileBlob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `selected_files_${new Date().getTime()}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (error) {
+      console.error('Error during multiple file download:', error);
+      alert('Error downloading files: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -284,7 +336,12 @@ function MyUploads() {
           <Link
             component="button"
             variant="body1"
-            onClick={() => navigate('/MyDocs/Upload')}
+            onClick={() => {
+              setCurrentPath([]);
+              setBreadcrumbs([]);
+              navigate('/records');
+              fetchAllFolder(null);
+            }}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -301,7 +358,7 @@ function MyUploads() {
               key={crumb.folder_id}
               component="button"
               variant="body1"
-              onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}
+              onClick={() => navigateToBreadcrumb(crumb.folder_id)}
               sx={{
                 color: '#667eea',
                 textDecoration: 'none',
@@ -392,67 +449,68 @@ function MyUploads() {
                 Delete
               </Button>
 
-              {selectedFileId && (
-                <Button
-                  variant="outlined"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => handleDownload(selectedFileId)}
-                  sx={{
-                    borderRadius: '12px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    borderColor: '#10b981',
-                    color: '#10b981',
-                    '&:hover': {
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    }
-                  }}
-                >
-                  Download
-                </Button>
-              )}
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                onClick={handleMultipleDownload}
+                sx={{
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: '#10b981',
+                  color: '#10b981',
+                  '&:hover': {
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  }
+                }}
+              >
+                Download {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
+              </Button>
             </>
           )}
         </Box>
-
-        {selectedFiles.size === 1 && (
-          <Box mt={2} display="flex" gap={2} alignItems="center">
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Select Doctor</InputLabel>
-              <Select
-                value={selectedDoctor}
-                onChange={(e) => setSelectedDoctor(e.target.value)}
-                label="Select Doctor"
-                sx={{ borderRadius: '8px' }}
-              >
-                <MenuItem value="">
-                  <em>Choose a doctor</em>
-                </MenuItem>
-                {doctors.map((doctor) => (
-                  <MenuItem key={doctor.id} value={doctor.DoctorId}>
-                    Dr. {doctor.FirstName} {doctor.LastName}
+        
+        { userType === 'doctor' && (
+          selectedFiles.size === 1 && (
+            <Box mt={2} display="flex" gap={2} alignItems="center">
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Select Doctor</InputLabel>
+                <Select
+                  value={selectedDoctor}
+                  onChange={(e) => setSelectedDoctor(e.target.value)}
+                  label="Select Doctor"
+                  sx={{ borderRadius: '8px' }}
+                >
+                  <MenuItem value="">
+                    <em>Choose a doctor</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              startIcon={<ShareIcon />}
-              onClick={() => shareFolder(Array.from(selectedFiles)[0], selectedDoctor)}
-              disabled={!selectedDoctor}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #059669, #047857)',
-                }
-              }}
-            >
-              Share with Doctor
-            </Button>
-          </Box>
+                  {doctors.map((doctor) => (
+                    <MenuItem key={doctor.doctorId} value={doctor.doctorId}>
+                      Dr. {doctor.firstName} {doctor.lastName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                startIcon={<ShareIcon />}
+                onClick={() => shareFolder(Array.from(selectedFiles)[0], selectedDoctor)}
+                disabled={!selectedDoctor}
+                sx={{
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669, #047857)',
+                  }
+                }}
+              >
+                Share with Doctor
+              </Button>
+            </Box>
+          )
         )}
+        
       </Paper>
 
       {loading ? (

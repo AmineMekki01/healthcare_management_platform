@@ -167,7 +167,7 @@ const BottomNavbar = () => {
     baseItems.push(
         {
             label: 'My Documents',
-            href: '/MyDocs',
+            href: '/records',
             icon: <DescriptionIcon />,
         },
         {
