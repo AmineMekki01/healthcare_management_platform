@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import ChatList from './ChatList';
 import { AuthContext } from '../../../auth/context/AuthContext';
+import { chatService } from '../../services';
 import styled from 'styled-components';
-import { v4 as uuidv4 } from 'uuid';
 
 const CreateNewChat = styled.button`
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
@@ -83,7 +83,6 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
   const { userId } = useContext(AuthContext);
   
   const onClickCreateChat = async () => {
-
     if (!userId || userId === 'null' || userId === null || userId === undefined) {
       alert('Please log in to create a chat');
       return;
@@ -91,34 +90,20 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
 
     const chatName = prompt("Please enter the name of the chat : ", "New Chat");
     if (chatName) {
-      const chat_id = uuidv4();
-      const newChat = {
-        id : chat_id,
-        user_id: userId,
-        title: chatName,
-        model : "",
-        agent_role : "",
-        created_at : new Date().toISOString().slice(0, 19).replace('T', ' '),
-        updated_at : new Date().toISOString().slice(0, 19).replace('T', ' '),
-      
-      };
       try {
-        const response = await fetch('http://localhost:8000/v1/chatbot/chat-create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newChat),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setChats(prevChats => [...prevChats, newChat]);
-          handleSelectChat(newChat.id);
-        } else {
-          console.error('Failed to create chat - Response not ok:', response.status);
-        }
+        const newChat = await chatService.createChat(userId, chatName);
+        setChats(prevChats => [...prevChats, {
+          id: newChat.id,
+          title: newChat.title,
+          created_at: newChat.created_at,
+          updated_at: newChat.updated_at,
+          message_count: 0,
+          last_message: null
+        }]);
+        handleSelectChat(newChat.id);
       } catch (error) {
         console.error('Error creating Chat:', error);
+        alert('Failed to create chat. Please try again.');
       }
     }
   };
@@ -133,14 +118,9 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
 
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:8000/v1/chatbot/chats/${userId}`);
-    
-        if (response.ok) {
-          const data = await response.json();
-          setChats(data);
-        } else {
-          console.error('Failed to fetch chats - Response not ok:', response.status);
-        }
+        const data = await chatService.getUserChats(userId);
+        console.log('Fetched chats:', data);
+        setChats(data);
       } catch (error) {
         console.error('Error fetching chats:', error);
       } finally {

@@ -1,20 +1,19 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../../../auth/context/AuthContext';
 import remarkGfm from 'remark-gfm';
-import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadButton, FileUploadContainer, FilesUploadTitle, ChatInputContainer, FileUpload, Header, BackButton, ChatTitle} from './ChatInterface.styles';
+import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadContainer, FilesUploadTitle, ChatInputContainer, Header, BackButton, ChatTitle} from './ChatInterface.styles';
 import ReactMarkdown from 'react-markdown';
 import DocumentList from '../DocumentUpload/DocumentList';
 import FileUploadComponent from '../DocumentUpload/FileUpload';
 import { PatientMention } from '../PatientMention';
+import { messageService } from '../../services';
 
-const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isSmallScreen }) => {
+const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, toggleChatHistory, isSmallScreen }) => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [mentionedPatients, setMentionedPatients] = useState(new Map());
   const [cursorPosition, setCursorPosition] = useState(0);
   const [chats, setChats] = useState([]);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [files, setFiles] = useState([]);
   const fileUploadRef = useRef();
   const inputRef = useRef();
 
@@ -38,27 +37,17 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/v1/chatbot/message/${messageId}?user_id=${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
-      } else {
-        const error = await response.json();
-        alert(`Failed to delete message: ${error.detail || 'Unknown error'}`);
-      }
+      await messageService.deleteMessage(messageId, userId);
+      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
     } catch (error) {
       console.error('Error deleting message:', error);
-      alert('Failed to delete message. Please try again.');
+      alert(`Failed to delete message: ${error.message || 'Unknown error'}`);
     }
   };
   const handleInputChange = (event) => {
     const newValue = event.target.value;
     const newCursorPos = event.target.selectionStart;
-    
-    console.log("ChatInterface handleInputChange:", { newValue, newCursorPos });
-    
+      
     setUserInput(newValue);
     setCursorPosition(newCursorPos);
   };
@@ -80,31 +69,19 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
   };
 
   const extractMentionedPatients = (message) => {
-    const mentions = [];
-    
-    for (const [patientName, patientData] of mentionedPatients.entries()) {
-      const mentionPattern = new RegExp(`@${patientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`, 'g');
-      if (mentionPattern.test(message)) {
-        mentions.push(patientData);
-      }
-    }
-    
-    return mentions;
+    return messageService.extractMentionedPatients(message, mentionedPatients);
   };
     
-  const chat_id = chatId;
 
   const handleSelectDocument = (document) => {
-    setSelectedDocument(document);
+    console.log('Selected document:', document);
   };
 
   const handleFileSelect = (selectedFiles) => {
-    setFiles(selectedFiles);
     onFileSelect(selectedFiles);
   };
 
   useEffect(() => {
-    setFiles([]);
     if (fileUploadRef.current) {
       fileUploadRef.current.clearFiles();
     }
@@ -113,10 +90,6 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
 
 
   const handleSendMessage = async (event) => {
-    console.log("handleSendMessage");
-    console.log("userInput", userInput);
-    console.log("chatId", chatId);
-    console.log("userId", userId);
     event.preventDefault();
     if (!userInput.trim()) return;
 
@@ -126,47 +99,36 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
     }
 
     const mentionedPatientsList = extractMentionedPatients(userInput);
+    console.log('Mentioned patients list:', mentionedPatientsList);
+    const patientMention = mentionedPatientsList.length > 0 ? mentionedPatientsList[0].full_name : null;
     const patientId = mentionedPatientsList.length > 0 ? mentionedPatientsList[0].patient_id : null;
+
   
-    const userMessage = { agent_role: 'user', user_message: userInput };
+    const userMessage = { role: 'user', content: userInput, created_at: new Date().toISOString() };
     setMessages(prevMessages => [...prevMessages, userMessage]);
 
     const originalInput = userInput;
     setUserInput('');
 
     try {
-      const endpoint = 'http://localhost:8000/v1/chatbot/agent-response';
-      const requestBody = {
-        user_message: originalInput,
-        user_id: userId,
-        chat_id: chat_id,
-        ...(patientId && { patient_id: patientId })
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      const aiMessage = await messageService.sendMessage({
+        content: originalInput,
+        chatId,
+        userId,
+        patientId
       });
-  
-      if (response.ok) {
-        const data = await response.json();
-        const now = new Date().toISOString();
-        setMessages(prevMessages => [
-          ...prevMessages.filter(msg => msg.user_message !== originalInput), 
-          userMessage,
-          { agent_role: 'assistant', answer: data.answer }
-        ]);
-        
-        updateChatHistory(chat_id, now);
-        
-      } else {
-        console.error('Failed to get the answer');
-      }
+      
+      const normalizedAiMessage = { ...aiMessage, role: aiMessage.role }; 
+      setMessages(prevMessages => [
+        ...prevMessages.filter(msg => msg.content !== originalInput), 
+        userMessage,
+        normalizedAiMessage
+      ]);
+      
+      updateChatHistory(chatId, new Date().toISOString());
     } catch (error) {
       console.error('Error during chat interaction:', error);
+      alert('Failed to send message. Please try again.');
     }
   };
 
@@ -174,13 +136,8 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
     const fetchMessages = async () => {
       if (chatId && userId && userId !== 'null' && userId !== null && userId !== undefined) {
         try {
-          const response = await fetch(`http://localhost:8000/v1/chatbot/${chatId}/messages`);
-          if (response.ok) {
-            const messagesData = await response.json();
-            setMessages(messagesData);
-          } else {
-            console.error('Failed to fetch messages - Response not ok:', response.status);
-          }
+          const messages = await messageService.getChatMessages(chatId, userId);
+          setMessages(messages);
         } catch (error) {
           console.error('Error fetching messages:', error);
         }
@@ -204,18 +161,32 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
       )}
       <FileUploadContainer>
         <FilesUploadTitle>Documents</FilesUploadTitle>
-        <DocumentList documents={documents} onSelectDocument={handleSelectDocument} />
+        <DocumentList 
+          documents={documents} 
+          onSelectDocument={handleSelectDocument}
+          onDeleteDocument={onDeleteDocument}
+        />
         <div style={{ marginTop: '12px' }}>
           <FileUploadComponent ref={fileUploadRef} onFileSelect={handleFileSelect} />
         </div>
       </FileUploadContainer>
       <ChatInterfaceMessages>
-        {messages.map((msg, index) => (
-          <div key={index} style={{ position: 'relative', marginBottom: '16px' }}>
-            {msg.user_message && (
+        {messages.length === 0 && (
+          <div style={{ color: '#888', fontSize: '14px', margin: '8px 0' }}>
+            No messages yet.
+          </div>
+        )}
+        {messages.map((msg, index) => {
+          const displayRole = msg.role || msg.role || 'assistant';
+          if (!msg.role && !msg.role) {
+            console.warn('Message without role encountered, defaulting to assistant:', msg);
+          }
+          return (
+          <div key={msg.id || index} style={{ position: 'relative', marginBottom: '16px' }}>
+            {displayRole === 'user' && (
               <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <ChatInterfaceMessageUser style={{ flex: 1 }}>
-                  {msg.user_message}
+                  {msg.content}
                 </ChatInterfaceMessageUser>
                 <button
                   onClick={() => handleDeleteMessage(msg.id)}
@@ -243,11 +214,11 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
                 </button>
               </div>
             )}
-            {msg.answer && (
+            {displayRole === 'assistant' && (
               <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <ChatInterfaceMessageLlm style={{ flex: 1 }}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {msg.answer}
+                  {msg.content}
                  </ReactMarkdown>
                 </ChatInterfaceMessageLlm>
                 <button
@@ -277,7 +248,8 @@ const ChatInterface = ({ onFileSelect, documents, chatId, toggleChatHistory, isS
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </ChatInterfaceMessages>
 
       

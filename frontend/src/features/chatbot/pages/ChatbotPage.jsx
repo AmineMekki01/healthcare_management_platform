@@ -1,10 +1,10 @@
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from '../../../components/axiosConfig';
 import { AuthContext } from '../../auth/context/AuthContext';
 import ChatInterface from '../components/ChatInterface/ChatInterface';
 import {FileContainer, ChatContainer} from '../styles/ChatbotPage.styles';
-import ChatHistory from '../components/ChatHistory/ChatHistory'; 
+import ChatHistory from '../components/ChatHistory/ChatHistory';
+import { documentService } from '../services'; 
 
 
 function ChatbotPage() {
@@ -32,27 +32,13 @@ function ChatbotPage() {
   };
 
   const handleFileSelect = async (files) => {
-    const formData = new FormData();
-  
-    for (let i = 0; i < files.length; i++) {
-      formData.append('files', files[i]);
-    }
-  
-    formData.append('user_id', userId);
-    formData.append('chat_id', currentChatId);
-  
     try {
-      const response = await axios.post('http://localhost:8000/v1/chatbot/upload-document', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json',
-        },
-      });
-      const uploadedFileInfo = response.data.files_names;
-  
-      const newFiles = Array.isArray(uploadedFileInfo) ? uploadedFileInfo : [uploadedFileInfo];
-  
-      setDocuments(prevDocuments => [...prevDocuments, ...newFiles]);
+      console.log('[UPLOAD] Starting upload for chatId:', currentChatId, 'userId:', userId);
+      await documentService.uploadDocuments(currentChatId, userId, files);
+      console.log('[UPLOAD] Upload completed, fetching documents...');
+      const documentsData = await documentService.getChatDocuments(currentChatId, userId);
+      console.log('[UPLOAD] Documents fetched:', documentsData);
+      setDocuments(documentsData);
     } catch (error) {
       setError('There was an error uploading the file!');
       console.error('There was an error!', error);
@@ -64,16 +50,13 @@ function ChatbotPage() {
     setView('chat');
     navigate(`/chatbot/${chatId}`);
     try {
-      const response = await axios.get(`http://localhost:8000/v1/chatbot/documents/${chatId}`);
-      if (response.status === 200) {
-        const fileNames = response.data.documents.map(doc => doc.file_name);
-        setDocuments(fileNames);
-      }
+      const documentsData = await documentService.getChatDocuments(chatId, userId);
+      setDocuments(documentsData);
     } catch (error) {
       setError('Error fetching documents for the selected chat.');
       console.error('Error fetching documents:', error);
     }
-  }, [navigate]);
+  }, [navigate, userId]);
 
   const toggleChatHistory = () => {
     if (isSmallScreen) {

@@ -168,8 +168,8 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
     setDeletingChatId(chatId);
     
     try {
-      const response = await fetch(`http://localhost:8000/v1/chatbot/chat-delete${chatId}?user_id=${userId}`, {
-        method: 'DELETE',
+      const response = await fetch(`http://localhost:8000/api/v1/chatbot/chats/${chatId}?user_id=${userId}`, {
+        method: 'DELETE'
       });
       
       if (response.ok) {
@@ -186,7 +186,7 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
     }
   };
 
-  const sortedChat = [...chats].sort((a,b) => new Date(b.last_message_date) - new Date(a.last_message_date));
+  const sortedChat = [...chats].sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
 
   return (
     <ChatsList>
@@ -198,7 +198,7 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
           >
             <MessageAndTime>
               <MessageContent>{chat.title}</MessageContent>
-              <MessageTime>{formatMessageDate(chat.last_message_date)}</MessageTime>
+              <MessageTime>{formatMessageDate(chat.updated_at)}</MessageTime>
             </MessageAndTime>
           </Chat>
           <DeleteButton

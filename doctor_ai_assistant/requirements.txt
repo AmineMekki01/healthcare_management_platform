@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+asyncpg
+alembic
+pydantic
+python-dotenv
+openai
+qdrant-client
+tiktoken
+PyPDF2
+python-docx
+Pillow
+pytesseract
+python-multipart
+agents
