@@ -13,6 +13,7 @@ import {
   UploadButton,
   ButtonGroup
 } from './FileUpload.styles';
+import { documentService } from '../../services';
 
 const FileUpload = forwardRef(({ onFileSelect }, ref) => {
   const [files, setFiles] = useState([]);
@@ -26,23 +27,41 @@ const FileUpload = forwardRef(({ onFileSelect }, ref) => {
   }));
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return documentService.formatFileSize(bytes);
   };
 
   const handleFileChange = (event) => {
     const selectedFiles = Array.from(event.target.files);
-    setFiles(selectedFiles);
+    const validFiles = [];
+    
+    for (const file of selectedFiles) {
+      const validation = documentService.validateFile(file);
+      if (validation.isValid) {
+        validFiles.push(file);
+      } else {
+        alert(`File "${file.name}": ${validation.error}`);
+      }
+    }
+    
+    setFiles(validFiles);
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
     setIsDragOver(false);
     const droppedFiles = Array.from(event.dataTransfer.files);
-    setFiles(droppedFiles);
+    const validFiles = [];
+    
+    for (const file of droppedFiles) {
+      const validation = documentService.validateFile(file);
+      if (validation.isValid) {
+        validFiles.push(file);
+      } else {
+        alert(`File "${file.name}": ${validation.error}`);
+      }
+    }
+    
+    setFiles(validFiles);
   };
 
   const handleDragOver = (event) => {

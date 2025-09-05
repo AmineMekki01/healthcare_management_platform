@@ -18,17 +18,14 @@ const PatientMention = ({
   const { userId } = useContext(AuthContext);
 
   useEffect(() => {
-    console.log("PatientMention useEffect triggered:", { inputValue, cursorPosition });
     
     if (inputRef.current && inputValue) {
       const beforeCursor = inputValue.substring(0, cursorPosition);
       const atIndex = beforeCursor.lastIndexOf('@');
       
-      console.log("Checking for @ mention:", { beforeCursor, atIndex });
       
       if (atIndex !== -1) {
         const textAfterAt = beforeCursor.substring(atIndex + 1);
-        console.log("Found @ mention, text after @:", textAfterAt);
         
         const nameMatch = textAfterAt.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)/);
         const searchTerm = nameMatch ? nameMatch[1] : textAfterAt;
@@ -50,14 +47,11 @@ const PatientMention = ({
           left: rect.left + window.scrollX + textWidth
         };
         
-        console.log("Setting position:", newPosition);
         setPosition(newPosition);
       } else {
-        console.log("No @ found, hiding dropdown");
         setIsVisible(false);
       }
     } else {
-      console.log("No input value, hiding dropdown");
       setIsVisible(false);
     }
   }, [inputValue, cursorPosition, inputRef]);
@@ -70,11 +64,9 @@ const PatientMention = ({
 
   const searchPatients = async (term) => {
     try {
-      const response = await fetch(`http://localhost:8000/v1/chatbot/patients/search/${userId}?search=${encodeURIComponent(term)}&limit=5`);
+      const response = await fetch(`http://localhost:8000/api/v1/chatbot/patients/search/${userId}?search=${encodeURIComponent(term)}&limit=5`);
       if (response.ok) {
         const data = await response.json();
-        console.log("patient search data", data);
-        console.log("setting patients:", data.patients || []);
         setPatients(data.patients || []);
         setSelectedIndex(0);
       }
