@@ -1,7 +1,7 @@
-import React, {useContext} from 'react'
+import React from 'react'
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components'
 import moment from 'moment';
-import { AuthContext } from './../../../features/auth/context/AuthContext';
 
 const Message = styled.div`
     display: flex;
@@ -11,10 +11,27 @@ const Message = styled.div`
 
     &.owner {
         flex-direction: row-reverse; 
+        justify-content: flex-start;
         
         .message-info {
             display: none;
         }
+    }
+
+    &.not-owner {
+        flex-direction: row;
+        justify-content: flex-start;
+    }
+
+    /* Force positioning regardless of RTL */
+    &.owner {
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    &.not-owner {
+        margin-left: 0;
+        margin-right: auto;
     }
 `;
 
@@ -86,19 +103,21 @@ const MessageContent = styled.div`
     cursor: pointer;
     
     p {
-        color: #ffffff;
         padding: 14px 18px;
         border-radius: 20px 20px 20px 6px;
         font-size: 15px;
         line-height: 1.5;
         max-width: max-content;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #000000;
+        background-color:rgba(220, 220, 220, 0.89);
         box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
         position: relative;
         margin: 0;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        direction: ltr; /* Force LTR for message content */
+        text-align: left; /* Force left alignment for message text */
         
         &:hover {
             transform: translateY(-2px);
@@ -114,7 +133,10 @@ const MessageContent = styled.div`
         align-items: flex-end; 
         p {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
             border-radius: 20px 20px 6px 20px;
+            direction: ltr; /* Force LTR for user message content */
+            text-align: left; /* Force left alignment for user message text */
             
             &:hover {
                 box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
@@ -126,6 +148,14 @@ const MessageContent = styled.div`
             right: 0;
             left: auto;
             transform: none;
+        }
+    }
+
+    &.not-owner {
+        align-items: flex-start;
+        p {
+            direction: ltr; /* Force LTR for other user message content */
+            text-align: left; /* Force left alignment for other user message text */
         }
     }
 `;
@@ -146,10 +176,11 @@ const MessageImage = styled.img`
 `;
 
 const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientImage }) => {
+    const { t } = useTranslation('chat');
 
     const formatMessageDate = (dateString) => {
         if (!dateString) {
-            return 'just now';
+            return t('ui.justNow');
         }
         return moment(dateString).calendar(null, {
             sameDay: 'LT',
@@ -165,7 +196,7 @@ const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientI
         console.log("content : ", content)
         if (content) {
             if (content.startsWith("http")) {
-                return <MessageImage src={content} alt="uploaded image" />;
+                return <MessageImage src={content} alt={t('ui.uploadedImage')} />;
             } else {
                 return <p>{content}</p>;
             }

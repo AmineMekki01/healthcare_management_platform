@@ -1,0 +1,58 @@
+{
+  "header": {
+    "title": "Find Your Doctor",
+    "subtitle": "Search for healthcare professionals by name, specialty, location, or describe your symptoms for AI-powered recommendations"
+  },
+  "placeholders": {
+    "searchByName": "Search by Name...",
+    "searchBySpecialty": "Search by specialty...",
+    "searchByLocation": "Search by Location...",
+    "describeSymptoms": "Describe your symptoms for AI-powered doctor recommendations..."
+  },
+  "buttons": {
+    "analyzeSymptoms": "Analyze Symptoms",
+    "analyzing": "Analyzing...",
+    "clearAll": "Clear All"
+  },
+  "results": {
+    "title": "Search Results",
+    "doctorsFound_one": "{{count}} doctor found",
+    "doctorsFound_other": "{{count}} doctors found",
+    "noDoctorsTitle": "No doctors found",
+    "noDoctorsMessage": "Try adjusting your search criteria or location"
+  },
+  "messages": {
+    "locationError": "Unable to get your location. Please enter manually.",
+    "noResults": "No doctors found matching your criteria.",
+    "searchError": "An error occurred while searching. Please try again."
+  },
+  "specialties": {
+    "cardiology": "Cardiology",
+    "dermatology": "Dermatology",
+    "pediatrics": "Pediatrics",
+    "orthopedics": "Orthopedics",
+    "neurology": "Neurology",
+    "psychiatry": "Psychiatry",
+    "internalMedicine": "Internal Medicine",
+    "surgery": "Surgery"
+  },
+  "suggestions": {
+    "title": "Popular Health Concerns",
+    "generalCheckup": {
+      "title": "General Health Checkup",
+      "description": "Regular health monitoring and preventive care"
+    },
+    "heartProblems": {
+      "title": "Heart Problems",
+      "description": "Chest pain, irregular heartbeat, blood pressure issues"
+    },
+    "skinIssues": {
+      "title": "Skin Issues",
+      "description": "Rashes, acne, moles, skin conditions"
+    },
+    "mentalHealth": {
+      "title": "Mental Health",
+      "description": "Anxiety, depression, stress management"
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "title": "Medical Knowledge Feed",
+  "search": {
+    "label": "Search Posts",
+    "placeholder": "Search by title, content, or keywords..."
+  },
+  "filter": {
+    "label": "Filter by Specialty",
+    "placeholder": "All Specialties"
+  },
+  "loading": "Loading posts...",
+  "noPosts": "No posts found",
+  "error": {
+    "message": "Error loading posts: {{error}}"
+  },
+  "post": {
+    "viewFull": "View Full Post",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "likesCount": "{{count}} Likes",
+    "commentsCount": "{{count}} Comments",
+    "like": "Like",
+    "unlike": "Unlike",
+    "comments": "Comments",
+    "readingTime": "{{minutes}} min read",
+    "publishedOn": "Published on {{date}}",
+    "lastUpdated": "Last updated {{date}}",
+    "author": "By {{name}}",
+    "tags": "Tags",
+    "share": "Share",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this post?",
+    "deleteSuccess": "Post deleted successfully",
+    "deleteError": "Error deleting post"
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment...",
+    "submit": "Post Comment",
+    "submitting": "Posting...",
+    "noComments": "No comments yet. Be the first to comment!",
+    "loadMore": "Load More Comments",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteConfirm": "Are you sure you want to delete this comment?",
+    "loginRequired": "Please log in to comment",
+    "error": "Error posting comment. Please try again."
+  },
+  "create": {
+    "title": "Create New Post",
+    "titleLabel": "Post Title",
+    "titlePlaceholder": "Enter post title...",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Write your post content...",
+    "tagsLabel": "Tags",
+    "tagsExtraLabel": "Press enter to add",
+    "tagsPlaceholder": "Add tags (comma separated)...",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select category...",
+    "imageLabel": "Featured Image",
+    "imageUpload": "Upload Image",
+    "publish": "Publish Post",
+    "saveDraft": "Save as Draft",
+    "preview": "Preview",
+    "publishing": "Publishing...",
+    "success": "Post published successfully!",
+    "error": "Error publishing post. Please try again.",
+    "validation": {
+      "titleRequired": "Title is required",
+      "contentRequired": "Content is required",
+      "titleMinLength": "Title must be at least 5 characters",
+      "contentMinLength": "Content must be at least 50 characters"
+    }
+  },
+  "edit": {
+    "title": "Edit Post",
+    "update": "Update Post",
+    "updating": "Updating...",
+    "success": "Post updated successfully!",
+    "error": "Error updating post. Please try again.",
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?"
+  },
+  "doctorPosts": {
+    "title": "Your Medical Posts",
+    "searchLabel": "Search Your Posts",
+    "searchPlaceholder": "Search by title, content, specialty, or keywords...",
+    "noResultsFound": "No posts found for \"{{query}}\"",
+    "oneResultFound": "Found 1 post matching \"{{query}}\"",
+    "multipleResultsFound": "Found {{count}} posts matching \"{{query}}\"",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this post?",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "likesCount": "{{count}} Likes",
+    "commentsCount": "{{count}} Comments",
+    "noPostsFoundTitle": "No posts found",
+    "noPostsFoundMessage": "No posts match your search for \"{{query}}\". Try different keywords or clear the search to see all posts.",
+    "noPostsYetTitle": "No posts yet",
+    "noPostsYetMessage": "You haven't created any posts yet. Start sharing your medical knowledge!"
+  }
+}

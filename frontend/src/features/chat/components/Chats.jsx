@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import styled from 'styled-components'
+import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import styled from 'styled-components';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { ChatContext } from './../contexts/ChatContext'; 
 
@@ -209,6 +210,7 @@ const NotificationBadge = styled.div`
 `;
 
 const ChatsComponent = ({onSelectChat}) => {
+    const { t } = useTranslation('chat');
     const { userId } = useContext(AuthContext);
     const { state, dispatch } = useContext(ChatContext); 
     const { currentChat } = state;
@@ -247,7 +249,7 @@ const ChatsComponent = ({onSelectChat}) => {
 
     const formatMessageDate = (dateString) => {
         if (!dateString) {
-            return 'just now';
+            return t('ui.justNow');
         }
         return moment(dateString).calendar(null, {
             sameDay: 'LT',  
@@ -263,7 +265,7 @@ const ChatsComponent = ({onSelectChat}) => {
         if (!content) return '';
         const text = String(content);
         const isUrl = text.startsWith('http://') || text.startsWith('https://');
-        return isUrl ? 'Photo' : text;
+        return isUrl ? t('ui.photo') : text;
     };
 
     return (

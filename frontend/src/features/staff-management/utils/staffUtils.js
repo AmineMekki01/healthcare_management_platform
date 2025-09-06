@@ -1,7 +1,7 @@
 export const staffUtils = {
     formatFullName: (firstName, lastName) => {
         const fullName = `${firstName || ''} ${lastName || ''}`.trim();
-        return fullName || 'Unknown User';
+        return fullName || 'Unknown User'; // Note: This should use translation in components
     },
 
     generateInitials: (firstName, lastName) => {
@@ -11,7 +11,7 @@ export const staffUtils = {
     },
 
     formatPhoneNumber: (phone) => {
-        if (!phone) return 'N/A';
+        if (!phone) return 'N/A'; // Note: This should use translation in components
         
         const cleaned = phone.replace(/\D/g, '');
         
@@ -25,7 +25,7 @@ export const staffUtils = {
     },
 
     formatEmail: (email) => {
-        if (!email) return 'N/A';
+        if (!email) return 'N/A'; // Note: This should use translation in components
         return email.toLowerCase().trim();
     },
 
@@ -39,17 +39,17 @@ export const staffUtils = {
     validatePhoneNumber: (phone) => {
         if (!phone) return false;
         
-        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
         const cleaned = phone.replace(/\D/g, '');
         return phoneRegex.test(cleaned) && cleaned.length >= 10;
     },
 
     formatDate: (dateString, options = {}) => {
-        if (!dateString) return 'N/A';
+        if (!dateString) return 'N/A'; // Note: This should use translation in components
         
         try {
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Invalid Date';
+        if (isNaN(date.getTime())) return 'Invalid Date'; // Note: This should use translation in components
         
         const defaultOptions = {
             year: 'numeric',

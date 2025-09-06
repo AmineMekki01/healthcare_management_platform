@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -24,6 +25,7 @@ export default function ReportCard({
   onDelete, 
   deleteLoading = false 
 }) {
+  const { t } = useTranslation('reports');
   return (
     <Card
       sx={{
@@ -81,7 +83,7 @@ export default function ReportCard({
               {report.patientFirstName} {report.patientLastName}
             </Typography>
             <Chip 
-              label="Patient"
+              label={t('labels.patient')}
               size="small"
               sx={{
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
@@ -114,7 +116,7 @@ export default function ReportCard({
                 mb: 0.5
               }}
             >
-              Diagnosis
+              {t('labels.diagnosis')}
             </Typography>
             <Typography 
               variant="body1" 
@@ -151,7 +153,7 @@ export default function ReportCard({
                   mb: 0.5
                 }}
               >
-                Referred to
+                {t('labels.referredTo')}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -189,7 +191,7 @@ export default function ReportCard({
                   mb: 0.5
                 }}
               >
-                Created
+                {t('labels.created')}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -210,7 +212,7 @@ export default function ReportCard({
           {/* Action Buttons */}
           <Box display="flex" gap={1}>
             {onView && (
-              <Tooltip title="View Report" arrow>
+              <Tooltip title={t('actions.viewReport')} arrow>
                 <IconButton
                   size="small"
                   sx={{
@@ -232,7 +234,7 @@ export default function ReportCard({
             )}
             
             {onEdit && (
-              <Tooltip title="Edit Report" arrow>
+              <Tooltip title={t('actions.editReport')} arrow>
                 <IconButton
                   size="small"
                   sx={{
@@ -251,7 +253,7 @@ export default function ReportCard({
             )}
             
             {onDelete && (
-              <Tooltip title="Delete Report" arrow>
+              <Tooltip title={t('actions.deleteReport')} arrow>
                 <IconButton
                   size="small"
                   disabled={deleteLoading}

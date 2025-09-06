@@ -1,0 +1,79 @@
+{
+  "header": {
+    "selectChat": "اختر محادثة لبدء المراسلة",
+    "online": "متصل",
+    "hide": "← إخفاء",
+    "show": "→ إظهار"
+  },
+  "input": {
+    "placeholder": "اكتب رسالتك...",
+    "attach": "إرفاق ملف",
+    "send": "إرسال الرسالة",
+    "removePreview": "إزالة"
+  },
+  "search": {
+    "placeholder": "البحث عن المستخدمين...",
+    "error": "فشل في البحث عن المستخدمين. يرجى المحاولة مرة أخرى."
+  },
+  "messages": {
+    "photo": "صورة",
+    "justNow": "الآن",
+    "yesterday": "أمس",
+    "today": "اليوم"
+  },
+  "chats": {
+    "noChats": "لا توجد محادثات بعد",
+    "startChat": "ابحث عن المستخدمين لبدء محادثة",
+    "unreadMessages": "رسائل غير مقروءة"
+  },
+  "navbar": {
+    "title": "الرسائل",
+    "newChat": "محادثة جديدة",
+    "settings": "إعدادات المحادثة"
+  },
+  "status": {
+    "online": "متصل",
+    "offline": "غير متصل",
+    "typing": "يكتب...",
+    "lastSeen": "آخر ظهور"
+  },
+  "actions": {
+    "deleteChat": "حذف المحادثة",
+    "muteChat": "كتم المحادثة",
+    "blockUser": "حظر المستخدم",
+    "reportUser": "الإبلاغ عن المستخدم"
+  },
+  "notifications": {
+    "newMessage": "رسالة جديدة من",
+    "chatCreated": "تم إنشاء المحادثة بنجاح",
+    "chatDeleted": "تم حذف المحادثة",
+    "userBlocked": "تم حظر المستخدم",
+    "messageDeleted": "تم حذف الرسالة"
+  },
+  "errors": {
+    "failedToSend": "فشل في إرسال الرسالة",
+    "failedToLoad": "فشل في تحميل الرسائل",
+    "connectionLost": "انقطع الاتصال. جاري إعادة الاتصال...",
+    "fileUploadFailed": "فشل في رفع الملف",
+    "fileTooLarge": "الملف كبير جداً",
+    "invalidFileType": "نوع الملف غير صالح",
+    "uploadFailed": "فشل في الرفع. يرجى المحاولة مرة أخرى.",
+    "uploadError": "خطأ في رفع الملف. يرجى المحاولة مرة أخرى."
+  },
+  "welcome": {
+    "title": "مرحباً بك في محادثة طبيبي",
+    "subtitle": "تواصل مع المختصين الصحيين والمرضى في بيئة آمنة وسهلة الاستخدام.",
+    "features": {
+      "secure": "رسائل آمنة وخاصة",
+      "realtime": "تواصل فوري",
+      "files": "مشاركة الصور والملفات",
+      "network": "شبكة مهنية للرعاية الصحية"
+    }
+  },
+  "ui": {
+    "hideSidebar": "إخفاء ←",
+    "showSidebar": "إظهار ←",
+    "justNow": "الآن",
+    "uploadedImage": "صورة مرفوعة"
+  }
+}

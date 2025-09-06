@@ -1,0 +1,107 @@
+{
+  "title": "موجز المعرفة الطبية",
+  "search": {
+    "label": "البحث في المقالات",
+    "placeholder": "البحث بالعنوان أو المحتوى أو الكلمات المفتاحية..."
+  },
+  "filter": {
+    "label": "تصفية حسب التخصص",
+    "placeholder": "جميع التخصصات"
+  },
+  "loading": "جاري تحميل المقالات...",
+  "noPosts": "لم يتم العثور على مقالات",
+  "error": {
+    "message": "خطأ في تحميل المقالات: {{error}}"
+  },
+  "post": {
+    "viewFull": "عرض المقال كاملاً",
+    "showMore": "عرض المزيد",
+    "showLess": "عرض أقل",
+    "likesCount": "{{count}} إعجاب",
+    "commentsCount": "{{count}} تعليق",
+    "like": "إعجاب",
+    "unlike": "إلغاء الإعجاب",
+    "comments": "التعليقات",
+    "readingTime": "{{minutes}} دقيقة قراءة",
+    "publishedOn": "نُشر في {{date}}",
+    "lastUpdated": "آخر تحديث {{date}}",
+    "author": "بواسطة {{name}}",
+    "tags": "العلامات",
+    "share": "مشاركة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا المقال؟",
+    "deleteSuccess": "تم حذف المقال بنجاح",
+    "deleteError": "خطأ في حذف المقال"
+  },
+  "comments": {
+    "title": "التعليقات",
+    "placeholder": "اكتب تعليقاً...",
+    "submit": "نشر التعليق",
+    "submitting": "جاري النشر...",
+    "noComments": "لا توجد تعليقات بعد. كن أول من يعلق!",
+    "loadMore": "تحميل المزيد من التعليقات",
+    "reply": "رد",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا التعليق؟",
+    "loginRequired": "يرجى تسجيل الدخول للتعليق",
+    "error": "خطأ في نشر التعليق. يرجى المحاولة مرة أخرى."
+  },
+  "create": {
+    "title": "إنشاء مقال جديد",
+    "titleLabel": "عنوان المقال",
+    "titlePlaceholder": "أدخل عنوان المقال...",
+    "contentLabel": "المحتوى",
+    "contentPlaceholder": "اكتب محتوى مقالك...",
+    "tagsLabel": "العلامات",
+    "tagsExtraLabel": "اضغط على مفتاح الإدخال للإضافة",
+    "tagsPlaceholder": "أضف علامات (مفصولة بفواصل)...",
+    "categoryLabel": "الفئة",
+    "categoryPlaceholder": "اختر فئة...",
+    "imageLabel": "الصورة المميزة",
+    "imageUpload": "رفع صورة",
+    "publish": "نشر المقال",
+    "saveDraft": "حفظ كمسودة",
+    "preview": "معاينة",
+    "publishing": "جاري النشر...",
+    "success": "تم نشر المقال بنجاح!",
+    "error": "خطأ في نشر المقال. يرجى المحاولة مرة أخرى.",
+    "validation": {
+      "titleRequired": "العنوان مطلوب",
+      "contentRequired": "المحتوى مطلوب",
+      "titleMinLength": "يجب أن يكون العنوان 5 أحرف على الأقل",
+      "contentMinLength": "يجب أن يكون المحتوى 50 حرفاً على الأقل"
+    }
+  },
+  "edit": {
+    "title": "تعديل المقال",
+    "update": "تحديث المقال",
+    "updating": "جاري التحديث...",
+    "success": "تم تحديث المقال بنجاح!",
+    "error": "خطأ في تحديث المقال. يرجى المحاولة مرة أخرى.",
+    "unsavedChanges": "لديك تغييرات غير محفوظة. هل أنت متأكد من المغادرة؟"
+  },
+  "doctorPosts": {
+    "title": "مقالاتك الطبية",
+    "searchLabel": "البحث في مقالاتك",
+    "searchPlaceholder": "البحث بالعنوان أو المحتوى أو التخصص أو الكلمات المفتاحية...",
+    "noResultsFound": "لم يتم العثور على مقالات لـ \"{{query}}\"",
+    "oneResultFound": "تم العثور على مقال واحد يطابق \"{{query}}\"",
+    "multipleResultsFound": "تم العثور على {{count}} مقالات تطابق \"{{query}}\"",
+    "view": "عرض",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "confirmDelete": "هل أنت متأكد من حذف هذا المقال؟",
+    "showMore": "عرض المزيد",
+    "showLess": "عرض أقل",
+    "likesCount": "{{count}} إعجاب",
+    "commentsCount": "{{count}} تعليق",
+    "noPostsFoundTitle": "لم يتم العثور على مقالات",
+    "noPostsFoundMessage": "لا توجد مقالات تطابق بحثك عن \"{{query}}\". جرب كلمات مفتاحية مختلفة أو امسح البحث لرؤية جميع المقالات.",
+    "noPostsYetTitle": "لا توجد مقالات بعد",
+    "noPostsYetMessage": "لم تقم بإنشاء أي مقالات بعد. ابدأ بمشاركة معرفتك الطبية!"
+  }
+}

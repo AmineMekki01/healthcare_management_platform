@@ -88,13 +88,13 @@ async def agent_response(
 ):
     """Unified agent endpoint that processes messages and returns AI responses"""
     try:
-
         user_message = Message(
             chat_id=request.chat_id,
             user_id=str(request.user_id),
             model=ModelsEnum.OPENAI_GPT.value,
             role="user",
-            content=request.content
+            content=request.content,
+            created_at=datetime.now(timezone.utc)
         )
         chat_service.db.add(user_message)
         

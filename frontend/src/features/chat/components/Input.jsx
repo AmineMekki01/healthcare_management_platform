@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import { AuthContext } from '../../../features/auth/context/AuthContext';
+import { ChatContext } from '../contexts/ChatContext';
+import chatService from '../services/chatService';
 import ImgAttachment from './../../../assets/images/ChatImages/img-attachment.png';
 import Send from './../../../assets/images/ChatImages/send.png';
-import chatService from '../services/chatService';
-import { AuthContext } from './../../../features/auth/context/AuthContext';
-import { ChatContext } from './../contexts/ChatContext'; 
 
 const InputSection = styled.div`
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -216,6 +217,7 @@ const RemovePreviewButton = styled.button`
 `;
 
 const InputComponent = ({ sendMessage }) => {
+    const { t } = useTranslation('chat');
     const [inputValue, setInputValue] = useState('');
     const [attachedFile, setAttachedFile] = useState(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
@@ -250,11 +252,11 @@ const InputComponent = ({ sendMessage }) => {
                     setAttachedFile(null);
                 } else {
                     console.error('Invalid response from upload:', response);
-                    alert('Upload failed. Invalid server response.');
+                    alert(t('errors.uploadFailed'));
                 }
             } catch (error) {
                 console.error('Error uploading file:', error);
-                alert('Failed to upload image. Please try again.');
+                alert(t('errors.uploadError'));
             }
         } else if (inputValue.trim()) {
             sendMessage(inputValue, null);
@@ -289,11 +291,11 @@ const InputComponent = ({ sendMessage }) => {
                 {imagePreviewUrl && (
                     <ImagePreviewWrapper>
                         <ImagePreview src={imagePreviewUrl} alt="Preview" />
-                        <RemovePreviewButton onClick={removePreview}>×</RemovePreviewButton>
+                        <RemovePreviewButton onClick={removePreview}>{t('input.remove')}</RemovePreviewButton>
                     </ImagePreviewWrapper>
                 )}
                 <UserTextarea
-                    placeholder="Type your message..."
+                    placeholder={t('input.placeholder')}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     hasImage={!!imagePreviewUrl}
@@ -308,14 +310,14 @@ const InputComponent = ({ sendMessage }) => {
                     onChange={handleFileChange}
                 />
                 <AttachButton htmlFor="fileInput">
-                    <InputImg src={ImgAttachment} alt="Attach" />
+                    <InputImg src={ImgAttachment} alt={t('input.attach')} />
                 </AttachButton>
                 <SendButton 
                     type="button" 
                     onClick={handleSend}
                     disabled={!inputValue.trim() && !attachedFile}
                 >
-                    <img src={Send} alt="Send" />
+                    <img src={Send} alt={t('input.send')} />
                 </SendButton>
             </InputOptions>
         </InputSection>

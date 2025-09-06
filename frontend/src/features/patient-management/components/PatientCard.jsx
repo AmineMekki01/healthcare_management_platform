@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FaPhone, FaEnvelope, FaCalendarAlt, FaUser, FaEdit, FaEye } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import { 
     formatDisplayName, 
     getPatientInitials, 
@@ -167,6 +168,7 @@ const PatientCard = ({
     showActions = true,
     className 
     }) => {
+    const { t } = useTranslation('common');
     const fullName = formatDisplayName(patient);
     const initials = getPatientInitials(patient);
     const age = calculateAge(patient.dateOfBirth);
@@ -201,17 +203,17 @@ const PatientCard = ({
                 <PatientName>{fullName}</PatientName>
                 <PatientId>ID: {patient.patientId || patient.id}</PatientId>
                 <PatientStatus $isActive={patient.isActive}>
-                {patient.isActive ? 'Active' : 'Inactive'}
+                {patient.isActive ? t('status.active') : t('status.inactive')}
                 </PatientStatus>
             </PatientDetails>
             </PatientInfo>
             
             {showActions && (
             <CardActions>
-                <ActionButton onClick={handleView} title="View Details">
+                <ActionButton onClick={handleView} title={t('actions.viewDetails')}>
                 <FaEye />
                 </ActionButton>
-                <ActionButton onClick={handleEdit} title="Edit Patient">
+                <ActionButton onClick={handleEdit} title={t('actions.editPatient')}>
                 <FaEdit />
                 </ActionButton>
             </CardActions>
@@ -243,7 +245,7 @@ const PatientCard = ({
                 <FaUser />
                 </InfoIcon>
                 <InfoText>
-                <AgeText>{age} years old</AgeText>
+                <AgeText>{t('patient.yearsOld', { age })}</AgeText>
                 {patient.gender && ` • ${patient.gender}`}
                 </InfoText>
             </InfoRow>
@@ -255,7 +257,7 @@ const PatientCard = ({
                 <FaCalendarAlt />
                 </InfoIcon>
                 <InfoText>
-                Next appointment: {formatMedicalDate(patient.nextAppointment)}
+                {t('patient.nextAppointment')}: {formatMedicalDate(patient.nextAppointment)}
                 </InfoText>
             </InfoRow>
             )}

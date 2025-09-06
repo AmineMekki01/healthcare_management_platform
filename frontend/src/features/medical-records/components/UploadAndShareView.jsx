@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -40,46 +41,47 @@ import {
 import { AuthContext } from '../../auth/context/AuthContext';
 import { fetchUsers, uploadClinicalDocument } from '../services/medicalRecordsService';
 
-const MEDICAL_CATEGORIES = {
-  'lab_results': { icon: <LabIcon />, label: 'Lab Results', color: '#4caf50', requiresBodyPart: false },
-  'ct_scan': { icon: <RadiologyIcon />, label: 'CT Scan', color: '#2196f3', requiresBodyPart: true },
-  'x_ray': { icon: <RadiologyIcon />, label: 'X-Ray', color: '#2196f3', requiresBodyPart: true },
-  'ultrasound': { icon: <RadiologyIcon />, label: 'Ultrasound', color: '#2196f3', requiresBodyPart: true },
-  'mammography': { icon: <RadiologyIcon />, label: 'Mammography', color: '#2196f3', requiresBodyPart: false },
-  'mri': { icon: <RadiologyIcon />, label: 'MRI', color: '#2196f3', requiresBodyPart: true },
-  'pet_scan': { icon: <RadiologyIcon />, label: 'PET Scan', color: '#2196f3', requiresBodyPart: true },
-  'clinical_reports': { icon: <ReportIcon />, label: 'Clinical Reports', color: '#ff9800', requiresBodyPart: false },
-  'discharge': { icon: <DischargeIcon />, label: 'Discharge', color: '#9c27b0', requiresBodyPart: false },
-  'other': { icon: <FileIcon />, label: 'Other', color: '#607d8b', requiresBodyPart: false }
-};
+const getMedicalCategories = (t) => ({
+  'lab_results': { icon: <LabIcon />, label: t('categories.labResults.label'), color: '#4caf50', requiresBodyPart: false },
+  'ct_scan': { icon: <RadiologyIcon />, label: t('categories.ctScan.label'), color: '#2196f3', requiresBodyPart: true },
+  'x_ray': { icon: <RadiologyIcon />, label: t('categories.xRay.label'), color: '#2196f3', requiresBodyPart: true },
+  'ultrasound': { icon: <RadiologyIcon />, label: t('categories.ultrasound.label'), color: '#2196f3', requiresBodyPart: true },
+  'mammography': { icon: <RadiologyIcon />, label: t('categories.mammography.label'), color: '#2196f3', requiresBodyPart: false },
+  'mri': { icon: <RadiologyIcon />, label: t('categories.mri.label'), color: '#2196f3', requiresBodyPart: true },
+  'pet_scan': { icon: <RadiologyIcon />, label: t('categories.petScan.label'), color: '#2196f3', requiresBodyPart: true },
+  'clinical_reports': { icon: <ReportIcon />, label: t('categories.clinicalReports.label'), color: '#ff9800', requiresBodyPart: false },
+  'discharge': { icon: <DischargeIcon />, label: t('categories.discharge.label'), color: '#9c27b0', requiresBodyPart: false },
+  'other': { icon: <FileIcon />, label: t('categories.other.label'), color: '#607d8b', requiresBodyPart: false }
+});
 
-const BODY_PARTS = {
-  'HEAD': 'Head',
-  'NECK': 'Neck', 
-  'CHEST': 'Chest',
-  'ABDOMEN': 'Abdomen',
-  'PELVIS': 'Pelvis',
-  'SPINE': 'Spine',
-  'ARM': 'Arm',
-  'HAND': 'Hand',
-  'LEG': 'Leg',
-  'FOOT': 'Foot',
-  'BRAIN': 'Brain',
-  'HEART': 'Heart',
-  'LUNGS': 'Lungs',
-  'KIDNEY': 'Kidney',
-  'LIVER': 'Liver',
-  'KNEE': 'Knee',
-  'SHOULDER': 'Shoulder',
-  'HIP': 'Hip',
-  'ANKLE': 'Ankle',
-  'WRIST': 'Wrist',
-  'FULL_BODY': 'Full Body',
-  'OTHER': 'Other'
-};
+const getBodyParts = (t) => ({
+  'HEAD': t('bodyParts.head'),
+  'NECK': t('bodyParts.neck'), 
+  'CHEST': t('bodyParts.chest'),
+  'ABDOMEN': t('bodyParts.abdomen'),
+  'PELVIS': t('bodyParts.pelvis'),
+  'SPINE': t('bodyParts.spine'),
+  'ARM': t('bodyParts.arm'),
+  'HAND': t('bodyParts.hand'),
+  'LEG': t('bodyParts.leg'),
+  'FOOT': t('bodyParts.foot'),
+  'BRAIN': t('bodyParts.brain'),
+  'HEART': t('bodyParts.heart'),
+  'LUNGS': t('bodyParts.lungs'),
+  'KIDNEY': t('bodyParts.kidney'),
+  'LIVER': t('bodyParts.liver'),
+  'KNEE': t('bodyParts.knee'),
+  'SHOULDER': t('bodyParts.shoulder'),
+  'HIP': t('bodyParts.hip'),
+  'ANKLE': t('bodyParts.ankle'),
+  'WRIST': t('bodyParts.wrist'),
+  'FULL_BODY': t('bodyParts.fullBody'),
+  'OTHER': t('bodyParts.other')
+});
 
 
 function UploadAndShareView() {
+  const { t } = useTranslation('medical');
   const { userId, userType } = useContext(AuthContext);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -102,7 +104,7 @@ function UploadAndShareView() {
           setUsers(data || []);
         } catch (err) {
           console.error('Failed to fetch patients:', err);
-          setError('Failed to load patients');
+          setError(t('errors.failedToLoadPatients'));
         }
       }
     };
@@ -129,12 +131,12 @@ function UploadAndShareView() {
 
   const handleUpload = async () => {
     if (!selectedCategory || selectedFiles.length === 0) {
-      setError('Please select category and files to upload');
+      setError(t('errors.selectCategoryAndFiles'));
       return;
     }
 
     if ((userType === 'doctor' || userType === 'receptionist') && !selectedUser) {
-      setError('Please select a patient to share with');
+      setError(t('errors.selectPatientToShare'));
       return;
     }
 
@@ -182,11 +184,11 @@ function UploadAndShareView() {
     
     const currentUser = users.find(u => u.id === userId);
     const doctorName = currentUser?.name?.replace(/\s+/g, '') || 'Doctor';
-    const categoryLabel = MEDICAL_CATEGORIES[selectedCategory]?.label || '';
-    const bodyPartLabel = selectedBodyPart ? BODY_PARTS[selectedBodyPart] : '';
+    const categoryLabel = getMedicalCategories(t)[selectedCategory]?.label || '';
+    const bodyPartLabel = selectedBodyPart ? getBodyParts(t)[selectedBodyPart] : '';
     
     let folderName = `Dr.${doctorName}_${studyDate}_${categoryLabel}`;
-    if (bodyPartLabel && MEDICAL_CATEGORIES[selectedCategory]?.requiresBodyPart) {
+    if (bodyPartLabel && getMedicalCategories(t)[selectedCategory]?.requiresBodyPart) {
       folderName += `_${bodyPartLabel}`;
     }
     
@@ -204,7 +206,7 @@ function UploadAndShareView() {
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
-                Select Files
+                {t('upload.selectFiles')}
               </Typography>
               
               <input
@@ -233,7 +235,7 @@ function UploadAndShareView() {
                     }
                   }}
                 >
-                  Choose Files to Upload
+                  {t('upload.chooseFiles')}
                 </Button>
               </label>
 
@@ -270,17 +272,17 @@ function UploadAndShareView() {
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
-                Configuration
+                {t('upload.configuration')}
               </Typography>
 
               <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>Medical Category</InputLabel>
+                <InputLabel>{t('upload.medicalCategory')}</InputLabel>
                 <Select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  label="Medical Category"
+                  label={t('upload.medicalCategory')}
                 >
-                  {Object.entries(MEDICAL_CATEGORIES).map(([key, category]) => (
+                  {Object.entries(getMedicalCategories(t)).map(([key, category]) => (
                     <MenuItem key={key} value={key}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Box sx={{ color: category.color }}>
@@ -293,15 +295,15 @@ function UploadAndShareView() {
                 </Select>
               </FormControl>
 
-              {selectedCategory && MEDICAL_CATEGORIES[selectedCategory]?.requiresBodyPart && (
+              {selectedCategory && getMedicalCategories(t)[selectedCategory]?.requiresBodyPart && (
                 <FormControl fullWidth sx={{ mb: 3 }}>
-                  <InputLabel>Body Part</InputLabel>
+                  <InputLabel>{t('upload.bodyPart')}</InputLabel>
                   <Select
                     value={selectedBodyPart}
                     onChange={(e) => setSelectedBodyPart(e.target.value)}
-                    label="Body Part"
+                    label={t('upload.bodyPart')}
                   >
-                    {Object.entries(BODY_PARTS).map(([key, label]) => (
+                    {Object.entries(getBodyParts(t)).map(([key, label]) => (
                       <MenuItem key={key} value={key}>
                         {label}
                       </MenuItem>
@@ -313,7 +315,7 @@ function UploadAndShareView() {
               <TextField
                 fullWidth
                 type="date"
-                label="Study Date"
+                label={t('upload.studyDate')}
                 value={studyDate}
                 onChange={(e) => setStudyDate(e.target.value)}
                 sx={{ mb: 3 }}
@@ -324,11 +326,11 @@ function UploadAndShareView() {
 
               {(userType === 'doctor' || userType === 'receptionist') && (
                 <FormControl fullWidth sx={{ mb: 3 }}>
-                  <InputLabel>Share with Patient</InputLabel>
+                  <InputLabel>{t('upload.shareWithPatient')}</InputLabel>
                   <Select
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
-                    label="Share with Patient"
+                    label={t('upload.shareWithPatient')}
                   >
                     {users.map(user => (
                       <MenuItem key={user.id} value={user.id}>
@@ -354,13 +356,13 @@ function UploadAndShareView() {
               {selectedCategory && (userType === 'doctor' || userType === 'receptionist') && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #e9ecef' }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Auto-Generated Folder Name:
+                    {t('upload.autoGeneratedFolder')}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600, color: '#495057' }}>
                     {generateFolderName()}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Files will be organized in this folder for the patient
+                    {t('upload.folderDescription')}
                   </Typography>
                 </Box>
               )}
@@ -368,14 +370,14 @@ function UploadAndShareView() {
               {selectedCategory && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Selected Category:
+                    {t('upload.selectedCategory')}
                   </Typography>
                   <Chip
-                    icon={MEDICAL_CATEGORIES[selectedCategory]?.icon}
-                    label={MEDICAL_CATEGORIES[selectedCategory]?.label}
+                    icon={getMedicalCategories(t)[selectedCategory]?.icon}
+                    label={getMedicalCategories(t)[selectedCategory]?.label}
                     sx={{
-                      bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}15`,
-                      color: MEDICAL_CATEGORIES[selectedCategory]?.color,
+                      bgcolor: `${getMedicalCategories(t)[selectedCategory]?.color}15`,
+                      color: getMedicalCategories(t)[selectedCategory]?.color,
                       fontWeight: 600
                     }}
                   />
@@ -399,7 +401,7 @@ function UploadAndShareView() {
                   }
                 }}
               >
-                {loading ? 'Uploading...' : 'Upload & Share Documents'}
+                {loading ? t('upload.uploading') : t('upload.uploadAndShare')}
               </Button>
 
               {error && (
@@ -410,7 +412,7 @@ function UploadAndShareView() {
 
               {success && (
                 <Alert severity="success" sx={{ mt: 2 }}>
-                  Documents uploaded and shared successfully!
+                  {t('upload.successMessage')}
                 </Alert>
               )}
             </CardContent>

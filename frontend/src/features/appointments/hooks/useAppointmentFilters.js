@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const useAppointmentFilters = (doctorReservations, patientReservations, userType, activeMode) => {
+  const { t } = useTranslation('appointments');
   const [filterText, setFilterText] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
 
@@ -71,22 +73,20 @@ export const useAppointmentFilters = (doctorReservations, patientReservations, u
   }, [userType, activeMode, doctorReservations, patientReservations]);
 
   const getTabTitle = useCallback(() => {
-    const roleText = (userType === 'doctor' || userType === 'receptionist') ? 
-      ` as ${activeMode === 'patient' ? 'Patient' : activeMode === 'doctor' ? 'Doctor' : 'Receptionist'}` : '';
+    const getRoleText = () => {
+      if (userType === 'doctor' || userType === 'receptionist') {
+        const roleKey = activeMode === 'patient' ? 'patient' : 
+                       activeMode === 'doctor' ? 'doctor' : 'receptionist';
+        return ` ${t('dashboard.as')} ${t(`userTypes.${roleKey}`)}`;
+      }
+      return '';
+    };
     
-    switch (activeTab) {
-      case 'upcoming':
-        return `Upcoming Appointments${roleText}`;
-      case 'completed':
-        return `Completed Appointments${roleText}`;
-      case 'canceled':
-        return `Canceled Appointments${roleText}`;
-      case 'all':
-        return `All Appointments${roleText}`;
-      default:
-        return `Appointments${roleText}`;
-    }
-  }, [activeTab, userType, activeMode]);
+    const roleText = getRoleText();
+    const baseTitle = t(`dashboard.${activeTab}Appointments`);
+    
+    return `${baseTitle}${roleText}`;
+  }, [activeTab, userType, activeMode, t]);
 
   const currentAppointments = useMemo(() => getTabAppointments(), [getTabAppointments]);
   const filteredAppointments = useMemo(() => filterReservations(currentAppointments), [filterReservations, currentAppointments]);
@@ -94,11 +94,11 @@ export const useAppointmentFilters = (doctorReservations, patientReservations, u
   const tabTitle = useMemo(() => getTabTitle(), [getTabTitle]);
 
   const tabs = useMemo(() => [
-    { id: 'upcoming', label: 'Upcoming', count: stats.upcoming },
-    { id: 'completed', label: 'Completed', count: stats.completed },
-    { id: 'canceled', label: 'Canceled', count: stats.canceled },
-    { id: 'all', label: 'All', count: stats.total }
-  ], [stats]);
+    { id: 'upcoming', label: t('tabs.upcoming'), count: stats.upcoming },
+    { id: 'completed', label: t('tabs.completed'), count: stats.completed },
+    { id: 'canceled', label: t('tabs.canceled'), count: stats.canceled },
+    { id: 'all', label: t('tabs.all'), count: stats.total }
+  ], [stats, t]);
 
   return {
     filterText,

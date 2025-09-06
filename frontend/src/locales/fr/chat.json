@@ -1,0 +1,79 @@
+{
+  "header": {
+    "selectChat": "Sélectionnez une conversation pour commencer à envoyer des messages",
+    "online": "En ligne",
+    "hide": "← Masquer",
+    "show": "→ Afficher"
+  },
+  "input": {
+    "placeholder": "Tapez votre message...",
+    "attach": "Joindre un fichier",
+    "send": "Envoyer le message",
+    "removePreview": "Supprimer"
+  },
+  "search": {
+    "placeholder": "Rechercher des utilisateurs...",
+    "error": "Échec de la recherche d'utilisateurs. Veuillez réessayer."
+  },
+  "messages": {
+    "photo": "Photo",
+    "justNow": "à l'instant",
+    "yesterday": "Hier",
+    "today": "Aujourd'hui"
+  },
+  "chats": {
+    "noChats": "Aucune conversation pour le moment",
+    "startChat": "Recherchez des utilisateurs pour commencer une conversation",
+    "unreadMessages": "messages non lus"
+  },
+  "navbar": {
+    "title": "Messages",
+    "newChat": "Nouvelle Conversation",
+    "settings": "Paramètres de Chat"
+  },
+  "status": {
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "typing": "En train d'écrire...",
+    "lastSeen": "Vu pour la dernière fois"
+  },
+  "actions": {
+    "deleteChat": "Supprimer la Conversation",
+    "muteChat": "Mettre en Sourdine",
+    "blockUser": "Bloquer l'Utilisateur",
+    "reportUser": "Signaler l'Utilisateur"
+  },
+  "notifications": {
+    "newMessage": "Nouveau message de",
+    "chatCreated": "Conversation créée avec succès",
+    "chatDeleted": "Conversation supprimée",
+    "userBlocked": "Utilisateur bloqué",
+    "messageDeleted": "Message supprimé"
+  },
+  "errors": {
+    "failedToSend": "Échec de l'envoi du message",
+    "failedToLoad": "Échec du chargement des messages",
+    "connectionLost": "Connexion perdue. Reconnexion en cours...",
+    "fileUploadFailed": "Échec du téléchargement du fichier",
+    "fileTooLarge": "Le fichier est trop volumineux",
+    "invalidFileType": "Type de fichier invalide",
+    "uploadFailed": "Échec du téléchargement. Veuillez réessayer.",
+    "uploadError": "Erreur lors du téléchargement du fichier. Veuillez réessayer."
+  },
+  "welcome": {
+    "title": "Bienvenue sur TBIBI Chat",
+    "subtitle": "Connectez-vous avec des professionnels de santé et des patients dans un environnement sécurisé et convivial.",
+    "features": {
+      "secure": "Messagerie sécurisée et privée",
+      "realtime": "Communication en temps réel",
+      "files": "Partager images et fichiers",
+      "network": "Réseau professionnel de santé"
+    }
+  },
+  "ui": {
+    "hideSidebar": "← Masquer",
+    "showSidebar": "→ Afficher",
+    "justNow": "à l'instant",
+    "uploadedImage": "image téléchargée"
+  }
+}

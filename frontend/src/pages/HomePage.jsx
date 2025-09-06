@@ -13,8 +13,8 @@ import {
   ArrowForward,
   Star
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../features/auth/context/AuthContext';
-import Testimonials from "../components/Testimonals/Testimonals";
 import AgePieChart from '../components/common/Charts/AgePieChart';
 import stetoImage from "./../assets/images/no_background_doc_steto.png";
 
@@ -111,47 +111,47 @@ const ModernButton = styled(Button)(({ theme }) => ({
 
 function HomePage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { isLoggedIn } = useContext(AuthContext);
+  const { t } = useTranslation(['common']);
 
   const services = [
     {
       icon: <LocalHospital />,
-      title: "Expert Medical Care",
-      description: "Access to qualified healthcare professionals and specialists for comprehensive medical treatment."
+      title: t('common:homepage.services.expertCare.title'),
+      description: t('common:homepage.services.expertCare.description')
     },
     {
       icon: <Schedule />,
-      title: "Easy Appointment Booking",
-      description: "Schedule your appointments online with just a few clicks. No more waiting in long queues."
+      title: t('common:homepage.services.easyBooking.title'),
+      description: t('common:homepage.services.easyBooking.description')
     },
     {
       icon: <Chat />,
-      title: "24/7 Medical Chat",
-      description: "Get instant medical advice and support through our AI-powered chatbot available round the clock."
+      title: t('common:homepage.services.medicalChat.title'),
+      description: t('common:homepage.services.medicalChat.description')
     },
     {
       icon: <PersonalVideo />,
-      title: "Telemedicine",
-      description: "Consult with doctors remotely through secure video calls from the comfort of your home."
+      title: t('common:homepage.services.telemedicine.title'),
+      description: t('common:homepage.services.telemedicine.description')
     },
     {
       icon: <Security />,
-      title: "Secure & Private",
-      description: "Your medical data is protected with enterprise-grade security and privacy measures."
+      title: t('common:homepage.services.secure.title'),
+      description: t('common:homepage.services.secure.description')
     },
     {
       icon: <Speed />,
-      title: "Fast & Efficient",
-      description: "Quick access to medical services with minimal waiting time and streamlined processes."
+      title: t('common:homepage.services.efficient.title'),
+      description: t('common:homepage.services.efficient.description')
     }
   ];
 
   const stats = [
-    { value: "10,000+", label: "Happy Patients" },
-    { value: "500+", label: "Expert Doctors" },
-    { value: "50+", label: "Medical Specialties" },
-    { value: "24/7", label: "Emergency Support" }
+    { value: "10,000+", label: t('common:homepage.stats.happyPatients') },
+    { value: "500+", label: t('common:homepage.stats.expertDoctors') },
+    { value: "50+", label: t('common:homepage.stats.medicalSpecialties') },
+    { value: "24/7", label: t('common:homepage.stats.emergencySupport') }
   ];
 
   const patientData = {
@@ -172,11 +172,10 @@ function HomePage() {
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h2" component="h1" gutterBottom sx={{ fontWeight: 'bold', fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
-                Your Health, Our Priority
+                {t('common:homepage.hero.title')}
               </Typography>
               <Typography variant="h5" component="p" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
-                Experience modern healthcare with our comprehensive medical platform. 
-                Book appointments, consult with doctors, and manage your health records all in one place.
+                {t('common:homepage.hero.subtitle')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center' }}>
                 {!isLoggedIn ? (
@@ -195,7 +194,7 @@ function HomePage() {
                       }}
                       endIcon={<ArrowForward />}
                     >
-                      Get Started
+                      {t('common:buttons.getStarted')}
                     </ModernButton>
                     <ModernButton
                       variant="outlined"
@@ -211,7 +210,7 @@ function HomePage() {
                         },
                       }}
                     >
-                      Sign In
+                      {t('common:buttons.signIn')}
                     </ModernButton>
                   </>
                 ) : (
@@ -229,7 +228,7 @@ function HomePage() {
                     }}
                     endIcon={<ArrowForward />}
                   >
-                    Go to Dashboard
+                    {t('common:buttons.goToDashboard')}
                   </ModernButton>
                 )}
               </Box>
@@ -254,7 +253,7 @@ function HomePage() {
       {/* Services Section */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-          Why Choose Our Platform?
+          {t('common:homepage.sections.whyChoose')}
         </Typography>
         <Grid container spacing={4}>
           {services.map((service, index) => (
@@ -281,7 +280,7 @@ function HomePage() {
       <StatsSection>
         <Container maxWidth="lg">
           <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-            Trusted by Thousands
+            {t('common:homepage.sections.trustedByThousands')}
           </Typography>
           <Grid container spacing={4}>
             {stats.map((stat, index) => (
@@ -304,7 +303,7 @@ function HomePage() {
       <Box sx={{ bgcolor: 'background.paper', py: 8 }}>
         <Container maxWidth="lg">
           <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-            Our Community
+            {t('common:homepage.sections.ourCommunity')}
           </Typography>
           <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} md={6}>
@@ -347,31 +346,15 @@ function HomePage() {
         </Container>
       </Box>
 
-      {/* Testimonials Section */}
-      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
-        <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-            What Our Users Say
-          </Typography>
-          <Box sx={{ maxWidth: 800, margin: '0 auto' }}>
-            <RecoilRoot>
-              <Suspense fallback={<Typography textAlign="center">Loading testimonials...</Typography>}>
-                <Testimonials />
-              </Suspense>
-            </RecoilRoot>
-          </Box>
-        </Container>
-      </Box>
-
       {/* CTA Section */}
       {!isLoggedIn && (
         <CTASection>
           <Container maxWidth="md">
             <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Ready to Transform Your Healthcare Experience?
+              {t('common:homepage.cta.title')}
             </Typography>
             <Typography variant="h6" component="p" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
-              Join thousands of satisfied patients and healthcare professionals on our platform.
+              {t('common:homepage.cta.subtitle')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center' }}>
               <ModernButton
@@ -388,7 +371,7 @@ function HomePage() {
                 }}
                 endIcon={<ArrowForward />}
               >
-                Get Started Today
+                {t('common:buttons.getStartedToday')}
               </ModernButton>
               <ModernButton
                 variant="outlined"
@@ -404,7 +387,7 @@ function HomePage() {
                   },
                 }}
               >
-                Sign In
+                {t('common:buttons.signIn')}
               </ModernButton>
             </Box>
           </Container>

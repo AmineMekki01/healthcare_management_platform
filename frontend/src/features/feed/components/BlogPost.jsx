@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaThumbsUp, FaComment, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import CommentsSection from './CommentsSection';
 import { usePostInteractions } from '../hooks/usePostInteractions';
@@ -27,6 +28,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const BlogPost = ({post}) => {
+    const { t } = useTranslation('feed');
     const [showMore, setShowMore] = useState(false);
     const navigate = useNavigate();
     
@@ -67,7 +69,7 @@ const BlogPost = ({post}) => {
                     </PostAuthorInfo>
                 </PostAuthorInfoContainer>
                 <GoToPostActionButton onClick={handleGoToPost}>
-                    View Full Post
+                    {t('post.viewFull')}
                 </GoToPostActionButton>
             </PostHeader>
             <PostMetadata>
@@ -95,26 +97,26 @@ const BlogPost = ({post}) => {
                 >
                     {showMore ? (
                         <>
-                            Show Less <FaChevronUp />
+                            {t('post.showLess')} <FaChevronUp />
                         </>
                     ) : (
                         <>
-                            Show More <FaChevronDown />
+                            {t('post.showMore')} <FaChevronDown />
                         </>
                     )}
                 </ActionButton>
             )}
             <PostActions>
                 <PostStats>
-                    <LikesCount>{likes} Likes</LikesCount>
-                    <CommentsCount>{commentsCount} Comments</CommentsCount>
+                    <LikesCount>{t('post.likesCount', { count: likes })}</LikesCount>
+                    <CommentsCount>{t('post.commentsCount', { count: commentsCount })}</CommentsCount>
                 </PostStats>
                 <ActionButtonsContainer>
                     <ActionButton onClick={handleLike}>
-                        <FaThumbsUp /> {liked ? 'Unlike' : 'Like'}
+                        <FaThumbsUp /> {liked ? t('post.unlike') : t('post.like')}
                     </ActionButton>
                     <ActionButton onClick={toggleComments}>
-                        <FaComment /> Comments
+                        <FaComment /> {t('post.comments')}
                     </ActionButton>
                 </ActionButtonsContainer>
             </PostActions>

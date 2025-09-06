@@ -1,7 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { staffUtils } from '../utils';
 
 const useStaffFilters = (initialStaff = []) => {
+  const { t } = useTranslation('staff');
   const [activeFilters, setActiveFilters] = useState({});
   const [savedFilters, setSavedFilters] = useState([]);
 
@@ -17,7 +19,7 @@ const useStaffFilters = (initialStaff = []) => {
 
   const filteredStaff = useMemo(() => {
     return applyFilters(initialStaff, activeFilters);
-  }, [initialStaff, activeFilters]);
+  }, [initialStaff, activeFilters, applyFilters]);
 
   const filterStats = useMemo(() => {
     const stats = {};
@@ -183,34 +185,34 @@ const useStaffFilters = (initialStaff = []) => {
       const statuses = Array.isArray(activeFilters.status) 
         ? activeFilters.status 
         : [activeFilters.status];
-      summary.push(`Status: ${statuses.join(', ')}`);
+      summary.push(t('utils.filterSummary.status', { statuses: statuses.join(', ') }));
     }
     
     if (activeFilters.role) {
       const roles = Array.isArray(activeFilters.role) 
         ? activeFilters.role 
         : [activeFilters.role];
-      summary.push(`Role: ${roles.join(', ')}`);
+      summary.push(t('utils.filterSummary.role', { roles: roles.join(', ') }));
     }
     
     if (activeFilters.experience) {
-      summary.push(`Experience: ${activeFilters.experience}`);
+      summary.push(t('utils.filterSummary.experience', { experience: activeFilters.experience }));
     }
     
     if (activeFilters.verification) {
-      summary.push(`Verification: ${activeFilters.verification}`);
+      summary.push(t('utils.filterSummary.verification', { verification: activeFilters.verification }));
     }
     
     if (activeFilters.dateRange) {
-      summary.push('Date Range Applied');
+      summary.push(t('utils.filterSummary.dateRange'));
     }
     
     if (activeFilters.search) {
-      summary.push(`Search: "${activeFilters.search}"`);
+      summary.push(t('utils.filterSummary.search', { query: activeFilters.search }));
     }
     
     return summary;
-  }, [activeFilters]);
+  }, [activeFilters, t]);
 
   return {
     activeFilters,

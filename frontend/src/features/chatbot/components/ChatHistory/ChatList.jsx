@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import moment from 'moment';
 
@@ -142,11 +143,12 @@ const MessageTime = styled.span`
 `;
 
 const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId }) => {
+  const { t } = useTranslation('chatbot');
   const [deletingChatId, setDeletingChatId] = useState(null);
   
   const formatMessageDate = (dateString) => {
     if (!dateString) {
-        return 'just now';
+        return t('chatList.justNow');
     }
     return moment(dateString).calendar(null, {
         sameDay: 'LT',
@@ -161,7 +163,7 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
   const handleDeleteChat = async (e, chatId, chatTitle) => {
     e.stopPropagation();
 
-    if (!window.confirm(`Are you sure you want to delete "${chatTitle}"? This action cannot be undone.`)) {
+    if (!window.confirm(t('chatList.confirmDelete', { chatTitle }))) {
       return;
     }
     
@@ -176,11 +178,11 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
         onDeleteChat(chatId);
       } else {
         const error = await response.json();
-        alert(`Failed to delete chat: ${error.detail || 'Unknown error'}`);
+        alert(t('chatList.deleteError', { error: error.detail || t('chatList.unknownError') }));
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
-      alert('Failed to delete chat. Please try again.');
+      alert(t('chatList.deleteFailure'));
     } finally {
       setDeletingChatId(null);
     }
@@ -205,7 +207,7 @@ const ChatList = ({ chats, onSelectChat, selectedChatId, onDeleteChat, userId })
             className="delete-button"
             onClick={(e) => handleDeleteChat(e, chat.id, chat.title)}
             disabled={deletingChatId === chat.id}
-            title="Delete conversation"
+            title={t('chatList.deleteConversation')}
           >
             {deletingChatId === chat.id ? '...' : '×'}
           </DeleteButton>

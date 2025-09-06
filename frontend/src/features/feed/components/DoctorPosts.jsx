@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import feedService from '../services/feedService';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
@@ -282,6 +283,7 @@ const SearchStats = styled.div`
 `;
 
 const DoctorPosts = () => {
+  const { t } = useTranslation('feed');
   const { userId } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -351,7 +353,7 @@ const DoctorPosts = () => {
   };
 
   const handleDeletePost = async (postId) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    if (window.confirm(t('doctorPosts.confirmDelete'))) {
       try {
         await feedService.deletePost(postId);
         const updatedPosts = posts.filter((post) => post.postId !== postId);
@@ -380,15 +382,15 @@ const DoctorPosts = () => {
     <DoctorPostsPageContainer>
       <EnhancedDoctorPostsContainer>
         <PageHeader>
-          <DoctorPostsTitle>Your Medical Posts</DoctorPostsTitle>
+          <DoctorPostsTitle>{t('doctorPosts.title')}</DoctorPostsTitle>
           <SearchContainer>
-            <SearchLabel htmlFor="search-posts">Search Your Posts</SearchLabel>
+            <SearchLabel htmlFor="search-posts">{t('doctorPosts.searchLabel')}</SearchLabel>
             <SearchInput
               id="search-posts"
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search by title, content, specialty, or keywords..."
+              placeholder={t('doctorPosts.searchPlaceholder')}
             />
             <SearchIcon />
           </SearchContainer>
@@ -397,11 +399,11 @@ const DoctorPosts = () => {
         {searchQuery && (
           <SearchStats>
             {filteredPosts.length === 0 ? (
-              `No posts found for "${searchQuery}"`
+              t('doctorPosts.noResultsFound', { query: searchQuery })
             ) : filteredPosts.length === 1 ? (
-              `Found 1 post matching "${searchQuery}"`
+              t('doctorPosts.oneResultFound', { query: searchQuery })
             ) : (
-              `Found ${filteredPosts.length} posts matching "${searchQuery}"`
+              t('doctorPosts.multipleResultsFound', { count: filteredPosts.length, query: searchQuery })
             )}
           </SearchStats>
         )}
@@ -428,13 +430,13 @@ const DoctorPosts = () => {
                   </PostTitleSection>
                   <PostActionsSection>
                     <ViewPostButton onClick={() => handleViewPost(post.postId)}>
-                      <FaEye /> View
+                      <FaEye /> {t('doctorPosts.view')}
                     </ViewPostButton>
                     <EnhancedEditButton onClick={() => handleEditPost(post.postId)}>
-                      <FaEdit /> Edit
+                      <FaEdit /> {t('doctorPosts.edit')}
                     </EnhancedEditButton>
                     <EnhancedDeleteButton onClick={() => handleDeletePost(post.postId)}>
-                      <FaTrashAlt /> Delete
+                      <FaTrashAlt /> {t('doctorPosts.delete')}
                     </EnhancedDeleteButton>
                   </PostActionsSection>
                 </PostHeaderSection>
@@ -450,11 +452,11 @@ const DoctorPosts = () => {
                     <ShowMoreButton onClick={() => toggleShowMore(post.postId)}>
                       {isExpanded ? (
                         <>
-                          Show Less <FaChevronUp />
+                          {t('doctorPosts.showLess')} <FaChevronUp />
                         </>
                       ) : (
                         <>
-                          Show More <FaChevronDown />
+                          {t('doctorPosts.showMore')} <FaChevronDown />
                         </>
                       )}
                     </ShowMoreButton>
@@ -462,8 +464,8 @@ const DoctorPosts = () => {
                 )}
                 
                 <PostStatsSection>
-                  <LikesCount>{post.likesCount} Likes</LikesCount>
-                  <CommentsCount>{post.commentsCount} Comments</CommentsCount>
+                  <LikesCount>{t('doctorPosts.likesCount', { count: post.likesCount })}</LikesCount>
+                  <CommentsCount>{t('doctorPosts.commentsCount', { count: post.commentsCount })}</CommentsCount>
                 </PostStatsSection>
               </EnhancedPostContainer>
             );
@@ -473,13 +475,13 @@ const DoctorPosts = () => {
             <PostContent style={{ textAlign: 'center', padding: '60px 28px', color: '#64748b' }}>
               {searchQuery ? (
                 <>
-                  <h3>No posts found</h3>
-                  <p>No posts match your search for "{searchQuery}". Try different keywords or clear the search to see all posts.</p>
+                  <h3>{t('doctorPosts.noPostsFoundTitle')}</h3>
+                  <p>{t('doctorPosts.noPostsFoundMessage', { query: searchQuery })}</p>
                 </>
               ) : (
                 <>
-                  <h3>No posts yet</h3>
-                  <p>You haven't created any posts yet. Start sharing your medical knowledge!</p>
+                  <h3>{t('doctorPosts.noPostsYetTitle')}</h3>
+                  <p>{t('doctorPosts.noPostsYetMessage')}</p>
                 </>
               )}
             </PostContent>

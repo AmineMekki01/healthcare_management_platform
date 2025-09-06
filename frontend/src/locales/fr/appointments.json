@@ -1,0 +1,158 @@
+{
+  "dashboard": {
+    "title": "Tableau de bord des rendez-vous",
+    "myAppointments": "Mes rendez-vous",
+    "pastAppointments": "Rendez-vous passés",
+    "todayAppointments": "Rendez-vous d'aujourd'hui",
+    "thisWeekAppointments": "Rendez-vous de cette semaine",
+    "scheduleAppointment": "Planifier un rendez-vous",
+    "rescheduleAppointment": "Reprogrammer le rendez-vous",
+    "cancelAppointment": "Annuler le rendez-vous",
+    "confirmAppointment": "Confirmer le rendez-vous",
+    "noAppointments": "Aucun rendez-vous trouvé",
+    "loadingAppointments": "Chargement des rendez-vous...",
+    "loading": "Chargement des rendez-vous...",
+    "error": "Erreur lors du chargement des rendez-vous",
+    "tryAgain": "Réessayer",
+    "titlePatient": "Mes rendez-vous en tant que patient",
+    "titleDoctor": "Mes rendez-vous en tant que médecin",
+    "titleReceptionist": "Mes rendez-vous en tant que réceptionniste",
+    "as": "en tant que",
+    "upcomingAppointments": "Rendez-vous à venir",
+    "completedAppointments": "Rendez-vous terminés",
+    "canceledAppointments": "Rendez-vous annulés",
+    "allAppointments": "Tous les rendez-vous"
+  },
+  "status": {
+    "scheduled": "Planifié",
+    "confirmed": "Confirmé",
+    "inProgress": "En Cours",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "noShow": "Absence",
+    "rescheduled": "Reprogrammé",
+    "pending": "En Attente de Confirmation"
+  },
+  "filters": {
+    "all": "Tous les Rendez-vous",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette Semaine",
+    "thisMonth": "Ce Mois",
+    "upcoming": "À Venir",
+    "past": "Passés",
+    "byStatus": "Filtrer par Statut",
+    "byDoctor": "Filtrer par Médecin",
+    "bySpecialty": "Filtrer par Spécialité",
+    "clearFilters": "Effacer les Filtres"
+  },
+  "details": {
+    "appointmentWith": "Rendez-vous avec",
+    "patientName": "Nom du Patient",
+    "doctorName": "Nom du Médecin",
+    "specialty": "Spécialité",
+    "date": "Date",
+    "time": "Heure",
+    "duration": "Durée",
+    "location": "Lieu",
+    "reason": "Motif de la Visite",
+    "notes": "Notes",
+    "instructions": "Instructions Pré-rendez-vous",
+    "reminderSent": "Rappel Envoyé",
+    "appointmentId": "ID du Rendez-vous",
+    "bookedOn": "Réservé le",
+    "lastModified": "Dernière Modification"
+  },
+  "actions": {
+    "viewDetails": "Voir les Détails",
+    "editAppointment": "Modifier le Rendez-vous",
+    "joinVideo": "Rejoindre l'Appel Vidéo",
+    "startConsultation": "Commencer la Consultation",
+    "markCompleted": "Marquer comme Terminé",
+    "markNoShow": "Marquer comme Absence",
+    "sendReminder": "Envoyer un Rappel",
+    "printDetails": "Imprimer les Détails",
+    "exportCalendar": "Exporter vers le Calendrier"
+  },
+  "booking": {
+    "selectDoctor": "Sélectionner un Médecin",
+    "selectDate": "Sélectionner une Date",
+    "selectTime": "Sélectionner un Créneau",
+    "availableSlots": "Créneaux Disponibles",
+    "noSlotsAvailable": "Aucun créneau disponible pour la date sélectionnée",
+    "reasonForVisit": "Motif de la Visite",
+    "additionalNotes": "Notes Supplémentaires",
+    "confirmBooking": "Confirmer la Réservation",
+    "bookingSuccess": "Rendez-vous réservé avec succès !",
+    "bookingError": "Échec de la réservation. Veuillez réessayer.",
+    "selectAnotherDate": "Sélectionner une Autre Date",
+    "morningSlots": "Créneaux du Matin",
+    "afternoonSlots": "Créneaux de l'Après-midi",
+    "eveningSlots": "Créneaux du Soir"
+  },
+  "notifications": {
+    "appointmentReminder": "Rappel de Rendez-vous",
+    "appointmentConfirmed": "Rendez-vous Confirmé",
+    "appointmentCancelled": "Rendez-vous Annulé",
+    "appointmentRescheduled": "Rendez-vous Reprogrammé",
+    "reminderSent": "Rappel envoyé avec succès",
+    "confirmationSent": "Confirmation envoyée au patient"
+  },
+  "card": {
+    "appointmentWith": "Rendez-vous avec {{doctorName}}",
+    "specialty": "Spécialité : {{specialty}}",
+    "onlineConsultation": "Consultation en ligne",
+    "appointmentDetails": "Détails du rendez-vous",
+    "shareText": "Rendez-vous avec {{doctorName}} le {{date}} à {{time}}",
+    "sharingNotSupported": "Le partage n'est pas pris en charge sur ce navigateur",
+    "cancelSuccess": "Rendez-vous annulé avec succès.",
+    "cancelError": "Une erreur s'est produite lors de l'annulation du rendez-vous.",
+    "patientAge": "Âge du patient : {{age}}",
+    "viewProfile": "Voir le profil",
+    "cancel": "Annuler",
+    "createReport": "Créer un rapport",
+    "status": {
+      "canceled": "Annulé",
+      "completed": "Terminé",
+      "upcoming": "À venir"
+    }
+  },
+  "modal": {
+    "cancelTitle": "Annuler le rendez-vous",
+    "reasonLabel": "Raison de l'annulation",
+    "reasonRequired": "Veuillez fournir une raison pour l'annulation.",
+    "cancelButton": "Annuler",
+    "confirmButton": "Confirmer"
+  },
+  "filter": {
+    "searchPlaceholder": "🔍 Rechercher par nom de médecin ou de patient..."
+  },
+  "stats": {
+    "totalAs": "Total en tant que {{role}}",
+    "upcomingAs": "À venir en tant que {{role}}",
+    "totalAppointments": "Total des Rendez-vous",
+    "upcoming": "À Venir",
+    "completed": "Terminés",
+    "canceled": "Annulés"
+  },
+  "userTypes": {
+    "doctor": "Médecin",
+    "receptionist": "Réceptionniste",
+    "patient": "Patient"
+  },
+  "tabs": {
+    "all": "Tous",
+    "upcoming": "À venir",
+    "completed": "Terminés",
+    "canceled": "Annulés",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "asPatient": "En tant que patient",
+    "asDoctor": "En tant que médecin",
+    "asReceptionist": "En tant que réceptionniste"
+  },
+  "grid": {
+    "showingAppointments": "Affichage de {{filtered}} sur {{total}} rendez-vous",
+    "noAppointmentsFound": "Aucun rendez-vous {{tab}} trouvé",
+    "noMatchingAppointments": "Aucun rendez-vous ne correspond à vos critères de recherche"
+  }
+}

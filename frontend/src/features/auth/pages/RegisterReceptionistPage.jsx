@@ -34,6 +34,7 @@ import {
   Email,
   Phone,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
@@ -114,7 +115,7 @@ const PHONE_REGEX = /^[0-9]{10}$/;
 
 const RegisterReceptionistPage = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const { t } = useTranslation('auth');
 
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -159,7 +160,11 @@ const RegisterReceptionistPage = () => {
 
   const { setIsLoggedIn, setUserType, setUserId, setReceptionistId, setUserFullName } = useContext(AuthContext);
 
-  const steps = ['Personal Information', 'Work Details', 'Review & Submit'];
+  const steps = [
+    t('receptionistRegistration.steps.personalInfo'),
+    t('receptionistRegistration.steps.workDetails'),
+    t('receptionistRegistration.steps.review')
+  ];
 
   useEffect(() => {
     setValidation(prev => ({
@@ -739,10 +744,10 @@ const RegisterReceptionistPage = () => {
       <RegisterPaper elevation={10}>
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-            Create Receptionist Account 💼
+            {t('receptionistRegistration.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Join our healthcare platform as a medical receptionist
+            {t('receptionistRegistration.subtitle')}
           </Typography>
         </Box>
 

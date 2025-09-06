@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffCard from '../components/StaffCard';
 import useStaffManagement from '../hooks/useStaffManagement';
@@ -215,29 +216,8 @@ const EmptyStateDescription = styled.p`
   color: #64748b;
 `;
 
-const HireButton = styled.button`
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
 const ReceptionistTalentPoolPage = () => {
+  const { t } = useTranslation('staff');
   const [filters, setFilters] = useState({
     search: '',
     experienceLevel: '',
@@ -338,9 +318,9 @@ const ReceptionistTalentPoolPage = () => {
       <PageHeader>
         <HeaderTop>
           <div>
-            <PageTitle>Talent Pool</PageTitle>
+            <PageTitle>{t('talentPool.title')}</PageTitle>
             <PageSubtitle>
-              Browse and hire qualified receptionists for your practice
+              {t('talentPool.subtitle')}
             </PageSubtitle>
           </div>
           
@@ -349,55 +329,55 @@ const ReceptionistTalentPoolPage = () => {
             onClick={() => fetchTalentPool()}
             disabled={loading}
           >
-            {loading ? 'Refreshing...' : 'Refresh'}
+            {loading ? t('talentPool.refreshing') : t('talentPool.refresh')}
           </ActionButton>
         </HeaderTop>
 
         <FilterContainer>
           <FilterGroup>
-            <FilterLabel>Search</FilterLabel>
+            <FilterLabel>{t('talentPool.filters.search')}</FilterLabel>
             <SearchInput
               type="text"
-              placeholder="Search by name, email..."
+              placeholder={t('talentPool.filters.searchPlaceholder')}
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel>Experience</FilterLabel>
+            <FilterLabel>{t('talentPool.filters.experience')}</FilterLabel>
             <FilterSelect 
               value={filters.experienceLevel}
               onChange={(e) => handleFilterChange('experienceLevel', e.target.value)}
             >
-              <option value="">All Levels</option>
-              <option value="entry">Entry Level (0-2 years)</option>
-              <option value="mid">Mid Level (2-5 years)</option>
-              <option value="senior">Senior (5+ years)</option>
+              <option value="">{t('talentPool.filters.allLevels')}</option>
+              <option value="entry">{t('talentPool.filters.entryLevel')}</option>
+              <option value="mid">{t('talentPool.filters.midLevel')}</option>
+              <option value="senior">{t('talentPool.filters.seniorLevel')}</option>
             </FilterSelect>
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel>Availability</FilterLabel>
+            <FilterLabel>{t('talentPool.filters.availability')}</FilterLabel>
             <FilterSelect 
               value={filters.availability}
               onChange={(e) => handleFilterChange('availability', e.target.value)}
             >
-              <option value="">All</option>
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
+              <option value="">{t('talentPool.filters.all')}</option>
+              <option value="available">{t('status.available')}</option>
+              <option value="busy">{t('status.busy')}</option>
             </FilterSelect>
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel>Sort By</FilterLabel>
+            <FilterLabel>{t('talentPool.filters.sortBy')}</FilterLabel>
             <FilterSelect 
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
             >
-              <option value="name">Name</option>
-              <option value="experience">Experience</option>
-              <option value="rating">Rating</option>
+              <option value="name">{t('talentPool.sort.name')}</option>
+              <option value="experience">{t('talentPool.sort.experience')}</option>
+              <option value="rating">{t('talentPool.sort.rating')}</option>
             </FilterSelect>
           </FilterGroup>
         </FilterContainer>
@@ -405,22 +385,22 @@ const ReceptionistTalentPoolPage = () => {
         <StatsRow>
           <StatCard $gradient="#dbeafe 0%, #bfdbfe 100%">
             <StatNumber $color="#1e40af">{stats.total}</StatNumber>
-            <StatLabel $color="#1e40af">Total</StatLabel>
+            <StatLabel $color="#1e40af">{t('talentPool.stats.total')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#d1fae5 0%, #a7f3d0 100%">
             <StatNumber $color="#059669">{stats.available}</StatNumber>
-            <StatLabel $color="#059669">Available</StatLabel>
+            <StatLabel $color="#059669">{t('talentPool.stats.available')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#fef3c7 0%, #fde68a 100%">
             <StatNumber $color="#d97706">{stats.experienced}</StatNumber>
-            <StatLabel $color="#d97706">Experienced</StatLabel>
+            <StatLabel $color="#d97706">{t('talentPool.stats.experienced')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#e0e7ff 0%, #c7d2fe 100%">
             <StatNumber $color="#6366f1">{stats.topRated}</StatNumber>
-            <StatLabel $color="#6366f1">Top Rated</StatLabel>
+            <StatLabel $color="#6366f1">{t('talentPool.stats.topRated')}</StatLabel>
           </StatCard>
         </StatsRow>
       </PageHeader>
@@ -446,22 +426,22 @@ const ReceptionistTalentPoolPage = () => {
       <MainContent>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0, color: '#1a202c' }}>
-            Available Receptionists ({filteredData.length})
+            {t('talentPool.availableReceptionists', { count: filteredData.length })}
           </h2>
         </div>
 
         {loading ? (
-          <LoadingMessage>Loading talent pool...</LoadingMessage>
+          <LoadingMessage>{t('talentPool.loading')}</LoadingMessage>
         ) : filteredData.length === 0 ? (
           <EmptyState>
             <EmptyStateIcon>🔍</EmptyStateIcon>
             <EmptyStateTitle>
-              {talentPool.length === 0 ? 'No Receptionists Available' : 'No Results Found'}
+              {talentPool.length === 0 ? t('talentPool.noReceptionistsTitle') : t('talentPool.noResultsTitle')}
             </EmptyStateTitle>
             <EmptyStateDescription>
               {talentPool.length === 0 
-                ? 'There are no receptionists in the talent pool at the moment. Please check back later.'
-                : 'Try adjusting your search criteria or filters to find more results.'
+                ? t('talentPool.noReceptionistsDescription')
+                : t('talentPool.noResultsDescription')
               }
             </EmptyStateDescription>
           </EmptyState>
@@ -474,12 +454,12 @@ const ReceptionistTalentPoolPage = () => {
                 onClick={(staff) => console.log('View profile:', staff)}
                 actions={[
                   {
-                    label: 'Hire',
+                    label: t('talentPool.actions.hire'),
                     variant: 'primary',
                     onClick: () => handleHire(receptionist.id)
                   },
                   {
-                    label: 'View Profile',
+                    label: t('talentPool.actions.viewProfile'),
                     variant: 'secondary',
                     onClick: (staff) => console.log('View profile:', staff)
                   }

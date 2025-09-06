@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Paper,
   Typography,
@@ -23,6 +24,7 @@ export default function ReportFilters({
   onSearch, 
   loading = false 
 }) {
+  const { t } = useTranslation('reports');
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const currentDay = new Date().getDate();
@@ -89,7 +91,7 @@ export default function ReportFilters({
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Filter Reports
+          {t('filters.title')}
         </Typography>
       </Box>
       
@@ -113,16 +115,16 @@ export default function ReportFilters({
               }
             }}
           >
-            <InputLabel id="year-label">Year</InputLabel>
+            <InputLabel id="year-label">{t('filters.year')}</InputLabel>
             <Select
               labelId="year-label"
-              label="Year"
+              label={t('filters.year')}
               name="year"
               value={filterCriteria.year}
               onChange={onFilterChange}
             >
               <MenuItem value="">
-                <em>Any Year</em>
+                <em>{t('filters.anyYear')}</em>
               </MenuItem>
               {years.map((year) => (
                 <MenuItem key={year} value={year}>
@@ -153,16 +155,16 @@ export default function ReportFilters({
               }
             }}
           >
-            <InputLabel id="month-label">Month</InputLabel>
+            <InputLabel id="month-label">{t('filters.month')}</InputLabel>
             <Select
               labelId="month-label"
-              label="Month"
+              label={t('filters.month')}
               name="month"
               value={filterCriteria.month}
               onChange={onFilterChange}
             >
               <MenuItem value="">
-                <em>Any Month</em>
+                <em>{t('filters.anyMonth')}</em>
               </MenuItem>
               {getMonths().map((month) => (
                 <MenuItem key={month} value={month}>
@@ -195,16 +197,16 @@ export default function ReportFilters({
               }
             }}
           >
-            <InputLabel id="day-label">Day</InputLabel>
+            <InputLabel id="day-label">{t('filters.day')}</InputLabel>
             <Select
               labelId="day-label"
-              label="Day"
+              label={t('filters.day')}
               name="day"
               value={filterCriteria.day}
               onChange={onFilterChange}
             >
               <MenuItem value="">
-                <em>Any Day</em>
+                <em>{t('filters.anyDay')}</em>
               </MenuItem>
               {getDays().map((day) => (
                 <MenuItem key={day} value={day}>
@@ -217,7 +219,7 @@ export default function ReportFilters({
         
         <Grid item xs={12} sm={6} md={2}>
           <TextField
-            label="Patient Name"
+            label={t('filters.patientName')}
             variant="outlined"
             fullWidth
             name="patientName"
@@ -242,7 +244,7 @@ export default function ReportFilters({
         
         <Grid item xs={12} sm={6} md={2}>
           <TextField
-            label="Diagnosis"
+            label={t('filters.diagnosis')}
             variant="outlined"
             fullWidth
             name="diagnosisName"
@@ -267,7 +269,7 @@ export default function ReportFilters({
         
         <Grid item xs={12} sm={6} md={2}>
           <TextField
-            label="Referral Doctor"
+            label={t('filters.referralDoctor')}
             variant="outlined"
             fullWidth
             name="referralDoctor"
@@ -319,7 +321,7 @@ export default function ReportFilters({
               }
             }}
           >
-            {loading ? 'Searching...' : 'Search Reports'}
+            {loading ? t('filters.searching') : t('filters.searchReports')}
           </Button>
         </Grid>
       </Grid>

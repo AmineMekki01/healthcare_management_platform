@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Drawer,
   List,
@@ -47,6 +48,7 @@ import {
   SupervisorAccount as StaffManagementIcon,
 } from '@mui/icons-material';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
+import FlagLanguageSelector from './../LanguageSelector/FlagLanguageSelector';
 import { useSidebar } from '../../../contexts/SidebarContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
 import logo from '../../../assets/images/logo_doc_app_white.png';
@@ -57,6 +59,8 @@ function capitalizeWords(str) {
 }
 
 const MyNavbar = () => {
+  const { t, i18n } = useTranslation(['common', 'navigation']);
+  const isRTL = i18n.language === 'ar';
   const {
     isLoggedIn,
     logout,
@@ -76,7 +80,6 @@ const MyNavbar = () => {
       : userType === 'patient' ? `/patient-profile/${userId}` : `/receptionist-profile/${userId}`;
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [hovering, setHovering] = React.useState(false);
 
   const [expandedMenus, setExpandedMenus] = React.useState({});
 
@@ -104,7 +107,7 @@ const MyNavbar = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const hasAccess = (requiredRoles) => {
+  const hasAccess = React.useCallback((requiredRoles) => {
     if (!requiredRoles || !Array.isArray(requiredRoles)) {
       return false;
     }
@@ -118,35 +121,35 @@ const MyNavbar = () => {
     }
 
     return false;
-  };
+  }, [activeMode, userType]);
 
   const baseNavItems = [
     {
-      label: 'Home',
+      label: t('common:navigation.home'),
       href: '/',
       icon: <HomeIcon />,
       roles: ['doctor', 'patient', 'receptionist'],
     },
     {
-      label: 'Find Doctors',
+      label: t('common:navigation.findDoctors'),
       href: '/SearchBar',
       icon: <DoctorSearchIcon />,
       roles: ['doctor', 'patient', 'receptionist'],
     },
     {
-      label: 'My Documents',
+      label: t('common:navigation.myDocuments'),
       href: '/records',
       icon: <DocumentsIcon />,
       roles: ['patient', 'doctor', 'receptionist']
     },
     {
-      label: 'Messages',
+      label: t('common:navigation.messages'),
       href: '/Messages',
       icon: <MessagesIcon />,
       roles: ['doctor', 'patient', 'receptionist'],
     },
     {
-      label: 'Health Feed',
+      label: t('common:navigation.healthFeed'),
       href: '/feed',
       icon: <FeedIcon />,
       roles: ['patient', 'receptionist'],
@@ -155,12 +158,12 @@ const MyNavbar = () => {
 
   const patientNavItems = [
     {
-      label: 'My Appointments',
+      label: t('common:navigation.myAppointments'),
       href: '/appointments',
       icon: <CalendarIcon />,
       roles: ['patient'],
     },{ 
-      label: 'My Documents',
+      label: t('common:navigation.myDocuments'),
       href: '/records',
       icon: <DocumentsIcon />,
       roles: ['patient']
@@ -171,68 +174,68 @@ const MyNavbar = () => {
   const professionalNavItems = {
     receptionist: [
       {
-        label: 'Receptionist Dashboard',
+        label: t('common:navigation.receptionistDashboard'),
         href: '/receptionist-dashboard',
         icon: <DashboardIcon />,
         roles: ['receptionist'],
       },
       {
-        label: 'Patient Management',
+        label: t('common:navigation.patientManagement'),
         icon: <ManageIcon />,
         hasSubItems: true,
         roles: ['receptionist'],
         subItems: [
-          { label: 'Patient Search', href: '/receptionist/patients', icon: <DoctorSearchIcon />, roles: ['receptionist'] },
-          { label: 'Create Patient', href: '/receptionist/create-patient', icon: <PersonIcon />, roles: ['receptionist'] },
-          { label: 'Schedule Appointment', href: '/receptionist/create-appointment', icon: <CalendarIcon />, roles: ['receptionist'] },
+          { label: t('common:navigation.patientSearch'), href: '/receptionist/patients', icon: <DoctorSearchIcon />, roles: ['receptionist'] },
+          { label: t('common:navigation.createPatient'), href: '/receptionist/create-patient', icon: <PersonIcon />, roles: ['receptionist'] },
+          { label: t('common:navigation.scheduleAppointment'), href: '/receptionist/create-appointment', icon: <CalendarIcon />, roles: ['receptionist'] },
         ],
       },
     ],
     doctor: [
       {
-        label: 'Medical Tools',
+        label: t('common:navigation.medicalTools'),
         icon: <MedicalIcon />,
         hasSubItems: true,
         roles: ['doctor'],
         subItems: [
-          { label: 'AI Assistant', href: '/ChatBot', icon: <ChatBotIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.aiAssistant'), href: '/ChatBot', icon: <ChatBotIcon />, roles: ['doctor'] },
         ],
       },
       {
-        label: 'Practice Management',
+        label: t('common:navigation.practiceManagement'),
         icon: <HospitalIcon />,
         hasSubItems: true,
         roles: ['doctor'],
         subItems: [
-          { label: 'My Schedule', href: '/appointments', icon: <CalendarIcon />, roles: ['doctor'] },
-          { label: 'Medical Reports', href: `/medical-report/${userId}`, icon: <ReportsIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.mySchedule'), href: '/appointments', icon: <CalendarIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.medicalReports'), href: `/medical-report/${userId}`, icon: <ReportsIcon />, roles: ['doctor'] },
         ],
       },
       {
-        label: 'Staff Management',
+        label: t('common:navigation.staffManagement'),
         icon: <StaffIcon />,
         hasSubItems: true,
         roles: ['doctor'],
         subItems: [
-          { label: 'Talent Pool', href: '/receptionist-talent-pool', icon: <TalentPoolIcon />, roles: ['doctor'] },
-          { label: 'Staff Management', href: '/staff-management', icon: <StaffManagementIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.talentPool'), href: '/receptionist-talent-pool', icon: <TalentPoolIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.staffManagement'), href: '/staff-management', icon: <StaffManagementIcon />, roles: ['doctor'] },
         ],
       },
       {
-        label: 'Content Management',
+        label: t('common:navigation.contentManagement'),
         icon: <CreateIcon />,
         hasSubItems: true,
         roles: ['doctor'],
         subItems: [
-          { label: 'Create Article', href: '/create-post', icon: <CreateIcon />, roles: ['doctor'] },
-          { label: 'My Articles', href: '/doctor-posts', icon: <NewsIcon />, roles: ['doctor'] },
-          { label: 'Health Feed', href: '/feed', icon: <FeedIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.createPost'), href: '/create-post', icon: <CreateIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.myPosts'), href: '/doctor-posts', icon: <NewsIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.healthFeed'), href: '/feed', icon: <FeedIcon />, roles: ['doctor'] },
         ],
       },
     ],
   };
 
-  const getAllNavItems = () => {
+  const getAllNavItems = React.useCallback(() => {
     let allItems = [...baseNavItems];
 
     if (activeMode === 'patient') {
@@ -248,14 +251,14 @@ const MyNavbar = () => {
       }
       return item.roles.includes(activeMode) || item.roles.includes(userType);
     });
-  };
+  }, [activeMode, userType, baseNavItems, patientNavItems, professionalNavItems]);
 
   const navItems = React.useMemo(() => {
     const allItems = getAllNavItems();
     const filteredItems = allItems.filter(item => hasAccess(item.roles));
     
     return filteredItems;
-  }, [userId, userType, activeMode]); 
+  }, [getAllNavItems, hasAccess]); 
 
   const drawerWidth = sidebarOpen ? 280 : 72;
 
@@ -295,8 +298,6 @@ const MyNavbar = () => {
         <Drawer
           variant="permanent"
           open={true}
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
           sx={{
             width: drawerWidth,
             flexShrink: 0,
@@ -313,9 +314,9 @@ const MyNavbar = () => {
               position: 'fixed',
               height: '100vh',
               top: 0,
-              left: 0,
+              [isRTL ? 'right' : 'left']: 0,
               zIndex: theme.zIndex.drawer,
-              boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15)',
+              boxShadow: isRTL ? '-4px 0 20px rgba(0, 0, 0, 0.15)' : '4px 0 20px rgba(0, 0, 0, 0.15)',
               '&::-webkit-scrollbar': {
                 width: '6px',
               },
@@ -444,10 +445,20 @@ const MyNavbar = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <BadgeIcon sx={{ fontSize: '16px', opacity: 0.8 }} />
+              <BadgeIcon sx={{
+                fontSize: '16px',
+                opacity: 0.8,
+              }} />
               <Typography variant="caption" sx={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                Viewing as:
+                {t('common:navigation.switchTo', { mode: capitalizeWords(t(`common:userTypes.${activeMode}`)) })}
               </Typography>
+            </Box>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              flexDirection: isRTL ? 'row-reverse' : 'row' 
+            }}>
               <Typography 
                 variant="caption" 
                 sx={{ 
@@ -457,26 +468,26 @@ const MyNavbar = () => {
                   color: activeMode === userType ? '#60a5fa' : '#34d399'
                 }}
               >
-                {activeMode}
+                {t(`common:userTypes.${activeMode}`)}
               </Typography>
+              <IconButton
+                onClick={handleModeToggle}
+                sx={{
+                  color: 'white',
+                  padding: '4px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                {activeMode === userType ? 
+                  <ToggleOnIcon sx={{ color: '#60a5fa', fontSize: '20px' }} /> : 
+                  <ToggleOffIcon sx={{ color: '#34d399', fontSize: '20px' }} />
+                }
+              </IconButton>
             </Box>
-            <IconButton
-              onClick={handleModeToggle}
-              sx={{
-                color: 'white',
-                padding: '4px',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease-in-out',
-              }}
-            >
-              {activeMode === userType ? 
-                <ToggleOnIcon sx={{ color: '#60a5fa', fontSize: '20px' }} /> : 
-                <ToggleOffIcon sx={{ color: '#34d399', fontSize: '20px' }} />
-              }
-            </IconButton>
           </Box>
         )}
 
@@ -521,7 +532,6 @@ const MyNavbar = () => {
             {item.hasSubItems ? (
               <>
                 {sidebarOpen ? (
-                  // Expanded sidebar -> we show normal expandable menu
                   <>
                     <ListItem
                       button
@@ -531,7 +541,7 @@ const MyNavbar = () => {
                         margin: '4px 0',
                         '&:hover': {
                           backgroundColor: 'rgba(255,255,255,0.08)',
-                          transform: 'translateX(4px)',
+                          transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                         },
                         padding: '12px 16px',
                         justifyContent: 'initial',
@@ -583,7 +593,7 @@ const MyNavbar = () => {
                                 : 'transparent',
                               '&:hover': {
                                 backgroundColor: 'rgba(255,255,255,0.1)',
-                                transform: 'translateX(4px)',
+                                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                               },
                               transition: 'all 0.2s ease-in-out',
                             }}
@@ -646,7 +656,7 @@ const MyNavbar = () => {
                               transition: 'all 0.2s ease-in-out',
                               '&:hover': {
                                 backgroundColor: 'rgba(59, 130, 246, 0.3)',
-                                transform: 'translateX(4px)',
+                                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                               }
                             }}
                           >
@@ -739,7 +749,7 @@ const MyNavbar = () => {
                       backgroundColor: location.pathname === item.href 
                         ? 'rgba(59, 130, 246, 0.3)' 
                         : 'rgba(255,255,255,0.08)',
-                      transform: 'translateX(4px)',
+                      transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                     },
                     padding: sidebarOpen ? '12px 16px' : '12px',
                     justifyContent: sidebarOpen ? 'initial' : 'center',
@@ -794,7 +804,7 @@ const MyNavbar = () => {
                 backgroundColor: location.pathname === profileHref 
                   ? 'rgba(59, 130, 246, 0.3)' 
                   : 'rgba(255,255,255,0.08)',
-                transform: 'translateX(4px)',
+                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
               justifyContent: sidebarOpen ? 'initial' : 'center',
@@ -812,7 +822,7 @@ const MyNavbar = () => {
             </ListItemIcon>
             {sidebarOpen && (
               <ListItemText 
-                primary="Profile"
+                primary={t('common:navigation.profile')}
                 sx={{ 
                   '& .MuiListItemText-primary': {
                     fontWeight: 500,
@@ -843,7 +853,7 @@ const MyNavbar = () => {
                 backgroundColor: location.pathname === `/settings/${userId}` 
                   ? 'rgba(59, 130, 246, 0.3)' 
                   : 'rgba(255,255,255,0.08)',
-                transform: 'translateX(4px)',
+                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
               justifyContent: sidebarOpen ? 'initial' : 'center',
@@ -861,7 +871,7 @@ const MyNavbar = () => {
             </ListItemIcon>
             {sidebarOpen && (
               <ListItemText 
-                primary="Settings"
+                primary={t('common:navigation.settings')}
                 sx={{ 
                   '& .MuiListItemText-primary': {
                     fontWeight: 500,
@@ -871,6 +881,11 @@ const MyNavbar = () => {
             )}
           </ListItem>
         </Tooltip>
+
+        {/* Language Selector */}
+        <Box sx={{ padding: '8px 16px', display: 'flex', justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
+          <FlagLanguageSelector />
+        </Box>
 
         <Tooltip 
           title={!sidebarOpen ? 'Logout' : ''} 
@@ -888,7 +903,7 @@ const MyNavbar = () => {
               margin: '4px 0',
               '&:hover': {
                 backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                transform: 'translateX(4px)',
+                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
               justifyContent: sidebarOpen ? 'initial' : 'center',
@@ -906,7 +921,7 @@ const MyNavbar = () => {
             </ListItemIcon>
             {sidebarOpen && (
               <ListItemText 
-                primary="Logout"
+                primary={t('common:navigation.logout')}
                 sx={{ 
                   '& .MuiListItemText-primary': {
                     fontWeight: 500,

@@ -1,4 +1,5 @@
 import axios from '../../../components/axiosConfig';
+import { translateSearchParams, getLocalizedSpecialty, getLocalizedLocation } from '../utils/translationMaps';
 
 class SearchService {
   constructor() {
@@ -6,15 +7,22 @@ class SearchService {
     this.aiServiceURL = 'http://localhost:8000/api/v1';
   }
 
-  async searchDoctors(params = {}) {
+  async searchDoctors(params = {}, currentLanguage = 'en') {
     try {
-      const searchParams = this.buildSearchParams(params);
+      // Translate search parameters to English for backend compatibility
+      const translatedParams = translateSearchParams(params, currentLanguage);
+      const searchParams = this.buildSearchParams(translatedParams);
       const response = await axios.get(`${this.baseURL}/doctors`, { params: searchParams });
       
+      console.log('Search URL:', `${this.baseURL}/doctors`);
+      console.log('Search params sent:', searchParams);
       console.log('Search response:', response.data);
+      console.log('Response status:', response.status);
       
       const doctors = this.normalizeSearchResults(response.data);
-      return this.sortDoctorsByRelevance(doctors, params);
+      // Localize doctor data for display
+      const localizedDoctors = doctors.map(doctor => this.localizeDoctorData(doctor, currentLanguage));
+      return this.sortDoctorsByRelevance(localizedDoctors, params);
     } catch (error) {
       console.error('Failed to search doctors:', error);
       throw new Error('Failed to search doctors. Please try again.');
@@ -143,6 +151,18 @@ class SearchService {
       
       ...doctor
     }; 
+  }
+
+  localizeDoctorData(doctor, language = 'en') {
+    if (language === 'en') return doctor;
+    
+    return {
+      ...doctor,
+      specialty: getLocalizedSpecialty(doctor.specialty, language),
+      location: getLocalizedLocation(doctor.location, language),
+      localizedSpecialty: getLocalizedSpecialty(doctor.specialty, language),
+      localizedLocation: getLocalizedLocation(doctor.location, language)
+    };
   }
 
   sortDoctorsByRelevance(doctors, params = {}) {

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   UploadContainer, 
   DropZone, 
@@ -16,6 +17,7 @@ import {
 import { documentService } from '../../services';
 
 const FileUpload = forwardRef(({ onFileSelect }, ref) => {
+  const { t } = useTranslation('chatbot');
   const [files, setFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef();
@@ -39,7 +41,7 @@ const FileUpload = forwardRef(({ onFileSelect }, ref) => {
       if (validation.isValid) {
         validFiles.push(file);
       } else {
-        alert(`File "${file.name}": ${validation.error}`);
+        alert(t('fileUpload.validationError', { fileName: file.name, error: validation.error }));
       }
     }
     
@@ -57,7 +59,7 @@ const FileUpload = forwardRef(({ onFileSelect }, ref) => {
       if (validation.isValid) {
         validFiles.push(file);
       } else {
-        alert(`File "${file.name}": ${validation.error}`);
+        alert(t('fileUpload.validationError', { fileName: file.name, error: validation.error }));
       }
     }
     
@@ -120,9 +122,9 @@ const FileUpload = forwardRef(({ onFileSelect }, ref) => {
               </svg>
             </UploadIcon>
             <UploadText>
-              {isDragOver ? 'Drop files here' : 'Drag & drop files here'}
+              {isDragOver ? t('fileUpload.dropFiles') : t('fileUpload.dragDrop')}
             </UploadText>
-            <UploadSubtext>or click to browse</UploadSubtext>
+            <UploadSubtext>{t('fileUpload.clickToBrowse')}</UploadSubtext>
           </>
         ) : (
           <div style={{ 
@@ -149,10 +151,10 @@ const FileUpload = forwardRef(({ onFileSelect }, ref) => {
       {files.length > 0 && (
         <ButtonGroup>
           <UploadButton onClick={handleUpload} primary>
-            Upload {files.length} file{files.length > 1 ? 's' : ''}
+            {t('fileUpload.uploadFiles', { count: files.length })}
           </UploadButton>
           <UploadButton onClick={() => setFiles([])}>
-            Clear
+            {t('fileUpload.clear')}
           </UploadButton>
         </ButtonGroup>
       )}

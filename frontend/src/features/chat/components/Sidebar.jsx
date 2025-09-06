@@ -1,5 +1,6 @@
-import React, { useState, useContext} from 'react';
-import styled from 'styled-components'
+import React, { useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
+import styled from 'styled-components';
 import NavbarComponent from './Navbar';
 import SearchComponent from './Search';
 import ChatsComponent from './Chats';

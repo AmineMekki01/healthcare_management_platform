@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import UserCard from '../../user-management/components/shared/UserCard';
 
@@ -111,12 +112,13 @@ const StaffCard = ({
   actions = [],
   className 
 }) => {
+  const { t } = useTranslation('staff');
   const getDefaultActions = () => {
     const defaultActions = [];
     
     if (onEdit) {
       defaultActions.push({
-        label: 'Edit',
+        label: t('actions.edit'),
         variant: 'primary',
         onClick: onEdit
       });
@@ -124,7 +126,7 @@ const StaffCard = ({
     
     if (onViewSchedule) {
       defaultActions.push({
-        label: 'Schedule',
+        label: t('actions.viewSchedule'),
         variant: 'secondary',
         onClick: onViewSchedule
       });
@@ -132,7 +134,7 @@ const StaffCard = ({
     
     if (onManagePermissions) {
       defaultActions.push({
-        label: 'Permissions',
+        label: t('actions.managePermissions'),
         variant: 'secondary',
         onClick: onManagePermissions
       });
@@ -140,13 +142,13 @@ const StaffCard = ({
     
     if (staff?.isActive && onDeactivate) {
       defaultActions.push({
-        label: 'Deactivate',
+        label: t('actions.deactivate'),
         variant: 'danger',
         onClick: onDeactivate
       });
     } else if (!staff?.isActive && onActivate) {
       defaultActions.push({
-        label: 'Activate',
+        label: t('actions.activate'),
         variant: 'primary',
         onClick: onActivate
       });
@@ -154,7 +156,7 @@ const StaffCard = ({
     
     if (onDismiss) {
       defaultActions.push({
-        label: 'Dismiss',
+        label: t('actions.dismiss'),
         variant: 'danger',
         onClick: onDismiss
       });
@@ -166,26 +168,26 @@ const StaffCard = ({
   const getMetaFields = () => {
     const fields = [
       { 
-        label: 'Phone', 
+        label: t('labels.phone'), 
         value: staff?.phoneNumber || staff?.phone_number || 'N/A' 
       },
       { 
-        label: 'Joined', 
+        label: t('labels.joined'), 
         value: staff?.createdAt ? new Date(staff.createdAt).toLocaleDateString() : 'N/A' 
       }
     ];
 
     if (staff?.assignedDoctorId) {
       fields.push({
-        label: 'Assigned',
-        value: 'Yes'
+        label: t('labels.assigned'),
+        value: t('labels.yes')
       });
     }
 
     if (staff?.emailVerified !== undefined) {
       fields.push({
-        label: 'Verified',
-        value: staff.emailVerified ? 'Yes' : 'No'
+        label: t('labels.verified'),
+        value: staff.emailVerified ? t('labels.yes') : t('labels.no')
       });
     }
 
@@ -200,9 +202,9 @@ const StaffCard = ({
     if (permissions.length === 0) {
       return (
         <PermissionsSection>
-          <PermissionLabel>Permissions</PermissionLabel>
+          <PermissionLabel>{t('labels.permissions')}</PermissionLabel>
           <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-            No specific permissions set
+            {t('messages.noPermissions')}
           </div>
         </PermissionsSection>
       );
@@ -210,7 +212,7 @@ const StaffCard = ({
 
     return (
       <PermissionsSection>
-        <PermissionLabel>Permissions</PermissionLabel>
+        <PermissionLabel>{t('labels.permissions')}</PermissionLabel>
         <PermissionTags>
           {permissions.map((permission, index) => (
             <SpecializationTag key={index}>
@@ -231,7 +233,7 @@ const StaffCard = ({
       return (
         <ScheduleInfo>
           <ScheduleIcon>📅</ScheduleIcon>
-          <span>Schedule not set</span>
+          <span>{t('messages.scheduleNotSet')}</span>
         </ScheduleInfo>
       );
     }
@@ -241,7 +243,7 @@ const StaffCard = ({
       return (
         <ScheduleInfo>
           <ScheduleIcon>📅</ScheduleIcon>
-          <span>{workDays} days/week</span>
+          <span>{t('schedule.daysPerWeek', { days: workDays })}</span>
         </ScheduleInfo>
       );
     }
@@ -258,7 +260,7 @@ const StaffCard = ({
     return (
       <ScheduleInfo>
         <ScheduleIcon>📅</ScheduleIcon>
-        <span>Full-time</span>
+        <span>{t('schedule.fullTime')}</span>
       </ScheduleInfo>
     );
   };
@@ -272,11 +274,6 @@ const StaffCard = ({
 
   return (
     <StaffCardContainer className={className}>
-      {showRole && (
-        <RoleBadge>
-          Receptionist
-        </RoleBadge>
-      )}
       
       {showStatus && (
         <StatusIndicator $status={staff?.status || 'inactive'} />

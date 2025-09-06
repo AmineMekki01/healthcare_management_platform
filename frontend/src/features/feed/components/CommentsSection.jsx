@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import feedService from '../services/feedService';
 import {
   CommentsContainer,
@@ -15,6 +16,7 @@ import {
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 
 const CommentsSection = ({ postId, onCommentAdded }) => {
+  const { t } = useTranslation('feed');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const {userId, userType} = useContext(AuthContext)
@@ -55,24 +57,31 @@ const CommentsSection = ({ postId, onCommentAdded }) => {
 
   return (
     <CommentsContainer>
-      {comments && comments.map((comment) => (
-        console.log('Rendering comment:', comment),
-        <Comment key={comment.commentId}>
-          <CommentAvatar src={comment.userAvatar} alt={comment.userName} />
-          <CommentContent>
-            <CommentAuthor>{comment.userName}</CommentAuthor>
-            <CommentText>{comment.content}</CommentText>
-            <CommentTimestamp>{new Date(comment.createdAt).toLocaleString()}</CommentTimestamp>
-          </CommentContent>
-        </Comment>
-      ))}
+      {comments && comments.length > 0 ? (
+        comments.map((comment) => (
+          <Comment key={comment.commentId}>
+            <CommentAvatar src={comment.userAvatar} alt={comment.userName} />
+            <CommentContent>
+              <CommentAuthor>{comment.userName}</CommentAuthor>
+              <CommentText>{comment.content}</CommentText>
+              <CommentTimestamp>{new Date(comment.createdAt).toLocaleString()}</CommentTimestamp>
+            </CommentContent>
+          </Comment>
+        ))
+      ) : (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          {t('comments.noComments')}
+        </div>
+      )}
       <AddCommentForm>
         <AddCommentInput
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment..."
+          placeholder={t('comments.placeholder')}
         />
-        <AddCommentButton onClick={handleAddComment}>Post</AddCommentButton>
+        <AddCommentButton onClick={handleAddComment}>
+          {t('comments.submit')}
+        </AddCommentButton>
       </AddCommentForm>
     </CommentsContainer>
   );

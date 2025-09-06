@@ -1,6 +1,7 @@
 import React, { useState, useContext} from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -12,7 +13,6 @@ import {
   Alert,
   CircularProgress,
   Divider,
-  useTheme,
   InputAdornment,
   IconButton,
 } from '@mui/material';
@@ -106,6 +106,7 @@ const UserTypeCard = styled(Box)(({ theme, selected }) => ({
 
 const LoginForm = () => {
   const { login, loading, error, setError } = useAuth();
+  const { t } = useTranslation(['auth', 'common', 'validation']);
   const {
     setIsLoggedIn,
     setDoctorId,
@@ -125,14 +126,13 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError(t('auth:login.fillAllFields'));
       return;
     }
 
@@ -184,7 +184,7 @@ const LoginForm = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('Login error: ' + error.message);
+      setError(t('auth:login.loginError', { message: error.message }));
     }
   };
 
@@ -196,11 +196,11 @@ const LoginForm = () => {
     <LoginContainer>
         <LoginPaper elevation={10}>
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-              Welcome Back! 👋
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              {t('auth:login.title')}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Sign in to your account to continue
+              {t('auth:login.subtitle')}
             </Typography>
           </Box>
 
@@ -214,7 +214,7 @@ const LoginForm = () => {
             {/* User Type Selection */}
             <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
               <FormLabel component="legend" sx={{ mb: 2, fontWeight: 'bold' }}>
-                I am a:
+                {t('auth:login.userTypeLabel')}
               </FormLabel>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <UserTypeCard
@@ -224,7 +224,7 @@ const LoginForm = () => {
                 >
                   <PersonIcon sx={{ color: localUserType === 'patient' ? '#667eea' : '#666' }} />
                   <Typography sx={{ fontWeight: localUserType === 'patient' ? 'bold' : 'normal' }}>
-                    Patient
+                    {t('common:userTypes.patient')}
                   </Typography>
                 </UserTypeCard>
                 <UserTypeCard
@@ -234,7 +234,7 @@ const LoginForm = () => {
                 >
                   <HospitalIcon sx={{ color: localUserType === 'doctor' ? '#667eea' : '#666' }} />
                   <Typography sx={{ fontWeight: localUserType === 'doctor' ? 'bold' : 'normal' }}>
-                    Doctor
+                    {t('common:userTypes.doctor')}
                   </Typography>
                 </UserTypeCard>
                 <UserTypeCard
@@ -244,7 +244,7 @@ const LoginForm = () => {
                 >
                   <ReceptionistIcon sx={{ color: localUserType === 'receptionist' ? '#667eea' : '#666' }} />
                   <Typography sx={{ fontWeight: localUserType === 'receptionist' ? 'bold' : 'normal' }}>
-                    Receptionist
+                    {t('common:userTypes.receptionist')}
                   </Typography>
                 </UserTypeCard>
               </Box>
@@ -254,7 +254,7 @@ const LoginForm = () => {
             <StyledTextField
               fullWidth
               type="email"
-              label="Email Address"
+              label={t('auth:login.emailLabel')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               margin="normal"
@@ -273,7 +273,7 @@ const LoginForm = () => {
             <StyledTextField
               fullWidth
               type={showPassword ? 'text' : 'password'}
-              label="Password"
+              label={t('auth:login.passwordLabel')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               margin="normal"
@@ -287,7 +287,7 @@ const LoginForm = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label="toggle password visibility"
+                      aria-label={t('auth:login.togglePasswordVisibility')}
                       onClick={handleClickShowPassword}
                       edge="end"
                     >
@@ -308,7 +308,7 @@ const LoginForm = () => {
               endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ArrowForward />}
               sx={{ mb: 2 }}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? t('auth:login.signingIn') : t('auth:login.signIn')}
             </LoginButton>
 
             {/* Forgot Password */}
@@ -323,7 +323,7 @@ const LoginForm = () => {
                   '&:hover': { backgroundColor: 'rgba(102, 126, 234, 0.05)' }
                 }}
               >
-                Forgot Password?
+                {t('auth:login.forgotPassword')}
               </Button>
             </Box>
 
@@ -332,7 +332,7 @@ const LoginForm = () => {
             {/* Sign Up Link */}
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                Don't have an account?{' '}
+                {t('auth:login.noAccount')}{' '}
                 <Button
                   component={Link}
                   to="/register"
@@ -346,7 +346,7 @@ const LoginForm = () => {
                     '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
                   }}
                 >
-                  Sign Up
+                  {t('auth:login.signUp')}
                 </Button>
               </Typography>
             </Box>

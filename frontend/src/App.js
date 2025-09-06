@@ -1,7 +1,13 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 import NavigationProvider from './features/auth/context/NavigationProvider';
 import { SidebarProvider } from './contexts/SidebarContext';
+import { createRTLTheme } from './utils/rtl';
+
+import './i18n';
 
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
@@ -62,8 +68,12 @@ import { ReceptionistTalentPoolPage, StaffManagementPage } from './features/staf
 
 
 function App() {
+  const { i18n } = useTranslation();
+  const theme = createRTLTheme(i18n.language);
 
   return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <Router>
         <NavigationProvider>
           <SidebarProvider>
@@ -312,6 +322,7 @@ function App() {
           </SidebarProvider>
         </NavigationProvider>
       </Router>
+    </ThemeProvider>
   );
 }
 export default App;

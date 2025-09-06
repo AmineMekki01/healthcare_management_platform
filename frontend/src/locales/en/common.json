@@ -1,0 +1,261 @@
+{
+  "navigation": {
+    "home": "Home",
+    "login": "Login",
+    "register": "Register",
+    "platformName": "Healthcare Platform",
+    "findDoctors": "Find Doctors",
+    "myDocuments": "My Documents",
+    "messages": "Messages",
+    "healthFeed": "Health Feed",
+    "myAppointments": "My Appointments",
+    "appointments": "Appointments",
+    "schedule": "Schedule",
+    "dashboard": "Dashboard",
+    "receptionistDashboard": "Receptionist Dashboard",
+    "patientManagement": "Patient Management",
+    "medicalTools": "Medical Tools",
+    "aiAssistant": "AI Assistant",
+    "practiceManagement": "Practice Management",
+    "mySchedule": "My Schedule",
+    "medicalReports": "Medical Reports",
+    "staffManagement": "Staff Management",
+    "contentManagement": "Content Management",
+    "createPost": "Create Post",
+    "myPosts": "My Posts",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "more": "More",
+    "switchTo": "Switch to {{mode}} View",
+    "patientSearch": "Patient Search",
+    "createPatient": "Create Patient",
+    "scheduleAppointment": "Schedule Appointment",
+    "talentPool": "Talent Pool"
+  },
+  "buttons": {
+    "getStartedToday": "Get Started Today",
+    "goToDashboard": "Go to Dashboard",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "upload": "Upload",
+    "download": "Download",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "confirm": "Confirm",
+    "close": "Close",
+    "viewMore": "View More",
+    "loadMore": "Load More",
+    "refresh": "Refresh",
+    "tryAgain": "Try Again"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "uploading": "Uploading...",
+    "processing": "Processing...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "or": "or",
+    "and": "and",
+    "of": "of",
+    "in": "in",
+    "at": "at",
+    "by": "by",
+    "for": "for",
+    "with": "with",
+    "from": "from",
+    "to": "to",
+    "the": "the",
+    "a": "a",
+    "an": "an",
+    "notAvailable": "N/A",
+    "today": "Today",
+    "total": "Total",
+    "Select": "Select",
+    "optional": "Optional",
+    "required": "Required",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "date": "Date",
+    "time": "Time",
+    "description": "Description",
+    "notes": "Notes",
+    "type": "Type",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status"
+  },
+  "userTypes": {
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "receptionist": "Receptionist"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "nextWeek": "Next Week",
+    "thisMonth": "This Month",
+    "lastMonth": "Last Month",
+    "nextMonth": "Next Month",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "night": "Night"
+  },
+  "homepage": {
+    "hero": {
+      "title": "Your Health, Our Priority",
+      "subtitle": "Experience modern healthcare management with our comprehensive platform designed for patients, doctors, and healthcare professionals."
+    },
+    "services": {
+      "expertCare": {
+        "title": "Expert Medical Care",
+        "description": "Connect with qualified healthcare professionals"
+      },
+      "easyBooking": {
+        "title": "Easy Appointment Booking",
+        "description": "Schedule appointments with just a few clicks"
+      },
+      "medicalChat": {
+        "title": "24/7 Medical Chat",
+        "description": "Get instant medical advice and support through our AI-powered chatbot"
+      },
+      "telemedicine": {
+        "title": "Telemedicine",
+        "description": "Remote consultations from the comfort of your home"
+      },
+      "secure": {
+        "title": "Secure & Private",
+        "description": "Your medical data is protected with enterprise-grade security"
+      },
+      "efficient": {
+        "title": "Fast & Efficient",
+        "description": "Streamlined processes for better healthcare delivery"
+      }
+    },
+    "stats": {
+      "happyPatients": "Happy Patients",
+      "expertDoctors": "Expert Doctors",
+      "medicalSpecialties": "Medical Specialties",
+      "emergencySupport": "Emergency Support"
+    },
+    "sections": {
+      "whyChoose": "Why Choose Our Platform?",
+      "trustedByThousands": "Trusted by Thousands",
+      "ourCommunity": "Our Community",
+      "whatUsersSay": "What Our Users Say"
+    },
+    "cta": {
+      "title": "Ready to Transform Your Healthcare Experience?",
+      "subtitle": "Join thousands of satisfied patients and healthcare professionals on our platform."
+    }
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "editPatient": "Edit Patient",
+    "viewProfile": "View Profile",
+    "bookAppointment": "Book Appointment",
+    "viewAll": "View All"
+  },
+  "patient": {
+    "yearsOld": "{{age}} years old",
+    "nextAppointment": "Next appointment",
+    "searchPlaceholder": "Search by name, email, phone, or ID...",
+    "searchingPatients": "Searching patients...",
+    "patientsFound": "{{count}} patients found",
+    "filters": {
+      "allStatus": "All Status",
+      "allGenders": "All Genders",
+      "allAges": "All Ages"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "ageRanges": {
+      "child": "0-18 years",
+      "young": "19-35 years",
+      "adult": "36-50 years",
+      "senior": "51-65 years",
+      "elderly": "65+ years"
+    },
+    "views": {
+      "grid": "Grid",
+      "list": "List"
+    },
+    "noResults": {
+      "title": "No patients found",
+      "description": "Try adjusting your search terms or filters"
+    },
+    "searchPrompt": {
+      "title": "Search for patients",
+      "description": "Enter a name, email, phone number, or patient ID to get started"
+    },
+    "fields": {
+      "age": "Age",
+      "gender": "Gender",
+      "lastVisit": "Last Visit",
+      "status": "Status",
+      "never": "Never"
+    }
+  },
+  "receptionist": {
+    "welcome": "Welcome back, {{name}}! Managing patients for Dr. {{doctor}}",
+    "quickActions": "Quick Actions",
+    "recentPatients": "Recent Patients",
+    "totalAppointments": "Total appointments",
+    "actions": {
+      "addNewPatient": "Add New Patient",
+      "viewReports": "View Reports"
+    },
+    "stats": {
+      "appointments": "Appointment Statistics",
+      "patients": "Patient Statistics",
+      "upcoming": "Upcoming",
+      "newToday": "New Today",
+      "thisWeek": "This Week"
+    },
+    "errors": {
+      "noAssignedDoctor": "No assigned doctor found. Please contact administrator.",
+      "loadFailed": "Failed to load dashboard data"
+    },
+    "noData": {
+      "appointments": "No appointment data available",
+      "patients": "No patient data available"
+    },
+    "noPatients": {
+      "description": "Start by adding a new patient or searching existing ones"
+    }
+  }
+}

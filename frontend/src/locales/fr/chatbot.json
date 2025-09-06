@@ -1,0 +1,132 @@
+{
+  "interface": {
+    "messagePlaceholder": "Tapez votre message... Utilisez @nom_patient pour mentionner des patients",
+    "placeholder": "Tapez votre message... Utilisez @nom_patient pour mentionner des patients",
+    "noMessages": "Aucun message pour le moment.",
+    "sendMessage": "Envoyer le Message",
+    "newChat": "Nouvelle Discussion",
+    "chatHistory": "Historique des Discussions",
+    "documents": "Documents",
+    "uploadDocument": "Télécharger un Document",
+    "dragDropText": "Glissez et déposez les fichiers ici ou cliquez pour parcourir",
+    "supportedFormats": "Formats supportés : PDF, DOC, DOCX, TXT, JPG, PNG",
+    "maxFileSize": "Taille maximale du fichier : 10MB",
+    "selectFiles": "Sélectionner les Fichiers",
+    "uploading": "Téléchargement en cours...",
+    "uploadSuccess": "Fichier téléchargé avec succès",
+    "uploadError": "Échec du téléchargement. Veuillez réessayer.",
+    "deleteDocument": "Supprimer le Document",
+    "downloadDocument": "Télécharger le Document",
+    "documentUploaded": "Document téléchargé",
+    "documentDeleted": "Document supprimé",
+    "processingDocument": "Traitement du document...",
+    "documentProcessed": "Document traité avec succès",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce message ? Cette action ne peut pas être annulée.",
+    "deleteMessage": "Supprimer le message",
+    "deleteError": "Échec de la suppression du message : {{error}}",
+    "unknownError": "Erreur inconnue",
+    "loginRequired": "Veuillez vous connecter pour envoyer des messages.",
+    "sendError": "Échec de l'envoi du message. Veuillez réessayer."
+  },
+  "patientMention": {
+    "searchPatients": "Rechercher des patients...",
+    "noPatients": "Aucun patient trouvé",
+    "selectPatient": "Sélectionner un patient à mentionner",
+    "patientSelected": "Patient sélectionné : {{name}}",
+    "enhancedTools": "Outils améliorés activés pour le contexte patient",
+    "age": "Âge",
+    "sex": "Sexe"
+  },
+  "documentManagement": {
+    "title": "Gestion des Documents",
+    "uploadedFiles": "Fichiers Téléchargés",
+    "fileSize": "Taille du Fichier",
+    "uploadDate": "Date de Téléchargement",
+    "storageType": "Type de Stockage",
+    "tokenCount": "Nombre de Tokens",
+    "contextStorage": "Stockage Contextuel",
+    "temporaryStorage": "Stockage Temporaire",
+    "persistentStorage": "Stockage Persistant",
+    "storageDescription": {
+      "context": "Petits documents stockés directement dans le contexte du chat",
+      "temporary": "Documents moyens stockés temporairement (7 jours)",
+      "persistent": "Gros documents stockés de façon persistante (30 jours)"
+    },
+    "noDocuments": "Aucun document téléchargé pour le moment",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce document ?",
+    "deleteSuccess": "Document supprimé avec succès",
+    "deleteError": "Échec de la suppression du document"
+  },
+  "chat": {
+    "thinking": "Réflexion...",
+    "typing": "L'IA tape...",
+    "error": "Quelque chose s'est mal passé. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "regenerate": "Régénérer",
+    "feedback": "Donner un Retour",
+    "helpful": "Utile",
+    "notHelpful": "Pas Utile",
+    "reportIssue": "Signaler un Problème"
+  },
+  "citations": {
+    "sources": "Sources",
+    "fromDocument": "Du document : {{filename}}",
+    "viewSource": "Voir la Source",
+    "page": "Page {{number}}",
+    "section": "Section {{name}}"
+  },
+  "documents": {
+    "noDocuments": "Aucun document disponible",
+    "deleteDocument": "Supprimer le document",
+    "storageTypes": {
+      "context": "Contexte Direct",
+      "temporary": "Stockage Temp",
+      "persistent": "Persistant"
+    }
+  },
+  "input": {
+    "placeholder": "Tapez votre message...",
+    "removePreview": "×",
+    "attach": "Joindre",
+    "send": "Envoyer"
+  },
+  "search": {
+    "placeholder": "Rechercher des utilisateurs...",
+    "error": "Échec de la recherche. Veuillez réessayer."
+  },
+  "chatHistory": {
+    "title": "Historique des Discussions",
+    "newChat": "Nouvelle Discussion",
+    "loginRequired": "Veuillez vous connecter pour créer une nouvelle discussion.",
+    "enterChatName": "Entrez le nom de la discussion :",
+    "defaultChatName": "Nouvelle Discussion",
+    "createChatError": "Erreur lors de la création de la discussion. Veuillez réessayer.",
+    "loginToView": "Veuillez vous connecter pour voir votre historique de discussions.",
+    "loadingChats": "Chargement des discussions..."
+  },
+  "chatList": {
+    "justNow": "À l'instant",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer '{{chatTitle}}' ?",
+    "deleteError": "Erreur lors de la suppression de la discussion : {{error}}",
+    "unknownError": "Erreur inconnue",
+    "deleteFailure": "Échec de la suppression de la discussion. Veuillez réessayer.",
+    "deleteConversation": "Supprimer la conversation"
+  },
+  "fileUpload": {
+    "validationError": "{{fileName}} : {{error}}",
+    "dropFiles": "Déposez les fichiers ici",
+    "dragDrop": "Glissez et déposez les fichiers ici",
+    "clickToBrowse": "ou cliquez pour parcourir",
+    "uploadFiles": "Télécharger {{count}} fichier(s)",
+    "clear": "Effacer"
+  },
+  "errors": {
+    "uploadError": "Échec du téléchargement. Veuillez réessayer.",
+    "fetchDocumentsError": "Échec de la récupération des documents. Veuillez réessayer."
+  },
+  "common": {
+    "error": "Erreur"
+  }
+}

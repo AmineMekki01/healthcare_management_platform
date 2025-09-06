@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -35,63 +36,105 @@ import {
 import { AuthContext } from '../../auth/context/AuthContext';
 import { getMedicalRecordsByCategory, downloadFile, downloadMultipleFiles } from '../services/medicalRecordsService';
 
-const MEDICAL_CATEGORIES = {
+const getMedicalCategories = (t) => ({
   'lab_results': { 
     icon: <LabIcon />, 
-    label: 'Lab Results', 
+    label: t('categories.labResults.label'), 
     color: '#4caf50',
-    description: 'Blood tests, urine tests, and other laboratory analyses'
+    description: t('categories.labResults.description')
   },
   'ct_scan': { 
     icon: <RadiologyIcon />, 
-    label: 'CT Scan', 
+    label: t('categories.ctScan.label'), 
     color: '#2196f3',
-    description: 'Computed tomography scans and reports'
+    description: t('categories.ctScan.description')
   },
   'x_ray': { 
     icon: <RadiologyIcon />, 
-    label: 'X-Ray', 
+    label: t('categories.xRay.label'), 
     color: '#2196f3',
-    description: 'X-ray images and radiological reports'
+    description: t('categories.xRay.description')
   },
   'ultrasound': { 
     icon: <RadiologyIcon />, 
-    label: 'Ultrasound', 
+    label: t('categories.ultrasound.label'), 
     color: '#2196f3',
-    description: 'Ultrasound images and diagnostic reports'
+    description: t('categories.ultrasound.description')
   },
   'mri': { 
     icon: <RadiologyIcon />, 
-    label: 'MRI', 
+    label: t('categories.mri.label'), 
     color: '#2196f3',
-    description: 'Magnetic resonance imaging scans'
+    description: t('categories.mri.description')
   },
   'clinical_reports': { 
     icon: <ReportIcon />, 
-    label: 'Clinical Reports', 
+    label: t('categories.clinicalReports.label'), 
     color: '#ff9800',
-    description: 'Doctor consultations and clinical assessments'
+    description: t('categories.clinicalReports.description')
   },
   'discharge': { 
     icon: <DischargeIcon />, 
-    label: 'Discharge', 
+    label: t('categories.discharge.label'), 
     color: '#9c27b0',
-    description: 'Hospital discharge summaries and instructions'
+    description: t('categories.discharge.description')
   },
   'other': { 
     icon: <FileIcon />, 
-    label: 'Other', 
+    label: t('categories.other.label'), 
     color: '#607d8b',
-    description: 'Other medical documents and records'
+    description: t('categories.other.description')
   }
-};
+});
 
 function MedicalRecordsView({ onBackToMyDocs }) {
+  const { t } = useTranslation('medical');
   const { userId } = useContext(AuthContext);
   const [medicalRecords, setMedicalRecords] = useState({});
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categoryDocuments, setCategoryDocuments] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const MEDICAL_CATEGORIES = getMedicalCategories(t);
+
+  const extractFolderInfo = useCallback((doc) => {
+    const path = doc.path || '';
+    const pathParts = path.split('/');
+    
+    const folderPattern = /Dr\.([^_]+)_(\d{4}-\d{2}-\d{2})_([^_]+)(?:_(.+))?/;
+    
+    for (let i = pathParts.length - 1; i >= 0; i--) {
+      const part = pathParts[i];
+      const match = part.match(folderPattern);
+      if (match) {
+        return {
+          folderName: part,
+          doctorName: match[1],
+          studyDate: match[2],
+          category: match[3],
+          bodyPart: match[4] || null
+        };
+      }
+    }
+    
+    const doctorName = doc.doctor_name || doc.uploader_name || 'Doctor';
+    const studyDate = doc.study_date || doc.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+    const category = MEDICAL_CATEGORIES[doc.category]?.label || 'Other';
+    const bodyPart = doc.body_part;
+    
+    let folderName = `Dr.${doctorName.replace(/\s+/g, '')}_${studyDate}_${category}`;
+    if (bodyPart && bodyPart !== 'OTHER') {
+      folderName += `_${bodyPart}`;
+    }
+    
+    return {
+      folderName,
+      doctorName,
+      studyDate,
+      category,
+      bodyPart
+    };
+  }, [MEDICAL_CATEGORIES]);
 
   const fetchMedicalRecords = useCallback(async () => {
     if (!userId) return;
@@ -134,7 +177,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
     } catch (error) {
       console.error('Error fetching medical records:', error);
     }
-  }, [userId]);
+  }, [userId, extractFolderInfo]);
 
   useEffect(() => {
     fetchMedicalRecords();
@@ -154,44 +197,6 @@ function MedicalRecordsView({ onBackToMyDocs }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const extractFolderInfo = (doc) => {
-    const path = doc.path || '';
-    const pathParts = path.split('/');
-    
-    const folderPattern = /Dr\.([^_]+)_(\d{4}-\d{2}-\d{2})_([^_]+)(?:_(.+))?/;
-    
-    for (let i = pathParts.length - 1; i >= 0; i--) {
-      const part = pathParts[i];
-      const match = part.match(folderPattern);
-      if (match) {
-        return {
-          folderName: part,
-          doctorName: match[1],
-          studyDate: match[2],
-          category: match[3],
-          bodyPart: match[4] || null
-        };
-      }
-    }
-    
-    const doctorName = doc.doctor_name || doc.uploader_name || 'Doctor';
-    const studyDate = doc.study_date || doc.created_at?.split('T')[0] || new Date().toISOString().split('T')[0];
-    const category = MEDICAL_CATEGORIES[doc.category]?.label || 'Other';
-    const bodyPart = doc.body_part;
-    
-    let folderName = `Dr.${doctorName.replace(/\s+/g, '')}_${studyDate}_${category}`;
-    if (bodyPart && bodyPart !== 'OTHER') {
-      folderName += `_${bodyPart}`;
-    }
-    
-    return {
-      folderName,
-      doctorName,
-      studyDate,
-      category,
-      bodyPart
-    };
-  };
 
   const handleDownload = async (documentId, filename) => {
     try {

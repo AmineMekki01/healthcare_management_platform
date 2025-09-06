@@ -1,0 +1,208 @@
+{
+  "actions": {
+    "edit": "Modifier",
+    "schedule": "Horaire",
+    "permissions": "Permissions",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "dismiss": "Renvoyer",
+    "viewProfile": "Voir le profil",
+    "viewSchedule": "Voir l'horaire",
+    "managePermissions": "Gérer les permissions",
+    "export": "Exporter",
+    "delete": "Supprimer",
+    "clearFilters": "Effacer les filtres",
+    "clearAllFilters": "Effacer tous les filtres",
+    "addStaff": "Ajouter du personnel"
+  },
+  "labels": {
+    "phone": "Téléphone",
+    "joined": "Rejoint",
+    "assigned": "Assigné",
+    "verified": "Vérifié",
+    "permissions": "Permissions",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "messages": {
+    "noPermissions": "Aucune permission spécifique définie",
+    "scheduleNotSet": "Horaire non défini",
+    "confirmDismiss": "Êtes-vous sûr de vouloir renvoyer {{name}} ?"
+  },
+  "page": {
+    "title": "Gestion du personnel",
+    "subtitle": "Gérez les membres de votre équipe médicale"
+  },
+  "stats": {
+    "totalStaff": "Personnel total",
+    "assigned": "Assigné",
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "schedule": {
+    "daysPerWeek": "{{days}} jours/semaine",
+    "fullTime": "Temps plein"
+  },
+  "roles": {
+    "receptionist": "Réceptionniste",
+    "doctor": "Médecin",
+    "nurse": "Infirmière"
+  },
+  "list": {
+    "title": "Membres du personnel",
+    "searchPlaceholder": "Rechercher par nom, email, téléphone ou spécialisation...",
+    "loading": "Chargement...",
+    "staffMembersFound": "{{count}} membres du personnel trouvés",
+    "selected": "{{count}} sélectionnés",
+    "noStaffFound": "Aucun membre du personnel trouvé",
+    "noStaffAdded": "Aucun membre du personnel n'a encore été ajouté.",
+    "adjustFilters": "Essayez d'ajuster vos termes de recherche ou filtres.",
+    "views": {
+      "grid": "Grille",
+      "list": "Liste",
+      "compact": "Compact"
+    },
+    "filters": {
+      "allRoles": "Tous les rôles",
+      "allStatus": "Tous les statuts",
+      "allDepartments": "Tous les départements"
+    },
+    "sort": {
+      "name": "Trier par nom",
+      "role": "Trier par rôle",
+      "department": "Trier par département",
+      "experience": "Trier par expérience",
+      "status": "Trier par statut"
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "bulkActions": {
+      "activate": "Activer",
+      "deactivate": "Désactiver",
+      "export": "Exporter",
+      "delete": "Supprimer"
+    }
+  },
+  "search": {
+    "title": "Recherche du personnel",
+    "placeholder": "Rechercher par nom, rôle, spécialisation ou département...",
+    "button": "Rechercher",
+    "searching": "Recherche en cours...",
+    "quickFilters": {
+      "doctors": "👨‍⚕️ Médecins",
+      "receptionists": "👩‍💼 Réceptionnistes",
+      "nurses": "👩‍⚕️ Infirmières",
+      "available": "🟢 Disponible"
+    },
+    "advancedFilters": "Filtres avancés",
+    "filters": {
+      "allStatus": "Tous les statuts",
+      "available": "Disponible",
+      "busy": "Occupé",
+      "offline": "Hors ligne",
+      "onBreak": "En pause",
+      "allDepartments": "Tous les départements",
+      "cardiology": "Cardiologie",
+      "neurology": "Neurologie",
+      "orthopedics": "Orthopédie",
+      "pediatrics": "Pédiatrie",
+      "emergency": "Urgences",
+      "anyExperience": "Toute expérience",
+      "experience0to2": "0-2 ans",
+      "experience3to5": "3-5 ans",
+      "experience6to10": "6-10 ans",
+      "experience10plus": "10+ ans",
+      "allShifts": "Tous les quarts",
+      "morning": "Matin",
+      "afternoon": "Après-midi",
+      "night": "Nuit",
+      "weekend": "Week-end"
+    },
+    "results": {
+      "searching": "Recherche en cours...",
+      "found": "{{count}} membres du personnel trouvés",
+      "noResults": "Aucun membre du personnel trouvé",
+      "noResultsDesc": "Essayez d'ajuster vos termes de recherche ou filtres",
+      "searchPrompt": "Rechercher des membres du personnel",
+      "searchPromptDesc": "Entrez un nom, rôle ou département pour commencer"
+    },
+    "error": "Erreur: {{message}}"
+  },
+  "status": {
+    "online": "En ligne",
+    "available": "Disponible",
+    "active": "Actif",
+    "busy": "Occupé",
+    "offline": "Hors ligne",
+    "unavailable": "Indisponible",
+    "inactive": "Inactif",
+    "break": "En pause"
+  },
+  "talentPool": {
+    "title": "Vivier de talents",
+    "subtitle": "Parcourez et embauchez des réceptionnistes qualifiées pour votre cabinet",
+    "refresh": "Actualiser",
+    "refreshing": "Actualisation...",
+    "loading": "Chargement du vivier de talents...",
+    "availableReceptionists": "Réceptionnistes disponibles ({{count}})",
+    "noReceptionistsTitle": "Aucune réceptionniste disponible",
+    "noReceptionistsDescription": "Il n'y a aucune réceptionniste dans le vivier de talents pour le moment. Veuillez revenir plus tard.",
+    "noResultsTitle": "Aucun résultat trouvé",
+    "noResultsDescription": "Essayez d'ajuster vos critères de recherche ou filtres pour trouver plus de résultats.",
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher par nom, email...",
+      "experience": "Expérience",
+      "allLevels": "Tous les niveaux",
+      "entryLevel": "Niveau débutant (0-2 ans)",
+      "midLevel": "Niveau intermédiaire (2-5 ans)",
+      "seniorLevel": "Niveau senior (5+ ans)",
+      "availability": "Disponibilité",
+      "all": "Tous",
+      "sortBy": "Trier par"
+    },
+    "sort": {
+      "name": "Nom",
+      "experience": "Expérience",
+      "rating": "Évaluation"
+    },
+    "stats": {
+      "total": "Total",
+      "available": "Disponible",
+      "experienced": "Expérimenté",
+      "topRated": "Mieux noté"
+    },
+    "actions": {
+      "hire": "Embaucher",
+      "viewProfile": "Voir le profil"
+    }
+  },
+  "errors": {
+    "failedOperation": "Échec de {{operation}}",
+    "doctorIdRequired": "L'ID du médecin est requis pour récupérer le personnel"
+  },
+  "utils": {
+    "unknownUser": "Utilisateur inconnu",
+    "notAvailable": "N/A",
+    "invalidDate": "Date invalide",
+    "invalidDateTime": "Date/Heure invalide",
+    "unknown": "Inconnu",
+    "contractTypes": {
+      "fullTime": "Temps plein",
+      "partTime": "Temps partiel",
+      "contract": "Contrat",
+      "temporary": "Temporaire",
+      "intern": "Stagiaire"
+    },
+    "filterSummary": {
+      "status": "Statut: {{statuses}}",
+      "role": "Rôle: {{roles}}",
+      "experience": "Expérience: {{experience}}",
+      "verification": "Vérification: {{verification}}",
+      "dateRange": "Plage de dates appliquée",
+      "search": "Recherche: \"{{query}}\""
+    }
+  }
+}

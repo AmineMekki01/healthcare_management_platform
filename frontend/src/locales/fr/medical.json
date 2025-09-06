@@ -1,0 +1,213 @@
+{
+  "specialties": {
+    "generalPractice": "Médecine Générale",
+    "internalMedicine": "Médecine Interne",
+    "pediatrics": "Pédiatrie",
+    "cardiology": "Cardiologie",
+    "dermatology": "Dermatologie",
+    "orthopedics": "Orthopédie",
+    "neurology": "Neurologie",
+    "psychiatry": "Psychiatrie",
+    "surgery": "Chirurgie",
+    "endocrinology": "Endocrinologie",
+    "gastroenterology": "Gastro-entérologie",
+    "hematology": "Hématologie",
+    "infectiousDisease": "Maladies Infectieuses",
+    "nephrology": "Néphrologie",
+    "oncology": "Oncologie",
+    "ophthalmology": "Ophtalmologie",
+    "otolaryngology": "ORL",
+    "pathology": "Anatomie Pathologique",
+    "pulmonology": "Pneumologie",
+    "radiology": "Radiologie",
+    "rheumatology": "Rhumatologie",
+    "urology": "Urologie",
+    "emergencyMedicine": "Médecine d'Urgence",
+    "familyMedicine": "Médecine Familiale",
+    "anesthesiology": "Anesthésiologie",
+    "obstetricsGynecology": "Gynécologie-Obstétrique",
+    "physicalMedicine": "Médecine Physique",
+    "plasticSurgery": "Chirurgie Plastique",
+    "sportsMedicine": "Médecine du Sport"
+  },
+  "terms": {
+    "patient": "Patient",
+    "doctor": "Médecin",
+    "appointment": "Rendez-vous",
+    "diagnosis": "Diagnostic",
+    "treatment": "Traitement",
+    "prescription": "Prescription",
+    "medication": "Médicament",
+    "dosage": "Dosage",
+    "symptoms": "Symptômes",
+    "medicalHistory": "Antécédents Médicaux",
+    "allergies": "Allergies",
+    "bloodPressure": "Tension Artérielle",
+    "heartRate": "Rythme Cardiaque",
+    "temperature": "Température",
+    "weight": "Poids",
+    "height": "Taille",
+    "bmi": "IMC",
+    "labResults": "Résultats de Laboratoire",
+    "xray": "Radiographie",
+    "mri": "IRM",
+    "ctScan": "Scanner",
+    "ultrasound": "Échographie",
+    "bloodTest": "Analyse de Sang",
+    "urineTest": "Analyse d'Urine",
+    "vaccination": "Vaccination",
+    "surgery": "Chirurgie",
+    "consultation": "Consultation",
+    "followUp": "Suivi",
+    "referral": "Référence",
+    "insurance": "Assurance",
+    "copay": "Quote-part",
+    "deductible": "Franchise",
+    "emergencyContact": "Contact d'Urgence",
+    "nextOfKin": "Proche Parent",
+    "medicalRecord": "Dossier Médical",
+    "patientId": "ID Patient",
+    "doctorId": "ID Médecin",
+    "appointmentId": "ID Rendez-vous",
+    "medicalLicense": "Licence Médicale",
+    "hospitalAffiliation": "Affiliation Hospitalière",
+    "clinicLocation": "Localisation de la Clinique"
+  },
+  "documentTypes": {
+    "labReport": "Rapport de laboratoire",
+    "imagingStudy": "Étude d'imagerie",
+    "prescription": "Ordonnance",
+    "dischargeSummary": "Résumé de sortie",
+    "operativeReport": "Rapport opératoire",
+    "consultationNote": "Note de consultation",
+    "progressNote": "Note de progression",
+    "vaccinationRecord": "Carnet de vaccination",
+    "insuranceCard": "Carte d'assurance",
+    "referralLetter": "Lettre de référence",
+    "medicalClearance": "Autorisation médicale",
+    "pathologyReport": "Rapport de pathologie",
+    "radiologyReport": "Rapport de radiologie",
+    "ecg": "ECG/EKG",
+    "echocardiogram": "Échocardiogramme",
+    "stressTest": "Test de stress",
+    "allergyTest": "Test d'allergie",
+    "biopsyReport": "Rapport de biopsie",
+    "geneticTest": "Test génétique",
+    "mentalHealthAssessment": "Évaluation de santé mentale"
+  },
+  "categories": {
+    "labResults": {
+      "label": "Résultats de Laboratoire",
+      "description": "Résultats et analyses de tests de laboratoire"
+    },
+    "ctScan": {
+      "label": "Scanner CT",
+      "description": "Imagerie par tomodensitométrie"
+    },
+    "xRay": {
+      "label": "Radiographie",
+      "description": "Imagerie radiographique"
+    },
+    "ultrasound": {
+      "label": "Échographie",
+      "description": "Imagerie échographique et sonographie"
+    },
+    "mammography": {
+      "label": "Mammographie",
+      "description": "Imagerie mammographique"
+    },
+    "mri": {
+      "label": "IRM",
+      "description": "Imagerie par résonance magnétique"
+    },
+    "petScan": {
+      "label": "TEP Scan",
+      "description": "Tomographie par émission de positons"
+    },
+    "clinicalReports": {
+      "label": "Rapports Cliniques",
+      "description": "Évaluations et rapports cliniques"
+    },
+    "discharge": {
+      "label": "Sortie",
+      "description": "Résumés et documents de sortie"
+    },
+    "other": {
+      "label": "Autre",
+      "description": "Autres documents médicaux"
+    }
+  },
+  "bodyParts": {
+    "head": "Tête",
+    "neck": "Cou",
+    "chest": "Poitrine",
+    "abdomen": "Abdomen",
+    "pelvis": "Bassin",
+    "spine": "Colonne vertébrale",
+    "arm": "Bras",
+    "hand": "Main",
+    "leg": "Jambe",
+    "foot": "Pied",
+    "brain": "Cerveau",
+    "heart": "Cœur",
+    "lungs": "Poumons",
+    "kidney": "Rein",
+    "liver": "Foie",
+    "knee": "Genou",
+    "shoulder": "Épaule",
+    "hip": "Hanche",
+    "ankle": "Cheville",
+    "wrist": "Poignet",
+    "fullBody": "Corps entier",
+    "other": "Autre"
+  },
+  "upload": {
+    "title": "Télécharger des Documents Médicaux",
+    "subtitle": "Téléchargez et organisez vos fichiers médicaux en toute sécurité",
+    "dragDrop": "Glissez-déposez les fichiers ici ou cliquez pour parcourir",
+    "supportedFormats": "Formats supportés : PDF, DOC, DOCX, JPG, PNG, DICOM",
+    "maxFileSize": "Taille maximale du fichier : 50MB par fichier",
+    "selectFiles": "Sélectionner les Fichiers",
+    "uploading": "Téléchargement en cours...",
+    "uploadSuccess": "Fichiers téléchargés avec succès !",
+    "uploadError": "Échec du téléchargement. Veuillez réessayer.",
+    "noFilesSelected": "Aucun fichier sélectionné",
+    "newFolder": "Nouveau Dossier",
+    "uploadFile": "Télécharger un Fichier",
+    "noFiles": "Aucun Fichier ou Dossier",
+    "uploadFirst": "Téléchargez Votre Premier Fichier"
+  },
+  "shared": {
+    "searchPlaceholder": "Rechercher par nom d'utilisateur ou nom de fichier...",
+    "noSharedFiles": "Aucun Fichier Partagé",
+    "noMatchingFiles": "Aucun Fichier Correspondant",
+    "noSharedDescription": "Aucun fichier ou dossier n'a encore été partagé avec vous. Lorsque quelqu'un partage des documents médicaux avec vous, ils apparaîtront ici.",
+    "noMatchingDescription": "Aucun fichier ou dossier ne correspond à vos critères de recherche. Essayez d'ajuster votre terme de recherche."
+  },
+  "labels": {
+    "folder": "Dossier",
+    "file": "Fichier",
+    "documents": "documents"
+  },
+  "errors": {
+    "failedToLoadPatients": "Échec du chargement des patients",
+    "selectCategoryAndFiles": "Veuillez sélectionner une catégorie et des fichiers à télécharger",
+    "selectPatientToShare": "Veuillez sélectionner un patient avec qui partager"
+  },
+  "header": {
+    "title": "Documents Médicaux",
+    "subtitle": "Gérer, partager et organiser vos fichiers médicaux",
+    "tabs": {
+      "myDocs": "Mes Documents",
+      "myDocsDescription": "Documents personnels (non utilisés par le Chatbot)",
+      "medicalRecords": "Dossiers Médicaux",
+      "medicalRecordsDescription": "Documents cliniques organisés par catégorie",
+      "uploadShare": "Télécharger et Partager",
+      "uploadShareDescription": "Télécharger des fichiers et partager avec les patients",
+      "sharedWithMe": "Partagé avec Moi",
+      "sharedWithMeDescription": "Documents partagés par des collègues",
+      "iSharedWith": "J'ai Partagé Avec",
+      "iSharedWithDescription": "Documents que j'ai partagés avec d'autres"
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "dashboard": {
+    "title": "لوحة تحكم المواعيد",
+    "myAppointments": "مواعيدي",
+    "pastAppointments": "المواعيد السابقة",
+    "todayAppointments": "مواعيد اليوم",
+    "thisWeekAppointments": "مواعيد هذا الأسبوع",
+    "scheduleAppointment": "جدولة موعد",
+    "rescheduleAppointment": "إعادة جدولة الموعد",
+    "cancelAppointment": "إلغاء الموعد",
+    "confirmAppointment": "تأكيد الموعد",
+    "noAppointments": "لا توجد مواعيد",
+    "loadingAppointments": "جاري تحميل المواعيد...",
+    "loading": "جاري تحميل المواعيد...",
+    "error": "خطأ في تحميل المواعيد",
+    "tryAgain": "حاول مرة أخرى",
+    "titlePatient": "مواعيدي كمريض",
+    "titleDoctor": "مواعيدي كطبيب",
+    "titleReceptionist": "مواعيدي كموظف استقبال",
+    "as": "ك",
+    "upcomingAppointments": "المواعيد القادمة",
+    "completedAppointments": "المواعيد المكتملة",
+    "canceledAppointments": "المواعيد الملغاة",
+    "allAppointments": "جميع المواعيد"
+  },
+  "status": {
+    "scheduled": "مجدول",
+    "confirmed": "مؤكد",
+    "inProgress": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "cancelled": "ملغي",
+    "noShow": "عدم حضور",
+    "rescheduled": "معاد الجدولة",
+    "pending": "في انتظار التأكيد"
+  },
+  "filters": {
+    "all": "جميع المواعيد",
+    "today": "اليوم",
+    "thisWeek": "هذا الأسبوع",
+    "thisMonth": "هذا الشهر",
+    "upcoming": "القادمة",
+    "past": "السابقة",
+    "byStatus": "تصفية حسب الحالة",
+    "byDoctor": "تصفية حسب الطبيب",
+    "bySpecialty": "تصفية حسب التخصص",
+    "clearFilters": "مسح المرشحات"
+  },
+  "details": {
+    "appointmentWith": "موعد مع",
+    "patientName": "اسم المريض",
+    "doctorName": "اسم الطبيب",
+    "specialty": "التخصص",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "duration": "المدة",
+    "location": "الموقع",
+    "reason": "سبب الزيارة",
+    "notes": "ملاحظات",
+    "instructions": "تعليمات ما قبل الموعد",
+    "reminderSent": "تم إرسال التذكير",
+    "appointmentId": "رقم الموعد",
+    "bookedOn": "تم الحجز في",
+    "lastModified": "آخر تعديل"
+  },
+  "actions": {
+    "viewDetails": "عرض التفاصيل",
+    "editAppointment": "تعديل الموعد",
+    "joinVideo": "الانضمام لمكالمة الفيديو",
+    "startConsultation": "بدء الاستشارة",
+    "markCompleted": "تحديد كمكتمل",
+    "markNoShow": "تحديد كعدم حضور",
+    "sendReminder": "إرسال تذكير",
+    "printDetails": "طباعة التفاصيل",
+    "exportCalendar": "تصدير للتقويم"
+  },
+  "booking": {
+    "selectDoctor": "اختر طبيباً",
+    "selectDate": "اختر التاريخ",
+    "selectTime": "اختر الوقت",
+    "availableSlots": "الأوقات المتاحة",
+    "noSlotsAvailable": "لا توجد أوقات متاحة للتاريخ المحدد",
+    "reasonForVisit": "سبب الزيارة",
+    "additionalNotes": "ملاحظات إضافية",
+    "confirmBooking": "تأكيد الحجز",
+    "bookingSuccess": "تم حجز الموعد بنجاح!",
+    "bookingError": "فشل في حجز الموعد. يرجى المحاولة مرة أخرى.",
+    "selectAnotherDate": "اختر تاريخاً آخر",
+    "morningSlots": "أوقات الصباح",
+    "afternoonSlots": "أوقات بعد الظهر",
+    "eveningSlots": "أوقات المساء"
+  },
+  "notifications": {
+    "appointmentReminder": "تذكير بالموعد",
+    "appointmentConfirmed": "تم تأكيد الموعد",
+    "appointmentCancelled": "تم إلغاء الموعد",
+    "appointmentRescheduled": "تم إعادة جدولة الموعد",
+    "reminderSent": "تم إرسال التذكير بنجاح",
+    "confirmationSent": "تم إرسال التأكيد للمريض"
+  },
+  "card": {
+    "appointmentWith": "موعد مع {{doctorName}}",
+    "specialty": "التخصص: {{specialty}}",
+    "onlineConsultation": "استشارة عبر الإنترنت",
+    "appointmentDetails": "تفاصيل الموعد",
+    "shareText": "موعد مع {{doctorName}} في {{date}} الساعة {{time}}",
+    "sharingNotSupported": "المشاركة غير مدعومة في هذا المتصفح",
+    "cancelSuccess": "تم إلغاء الموعد بنجاح.",
+    "cancelError": "حدث خطأ أثناء إلغاء الموعد.",
+    "patientAge": "عمر المريض: {{age}}",
+    "viewProfile": "عرض الملف الشخصي",
+    "cancel": "إلغاء",
+    "createReport": "إنشاء تقرير",
+    "status": {
+      "canceled": "ملغي",
+      "completed": "مكتمل",
+      "upcoming": "قادم"
+    }
+  },
+  "modal": {
+    "cancelTitle": "إلغاء الموعد",
+    "reasonLabel": "سبب الإلغاء",
+    "reasonRequired": "يرجى تقديم سبب للإلغاء.",
+    "cancelButton": "إلغاء",
+    "confirmButton": "تأكيد"
+  },
+  "filter": {
+    "searchPlaceholder": "🔍 البحث باسم الطبيب أو المريض..."
+  },
+  "stats": {
+    "totalAs": "المجموع كـ {{role}}",
+    "upcomingAs": "القادمة كـ {{role}}",
+    "totalAppointments": "إجمالي المواعيد",
+    "upcoming": "القادمة",
+    "completed": "المكتملة",
+    "canceled": "الملغية"
+  },
+  "userTypes": {
+    "doctor": "طبيب",
+    "receptionist": "موظف استقبال",
+    "patient": "مريض"
+  },
+  "tabs": {
+    "all": "الكل",
+    "upcoming": "القادمة",
+    "completed": "المكتملة",
+    "canceled": "الملغاة",
+    "today": "اليوم",
+    "thisWeek": "هذا الأسبوع",
+    "asPatient": "كمريض",
+    "asDoctor": "كطبيب",
+    "asReceptionist": "كموظف استقبال"
+  },
+  "grid": {
+    "showingAppointments": "عرض {{filtered}} من {{total}} مواعيد",
+    "noAppointmentsFound": "لا توجد مواعيد {{tab}}",
+    "noMatchingAppointments": "لا توجد مواعيد تطابق معايير البحث الخاصة بك"
+  }
+}

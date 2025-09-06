@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
   Container,
@@ -28,6 +29,7 @@ import {
 import { fetchSharedByMe } from '../services/medicalRecordsService';
 
 function ISharedWith() {
+  const { t } = useTranslation('medical');
   const { userId } = useContext(AuthContext);
   const [sharedItems, setSharedItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -135,7 +137,7 @@ function ISharedWith() {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search by user name or file name..."
+          placeholder={t('shared.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{

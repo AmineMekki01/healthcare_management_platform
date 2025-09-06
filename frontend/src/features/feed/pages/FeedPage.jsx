@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {FaFilter } from 'react-icons/fa';
 import BlogPost from '../components/BlogPost';
 import { useFeed } from '../hooks/useFeed';
@@ -22,6 +23,7 @@ import {
 } from '../styles/styles';
 
 const FeedPage = () => {
+  const { t } = useTranslation('feed');
   const {
     posts,
     loading,
@@ -36,7 +38,7 @@ const FeedPage = () => {
   if (error) {
     return (
       <PageContainer>
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>{t('error.message', { error })}</ErrorMessage>
       </PageContainer>
     );
   }
@@ -45,29 +47,29 @@ const FeedPage = () => {
     <PageContainer>
       <FeedContainer>
         <FeedHeader>
-          <FeedTitle>Medical Knowledge Feed</FeedTitle>
+          <FeedTitle>{t('title')}</FeedTitle>
           <SearchFilterContainer>
             <SearchContainer>
-              <SearchLabel htmlFor="search">Search Posts</SearchLabel>
+              <SearchLabel htmlFor="search">{t('search.label')}</SearchLabel>
               <SearchInput
                 id="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by title, content, or keywords..."
+                placeholder={t('search.placeholder')}
               />
               <SearchIcon />
             </SearchContainer>
             <FilterContainer>
               <FilterLabel htmlFor="specialty">
                 <FaFilter />
-                Filter by Specialty
+                {t('filter.label')}
               </FilterLabel>
               <SpecialtySelect
                 id="specialty"
                 options={specialtyOptions}
                 value={specialty}
                 onChange={setSpecialty}
-                placeholder="All Specialties"
+                placeholder={t('filter.placeholder')}
                 classNamePrefix="react-select"
                 isClearable
                 menuPortalTarget={document.body}
@@ -81,7 +83,7 @@ const FeedPage = () => {
         </FeedHeader>
         
         {loading ? (
-          <LoadingSpinner>Loading posts...</LoadingSpinner>
+          <LoadingSpinner>{t('loading')}</LoadingSpinner>
         ) : (
           <PostsContainer>
             {posts && posts.length > 0 ? (
@@ -89,7 +91,7 @@ const FeedPage = () => {
                 <BlogPost key={post.postId} post={post} />
               ))
             ) : (
-              <NoPostsMessage>No posts found</NoPostsMessage>
+              <NoPostsMessage>{t('noPosts')}</NoPostsMessage>
             )}
           </PostsContainer>
         )}

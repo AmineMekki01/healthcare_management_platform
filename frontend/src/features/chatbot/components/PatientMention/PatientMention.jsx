@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../../auth/context/AuthContext';
 import { MentionItem, MentionName, MentionDetails, MentionHighlight } from './PatientMention.styles';
 
@@ -9,11 +10,11 @@ const PatientMention = ({
   onClose,
   inputRef 
 }) => {
+  const { t } = useTranslation('chatbot');
   const [patients, setPatients] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef();
   const { userId } = useContext(AuthContext);
 
@@ -33,21 +34,6 @@ const PatientMention = ({
         setSearchTerm(searchTerm);
         setIsVisible(true);
         
-        const rect = inputRef.current.getBoundingClientRect();
-        const textBeforeMention = beforeCursor.substring(0, atIndex);
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        const computedStyle = window.getComputedStyle(inputRef.current);
-        context.font = `${computedStyle.fontSize} ${computedStyle.fontFamily}`;
-        const textWidth = context.measureText(textBeforeMention).width;
-        
-        const newPosition = {
-          top: rect.top + window.scrollY - 210,
-          left: rect.left + window.scrollX + textWidth
-        };
-        
-        setPosition(newPosition);
       } else {
         setIsVisible(false);
       }
@@ -56,13 +42,7 @@ const PatientMention = ({
     }
   }, [inputValue, cursorPosition, inputRef]);
 
-  useEffect(() => {
-    if (searchTerm !== undefined && userId) {
-      searchPatients(searchTerm);
-    }
-  }, [searchTerm, userId]);
-
-  const searchPatients = async (term) => {
+  const searchPatients = useCallback(async (term) => {
     try {
       const response = await fetch(`http://localhost:8000/api/v1/chatbot/patients/search/${userId}?search=${encodeURIComponent(term)}&limit=5`);
       if (response.ok) {
@@ -74,9 +54,17 @@ const PatientMention = ({
       console.error('Error searching patients:', error);
       setPatients([]);
     }
-  };
+  }, [userId]);
 
-  const handlePatientSelect = (patient) => {
+  useEffect(() => {
+    if (searchTerm.length > 0) {
+      searchPatients(searchTerm);
+    } else {
+      setPatients([]);
+    }
+  }, [searchTerm, searchPatients]);
+
+  const handlePatientSelect = useCallback((patient) => {
     const beforeCursor = inputValue.substring(0, cursorPosition);
     const afterCursor = inputValue.substring(cursorPosition);
     const mentionMatch = beforeCursor.match(/@(\w*)$/);
@@ -90,45 +78,45 @@ const PatientMention = ({
       onPatientSelect(patient, newValue, newCursorPos);
       setIsVisible(false);
     }
-  };
+  }, [inputValue, cursorPosition, onPatientSelect]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (!isVisible || patients.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % patients.length);
+        setSelectedIndex(prev => 
+          prev < patients.length - 1 ? prev + 1 : prev
+        );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => (prev - 1 + patients.length) % patients.length);
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
         break;
       case 'Enter':
-      case 'Tab':
         e.preventDefault();
-        if (patients[selectedIndex]) {
+        if (selectedIndex >= 0 && patients[selectedIndex]) {
           handlePatientSelect(patients[selectedIndex]);
         }
         break;
       case 'Escape':
-        e.preventDefault();
         setIsVisible(false);
-        onClose();
+        break;
+      default:
         break;
     }
-  };
+  }, [isVisible, patients, selectedIndex, handlePatientSelect]);
 
   useEffect(() => {
     if (isVisible && inputRef.current) {
-      inputRef.current.addEventListener('keydown', handleKeyDown);
+      const currentInput = inputRef.current;
+      currentInput.addEventListener('keydown', handleKeyDown);
       return () => {
-        if (inputRef.current) {
-          inputRef.current.removeEventListener('keydown', handleKeyDown);
-        }
+        currentInput.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isVisible, patients, selectedIndex]);
+  }, [isVisible, handleKeyDown, inputRef]);
 
   const highlightMatch = (text, term) => {
     if (!term) return text;
@@ -171,9 +159,9 @@ const PatientMention = ({
             {highlightMatch(patient.full_name, searchTerm)}
           </MentionName>
           <MentionDetails>
-            {patient.age && `Age: ${patient.age}`}
+            {patient.age && `${t('patientMention.age')}: ${patient.age}`}
             {patient.age && patient.sex && ' • '}
-            {patient.sex && `Sex: ${patient.sex}`}
+            {patient.sex && `${t('patientMention.sex')}: ${patient.sex}`}
           </MentionDetails>
         </MentionItem>
       ))}

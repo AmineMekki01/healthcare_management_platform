@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -50,6 +51,7 @@ import {
 } from '../services/medicalRecordsService';
 
 function MyUploads() {
+  const { t } = useTranslation('medical');
   const { userId, userType } = useContext(AuthContext);
   const [currentPath, setCurrentPath] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -387,7 +389,7 @@ function MyUploads() {
               }
             }}
           >
-            Upload File
+            {t('upload.uploadFile')}
           </Button>
 
           <Button
@@ -407,7 +409,7 @@ function MyUploads() {
               }
             }}
           >
-            New Folder
+            {t('upload.newFolder')}
           </Button>
 
           {selectedFiles.size > 0 && (
@@ -616,7 +618,7 @@ function MyUploads() {
                             {folder.name}
                           </Typography>
                           <Chip
-                            label={isFolder ? 'Folder' : 'File'}
+                            label={isFolder ? t('labels.folder') : t('labels.file')}
                             size="small"
                             sx={{
                               backgroundColor: isFolder 
@@ -663,7 +665,7 @@ function MyUploads() {
                 mb: 1
               }}
             >
-              No Files or Folders
+              {t('upload.noFilesOrFolders')}
             </Typography>
             <Typography 
               variant="body1" 
@@ -689,7 +691,7 @@ function MyUploads() {
                 py: 1.5,
               }}
             >
-              Upload Your First File
+              {t('upload.uploadFirstFile')}
             </Button>
           </Box>
         </Fade>

@@ -14,6 +14,7 @@ class MessageService {
         patient_mentions: patientMentions,
         ...(patientId && { patient_id: patientId })
       };
+      console.log("Request body ", requestBody);
 
       const response = await axiosInstance.post(`${API_BASE_URL}/agent-response`, requestBody);
       return response.data;

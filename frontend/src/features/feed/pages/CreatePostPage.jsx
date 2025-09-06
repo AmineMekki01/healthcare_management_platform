@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import Select from 'react-select';
 import ReactQuill from 'react-quill';
@@ -175,6 +176,7 @@ const ErrorMessage = styled.div`
 `;
 
 const CreatePostPage = () => {
+  const { t } = useTranslation('feed');
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -187,16 +189,18 @@ const CreatePostPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const { t: tMedical } = useTranslation('medical');
+  
   const specialtyOptions = [
-    { value: 'cardiology', label: 'Cardiology' },
-    { value: 'neurology', label: 'Neurology' },
-    { value: 'pediatrics', label: 'Pediatrics' },
-    { value: 'radiology', label: 'Radiology' },
-    { value: 'dermatology', label: 'Dermatology' },
-    { value: 'oncology', label: 'Oncology' },
-    { value: 'psychiatry', label: 'Psychiatry' },
-    { value: 'orthopedics', label: 'Orthopedics' },
-    { value: 'general', label: 'General Medicine' },
+    { value: 'cardiology', label: tMedical('specialties.cardiology') },
+    { value: 'neurology', label: tMedical('specialties.neurology') },
+    { value: 'pediatrics', label: tMedical('specialties.pediatrics') },
+    { value: 'radiology', label: tMedical('specialties.radiology') },
+    { value: 'dermatology', label: tMedical('specialties.dermatology') },
+    { value: 'oncology', label: tMedical('specialties.oncology') },
+    { value: 'psychiatry', label: tMedical('specialties.psychiatry') },
+    { value: 'orthopedics', label: tMedical('specialties.orthopedics') },
+    { value: 'general', label: tMedical('specialties.generalPractice') },
   ];
 
   const handleInputChange = (e) => {
@@ -246,7 +250,7 @@ const CreatePostPage = () => {
     setError('');
     
     if (!formData.title.trim() || !formData.content.trim() || !formData.specialty) {
-      setError('Please fill in all required fields');
+      setError(t('create.validation.titleRequired'));
       return;
     }
 
@@ -265,7 +269,7 @@ const CreatePostPage = () => {
       navigate('/feed');
     } catch (error) {
       console.error('Error creating post:', error);
-      setError('Failed to create post. Please try again.');
+      setError(t('create.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -274,46 +278,46 @@ const CreatePostPage = () => {
   return (
     <PageContainer>
       <CreatePostContainer>
-        <CreatePostTitle>Create New Post</CreatePostTitle>
+        <CreatePostTitle>{t('create.title')}</CreatePostTitle>
         
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <Form onSubmit={handleSubmit}>
           <FormGroup>
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">{t('create.titleLabel')} *</Label>
             <Input
               id="title"
               name="title"
               type="text"
               value={formData.title}
               onChange={handleInputChange}
-              placeholder="Enter your post title..."
+              placeholder={t('create.titlePlaceholder')}
               required
             />
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="specialty">Specialty *</Label>
+            <Label htmlFor="specialty">{t('create.categoryLabel')} *</Label>
             <StyledSelect
               id="specialty"
               options={specialtyOptions}
               value={formData.specialty}
               onChange={handleSpecialtyChange}
-              placeholder="Select a specialty..."
+              placeholder={t('create.categoryPlaceholder')}
               classNamePrefix="react-select"
               required
             />
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="keywords">Keywords (Press Enter to add)</Label>
+            <Label htmlFor="keywords">{t('create.tagsLabel')} <span>({t('create.tagsExtraLabel')})</span></Label>
             <Input
               id="keywords"
               type="text"
               value={currentKeyword}
               onChange={(e) => setCurrentKeyword(e.target.value)}
               onKeyDown={handleAddKeyword}
-              placeholder="Add keywords to help others find your post..."
+              placeholder={t('create.tagsPlaceholder')}
             />
             {formData.keywords.length > 0 && (
               <KeywordsContainer>
@@ -333,11 +337,11 @@ const CreatePostPage = () => {
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="content">Content *</Label>
+            <Label htmlFor="content">{t('create.contentLabel')} *</Label>
             <ReactQuill
               value={formData.content}
               onChange={handleContentChange}
-              placeholder="Write your post content here..."
+              placeholder={t('create.contentPlaceholder')}
               modules={{
                 toolbar: [
                   [{ 'header': [1, 2, 3, false] }],
@@ -356,7 +360,7 @@ const CreatePostPage = () => {
           </FormGroup>
 
           <SubmitButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating Post...' : 'Create Post'}
+            {isSubmitting ? t('create.publishing') : t('create.publish')}
           </SubmitButton>
         </Form>
       </CreatePostContainer>

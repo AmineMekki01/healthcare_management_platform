@@ -1,18 +1,20 @@
 import { useState, useCallback, useContext, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { staffService } from '../services';
 import { staffUtils } from '../utils';
 import { AuthContext } from './../../auth/context/AuthContext';
 
 const useStaffManagement = () => {
+  const { t } = useTranslation('staff');
   const [receptionists, setReceptionists] = useState([]);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [talentPool, setTalentPool] = useState([]);
-  const [permissions, setPermissions] = useState([]);
-  const [workSchedule, setWorkSchedule] = useState([]);
+  const [permissions] = useState([]);
+  const [workSchedule] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const [performance, setPerformance] = useState({});
-  const [notifications, setNotifications] = useState([]);
+  const [notifications] = useState([]);
   const [pendingInvitations, setPendingInvitations] = useState([]);
   const [staffHistory, setStaffHistory] = useState({});
   const [loading, setLoading] = useState(false);
@@ -32,9 +34,9 @@ const useStaffManagement = () => {
 
   const handleError = useCallback((error, operation) => {
     console.error(`Error in ${operation}:`, error);
-    const errorMessage = error?.message || `Failed to ${operation}`;
+    const errorMessage = error?.message || t('errors.failedOperation', { operation });
     setError(errorMessage);
-  }, []);
+  }, [t]);
 
   const filteredStaff = useMemo(() => {
     return receptionists.filter(staff => staff && staff.id);
@@ -59,7 +61,7 @@ const useStaffManagement = () => {
       const currentDoctorId = doctorId || getCurrentDoctorId();
       
       if (!currentDoctorId) {
-        throw new Error('Doctor ID is required to fetch staff');
+        throw new Error(t('errors.doctorIdRequired'));
       }
 
       const staff = await staffService.fetchStaff(currentDoctorId);

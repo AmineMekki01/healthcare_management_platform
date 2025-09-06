@@ -1,0 +1,109 @@
+{
+  "page": {
+    "title": "Paramètres",
+    "subtitle": "Gérez vos préférences de compte et informations"
+  },
+  "general": {
+    "title": "Paramètres",
+    "personalSettings": "Paramètres Personnels",
+    "accountSettings": "Paramètres du Compte",
+    "privacySettings": "Paramètres de Confidentialité",
+    "notificationSettings": "Paramètres de Notification",
+    "securitySettings": "Paramètres de Sécurité",
+    "languageSettings": "Langue et Région",
+    "appearanceSettings": "Apparence",
+    "saveChanges": "Enregistrer les Modifications",
+    "discardChanges": "Annuler les Modifications",
+    "settingsUpdated": "Paramètres mis à jour avec succès",
+    "updateFailed": "Échec de la mise à jour des paramètres"
+  },
+  "profile": {
+    "profileInformation": "Informations de Profil",
+    "personalInformation": "Informations Personnelles",
+    "contactInformation": "Informations de Contact",
+    "professionalInformation": "Informations Professionnelles",
+    "changeProfilePicture": "Changer la Photo de Profil",
+    "removeProfilePicture": "Supprimer la Photo de Profil",
+    "updateProfile": "Mettre à Jour le Profil",
+    "profileUpdated": "Profil mis à jour avec succès"
+  },
+  "account": {
+    "changePassword": "Changer le Mot de Passe",
+    "currentPassword": "Mot de Passe Actuel",
+    "newPassword": "Nouveau Mot de Passe",
+    "confirmNewPassword": "Confirmer le Nouveau Mot de Passe",
+    "passwordChanged": "Mot de passe modifié avec succès",
+    "deleteAccount": "Supprimer le Compte",
+    "deactivateAccount": "Désactiver le Compte",
+    "accountDeletion": "Suppression du Compte",
+    "confirmDeletion": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action ne peut pas être annulée.",
+    "typeDeleteToConfirm": "Tapez 'SUPPRIMER' pour confirmer la suppression du compte"
+  },
+  "notifications": {
+    "emailNotifications": "Notifications Email",
+    "smsNotifications": "Notifications SMS",
+    "pushNotifications": "Notifications Push",
+    "appointmentReminders": "Rappels de Rendez-vous",
+    "messageNotifications": "Notifications de Message",
+    "systemUpdates": "Mises à Jour Système",
+    "marketingEmails": "Emails Marketing",
+    "securityAlerts": "Alertes de Sécurité",
+    "notificationFrequency": "Fréquence des Notifications",
+    "immediately": "Immédiatement",
+    "daily": "Résumé Quotidien",
+    "weekly": "Résumé Hebdomadaire",
+    "never": "Jamais"
+  },
+  "privacy": {
+    "dataSharing": "Partage de Données",
+    "profileVisibility": "Visibilité du Profil",
+    "searchVisibility": "Visibilité de Recherche",
+    "activityStatus": "Statut d'Activité",
+    "publicProfile": "Profil Public",
+    "privateProfile": "Profil Privé",
+    "friendsOnly": "Amis Seulement",
+    "allowDataSharing": "Autoriser le partage de données à des fins de recherche",
+    "allowProfileIndexing": "Autoriser l'indexation du profil par les moteurs de recherche",
+    "showOnlineStatus": "Afficher quand je suis en ligne",
+    "allowDirectMessages": "Autoriser les messages directs d'autres utilisateurs"
+  },
+  "language": {
+    "selectLanguage": "Sélectionner la Langue",
+    "currentLanguage": "Langue Actuelle",
+    "english": "English",
+    "french": "Français",
+    "arabic": "العربية",
+    "dateFormat": "Format de Date",
+    "timeFormat": "Format d'Heure",
+    "timezone": "Fuseau Horaire",
+    "currency": "Devise",
+    "measurementUnit": "Unités de Mesure",
+    "metric": "Métrique",
+    "imperial": "Impérial"
+  },
+  "appearance": {
+    "theme": "Thème",
+    "lightTheme": "Thème Clair",
+    "darkTheme": "Thème Sombre",
+    "systemTheme": "Par Défaut du Système",
+    "fontSize": "Taille de Police",
+    "small": "Petit",
+    "medium": "Moyen",
+    "large": "Grand",
+    "colorScheme": "Schéma de Couleurs",
+    "highContrast": "Mode Contraste Élevé",
+    "reducedMotion": "Réduire le Mouvement"
+  },
+  "security": {
+    "twoFactorAuth": "Authentification à Deux Facteurs",
+    "enable2FA": "Activer 2FA",
+    "disable2FA": "Désactiver 2FA",
+    "backupCodes": "Codes de Sauvegarde",
+    "generateBackupCodes": "Générer de Nouveaux Codes de Sauvegarde",
+    "loginHistory": "Historique de Connexion",
+    "activeDevices": "Appareils Actifs",
+    "signOutAllDevices": "Déconnecter Tous les Appareils",
+    "securityQuestions": "Questions de Sécurité",
+    "updateSecurityQuestions": "Mettre à Jour les Questions de Sécurité"
+  }
+}

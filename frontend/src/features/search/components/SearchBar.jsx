@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback} from 'react';
-import axios from '../../../components/axiosConfig';
+import { useTranslation } from 'react-i18next';
 import DoctorCard from './DoctorCard';
 import { 
   AppContainer, 
@@ -25,7 +25,8 @@ import {
 import { debounce } from 'lodash';
 
 const SearchBar = () => {
-
+  const { t, i18n } = useTranslation(['search', 'medical']);
+  
   const [users, setUsers] = useState([]);
   const [query, setQuery] = useState('');
   const [specialty, setSpecialty] = useState('');
@@ -39,30 +40,37 @@ const SearchBar = () => {
   const [showSuggestions, setShowSuggestions] = useState(true);
 
   const popularSpecialties = [
-    'Cardiology', 'Dermatology', 'Pediatrics', 'Orthopedics', 
-    'Neurology', 'Psychiatry', 'Internal Medicine', 'Surgery'
+    { key: 'cardiology', label: t('medical:specialties.cardiology') },
+    { key: 'dermatology', label: t('medical:specialties.dermatology') },
+    { key: 'pediatrics', label: t('medical:specialties.pediatrics') },
+    { key: 'orthopedics', label: t('medical:specialties.orthopedics') },
+    { key: 'neurology', label: t('medical:specialties.neurology') },
+    { key: 'psychiatry', label: t('medical:specialties.psychiatry') },
+    { key: 'internalMedicine', label: t('medical:specialties.internalMedicine') },
+    { key: 'surgery', label: t('medical:specialties.surgery') }
   ];
+
 
   const searchSuggestions = [
     {
-      title: 'General Health Checkup',
-      specialty: 'Internal Medicine',
-      description: 'Regular health monitoring and preventive care'
+      title: t('suggestions.generalCheckup.title'),
+      specialty: t('medical:specialties.internalMedicine'),
+      description: t('suggestions.generalCheckup.description')
     },
     {
-      title: 'Heart Problems',
-      specialty: 'Cardiology', 
-      description: 'Chest pain, irregular heartbeat, blood pressure issues'
+      title: t('suggestions.heartProblems.title'),
+      specialty: t('medical:specialties.cardiology'), 
+      description: t('suggestions.heartProblems.description')
     },
     {
-      title: 'Skin Issues',
-      specialty: 'Dermatology',
-      description: 'Rashes, acne, moles, skin conditions'
+      title: t('suggestions.skinIssues.title'),
+      specialty: t('medical:specialties.dermatology'),
+      description: t('suggestions.skinIssues.description')
     },
     {
-      title: 'Mental Health',
-      specialty: 'Psychiatry',
-      description: 'Anxiety, depression, stress management'
+      title: t('suggestions.mentalHealth.title'),
+      specialty: t('medical:specialties.psychiatry'),
+      description: t('suggestions.mentalHealth.description')
     }
   ];
 
@@ -75,7 +83,7 @@ const SearchBar = () => {
         },
         (error) => {
           console.error('Error getting user location:', error);
-          alert('Unable to retrieve your location. Please enable location services for better search results.');
+          alert(t('messages.locationError'));
           setUserLatitude(null);
           setUserLongitude(null);
         }
@@ -99,61 +107,40 @@ const SearchBar = () => {
     return () => clearTimeout(handler);
   }, [query, specialty, location]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const { query, specialty, location } = searchParams;
     if (query || specialty || location || (userLatitude && userLongitude)) {
       setIsLoading(true);
       setHasSearched(true);
       try {
-        const response = await axios.get(
-          `http://localhost:3001/api/v1/doctors`,
-          {
-            params: {
-              query,
-              specialty,
-              location,
-              latitude: userLatitude,
-              longitude: userLongitude,
-            },
-          }
-        );
-        console.log('API response:', response.data);
-        if (response.status === 200) {
-          if (Array.isArray(response.data)) {
-            setUsers(response.data);
-          } else if (response.data == null) {
-            setUsers([]);
-          } else {
-            setUsers([response.data]);
-          }
-        } else {
-          throw new Error(`Failed to fetch users: ${response.status}`);
-        }
+        const { searchService } = await import('../services/searchService');
+        
+        const searchResults = await searchService.searchDoctors({
+          query,
+          specialty,
+          location,
+          latitude: userLatitude,
+          longitude: userLongitude,
+        }, i18n.language);
+        
+        console.log('Search results:', searchResults);
+        setUsers(searchResults);
       } catch (error) {
-        console.error(
-          'API error:',
-          error.response ? error.response.data : error.message
-        );
+        console.error('Search error:', error.message);
         setUsers([]);
       } finally {
         setIsLoading(false);
       }
     }
-  };
+  }, [searchParams, userLatitude, userLongitude, i18n.language]);
 
   const debouncedFetchUsers = useCallback(debounce(() => {
     fetchUsers();
-  }, 500), [searchParams]);
+  }, 500), [fetchUsers]);
 
   useEffect(() => {
     debouncedFetchUsers();
-  }, [debouncedFetchUsers, userLatitude, userLongitude]);
-
-  useEffect(() => {
-    if (searchParams.specialty) {
-        fetchUsers();
-      }
-  }, [searchParams.specialty]);
+  }, [debouncedFetchUsers]);
 
 
   const analyzeAndRecommendDoctor = async () => {
@@ -162,21 +149,26 @@ const SearchBar = () => {
     setIsLoading(true);
     setHasSearched(true);
     try {
-      const specialtyResponse = await axios.post('http://localhost:8000/api/v1/analyze_symptoms_and_recommend_doctor', { userQuery });
-      if (specialtyResponse.data && specialtyResponse.data.doctors && specialtyResponse.data.doctors.length > 0) {
-        const newSpecialty = specialtyResponse.data.doctors[0].specialty;
+      const { searchService } = await import('../services/searchService');
+      
+      const analysisResult = await searchService.analyzeSymptoms(userQuery, 
+        userLatitude && userLongitude ? { latitude: userLatitude, longitude: userLongitude } : null
+      );
+      
+      if (analysisResult.recommendedSpecialty) {
+        const newSpecialty = analysisResult.recommendedSpecialty;
         setSpecialty(newSpecialty);
         setSearchParams(prev => ({ ...prev, specialty: newSpecialty }));
 
-        const doctorsResponse = await axios.get(`http://localhost:3001/api/v1/doctors`, {
-            params: { query: '', specialty: newSpecialty, location: '' }
-        });
+        const searchResults = await searchService.searchDoctors({
+          specialty: newSpecialty,
+          latitude: userLatitude,
+          longitude: userLongitude
+        }, i18n.language);
 
-        if (doctorsResponse.status === 200) { 
-            setUsers(doctorsResponse.data);
-        } else {
-            console.error('Failed to fetch doctors:', doctorsResponse.status);
-        }
+        setUsers(searchResults);
+      } else if (analysisResult.doctors && analysisResult.doctors.length > 0) {
+        setUsers(analysisResult.doctors);
       }
     } catch (error) {
         console.error('Error in analyzeAndRecommendDoctor:', error);
@@ -194,9 +186,17 @@ const SearchBar = () => {
     )
   ) : [];
 
-  const handleQuickFilter = (filterSpecialty) => {
-    setSpecialty(filterSpecialty);
+  const handleQuickFilter = async (specialtyObj) => {
+    setSpecialty(specialtyObj.label);
     setShowSuggestions(false);
+    
+    if (i18n.language !== 'en') {
+      const { findEnglishEquivalent } = await import('../utils/translationMaps');
+      const englishSpecialty = findEnglishEquivalent(specialtyObj.label, i18n.language);
+      setSearchParams(prev => ({ ...prev, specialty: englishSpecialty }));
+    } else {
+      setSearchParams(prev => ({ ...prev, specialty: specialtyObj.label }));
+    }
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -218,27 +218,31 @@ const SearchBar = () => {
   return (
     <AppContainer className="app mt-6">
       <SearchPageHeader>
-        <h1>Find Your Doctor</h1>
-        <p>Search for healthcare professionals by name, specialty, location, or describe your symptoms for AI-powered recommendations</p>
+        <h1>{t('header.title')}</h1>
+        <p>{t('header.subtitle')}</p>
       </SearchPageHeader>
 
       <SearchInputContainer>
         <SearchInputsRow>
           <SearchInput
             type="text"
-            placeholder="Search by Name..."
+            placeholder={t('placeholders.searchByName')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <SearchInput
             type="text"
-            placeholder="Search by specialty..."
+            placeholder={i18n.language === 'ar' ? 'مثال: طبيب قلب، طب الأطفال' : 
+                        i18n.language === 'fr' ? 'Ex: cardiologue, pédiatre' : 
+                        t('placeholders.searchBySpecialty')}
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
           />
           <SearchInput
             type="text"
-            placeholder="Search by Location..."
+            placeholder={i18n.language === 'ar' ? 'مثال: الدار البيضاء، الرباط' : 
+                        i18n.language === 'fr' ? 'Ex: Casablanca, Rabat' : 
+                        t('placeholders.searchByLocation')}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
@@ -247,11 +251,11 @@ const SearchBar = () => {
         <QuickFiltersContainer>
           {popularSpecialties.map((spec) => (
             <QuickFilterButton
-              key={spec}
-              className={specialty === spec ? 'active' : ''}
+              key={spec.key}
+              className={specialty === spec.label ? 'active' : ''}
               onClick={() => handleQuickFilter(spec)}
             >
-              {spec}
+              {spec.label}
             </QuickFilterButton>
           ))}
         </QuickFiltersContainer>
@@ -259,17 +263,17 @@ const SearchBar = () => {
         <SymptomInputContainer>
           <SymptomInput
             type="text"
-            placeholder="Describe your symptoms for AI-powered doctor recommendations..."
+            placeholder={t('placeholders.describeSymptoms')}
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
           />
           <SearchActionsContainer>
             <AnalyzeButton onClick={analyzeAndRecommendDoctor} disabled={!userQuery.trim() || isLoading}>
-              {isLoading ? 'Analyzing...' : 'Analyze Symptoms'}
+              {isLoading ? t('buttons.analyzing') : t('buttons.analyzeSymptoms')}
             </AnalyzeButton>
             {(query || specialty || location || userQuery || hasSearched) && (
               <ClearButton onClick={clearSearch}>
-                Clear All
+                {t('buttons.clearAll')}
               </ClearButton>
             )}
           </SearchActionsContainer>
@@ -278,7 +282,7 @@ const SearchBar = () => {
 
       {showSuggestions && !hasSearched && (
         <SearchSuggestions>
-          <h3>Popular Health Concerns</h3>
+          <h3>{t('suggestions.title')}</h3>
           <SuggestionGrid>
             {searchSuggestions.map((suggestion, index) => (
               <SuggestionCard
@@ -297,15 +301,15 @@ const SearchBar = () => {
 
       {!isLoading && hasSearched && (
         <ResultsHeader>
-          <h2>Search Results</h2>
-          <p>{filteredUsers.length} doctor{filteredUsers.length !== 1 ? 's' : ''} found</p>
+          <h2>{t('results.title')}</h2>
+          <p>{t('results.doctorsFound', { count: filteredUsers.length })}</p>
         </ResultsHeader>
       )}
 
       {!isLoading && hasSearched && filteredUsers.length === 0 && (
         <EmptyState>
-          <h3>No doctors found</h3>
-          <p>Try adjusting your search criteria or location</p>
+          <h3>{t('results.noDoctorsTitle')}</h3>
+          <p>{t('results.noDoctorsMessage')}</p>
         </EmptyState>
       )}
 

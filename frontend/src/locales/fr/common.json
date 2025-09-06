@@ -1,0 +1,227 @@
+{
+  "navigation": {
+    "home": "Accueil",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "platformName": "Plateforme de Santé",
+    "findDoctors": "Trouver des médecins",
+    "myDocuments": "Mes documents",
+    "messages": "Messages",
+    "healthFeed": "Fil de santé",
+    "myAppointments": "Mes rendez-vous",
+    "appointments": "Rendez-vous",
+    "schedule": "Horaire",
+    "dashboard": "Tableau de bord",
+    "receptionistDashboard": "Tableau de bord réceptionniste",
+    "patientManagement": "Gestion des patients",
+    "medicalTools": "Outils médicaux",
+    "aiAssistant": "Assistant IA",
+    "practiceManagement": "Gestion de cabinet",
+    "mySchedule": "Mon horaire",
+    "medicalReports": "Rapports médicaux",
+    "staffManagement": "Gestion du personnel",
+    "contentManagement": "Gestion de contenu",
+    "createPost": "Créer un article",
+    "myPosts": "Mes articles",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "more": "Plus",
+    "switchTo": "Passer à la vue {{mode}}",
+    "patientSearch": "Recherche de patients",
+    "createPatient": "Créer un patient",
+    "scheduleAppointment": "Planifier un rendez-vous",
+    "talentPool": "Réservoir de talents"
+  },
+  "buttons": {
+    "getStartedToday": "Commencer Aujourd'hui",
+    "goToDashboard": "Aller au Tableau de Bord",
+    "signIn": "Se Connecter",
+    "signUp": "S'Inscrire",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "upload": "Télécharger",
+    "download": "Télécharger",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "clear": "Effacer",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "viewMore": "Voir Plus",
+    "loadMore": "Charger Plus",
+    "refresh": "Actualiser",
+    "tryAgain": "Réessayer"
+  },
+  "status": {
+    "loading": "Chargement...",
+    "saving": "Enregistrement...",
+    "uploading": "Téléchargement...",
+    "processing": "Traitement...",
+    "success": "Succès",
+    "error": "Erreur",
+    "warning": "Avertissement",
+    "info": "Information",
+    "pending": "En attente",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "archived": "Archivé",
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "common": {
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "or": "ou",
+    "and": "et",
+    "of": "de",
+    "in": "dans",
+    "at": "à",
+    "on": "sur",
+    "by": "par",
+    "for": "pour",
+    "with": "avec",
+    "from": "de",
+    "to": "à",
+    "all": "Tout",
+    "none": "Aucun",
+    "select": "Sélectionner",
+    "optional": "Optionnel",
+    "required": "Requis",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "date": "Date",
+    "time": "Heure",
+    "description": "Description",
+    "notes": "Notes",
+    "type": "Type",
+    "category": "Catégorie",
+    "priority": "Priorité",
+    "status": "Statut"
+  },
+  "userTypes": {
+    "patient": "Patient",
+    "doctor": "Médecin",
+    "receptionist": "Réceptionniste"
+  },
+  "time": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "tomorrow": "Demain",
+    "thisWeek": "Cette Semaine",
+    "lastWeek": "Semaine Dernière",
+    "nextWeek": "Semaine Prochaine",
+    "thisMonth": "Ce Mois",
+    "lastMonth": "Mois Dernier",
+    "nextMonth": "Mois Prochain",
+    "morning": "Matin",
+    "afternoon": "Après-midi",
+    "evening": "Soir",
+    "night": "Nuit"
+  },
+  "homepage": {
+    "hero": {
+      "title": "Votre Santé, Notre Priorité",
+      "subtitle": "Découvrez la gestion moderne des soins de santé avec notre plateforme complète conçue pour les patients, les médecins et les professionnels de la santé."
+    },
+    "services": {
+      "expertCare": {
+        "title": "Soins Médicaux Experts",
+        "description": "Connectez-vous avec des professionnels de la santé qualifiés"
+      },
+      "easyBooking": {
+        "title": "Prise de Rendez-vous Facile",
+        "description": "Planifiez des rendez-vous en quelques clics seulement"
+      },
+      "medicalChat": {
+        "title": "Chat Médical 24/7",
+        "description": "Obtenez des conseils médicaux instantanés grâce à notre chatbot IA"
+      },
+      "telemedicine": {
+        "title": "Télémédecine",
+        "description": "Consultations à distance depuis le confort de votre domicile"
+      },
+      "secure": {
+        "title": "Sécurisé et Privé",
+        "description": "Vos données médicales sont protégées par une sécurité de niveau entreprise"
+      },
+      "efficient": {
+        "title": "Rapide et Efficace",
+        "description": "Processus rationalisés pour de meilleurs soins de santé"
+      }
+    },
+    "stats": {
+      "happyPatients": "Patients Satisfaits",
+      "expertDoctors": "Médecins Experts",
+      "medicalSpecialties": "Spécialités Médicales",
+      "emergencySupport": "Support d'Urgence"
+    },
+    "sections": {
+      "whyChoose": "Pourquoi Choisir Notre Plateforme ?",
+      "trustedByThousands": "Approuvé par des Milliers",
+      "ourCommunity": "Notre Communauté",
+      "whatUsersSay": "Ce Que Disent Nos Utilisateurs"
+    },
+    "cta": {
+      "title": "Prêt à transformer votre expérience de soins de santé ?",
+      "subtitle": "Rejoignez des milliers de patients et de professionnels de santé satisfaits sur notre plateforme."
+    }
+  },
+  "actions": {
+    "viewDetails": "Voir les détails",
+    "editPatient": "Modifier le patient",
+    "viewProfile": "Voir le profil",
+    "bookAppointment": "Prendre rendez-vous"
+  },
+  "patient": {
+    "yearsOld": "{{age}} ans",
+    "nextAppointment": "Prochain rendez-vous",
+    "searchPlaceholder": "Rechercher par nom, email, téléphone ou ID...",
+    "searchingPatients": "Recherche de patients...",
+    "patientsFound": "{{count}} patients trouvés",
+    "filters": {
+      "allStatus": "Tous les statuts",
+      "allGenders": "Tous les genres",
+      "allAges": "Tous les âges"
+    },
+    "gender": {
+      "male": "Homme",
+      "female": "Femme",
+      "other": "Autre"
+    },
+    "ageRanges": {
+      "child": "0-18 ans",
+      "young": "19-35 ans",
+      "adult": "36-50 ans",
+      "senior": "51-65 ans",
+      "elderly": "65+ ans"
+    },
+    "views": {
+      "grid": "Grille",
+      "list": "Liste"
+    },
+    "noResults": {
+      "title": "Aucun patient trouvé",
+      "description": "Essayez d'ajuster vos termes de recherche ou filtres"
+    },
+    "searchPrompt": {
+      "title": "Rechercher des patients",
+      "description": "Entrez un nom, email, numéro de téléphone ou ID patient pour commencer"
+    },
+    "fields": {
+      "age": "Âge",
+      "gender": "Genre",
+      "lastVisit": "Dernière visite",
+      "status": "Statut",
+      "never": "Jamais"
+    }
+  }
+}
