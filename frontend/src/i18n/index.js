@@ -14,6 +14,7 @@ import enSearch from '../locales/en/search.json';
 import enStaff from '../locales/en/staff.json';
 import enChat from '../locales/en/chat.json';
 import enFeed from '../locales/en/feed.json';
+import enUserManagement from '../locales/en/userManagement.json';
 
 import frCommon from '../locales/fr/common.json';
 import frAuth from '../locales/fr/auth.json';
@@ -27,6 +28,7 @@ import frSearch from '../locales/fr/search.json';
 import frStaff from '../locales/fr/staff.json';
 import frChat from '../locales/fr/chat.json';
 import frFeed from '../locales/fr/feed.json';
+import frUserManagement from '../locales/fr/userManagement.json';
 
 import arCommon from '../locales/ar/common.json';
 import arAuth from '../locales/ar/auth.json';
@@ -40,6 +42,7 @@ import arSearch from '../locales/ar/search.json';
 import arStaff from '../locales/ar/staff.json';
 import arChat from '../locales/ar/chat.json';
 import arFeed from '../locales/ar/feed.json';
+import arUserManagement from '../locales/ar/userManagement.json';
 
 const resources = {
   en: {
@@ -55,6 +58,7 @@ const resources = {
     staff: enStaff,
     chat: enChat,
     feed: enFeed,
+    userManagement: enUserManagement,
   },
   fr: {
     common: frCommon,
@@ -69,6 +73,7 @@ const resources = {
     staff: frStaff,
     chat: frChat,
     feed: frFeed,
+    userManagement: frUserManagement,
   },
   ar: {
     common: arCommon,
@@ -83,6 +88,7 @@ const resources = {
     staff: arStaff,
     chat: arChat,
     feed: arFeed,
+    userManagement: arUserManagement,
   },
 };
 

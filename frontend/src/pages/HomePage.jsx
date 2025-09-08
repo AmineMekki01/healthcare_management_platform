@@ -112,7 +112,8 @@ const ModernButton = styled(Button)(({ theme }) => ({
 function HomePage() {
   const theme = useTheme();
   const { isLoggedIn } = useContext(AuthContext);
-  const { t } = useTranslation(['common']);
+  const { t, i18n} = useTranslation(['common']);
+  const isRTL = i18n.language === 'ar';
 
   const services = [
     {
@@ -165,6 +166,7 @@ function HomePage() {
   };
 
   return (
+    
     <Box sx={{ bgcolor: 'background.default' }}>
       {/* Hero Section */}
       <HeroSection>
@@ -191,10 +193,18 @@ function HomePage() {
                         '&:hover': {
                           bgcolor: 'rgba(255,255,255,0.9)',
                         },
+                        display: 'flex',
+                       
                       }}
-                      endIcon={<ArrowForward />}
                     >
-                      {t('common:buttons.getStarted')}
+                      <Typography variant="body1" sx={{ ml: 1 }}>
+                        {t('common:buttons.getStartedToday')}
+                      </Typography>
+                      <ArrowForward 
+                      sx={{
+                        transform: isRTL ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }}
+                      />
                     </ModernButton>
                     <ModernButton
                       variant="outlined"
@@ -225,10 +235,16 @@ function HomePage() {
                       '&:hover': {
                         bgcolor: 'rgba(255,255,255,0.9)',
                       },
+                      '& svg': {
+                        transform: isRTL ? 'rotate(180deg)' : 'rotate(0deg)',
+                      },
                     }}
-                    endIcon={<ArrowForward />}
                   >
-                    {t('common:buttons.goToDashboard')}
+                    <Typography variant="body1" sx={{ ml: 1 }}>
+                      {t('common:buttons.goToDashboard')}
+                    </Typography>
+                    <ArrowForward />
+                    
                   </ModernButton>
                 )}
               </Box>

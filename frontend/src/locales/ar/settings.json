@@ -3,6 +3,214 @@
     "title": "الإعدادات",
     "subtitle": "إدارة تفضيلات حسابك ومعلوماتك"
   },
+  "navigation": {
+    "personal": "المعلومات الشخصية",
+    "followSettings": "إعدادات المتابعة",
+    "followedDoctors": "الأطباء المتابعون",
+    "availability": "إعدادات التوفر",
+    "professionalInfo": "المعلومات المهنية"
+  },
+  "personalInfo": {
+    "title": "المعلومات الشخصية",
+    "profilePhoto": {
+      "upload": "رفع صورة الملف الشخصي",
+      "instructions": "انقر لاختيار صورة جديدة (JPG، PNG، الحد الأقصى 5 ميجابايت)"
+    },
+    "fields": {
+      "firstName": {
+        "label": "الاسم الأول",
+        "placeholder": "أدخل اسمك الأول"
+      },
+      "lastName": {
+        "label": "اسم العائلة",
+        "placeholder": "أدخل اسم عائلتك"
+      },
+      "email": {
+        "label": "عنوان البريد الإلكتروني",
+        "placeholder": "أدخل بريدك الإلكتروني"
+      },
+      "phoneNumber": {
+        "label": "رقم الهاتف",
+        "placeholder": "أدخل رقم هاتفك"
+      },
+      "birthDate": {
+        "label": "تاريخ الميلاد"
+      },
+      "gender": {
+        "label": "الجنس",
+        "placeholder": "الجنس"
+      },
+      "streetAddress": {
+        "label": "عنوان الشارع",
+        "placeholder": "أدخل عنوان شارعك"
+      },
+      "city": {
+        "label": "المدينة",
+        "placeholder": "أدخل مدينتك"
+      },
+      "state": {
+        "label": "الولاية/المحافظة",
+        "placeholder": "أدخل ولايتك/محافظتك"
+      },
+      "zipCode": {
+        "label": "الرمز البريدي",
+        "placeholder": "أدخل رمزك البريدي"
+      },
+      "country": {
+        "label": "البلد",
+        "placeholder": "أدخل بلدك"
+      },
+      "bio": {
+        "label": "السيرة الذاتية",
+        "placeholder": "أخبرنا عن نفسك..."
+      }
+    },
+    "buttons": {
+      "updateProfile": "تحديث الملف الشخصي",
+      "updating": "جاري التحديث..."
+    },
+    "success": {
+      "profileUpdated": "تم تحديث الملف الشخصي بنجاح!"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل معلومات الملف الشخصي",
+      "updateFailed": "خطأ في تحديث الملف الشخصي. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "doctorInfo": {
+    "title": "معلومات الطبيب",
+    "sections": {
+      "hospitals": {
+        "title": "المستشفيات",
+        "fields": {
+          "hospitalName": "اسم المستشفى",
+          "position": "المنصب",
+          "startDate": "تاريخ البداية",
+          "endDate": "تاريخ النهاية",
+          "description": "الوصف"
+        }
+      },
+      "organizations": {
+        "title": "المنظمات",
+        "fields": {
+          "organizationName": "اسم المنظمة",
+          "role": "الدور",
+          "startDate": "تاريخ البداية",
+          "endDate": "تاريخ النهاية",
+          "description": "الوصف"
+        }
+      },
+      "awards": {
+        "title": "الجوائز",
+        "fields": {
+          "awardName": "اسم الجائزة",
+          "dateAwarded": "تاريخ منح الجائزة",
+          "issuingOrganization": "المنظمة المانحة",
+          "description": "الوصف"
+        }
+      },
+      "certifications": {
+        "title": "الشهادات",
+        "fields": {
+          "certificationName": "اسم الشهادة",
+          "issuedBy": "صادرة من",
+          "issueDate": "تاريخ الإصدار",
+          "expirationDate": "تاريخ انتهاء الصلاحية",
+          "description": "الوصف"
+        }
+      },
+      "languages": {
+        "title": "اللغات",
+        "fields": {
+          "languageName": "اسم اللغة",
+          "proficiencyLevel": "مستوى الإتقان"
+        },
+        "proficiency": {
+          "basic": "أساسي",
+          "conversational": "محادثة",
+          "fluent": "طلق",
+          "native": "لغة أم"
+        }
+      }
+    },
+    "buttons": {
+      "add": "إضافة",
+      "saveInformation": "حفظ المعلومات"
+    },
+    "success": {
+      "informationUpdated": "تم تحديث المعلومات بنجاح!"
+    },
+    "errors": {
+      "updateFailed": "فشل في تحديث المعلومات."
+    }
+  },
+  "availability": {
+    "title": "إعدادات توفر الطبيب",
+    "days": {
+      "Monday": "الاثنين",
+      "Tuesday": "الثلاثاء",
+      "Wednesday": "الأربعاء",
+      "Thursday": "الخميس", 
+      "Friday": "الجمعة",
+      "Saturday": "السبت",
+      "Sunday": "الأحد"
+    },
+    "table": {
+      "day": "اليوم",
+      "enabled": "مفعل",
+      "start": "البداية",
+      "end": "النهاية",
+      "slotDuration": "مدة الفترة الزمنية"
+    },
+    "buttons": {
+      "saveSchedule": "حفظ الجدول",
+      "clearAllSchedule": "مسح جميع الجداول",
+      "addException": "إضافة استثناء",
+      "cancel": "إلغاء",
+      "yesClearAll": "نعم، امسح الكل"
+    },
+    "exceptions": {
+      "title": "الاستثناءات (إجازة / تعديل)",
+      "noExceptions": "لم يتم إضافة استثناءات لهذا الأسبوع.",
+      "timeOff": "إجازة",
+      "override": "تعديل"
+    },
+    "confirmDialog": {
+      "title": "مسح جميع الجداول؟",
+      "message": "هل أنت متأكد من أنك تريد مسح جميع جداول التوفر؟ سيؤدي هذا إلى إزالة جميع فترات التوفر المحفوظة ولا يمكن التراجع عنه."
+    },
+    "success": {
+      "scheduleSaved": "تم حفظ الجدول لهذا الأسبوع فقط!",
+      "schedulesCleared": "تم مسح جميع الجداول بنجاح!"
+    },
+    "errors": {
+      "clearingSchedules": "خطأ في مسح الجداول"
+    }
+  },
+  "followedDoctors": {
+    "title": "الأطباء المتابعون",
+    "noDoctors": {
+      "title": "لا يوجد أطباء متابعون بعد",
+      "description": "ابدأ بمتابعة الأطباء لرؤية منشوراتهم وتحديثاتهم في خلاصتك. استكشف مجتمع المهنيين الصحيين لدينا للعثور على أطباء يهمونك."
+    },
+    "buttons": {
+      "unfollow": "إلغاء المتابعة",
+      "unfollowing": "جاري إلغاء المتابعة...",
+      "yesUnfollow": "نعم، ألغ المتابعة",
+      "cancel": "إلغاء"
+    },
+    "confirmDialog": {
+      "title": "تأكيد إلغاء المتابعة",
+      "message": "هل أنت متأكد من أنك تريد إلغاء متابعة {{doctorName}}؟ لن ترى منشوراتهم في خلاصتك بعد الآن."
+    },
+    "success": {
+      "unfollowed": "لقد ألغيت متابعة {{doctorName}} بنجاح"
+    },
+    "errors": {
+      "loadFailed": "فشل في تحميل الأطباء المتابعين. يرجى المحاولة مرة أخرى.",
+      "unfollowFailed": "فشل في إلغاء متابعة الطبيب. يرجى المحاولة مرة أخرى."
+    }
+  },
   "general": {
     "title": "الإعدادات",
     "personalSettings": "الإعدادات الشخصية",

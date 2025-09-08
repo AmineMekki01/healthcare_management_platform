@@ -1,0 +1,249 @@
+{
+  "appointmentBooking": {
+    "title": "Prendre Rendez-vous",
+    "sections": {
+      "selectDate": "Sélectionner la Date",
+      "availableSlots": "Créneaux Disponibles",
+      "bookingFor": "Pour qui est ce rendez-vous ?",
+      "patientInfo": "Informations du Patient",
+      "appointmentDetails": "Détails du Rendez-vous"
+    },
+    "bookingType": {
+      "self": "Pour moi-même",
+      "other": "Pour quelqu'un d'autre"
+    },
+    "fields": {
+      "patientName": "Nom du Patient",
+      "email": "Email",
+      "phoneNumber": "Numéro de Téléphone",
+      "reasonForVisit": "Motif de la Visite",
+      "additionalNotes": "Notes Supplémentaires"
+    },
+    "placeholders": {
+      "patientName": "Entrez le nom du patient",
+      "email": "Entrez l'adresse email",
+      "phoneNumber": "Entrez le numéro de téléphone",
+      "reasonForVisit": "Motif bref de la visite",
+      "additionalNotes": "Informations supplémentaires ou demandes spéciales"
+    },
+    "buttons": {
+      "cancel": "Annuler",
+      "bookAppointment": "Prendre Rendez-vous",
+      "booking": "Réservation..."
+    },
+    "messages": {
+      "loading": "Chargement des créneaux disponibles...",
+      "noSlots": "Aucun créneau disponible pour cette date",
+      "bookingFor": "Prise de rendez-vous pour : {{name}}",
+      "successSelf": "Rendez-vous réservé avec succès pour vous !",
+      "successOther": "Rendez-vous réservé avec succès pour {{name}} !",
+      "fillRequired": "Veuillez remplir tous les champs obligatoires et sélectionner un créneau",
+      "providePatientInfo": "Veuillez fournir le nom et l'email du patient lors de la réservation pour quelqu'un d'autre",
+      "loginRequired": "Veuillez vous connecter pour prendre un rendez-vous",
+      "bookingFailed": "Échec de la réservation du rendez-vous. Veuillez réessayer.",
+      "slotsFailed": "Échec du chargement des créneaux disponibles"
+    }
+  },
+  "appointmentManager": {
+    "title": "Gestion des Rendez-vous",
+    "tabs": {
+      "all": "Tous",
+      "upcoming": "À Venir",
+      "past": "Passés",
+      "cancelled": "Annulés"
+    },
+    "status": {
+      "scheduled": "Programmé",
+      "confirmed": "Confirmé",
+      "completed": "Terminé",
+      "cancelled": "Annulé",
+      "past": "Passé",
+      "noShow": "Absent"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "reschedule": "Reprogrammer",
+      "complete": "Terminer",
+      "viewDetails": "Voir Détails"
+    },
+    "messages": {
+      "noAppointments": "Aucun rendez-vous trouvé",
+      "loading": "Chargement des rendez-vous...",
+      "cancelSuccess": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?",
+      "cancelFailed": "Échec de l'annulation du rendez-vous",
+      "rescheduleSuccess": "Rendez-vous reprogrammé avec succès",
+      "rescheduleFailed": "Échec de la reprogrammation du rendez-vous"
+    }
+  },
+  "userProfile": {
+    "title": "Profil Utilisateur",
+    "sections": {
+      "personalInfo": "Informations Personnelles",
+      "contactInfo": "Informations de Contact",
+      "medicalInfo": "Informations Médicales",
+      "preferences": "Préférences"
+    },
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom de Famille",
+      "email": "Adresse Email",
+      "phoneNumber": "Numéro de Téléphone",
+      "dateOfBirth": "Date de Naissance",
+      "gender": "Sexe",
+      "address": "Adresse",
+      "emergencyContact": "Contact d'Urgence",
+      "medicalHistory": "Antécédents Médicaux",
+      "allergies": "Allergies",
+      "medications": "Médicaments Actuels"
+    },
+    "buttons": {
+      "edit": "Modifier le Profil",
+      "save": "Enregistrer les Modifications",
+      "cancel": "Annuler",
+      "changePassword": "Changer le Mot de Passe"
+    },
+    "messages": {
+      "updateSuccess": "Profil mis à jour avec succès",
+      "updateFailed": "Échec de la mise à jour du profil",
+      "loading": "Chargement du profil...",
+      "saving": "Enregistrement...",
+      "saveChanges": "Enregistrer vos modifications ?",
+      "unknownUser": "Utilisateur Inconnu",
+      "userNotFound": "Utilisateur non trouvé"
+    }
+  },
+  "doctorProfile": {
+    "title": "Profil du Médecin",
+    "sections": {
+      "overview": "Aperçu",
+      "specialties": "Spécialités",
+      "experience": "Expérience",
+      "education": "Formation",
+      "reviews": "Avis",
+      "availability": "Disponibilité",
+      "statistics": "Statistiques",
+      "hospitals": "Hôpitaux",
+      "certifications": "Certifications",
+      "languages": "Langues",
+      "awards": "Prix"
+    },
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom de Famille",
+      "email": "Email",
+      "phoneNumber": "Téléphone",
+      "username": "Nom d'utilisateur",
+      "specialty": "Spécialité",
+      "licenseNumber": "Licence Médicale",
+      "experience": "Années d'Expérience",
+      "qualification": "Qualification",
+      "consultationFee": "Frais de Consultation",
+      "bio": "Biographie",
+      "birthDate": "Date de Naissance",
+      "gender": "Sexe",
+      "address": "Adresse",
+      "city": "Ville",
+      "state": "État",
+      "zipCode": "Code Postal",
+      "country": "Pays"
+    },
+    "stats": {
+      "experience": "Années Exp.",
+      "patients": "Patients",
+      "rating": "Note",
+      "reviews": "Total des Avis",
+      "followers": "Abonnés"
+    },
+    "actions": {
+      "bookAppointment": "Prendre Rendez-vous",
+      "hideBooking": "Masquer la Réservation",
+      "follow": "Suivre",
+      "unfollow": "Ne Plus Suivre",
+      "message": "Envoyer un Message",
+      "viewSchedule": "Voir l'Horaire"
+    },
+    "messages": {
+      "loading": "Chargement du profil du médecin...",
+      "loadError": "Erreur lors du chargement du profil du médecin",
+      "notFound": "Médecin non trouvé",
+      "followSuccess": "Médecin suivi avec succès",
+      "unfollowSuccess": "Médecin non suivi avec succès",
+      "followFailed": "Échec du suivi du médecin",
+      "unfollowFailed": "Échec de l'arrêt du suivi du médecin"
+    }
+  },
+  "patientProfile": {
+    "title": "Profil du Patient",
+    "sections": {
+      "overview": "Aperçu",
+      "appointments": "Rendez-vous",
+      "medicalHistory": "Antécédents Médicaux",
+      "documents": "Documents",
+      "billing": "Facturation"
+    },
+    "stats": {
+      "totalAppointments": "Total des Rendez-vous",
+      "upcomingAppointments": "À Venir",
+      "completedAppointments": "Terminés",
+      "lastVisit": "Dernière Visite"
+    }
+  },
+  "receptionistProfile": {
+    "title": "Profil de la Réceptionniste",
+    "sections": {
+      "overview": "Aperçu",
+      "schedule": "Horaire",
+      "responsibilities": "Responsabilités",
+      "performance": "Performance"
+    },
+    "stats": {
+      "appointmentsManaged": "Rendez-vous Gérés",
+      "patientsAssisted": "Patients Assistés",
+      "callsHandled": "Appels Traités",
+      "efficiency": "Note d'Efficacité"
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "actions": "Actions",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "available": "Disponible",
+    "notAvailable": "Indisponible",
+    "busy": "Occupé",
+    "roles": {
+      "doctor": "Médecin",
+      "patient": "Patient",
+      "receptionist": "Réceptionniste"
+    }
+  },
+  "hooks": {
+    "errors": {
+      "fetchUser": "Échec de la récupération de l'utilisateur",
+      "fetchUsers": "Échec de la récupération des {{type}}s",
+      "validationErrors": "Veuillez corriger les erreurs de validation",
+      "updateUser": "Échec de la mise à jour de l'utilisateur",
+      "searchUsers": "Échec de la recherche d'utilisateurs",
+      "uploadImage": "Échec du téléchargement de l'image",
+      "toggleStatus": "Échec du changement de statut de l'utilisateur",
+      "deleteUser": "Échec de la suppression de l'utilisateur",
+      "fetchStats": "Échec de la récupération des statistiques utilisateur"
+    }
+  }
+}

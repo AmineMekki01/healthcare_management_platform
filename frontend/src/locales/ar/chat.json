@@ -71,8 +71,8 @@
     }
   },
   "ui": {
-    "hideSidebar": "إخفاء ←",
-    "showSidebar": "إظهار ←",
+    "hideSidebar": "إخفاء →",
+    "showSidebar": "← إظهار",
     "justNow": "الآن",
     "uploadedImage": "صورة مرفوعة"
   }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -170,15 +169,4 @@ func (bp BodyPart) GetDisplayName() string {
 	default:
 		return "Unknown"
 	}
-}
-
-func GenerateMedicalFolderName(doctorName string, category Category, bodyPart *BodyPart, studyDate time.Time) string {
-	dateStr := studyDate.Format("2006-01-02")
-	categoryName := category.GetDisplayName()
-
-	if bodyPart != nil && *bodyPart != BodyPartOther {
-		return fmt.Sprintf("Dr.%s_%s_%s_%s", doctorName, dateStr, categoryName, bodyPart.GetDisplayName())
-	}
-
-	return fmt.Sprintf("Dr.%s_%s_%s", doctorName, dateStr, categoryName)
 }

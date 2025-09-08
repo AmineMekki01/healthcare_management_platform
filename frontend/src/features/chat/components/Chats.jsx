@@ -265,7 +265,7 @@ const ChatsComponent = ({onSelectChat}) => {
         if (!content) return '';
         const text = String(content);
         const isUrl = text.startsWith('http://') || text.startsWith('https://');
-        return isUrl ? t('ui.photo') : text;
+        return isUrl ? t('messages.photo') : text;
     };
 
     return (

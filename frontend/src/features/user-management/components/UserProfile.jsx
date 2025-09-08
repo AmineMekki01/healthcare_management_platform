@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import UserAvatar from './shared/UserAvatar';
 import { useUserManagement } from '../hooks/useUserManagement';
 
@@ -237,11 +238,11 @@ const UserProfile = ({
   className,
   headerActions = []
 }) => {
+  const { t } = useTranslation('userManagement');
   const { 
     user: hookUser, 
     loading, 
     error, 
-    fetchUser, 
     updateUser, 
     uploadUserImage 
   } = useUserManagement(propUser ? null : userId, propUser ? null : userType);
@@ -295,14 +296,14 @@ const UserProfile = ({
   };
 
   const getFullName = (user) => {
-    return `${user?.firstName} ${user?.lastName}`.trim() || 'Unknown User';
+    return `${user?.firstName} ${user?.lastName}`.trim() || t('userProfile.messages.unknownUser');
   };
 
   const getUserRole = (user) => {
-    if (user?.specialty) return 'Doctor';
-    if (user?.patientId) return 'Patient';
-    if (user?.receptionistId) return 'Receptionist';
-    return user?.role || user?.userType || user?.type || 'User';
+    if (user?.specialty) return t('common.roles.doctor');
+    if (user?.patientId) return t('common.roles.patient');
+    if (user?.receptionistId) return t('common.roles.receptionist');
+    return user?.role || user?.userType || user?.type || t('common.roles.user');
   };
 
   const getUserEmail = (user) => {
@@ -310,12 +311,12 @@ const UserProfile = ({
   };
 
   const defaultFields = [
-    { key: 'firstName', label: 'First Name', type: 'text' },
-    { key: 'lastName', label: 'Last Name', type: 'text' },
-    { key: 'email', label: 'email', type: 'email' },
-    { key: 'phoneNumber', label: 'Phone', type: 'tel' },
-    { key: 'birthDate', label: 'Date of Birth', type: 'date' },
-    { key: 'streetAddress', label: 'Address', type: 'textarea' },
+    { key: 'firstName', label: t('userProfile.fields.firstName'), type: 'text' },
+    { key: 'lastName', label: t('userProfile.fields.lastName'), type: 'text' },
+    { key: 'email', label: t('userProfile.fields.email'), type: 'email' },
+    { key: 'phoneNumber', label: t('userProfile.fields.phoneNumber'), type: 'tel' },
+    { key: 'birthDate', label: t('userProfile.fields.dateOfBirth'), type: 'date' },
+    { key: 'streetAddress', label: t('userProfile.fields.address'), type: 'textarea' },
   ];
 
   const profileFields = customFields.length > 0 ? customFields : defaultFields;
@@ -323,7 +324,7 @@ const UserProfile = ({
   if (!propUser && loading) {
     return (
       <ProfileContainer className={className}>
-        <LoadingSpinner>Loading profile...</LoadingSpinner>
+        <LoadingSpinner>{t('userProfile.messages.loading')}</LoadingSpinner>
       </ProfileContainer>
     );
   }
@@ -331,7 +332,7 @@ const UserProfile = ({
   if (!propUser && error) {
     return (
       <ProfileContainer className={className}>
-        <ErrorMessage>Error loading profile: {error}</ErrorMessage>
+        <ErrorMessage>{t('userProfile.messages.updateFailed')}: {error}</ErrorMessage>
       </ProfileContainer>
     );
   }
@@ -339,7 +340,7 @@ const UserProfile = ({
   if (!user) {
     return (
       <ProfileContainer className={className}>
-        <ErrorMessage>User not found</ErrorMessage>
+        <ErrorMessage>{t('userProfile.messages.userNotFound')}</ErrorMessage>
       </ProfileContainer>
     );
   }
@@ -382,7 +383,7 @@ const UserProfile = ({
 
       <ProfileBody>
         <Section>
-          <SectionTitle>Personal Information</SectionTitle>
+          <SectionTitle>{t('userProfile.sections.personalInfo')}</SectionTitle>
           <FieldGrid>
             {profileFields.map((field) => (
               <Field key={field.key}>
@@ -404,7 +405,7 @@ const UserProfile = ({
                   )
                 ) : (
                   <FieldValue>
-                    {user[field.key] || 'Not specified'}
+                    {user[field.key] || t('common.notAvailable')}
                   </FieldValue>
                 )}
               </Field>
@@ -421,15 +422,15 @@ const UserProfile = ({
                   onClick={handleSave}
                   disabled={loading}
                 >
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  {loading ? t('userProfile.messages.saving') : t('userProfile.buttons.save')}
                 </Button>
                 <Button $variant="secondary" onClick={handleCancel}>
-                  Cancel
+                  {t('userProfile.buttons.cancel')}
                 </Button>
               </>
             ) : (
               <Button $variant="primary" onClick={handleEdit}>
-                Edit Profile
+                {t('userProfile.buttons.edit')}
               </Button>
             )}
           </EditActions>

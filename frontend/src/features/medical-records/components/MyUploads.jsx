@@ -665,7 +665,7 @@ function MyUploads() {
                 mb: 1
               }}
             >
-              {t('upload.noFilesOrFolders')}
+              {t('upload.noFiles')}
             </Typography>
             <Typography 
               variant="body1" 
@@ -676,7 +676,7 @@ function MyUploads() {
                 mb: 3
               }}
             >
-              Start by uploading your first file or creating a new folder to organize your medical documents.
+              {t('upload.subtitle')}
             </Typography>
             <Button
               variant="contained"
@@ -691,7 +691,7 @@ function MyUploads() {
                 py: 1.5,
               }}
             >
-              {t('upload.uploadFirstFile')}
+              {t('upload.uploadFirst')}
             </Button>
           </Box>
         </Fade>

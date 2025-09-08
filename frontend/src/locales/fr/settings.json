@@ -1,7 +1,215 @@
 {
   "page": {
     "title": "Paramètres",
-    "subtitle": "Gérez vos préférences de compte et informations"
+    "subtitle": "Gérez vos préférences de compte et vos informations"
+  },
+  "navigation": {
+    "personal": "Informations personnelles",
+    "followSettings": "Paramètres de suivi",
+    "followedDoctors": "Médecins que je suis",
+    "availability": "Paramètres de disponibilité",
+    "professionalInfo": "Informations professionnelles"
+  },
+  "personalInfo": {
+    "title": "Informations personnelles",
+    "profilePhoto": {
+      "upload": "Télécharger une photo de profil",
+      "instructions": "Cliquez pour sélectionner une nouvelle photo (JPG, PNG, max 5 Mo)"
+    },
+    "fields": {
+      "firstName": {
+        "label": "Prénom",
+        "placeholder": "Entrez votre prénom"
+      },
+      "lastName": {
+        "label": "Nom de famille",
+        "placeholder": "Entrez votre nom de famille"
+      },
+      "email": {
+        "label": "Adresse e-mail",
+        "placeholder": "Entrez votre e-mail"
+      },
+      "phoneNumber": {
+        "label": "Numéro de téléphone",
+        "placeholder": "Entrez votre numéro de téléphone"
+      },
+      "birthDate": {
+        "label": "Date de naissance"
+      },
+      "gender": {
+        "label": "Genre",
+        "placeholder": "Genre"
+      },
+      "streetAddress": {
+        "label": "Adresse",
+        "placeholder": "Entrez votre adresse"
+      },
+      "city": {
+        "label": "Ville",
+        "placeholder": "Entrez votre ville"
+      },
+      "state": {
+        "label": "État/Province",
+        "placeholder": "Entrez votre état/province"
+      },
+      "zipCode": {
+        "label": "Code postal",
+        "placeholder": "Entrez votre code postal"
+      },
+      "country": {
+        "label": "Pays",
+        "placeholder": "Entrez votre pays"
+      },
+      "bio": {
+        "label": "Biographie",
+        "placeholder": "Parlez-nous de vous..."
+      }
+    },
+    "buttons": {
+      "updateProfile": "Mettre à jour le profil",
+      "updating": "Mise à jour..."
+    },
+    "success": {
+      "profileUpdated": "Profil mis à jour avec succès !"
+    },
+    "errors": {
+      "loadFailed": "Échec du chargement des informations de profil",
+      "updateFailed": "Erreur lors de la mise à jour du profil. Veuillez réessayer."
+    }
+  },
+  "doctorInfo": {
+    "title": "Informations du médecin",
+    "sections": {
+      "hospitals": {
+        "title": "Hôpitaux",
+        "fields": {
+          "hospitalName": "Nom de l'hôpital",
+          "position": "Poste",
+          "startDate": "Date de début",
+          "endDate": "Date de fin",
+          "description": "Description"
+        }
+      },
+      "organizations": {
+        "title": "Organisations",
+        "fields": {
+          "organizationName": "Nom de l'organisation",
+          "role": "Rôle",
+          "startDate": "Date de début",
+          "endDate": "Date de fin",
+          "description": "Description"
+        }
+      },
+      "awards": {
+        "title": "Récompenses",
+        "fields": {
+          "awardName": "Nom de la récompense",
+          "dateAwarded": "Date d'attribution",
+          "issuingOrganization": "Organisation émettrice",
+          "description": "Description"
+        }
+      },
+      "certifications": {
+        "title": "Certifications",
+        "fields": {
+          "certificationName": "Nom de la certification",
+          "issuedBy": "Émis par",
+          "issueDate": "Date d'émission",
+          "expirationDate": "Date d'expiration",
+          "description": "Description"
+        }
+      },
+      "languages": {
+        "title": "Langues",
+        "fields": {
+          "languageName": "Nom de la langue",
+          "proficiencyLevel": "Niveau de maîtrise"
+        },
+        "proficiency": {
+          "basic": "Débutant",
+          "conversational": "Conversationnel",
+          "fluent": "Courant",
+          "native": "Natif"
+        }
+      }
+    },
+    "buttons": {
+      "add": "Ajouter",
+      "saveInformation": "Enregistrer les informations"
+    },
+    "success": {
+      "informationUpdated": "Informations mises à jour avec succès !"
+    },
+    "errors": {
+      "updateFailed": "Échec de la mise à jour des informations."
+    }
+  },
+  "availability": {
+    "title": "Paramètres de disponibilité du médecin",
+    "days": {
+      "Monday": "Lundi",
+      "Tuesday": "Mardi",
+      "Wednesday": "Mercredi", 
+      "Thursday": "Jeudi",
+      "Friday": "Vendredi",
+      "Saturday": "Samedi",
+      "Sunday": "Dimanche"
+    },
+    "table": {
+      "day": "Jour",
+      "enabled": "Activé",
+      "start": "Début",
+      "end": "Fin",
+      "slotDuration": "Durée du créneau"
+    },
+    "buttons": {
+      "saveSchedule": "Enregistrer l'horaire",
+      "clearAllSchedule": "Effacer tous les horaires",
+      "addException": "Ajouter une exception",
+      "cancel": "Annuler",
+      "yesClearAll": "Oui, tout effacer"
+    },
+    "exceptions": {
+      "title": "Exceptions (Congés / Remplacements)",
+      "noExceptions": "Aucune exception ajoutée pour cette semaine.",
+      "timeOff": "Congé",
+      "override": "Remplacement"
+    },
+    "confirmDialog": {
+      "title": "Effacer tous les horaires ?",
+      "message": "Êtes-vous sûr de vouloir effacer TOUS les horaires de disponibilité ? Cela supprimera tous vos créneaux de disponibilité sauvegardés et ne peut pas être annulé."
+    },
+    "success": {
+      "scheduleSaved": "Horaire enregistré juste pour cette semaine !",
+      "schedulesCleared": "Tous les horaires ont été effacés avec succès !"
+    },
+    "errors": {
+      "clearingSchedules": "Erreur lors de l'effacement des horaires"
+    }
+  },
+  "followedDoctors": {
+    "title": "Médecins suivis",
+    "noDoctors": {
+      "title": "Aucun médecin suivi pour le moment",
+      "description": "Commencez à suivre des médecins pour voir leurs publications et mises à jour dans votre fil d'actualité. Explorez notre communauté de professionnels de la santé pour trouver des médecins qui vous intéressent."
+    },
+    "buttons": {
+      "unfollow": "Ne plus suivre",
+      "unfollowing": "Désabonnement...",
+      "yesUnfollow": "Oui, ne plus suivre",
+      "cancel": "Annuler"
+    },
+    "confirmDialog": {
+      "title": "Confirmer le désabonnement",
+      "message": "Êtes-vous sûr de vouloir ne plus suivre {{doctorName}} ? Vous ne verrez plus leurs publications dans votre fil d'actualité."
+    },
+    "success": {
+      "unfollowed": "Vous avez arrêté de suivre {{doctorName}} avec succès"
+    },
+    "errors": {
+      "loadFailed": "Échec du chargement des médecins suivis. Veuillez réessayer.",
+      "unfollowFailed": "Échec du désabonnement du médecin. Veuillez réessayer."
+    }
   },
   "general": {
     "title": "Paramètres",

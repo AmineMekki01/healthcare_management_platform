@@ -1,0 +1,249 @@
+{
+  "appointmentBooking": {
+    "title": "Book Appointment",
+    "sections": {
+      "selectDate": "Select Date",
+      "availableSlots": "Available Time Slots",
+      "bookingFor": "Who is this appointment for?",
+      "patientInfo": "Patient Information",
+      "appointmentDetails": "Appointment Details"
+    },
+    "bookingType": {
+      "self": "For myself",
+      "other": "For someone else"
+    },
+    "fields": {
+      "patientName": "Patient Name",
+      "email": "Email",
+      "phoneNumber": "Phone Number",
+      "reasonForVisit": "Reason for Visit",
+      "additionalNotes": "Additional Notes"
+    },
+    "placeholders": {
+      "patientName": "Enter patient name",
+      "email": "Enter email address",
+      "phoneNumber": "Enter phone number",
+      "reasonForVisit": "Brief reason for visit",
+      "additionalNotes": "Any additional information or special requests"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "bookAppointment": "Book Appointment",
+      "booking": "Booking..."
+    },
+    "messages": {
+      "loading": "Loading available slots...",
+      "noSlots": "No available slots for this date",
+      "bookingFor": "Booking appointment for: {{name}}",
+      "successSelf": "Appointment booked successfully for you!",
+      "successOther": "Appointment booked successfully for {{name}}!",
+      "fillRequired": "Please fill in all required fields and select a time slot",
+      "providePatientInfo": "Please provide patient name and email when booking for someone else",
+      "loginRequired": "Please log in to book an appointment",
+      "bookingFailed": "Failed to book appointment. Please try again.",
+      "slotsFailed": "Failed to fetch available time slots"
+    }
+  },
+  "appointmentManager": {
+    "title": "Appointment Management",
+    "tabs": {
+      "all": "All",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "cancelled": "Cancelled"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "past": "Past",
+      "noShow": "No Show"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "reschedule": "Reschedule",
+      "complete": "Complete",
+      "viewDetails": "View Details"
+    },
+    "messages": {
+      "noAppointments": "No appointments found",
+      "loading": "Loading appointments...",
+      "cancelSuccess": "Are you sure you want to cancel this appointment?",
+      "cancelFailed": "Failed to cancel appointment",
+      "rescheduleSuccess": "Appointment rescheduled successfully",
+      "rescheduleFailed": "Failed to reschedule appointment"
+    }
+  },
+  "userProfile": {
+    "title": "User Profile",
+    "sections": {
+      "personalInfo": "Personal Information",
+      "contactInfo": "Contact Information",
+      "medicalInfo": "Medical Information",
+      "preferences": "Preferences"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "phoneNumber": "Phone Number",
+      "dateOfBirth": "Date of Birth",
+      "gender": "Gender",
+      "address": "Address",
+      "emergencyContact": "Emergency Contact",
+      "medicalHistory": "Medical History",
+      "allergies": "Allergies",
+      "medications": "Current Medications"
+    },
+    "buttons": {
+      "edit": "Edit Profile",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "changePassword": "Change Password"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateFailed": "Failed to update profile",
+      "loading": "Loading profile...",
+      "saving": "Saving...",
+      "saveChanges": "Save your changes?",
+      "unknownUser": "Unknown User",
+      "userNotFound": "User not found"
+    }
+  },
+  "doctorProfile": {
+    "title": "Doctor Profile",
+    "sections": {
+      "overview": "Overview",
+      "specialties": "Specialties",
+      "experience": "Experience",
+      "education": "Education",
+      "reviews": "Reviews",
+      "availability": "Availability",
+      "statistics": "Statistics",
+      "hospitals": "Hospitals",
+      "certifications": "Certifications",
+      "languages": "Languages",
+      "awards": "Awards"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phoneNumber": "Phone",
+      "username": "Username",
+      "specialty": "specialty",
+      "licenseNumber": "Medical License",
+      "experience": "Years of Experience",
+      "qualification": "Qualification",
+      "consultationFee": "Consultation Fee",
+      "bio": "Biography",
+      "birthDate": "Birth Date",
+      "gender": "Gender",
+      "address": "Address",
+      "city": "City",
+      "state": "State",
+      "zipCode": "Zip Code",
+      "country": "Country"
+    },
+    "stats": {
+      "experience": "Years Exp.",
+      "patients": "Patients",
+      "rating": "Rating",
+      "reviews": "Total Reviews",
+      "followers": "Followers"
+    },
+    "actions": {
+      "bookAppointment": "Book Appointment",
+      "hideBooking": "Hide Booking",
+      "follow": "Follow",
+      "unfollow": "Unfollow",
+      "message": "Send Message",
+      "viewSchedule": "View Schedule"
+    },
+    "messages": {
+      "loading": "Loading doctor profile...",
+      "loadError": "Error loading doctor profile",
+      "notFound": "Doctor not found",
+      "followSuccess": "Doctor followed successfully",
+      "unfollowSuccess": "Doctor unfollowed successfully",
+      "followFailed": "Failed to follow doctor",
+      "unfollowFailed": "Failed to unfollow doctor"
+    }
+  },
+  "patientProfile": {
+    "title": "Patient Profile",
+    "sections": {
+      "overview": "Overview",
+      "appointments": "Appointments",
+      "medicalHistory": "Medical History",
+      "documents": "Documents",
+      "billing": "Billing"
+    },
+    "stats": {
+      "totalAppointments": "Total Appointments",
+      "upcomingAppointments": "Upcoming",
+      "completedAppointments": "Completed",
+      "lastVisit": "Last Visit"
+    }
+  },
+  "receptionistProfile": {
+    "title": "Receptionist Profile",
+    "sections": {
+      "overview": "Overview",
+      "schedule": "Schedule",
+      "responsibilities": "Responsibilities",
+      "performance": "Performance"
+    },
+    "stats": {
+      "appointmentsManaged": "Appointments Managed",
+      "patientsAssisted": "Patients Assisted",
+      "callsHandled": "Calls Handled",
+      "efficiency": "Efficiency Rating"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline",
+    "available": "Available",
+    "notAvailable": "Not Available",
+    "busy": "Busy",
+    "roles": {
+      "doctor": "Doctor",
+      "patient": "Patient",
+      "receptionist": "Receptionist"
+    }
+  },
+  "hooks": {
+    "errors": {
+      "fetchUser": "Failed to fetch user",
+      "fetchUsers": "Failed to fetch {{type}}s",
+      "validationErrors": "Please correct the validation errors",
+      "updateUser": "Failed to update user",
+      "searchUsers": "Failed to search users",
+      "uploadImage": "Failed to upload image",
+      "toggleStatus": "Failed to toggle user status",
+      "deleteUser": "Failed to delete user",
+      "fetchStats": "Failed to fetch user statistics"
+    }
+  }
+}

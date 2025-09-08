@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from '../../../components/axiosConfig';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DoctorCard,
   DoctorInfo,
@@ -44,6 +44,7 @@ const ExploreIcon = () => (
 );
 
 export default function DoctorFollowSettings({ userId }) {
+  const { t } = useTranslation('settings');
   const [followedDoctors, setFollowedDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,11 +52,7 @@ export default function DoctorFollowSettings({ userId }) {
   const [unfollowingId, setUnfollowingId] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ show: false, doctor: null });
 
-  useEffect(() => {
-    fetchDoctors();
-  }, [userId]);
-
-  const fetchDoctors = async () => {
+  const fetchDoctors = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -64,11 +61,15 @@ export default function DoctorFollowSettings({ userId }) {
       setFollowedDoctors(data || []);
     } catch (error) {
       console.error('Error fetching followed doctors:', error);
-      setError('Failed to load followed doctors. Please try again.');
+      setError(t('followedDoctors.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, t]);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
 
   const handleUnfollowClick = (doctor) => {
     setConfirmDialog({ show: true, doctor });
@@ -85,12 +86,12 @@ export default function DoctorFollowSettings({ userId }) {
       await settingsService.unfollowDoctor(userId, doctor.doctorId);
       
       setFollowedDoctors(followedDoctors.filter(doc => doc.doctorId !== doctor.doctorId));
-      setSuccess(`You have successfully unfollowed Dr. ${doctor.firstName} ${doctor.lastName}`);
+      setSuccess(t('followedDoctors.success.unfollowed', { doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}` }));
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error unfollowing doctor:', error);
-      setError('Failed to unfollow doctor. Please try again.');
+      setError(t('followedDoctors.errors.unfollowFailed'));
     } finally {
       setUnfollowingId(null);
       setConfirmDialog({ show: false, doctor: null });
@@ -132,10 +133,9 @@ export default function DoctorFollowSettings({ userId }) {
       {followedDoctors.length === 0 ? (
         <NoDoctorsMessage>
           <ExploreIcon />
-          <h3>No doctors followed yet</h3>
+          <h3>{t('followedDoctors.noDoctors.title')}</h3>
           <p>
-            Start following doctors to see their posts and updates in your feed.
-            Explore our community of healthcare professionals to find doctors that interest you.
+            {t('followedDoctors.noDoctors.description')}
           </p>
         </NoDoctorsMessage>
       ) : (
@@ -162,12 +162,12 @@ export default function DoctorFollowSettings({ userId }) {
                 {unfollowingId === doctor.doctorId ? (
                   <>
                     <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
-                    Unfollowing...
+                    {t('followedDoctors.buttons.unfollowing')}
                   </>
                 ) : (
                   <>
                     <UnfollowIcon />
-                    Unfollow
+                    {t('followedDoctors.buttons.unfollow')}
                   </>
                 )}
               </UnfollowButton>
@@ -179,17 +179,16 @@ export default function DoctorFollowSettings({ userId }) {
       {confirmDialog.show && (
         <ConfirmationDialog>
           <ConfirmationContent>
-            <h3>Confirm Unfollow</h3>
+            <h3>{t('followedDoctors.confirmDialog.title')}</h3>
             <p>
-              Are you sure you want to unfollow Dr. {confirmDialog.doctor?.firstName} {confirmDialog.doctor?.lastName}?
-              You won't see their posts in your feed anymore.
+              {t('followedDoctors.confirmDialog.message', { doctorName: `Dr. ${confirmDialog.doctor?.firstName} ${confirmDialog.doctor?.lastName}` })}
             </p>
             <ConfirmationButtons>
               <ConfirmButton onClick={confirmUnfollow}>
-                Yes, Unfollow
+                {t('followedDoctors.buttons.yesUnfollow')}
               </ConfirmButton>
               <CancelButton onClick={cancelUnfollow}>
-                Cancel
+                {t('followedDoctors.buttons.cancel')}
               </CancelButton>
             </ConfirmationButtons>
           </ConfirmationContent>

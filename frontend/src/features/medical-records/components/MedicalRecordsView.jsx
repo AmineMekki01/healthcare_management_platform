@@ -19,19 +19,17 @@ import {
   DialogActions,
   List,
   ListItem,
-  ListItemText,
-  ListItemAvatar,
-  ListItemSecondaryAction
+  ListItemAvatar
 } from '@mui/material';
 import {
   Description as FileIcon,
-  Person as PersonIcon,
   Download as DownloadIcon,
   Science as LabIcon,
   Visibility as RadiologyIcon,
   Assignment as ReportIcon,
   ExitToApp as DischargeIcon,
-  Folder as FolderIcon
+  Folder as FolderIcon,
+  CalendarToday as DateIcon
 } from '@mui/icons-material';
 import { AuthContext } from '../../auth/context/AuthContext';
 import { getMedicalRecordsByCategory, downloadFile, downloadMultipleFiles } from '../services/medicalRecordsService';
@@ -88,13 +86,15 @@ const getMedicalCategories = (t) => ({
 });
 
 function MedicalRecordsView({ onBackToMyDocs }) {
-  const { t } = useTranslation('medical');
+  const { t, i18n } = useTranslation('medical');
+  const isRTL = i18n.language === 'ar';
+
   const { userId } = useContext(AuthContext);
   const [medicalRecords, setMedicalRecords] = useState({});
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categoryDocuments, setCategoryDocuments] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+  console.log(categoryDocuments);
   const MEDICAL_CATEGORIES = getMedicalCategories(t);
 
   const extractFolderInfo = useCallback((doc) => {
@@ -316,7 +316,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
                   </Typography>
                   
                   <Chip
-                    label={`${documentsCount} document${documentsCount !== 1 ? 's' : ''}`}
+                    label={t('labels.documentCount', { count: documentsCount })}
                     sx={{
                       bgcolor: hasDocuments ? `${category.color}15` : '#f5f5f5',
                       color: hasDocuments ? category.color : '#999',
@@ -335,7 +335,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
                         textTransform: 'none'
                       }}
                     >
-                      View Documents
+                      {t('labels.viewDocuments')}
                     </Button>
                   </CardActions>
                 )}
@@ -411,7 +411,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Chip 
-                    label={`${folderGroup.files.length} file${folderGroup.files.length !== 1 ? 's' : ''}`}
+                    label={t('labels.fileCount', { count: folderGroup.files.length })}
                     size="small"
                     sx={{ 
                       bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}20`,
@@ -430,7 +430,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
                         bgcolor: 'primary.dark'
                       }
                     }}
-                    title="Download entire folder"
+                    title={t('labels.downloadFolder')}
                   >
                     <DownloadIcon sx={{ fontSize: 14 }} />
                   </IconButton>
@@ -439,44 +439,72 @@ function MedicalRecordsView({ onBackToMyDocs }) {
 
               <List sx={{ pl: 2 }}>
                 {folderGroup.files.map((doc, fileIndex) => [
-                  <ListItem key={doc.id || fileIndex} sx={{ py: 1.5 }}>
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}20`, width: 32, height: 32 }}>
-                        <FileIcon sx={{ color: MEDICAL_CATEGORIES[selectedCategory]?.color, fontSize: 16 }} />
-                      </Avatar>
-                    </ListItemAvatar>
+                  <ListItem key={doc.id || fileIndex} sx={{ 
+                    py: 1.5,
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                  }}>
                     
-                    <ListItemText
-                      primary={
-                        <Typography variant="body1" component="span" sx={{ fontWeight: 500 }}>
-                          {doc.filename || doc.name || 'Untitled Document'}
+                    <Box sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}>
+                      <ListItemAvatar sx={{ 
+                        minWidth: 'auto',
+                       
+                      }}>
+                        <Avatar sx={{
+                          bgcolor: `${MEDICAL_CATEGORIES[selectedCategory]?.color}20`, 
+                          width: 32, 
+                          height: 32,
+                          ml: isRTL ? 2 : 0,
+                          mr: isRTL ? 0 : 2
+                        }}>
+                          <FileIcon sx={{ color: MEDICAL_CATEGORIES[selectedCategory]?.color, fontSize: 16 }} />
+                        </Avatar>
+                      </ListItemAvatar>
+                      
+                      <Box sx={{ 
+                        flex: 1,
+                      }}>
+                        <Typography variant="body1" sx={{
+                          fontWeight: 500,
+                          display: 'block',
+                          mb: 0.5
+                        }}>
+                          {doc.name || 'Untitled Document'}
                         </Typography>
-                      }
-                      secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <PersonIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              {doc.uploader_name} ({doc.uploaded_by_role})
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        
+                        <Box sx={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          justifyContent: isRTL ? 'flex-end' : 'flex-start'
+                        }}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            color: 'text.secondary'
+                          }}>
+                            <DateIcon sx={{ fontSize: 12 }} />
                             <Typography variant="caption" color="text.secondary">
                               {new Date(doc.created_at).toLocaleDateString()}
                             </Typography>
-                            {doc.size && (
-                              <>
-                                <Typography variant="caption" color="text.secondary">•</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {formatFileSize(doc.size)}
-                                </Typography>
-                              </>
-                            )}
                           </Box>
+                          {doc.size && (
+                            <>
+                              <Typography variant="caption" color="text.secondary">•</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatFileSize(doc.size)}
+                              </Typography>
+                            </>
+                          )}
                         </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
+                      </Box>
+                    </Box>
+                    
+                    <Box>
                       <IconButton 
                         onClick={() => handleDownload(doc.folder_id, doc.name)}
                         size="small"
@@ -492,9 +520,14 @@ function MedicalRecordsView({ onBackToMyDocs }) {
                       >
                         <DownloadIcon sx={{ fontSize: 16 }} />
                       </IconButton>
-                    </ListItemSecondaryAction>
+                    </Box>
                   </ListItem>,
-                  fileIndex < folderGroup.files.length - 1 && <Divider key={`file-divider-${doc.id || fileIndex}`} sx={{ ml: 6 }} />
+                  fileIndex < folderGroup.files.length - 1 && (
+                    <Divider 
+                      key={`file-divider-${doc.id || fileIndex}`} 
+                      sx={isRTL ? { mr: 6 } : { ml: 6 }} 
+                    />
+                  )
                 ]).flat().filter(Boolean)}
               </List>
             </Box>
@@ -503,7 +536,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
         
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>
-            Close
+            {t('labels.close')}
           </Button>
         </DialogActions>
       </Dialog>

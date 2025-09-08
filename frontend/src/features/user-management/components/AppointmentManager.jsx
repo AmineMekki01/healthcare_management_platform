@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services/userService';
 
 const ManagerContainer = styled.div`
@@ -182,16 +183,13 @@ const ErrorMessage = styled.div`
 `;
 
 const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) => {
+  const { t } = useTranslation('userManagement');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [doctorId, filter]);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -209,14 +207,18 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
       setAppointments(data || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      setError('Failed to fetch appointments');
+      setError(t('appointmentManager.messages.loading'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId, t, currentUserId, userType]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   const handleCancelAppointment = async (appointmentId) => {
-    if (!window.confirm('Are you sure you want to cancel this appointment?')) {
+    if (!window.confirm(t('appointmentManager.messages.cancelSuccess'))) {
       return;
     }
 
@@ -230,7 +232,7 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
       fetchAppointments();
     } catch (error) {
       console.error('Error canceling appointment:', error);
-      setError('Failed to cancel appointment');
+      setError(t('appointmentManager.messages.cancelFailed'));
     }
   };
 
@@ -267,31 +269,31 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
   return (
     <ManagerContainer>
       <ManagerHeader>
-        <ManagerTitle>Appointments</ManagerTitle>
+        <ManagerTitle>{t('appointmentManager.title')}</ManagerTitle>
         <FilterGroup>
           <FilterButton 
             $active={filter === 'all'} 
             onClick={() => setFilter('all')}
           >
-            All
+            {t('appointmentManager.tabs.all')}
           </FilterButton>
           <FilterButton 
             $active={filter === 'upcoming'} 
             onClick={() => setFilter('upcoming')}
           >
-            Upcoming
+            {t('appointmentManager.tabs.upcoming')}
           </FilterButton>
           <FilterButton 
             $active={filter === 'past'} 
             onClick={() => setFilter('past')}
           >
-            Past
+            {t('appointmentManager.tabs.past')}
           </FilterButton>
           <FilterButton 
             $active={filter === 'cancelled'} 
             onClick={() => setFilter('cancelled')}
           >
-            Cancelled
+            {t('appointmentManager.tabs.cancelled')}
           </FilterButton>
         </FilterGroup>
       </ManagerHeader>
@@ -299,10 +301,10 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
       {error && <ErrorMessage>{error}</ErrorMessage>}
 
       {loading ? (
-        <LoadingMessage>Loading appointments...</LoadingMessage>
+        <LoadingMessage>{t('appointmentManager.messages.loading')}</LoadingMessage>
       ) : filteredAppointments.length === 0 ? (
         <EmptyMessage>
-          {filter === 'all' ? 'No appointments found' : `No ${filter} appointments`}
+          {t('appointmentManager.messages.noAppointments')}
         </EmptyMessage>
       ) : (
         <AppointmentList>
@@ -324,7 +326,7 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
                   </PatientInfo>
                 </AppointmentInfo>
                 <StatusBadge $status={getAppointmentStatus(appointment)}>
-                  {getAppointmentStatus(appointment)}
+                  {t(`appointmentManager.status.${getAppointmentStatus(appointment)}`)}
                 </StatusBadge>
               </AppointmentHeader>
 
@@ -335,14 +337,14 @@ const AppointmentManager = ({ doctorId, userType = 'patient', currentUserId }) =
                     console.log('View appointment:', appointment.appointmentId);
                   }}
                 >
-                  View Details
+                  {t('appointmentManager.actions.viewDetails')}
                 </ActionButton>
                 {getAppointmentStatus(appointment) === 'confirmed' && (
                   <ActionButton 
                     $variant="cancel"
                     onClick={() => handleCancelAppointment(appointment.appointmentId)}
                   >
-                    Cancel
+                    {t('appointmentManager.actions.cancel')}
                   </ActionButton>
                 )}
               </AppointmentActions>
