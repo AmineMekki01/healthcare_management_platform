@@ -1,0 +1,317 @@
+{
+  "page": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences and information"
+  },
+  "navigation": {
+    "personal": "Personal Information",
+    "followSettings": "Follow Settings",
+    "followedDoctors": "Doctors I Follow",
+    "availability": "Availability Settings",
+    "professionalInfo": "Professional Information"
+  },
+  "personalInfo": {
+    "title": "Personal Information",
+    "profilePhoto": {
+      "upload": "Upload Profile Photo",
+      "instructions": "Click to select a new photo (JPG, PNG, max 5MB)"
+    },
+    "fields": {
+      "firstName": {
+        "label": "First Name",
+        "placeholder": "Enter your first name"
+      },
+      "lastName": {
+        "label": "Last Name",
+        "placeholder": "Enter your last name"
+      },
+      "email": {
+        "label": "Email Address",
+        "placeholder": "Enter your email"
+      },
+      "phoneNumber": {
+        "label": "Phone Number",
+        "placeholder": "Enter your phone number"
+      },
+      "birthDate": {
+        "label": "Date of Birth"
+      },
+      "gender": {
+        "label": "Gender",
+        "placeholder": "Gender"
+      },
+      "streetAddress": {
+        "label": "Street Address",
+        "placeholder": "Enter your street address"
+      },
+      "city": {
+        "label": "City",
+        "placeholder": "Enter your city"
+      },
+      "state": {
+        "label": "State/Province",
+        "placeholder": "Enter your state/province"
+      },
+      "zipCode": {
+        "label": "Zip Code",
+        "placeholder": "Enter your zip code"
+      },
+      "country": {
+        "label": "Country",
+        "placeholder": "Enter your country"
+      },
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Tell us about yourself..."
+      }
+    },
+    "buttons": {
+      "updateProfile": "Update Profile",
+      "updating": "Updating..."
+    },
+    "success": {
+      "profileUpdated": "Profile updated successfully!"
+    },
+    "errors": {
+      "loadFailed": "Failed to load profile information",
+      "updateFailed": "Error updating profile. Please try again."
+    }
+  },
+  "doctorInfo": {
+    "title": "Doctor Information",
+    "sections": {
+      "hospitals": {
+        "title": "Hospitals",
+        "fields": {
+          "hospitalName": "Hospital Name",
+          "position": "Position",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "description": "Description"
+        }
+      },
+      "organizations": {
+        "title": "Organizations",
+        "fields": {
+          "organizationName": "Organization Name",
+          "role": "Role",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "description": "Description"
+        }
+      },
+      "awards": {
+        "title": "Awards",
+        "fields": {
+          "awardName": "Award Name",
+          "dateAwarded": "Date Awarded",
+          "issuingOrganization": "Issuing Organization",
+          "description": "Description"
+        }
+      },
+      "certifications": {
+        "title": "Certifications",
+        "fields": {
+          "certificationName": "Certification Name",
+          "issuedBy": "Issued By",
+          "issueDate": "Issue Date",
+          "expirationDate": "Expiration Date",
+          "description": "Description"
+        }
+      },
+      "languages": {
+        "title": "Languages",
+        "fields": {
+          "languageName": "Language Name",
+          "proficiencyLevel": "Proficiency Level"
+        },
+        "proficiency": {
+          "basic": "Basic",
+          "conversational": "Conversational",
+          "fluent": "Fluent",
+          "native": "Native"
+        }
+      }
+    },
+    "buttons": {
+      "add": "Add",
+      "saveInformation": "Save Information"
+    },
+    "success": {
+      "informationUpdated": "Information updated successfully!"
+    },
+    "errors": {
+      "updateFailed": "Failed to update information."
+    }
+  },
+  "availability": {
+    "title": "Doctor Availability Settings",
+    "days": {
+      "Monday": "Monday",
+      "Tuesday": "Tuesday", 
+      "Wednesday": "Wednesday",
+      "Thursday": "Thursday",
+      "Friday": "Friday",
+      "Saturday": "Saturday",
+      "Sunday": "Sunday"
+    },
+    "table": {
+      "day": "Day",
+      "enabled": "Enabled",
+      "start": "Start",
+      "end": "End",
+      "slotDuration": "Slot Duration"
+    },
+    "buttons": {
+      "saveSchedule": "Save Schedule",
+      "clearAllSchedule": "Clear All Schedule",
+      "addException": "Add Exception",
+      "cancel": "Cancel",
+      "yesClearAll": "Yes, Clear All"
+    },
+    "exceptions": {
+      "title": "Exceptions (Time Off / Overrides)",
+      "noExceptions": "No exceptions added for this week.",
+      "timeOff": "Time Off",
+      "override": "Override"
+    },
+    "confirmDialog": {
+      "title": "Clear All Schedules?",
+      "message": "Are you sure you want to clear ALL availability schedules? This will remove all your saved availability slots and cannot be undone."
+    },
+    "success": {
+      "scheduleSaved": "Schedule saved just for this week!",
+      "schedulesCleared": "All schedules cleared successfully!"
+    },
+    "errors": {
+      "clearingSchedules": "Error clearing schedules"
+    }
+  },
+  "followedDoctors": {
+    "title": "Followed Doctors",
+    "noDoctors": {
+      "title": "No doctors followed yet",
+      "description": "Start following doctors to see their posts and updates in your feed. Explore our community of healthcare professionals to find doctors that interest you."
+    },
+    "buttons": {
+      "unfollow": "Unfollow",
+      "unfollowing": "Unfollowing...",
+      "yesUnfollow": "Yes, Unfollow",
+      "cancel": "Cancel"
+    },
+    "confirmDialog": {
+      "title": "Confirm Unfollow",
+      "message": "Are you sure you want to unfollow {{doctorName}}? You won't see their posts in your feed anymore."
+    },
+    "success": {
+      "unfollowed": "You have successfully unfollowed {{doctorName}}"
+    },
+    "errors": {
+      "loadFailed": "Failed to load followed doctors. Please try again.",
+      "unfollowFailed": "Failed to unfollow doctor. Please try again."
+    }
+  },
+  "general": {
+    "title": "Settings",
+    "personalSettings": "Personal Settings",
+    "accountSettings": "Account Settings",
+    "privacySettings": "Privacy Settings",
+    "notificationSettings": "Notification Settings",
+    "securitySettings": "Security Settings",
+    "languageSettings": "Language & Region",
+    "appearanceSettings": "Appearance",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard Changes",
+    "settingsUpdated": "Settings updated successfully",
+    "updateFailed": "Failed to update settings"
+  },
+  "profile": {
+    "profileInformation": "Profile Information",
+    "personalInformation": "Personal Information",
+    "contactInformation": "Contact Information",
+    "professionalInformation": "Professional Information",
+    "changeProfilePicture": "Change Profile Picture",
+    "removeProfilePicture": "Remove Profile Picture",
+    "updateProfile": "Update Profile",
+    "profileUpdated": "Profile updated successfully"
+  },
+  "account": {
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordChanged": "Password changed successfully",
+    "deleteAccount": "Delete Account",
+    "deactivateAccount": "Deactivate Account",
+    "accountDeletion": "Account Deletion",
+    "confirmDeletion": "Are you sure you want to delete your account? This action cannot be undone.",
+    "typeDeleteToConfirm": "Type 'DELETE' to confirm account deletion"
+  },
+  "notifications": {
+    "emailNotifications": "Email Notifications",
+    "smsNotifications": "SMS Notifications",
+    "pushNotifications": "Push Notifications",
+    "appointmentReminders": "Appointment Reminders",
+    "messageNotifications": "Message Notifications",
+    "systemUpdates": "System Updates",
+    "marketingEmails": "Marketing Emails",
+    "securityAlerts": "Security Alerts",
+    "notificationFrequency": "Notification Frequency",
+    "immediately": "Immediately",
+    "daily": "Daily Digest",
+    "weekly": "Weekly Summary",
+    "never": "Never"
+  },
+  "privacy": {
+    "dataSharing": "Data Sharing",
+    "profileVisibility": "Profile Visibility",
+    "searchVisibility": "Search Visibility",
+    "activityStatus": "Activity Status",
+    "publicProfile": "Public Profile",
+    "privateProfile": "Private Profile",
+    "friendsOnly": "Friends Only",
+    "allowDataSharing": "Allow data sharing for research purposes",
+    "allowProfileIndexing": "Allow profile to be indexed by search engines",
+    "showOnlineStatus": "Show when I'm online",
+    "allowDirectMessages": "Allow direct messages from other users"
+  },
+  "language": {
+    "selectLanguage": "Select Language",
+    "currentLanguage": "Current Language",
+    "english": "English",
+    "french": "Français",
+    "arabic": "العربية",
+    "dateFormat": "Date Format",
+    "timeFormat": "Time Format",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "measurementUnit": "Measurement Units",
+    "metric": "Metric",
+    "imperial": "Imperial"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "lightTheme": "Light Theme",
+    "darkTheme": "Dark Theme",
+    "systemTheme": "System Default",
+    "fontSize": "Font Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "colorScheme": "Color Scheme",
+    "highContrast": "High Contrast Mode",
+    "reducedMotion": "Reduce Motion"
+  },
+  "security": {
+    "twoFactorAuth": "Two-Factor Authentication",
+    "enable2FA": "Enable 2FA",
+    "disable2FA": "Disable 2FA",
+    "backupCodes": "Backup Codes",
+    "generateBackupCodes": "Generate New Backup Codes",
+    "loginHistory": "Login History",
+    "activeDevices": "Active Devices",
+    "signOutAllDevices": "Sign Out All Devices",
+    "securityQuestions": "Security Questions",
+    "updateSecurityQuestions": "Update Security Questions"
+  }
+}

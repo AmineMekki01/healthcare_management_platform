@@ -1,0 +1,42 @@
+{
+  "labels": {
+    "patient": "Patient",
+    "diagnosis": "Diagnosis",
+    "referredTo": "Referred to",
+    "created": "Created"
+  },
+  "actions": {
+    "viewReport": "View Report",
+    "editReport": "Edit Report",
+    "deleteReport": "Delete Report"
+  },
+  "filters": {
+    "title": "Filter Reports",
+    "year": "Year",
+    "month": "Month",
+    "day": "Day",
+    "anyYear": "Any Year",
+    "anyMonth": "Any Month",
+    "anyDay": "Any Day",
+    "patientName": "Patient Name",
+    "diagnosis": "Diagnosis",
+    "referralDoctor": "Referral Doctor",
+    "searching": "Searching...",
+    "searchReports": "Search Reports"
+  },
+  "pages": {
+    "myReports": {
+      "title": "Medical Reports",
+      "subtitle": "Manage and review your patient reports",
+      "noReportsTitle": "No Reports Found",
+      "noReportsMessage": "Try adjusting your search criteria or create a new report to get started."
+    }
+  },
+  "confirmations": {
+    "deleteReport": "Are you sure you want to delete this medical report? This action cannot be undone."
+  },
+  "messages": {
+    "deleteSuccess": "Report deleted successfully",
+    "deleteError": "Failed to delete report. Please try again."
+  }
+}

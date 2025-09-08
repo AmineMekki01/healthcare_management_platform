@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 const WelcomeContainer = styled.div`
@@ -121,30 +122,32 @@ const FeatureIcon = styled.span`
 `;
 
 const WelcomeScreen = () => {
+  const { t } = useTranslation('chat');
+  
   return (
     <WelcomeContainer>
       <WelcomeIcon>💬</WelcomeIcon>
-      <WelcomeTitle>Welcome to TBIBI Chat</WelcomeTitle>
+      <WelcomeTitle>{t('welcome.title')}</WelcomeTitle>
       <WelcomeSubtitle>
-        Connect with healthcare professionals and patients in a secure, user-friendly environment.
+        {t('welcome.subtitle')}
       </WelcomeSubtitle>
       
       <FeatureList>
         <Feature>
           <FeatureIcon>🔒</FeatureIcon>
-          <span>Secure and private messaging</span>
+          <span>{t('welcome.features.secure')}</span>
         </Feature>
         <Feature>
           <FeatureIcon>📱</FeatureIcon>
-          <span>Real-time communication</span>
+          <span>{t('welcome.features.realtime')}</span>
         </Feature>
         <Feature>
           <FeatureIcon>📎</FeatureIcon>
-          <span>Share images and files</span>
+          <span>{t('welcome.features.files')}</span>
         </Feature>
         <Feature>
           <FeatureIcon>👥</FeatureIcon>
-          <span>Professional healthcare network</span>
+          <span>{t('welcome.features.network')}</span>
         </Feature>
       </FeatureList>
     </WelcomeContainer>

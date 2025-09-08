@@ -13,12 +13,14 @@ from src.documents.chat_document_handler import ChatDocumentHandler
 from src.documents.qdrant_document_service import QdrantDocumentService
 from src.shared.logs import logger
 from dotenv import load_dotenv
+import re
 load_dotenv()
 
 
 class TbibiAgent:
     """
     Unified Tbibi Agent that intelligently handles both general and patient-specific queries
+    with multi-language support (English, French, Arabic)
     """
     def __init__(self):
         self.engine = create_async_engine(settings.database_url)
@@ -40,7 +42,15 @@ class TbibiAgent:
         self.agent = Agent(
             name="Tbibi Healthcare Assistant",
             instructions="""
-                You are Tbibi, an intelligent healthcare assistant designed specifically for doctors and medical professionals. You excel at quickly retrieving, synthesizing, and presenting patient information in a clinical format that supports medical decision-making.
+                You are Tbibi, an intelligent multilingual healthcare assistant designed specifically for doctors and medical professionals. You excel at quickly retrieving, synthesizing, and presenting patient information in a clinical format that supports medical decision-making.
+
+                LANGUAGE DETECTION & RESPONSE:
+                - ALWAYS detect the language of the user's query first
+                - If query is in FRENCH or user asks for French: Respond entirely in FRENCH
+                - If query is in ARABIC or contains Arabic script: Respond entirely in ARABIC (with proper RTL formatting)
+                - If query is in ENGLISH or mixed languages: Respond in ENGLISH
+                - Maintain medical terminology accuracy across all languages
+                - Use appropriate medical abbreviations for each language
 
                 CORE MISSION:
                 Help doctors efficiently access comprehensive patient information, analyze medical data, and make informed clinical decisions by providing instant access to complete patient records and medical documents.
@@ -55,42 +65,104 @@ class TbibiAgent:
                 6. get_appointments_report_content() - For appointments with reports
 
                 PRESENT IN CLINICAL FORMAT:
+
+                **ENGLISH FORMAT:**
                 👤 **[Patient Name], [Age]Y [M/F]**
                 📍 **Primary Conditions:** [Active diagnoses]
                 💊 **Current Medications:** [Active prescriptions] 
                 📅 **Last Seen:** [Most recent appointment]
                 ⚠️ **Alerts:** [Important notes, allergies, critical info]
 
-                Then provide:
-                - **Recent Clinical Activity** (last 3-6 months)
-                - **Current Medications** with dosages and prescribing doctors
-                - **Medical History** organized by relevance
-                - **Recent Reports** with key findings
-                - **Clinical Notes** or patterns you observe
+                **FRENCH FORMAT:**
+                👤 **[Nom du Patient], [Âge]A [H/F]**
+                📍 **Conditions Principales:** [Diagnostics actifs]
+                💊 **Médicaments Actuels:** [Prescriptions actives] 
+                📅 **Dernière Consultation:** [Dernier rendez-vous]
+                ⚠️ **Alertes:** [Notes importantes, allergies, infos critiques]
+
+                **ARABIC FORMAT:**
+                👤 **[اسم المريض], [العمر]س [ذ/أ]**
+                📍 **الحالات الأساسية:** [التشخيصات النشطة]
+                💊 **الأدوية الحالية:** [الوصفات النشطة] 
+                📅 **آخر زيارة:** [آخر موعد]
+                ⚠️ **تنبيهات:** [ملاحظات مهمة، حساسية، معلومات حرجة]
+
+                Then provide based on detected language:
+                - **Recent Clinical Activity / Activité Clinique Récente / النشاط السريري الأخير** (last 3-6 months)
+                - **Current Medications / Médicaments Actuels / الأدوية الحالية** with dosages and prescribing doctors
+                - **Medical History / Antécédents Médicaux / التاريخ الطبي** organized by relevance
+                - **Recent Reports / Rapports Récents / التقارير الأخيرة** with key findings
+                - **Clinical Notes / Notes Cliniques / الملاحظات السريرية** or patterns you observe
 
                 GENERAL QUERIES (no patient mentioned):
-                - Use the context provided to answer the query. 
+                - Use the context provided to answer the query in the detected language
                 - Provide evidence-based medical information
                 - Include clinical guidelines when relevant
                 - Cite sources clearly
 
-                DOCUMENT CITATIONS:
-                🏥 Medical Records | 📄 Uploaded Documents | 📋 Reports | 💊 Prescriptions | 🧪 Lab Results
+                DOCUMENT CITATIONS (adapt language):
+                **English:** 🏥 Medical Records | 📄 Uploaded Documents | 📋 Reports | 💊 Prescriptions | 🧪 Lab Results
+                **French:** 🏥 Dossiers Médicaux | 📄 Documents Téléchargés | 📋 Rapports | 💊 Ordonnances | 🧪 Résultats de Laboratoire
+                **Arabic:** 🏥 السجلات الطبية | 📄 المستندات المرفوعة | 📋 التقارير | 💊 الوصفات الطبية | 🧪 نتائج المختبر
 
-                CLINICAL GUIDELINES:
+                CLINICAL GUIDELINES (apply to all languages):
                 - Present critical/urgent information FIRST
-                - Use medical terminology appropriately  
+                - Use medical terminology appropriately for each language
                 - Include specific dates, dosages, measurements
                 - Highlight concerning patterns or drug interactions
                 - Be proactive - anticipate what doctors need to know
                 - When information is incomplete, clearly state what's missing
                 - Always maintain that you assist clinical decision-making, not replace medical judgment
 
-                Be concise but complete. Think like a highly organized medical assistant who anticipates clinical needs.
+                LANGUAGE-SPECIFIC NOTES:
+                - French: Use formal medical French, maintain gender agreements
+                - Arabic: Use proper medical Arabic terminology, consider RTL text flow
+                - For drug names: Keep international names but provide local equivalents when known
+                - Dates: Use local date formats (DD/MM/YYYY for French/Arabic, MM/DD/YYYY for English)
+
+                Be concise but complete. Think like a highly organized multilingual medical assistant who anticipates clinical needs and adapts communication style to the doctor's preferred language.
             """,
             tools=tools_list,
             model=ModelsEnum.OPENAI_GPT.value
         )
+    
+    def _detect_language(self, text: str) -> str:
+        """
+        Detect the language of the input text
+        Returns: 'arabic', 'french', or 'english'
+        """
+        # Check for Arabic characters
+        arabic_pattern = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]')
+        if arabic_pattern.search(text):
+            return 'arabic'
+        
+        # French indicators (common French words and phrases)
+        french_indicators = [
+            'bonjour', 'bonsoir', 'merci', 'patient', 'médecin', 'docteur', 
+            'traitement', 'médicament', 'ordonnance', 'consultation', 'dossier',
+            'antécédents', 'diagnostic', 'symptômes', 'analyses', 'résultats',
+            'rendez-vous', 'hospitalisation', 'chirurgie', 'thérapie',
+            # French medical terms
+            'hypertension', 'diabète', 'cardiovasculaire', 'respiratoire',
+            'neurologique', 'dermatologique', 'gynécologique', 'pédiatrique'
+        ]
+        
+        text_lower = text.lower()
+        french_matches = sum(1 for indicator in french_indicators if indicator in text_lower)
+        
+        # If we find multiple French indicators, it's likely French
+        if french_matches >= 2:
+            return 'french'
+        
+        # Check for explicit language requests
+        if any(phrase in text_lower for phrase in ['en français', 'in french', 'réponds en français']):
+            return 'french'
+        
+        if any(phrase in text_lower for phrase in ['بالعربية', 'in arabic', 'باللغة العربية']):
+            return 'arabic'
+        
+        # Default to English
+        return 'english'
     
     async def process_query(self, input_message: SendMessageRequest) -> str:
         """
@@ -108,6 +180,9 @@ class TbibiAgent:
             chat_id = input_message.chat_id
             patient_id = getattr(input_message, 'patient_id', None)
             
+            # Detect language
+            detected_language = self._detect_language(query)
+            
             document_context = await self._build_document_context(chat_id, doctor_id, query)
             
             enhanced_query = self._enhance_query_with_context(
@@ -115,7 +190,8 @@ class TbibiAgent:
                 patient_id=patient_id,
                 doctor_id=doctor_id,
                 chat_id=chat_id,
-                document_context=document_context
+                document_context=document_context,
+                detected_language=detected_language
             )
             
             session = SQLAlchemySession(
@@ -129,7 +205,15 @@ class TbibiAgent:
             return result.final_output
                 
         except Exception as e:
-            return f"I encountered an error while processing your request: {str(e)}. Please try again or contact support if the issue persists."
+            # Return error message in detected language
+            error_messages = {
+                'english': f"I encountered an error while processing your request: {str(e)}. Please try again or contact support if the issue persists.",
+                'french': f"J'ai rencontré une erreur lors du traitement de votre demande: {str(e)}. Veuillez réessayer ou contacter le support si le problème persiste.",
+                'arabic': f"واجهت خطأ أثناء معالجة طلبك: {str(e)}. يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة."
+            }
+            
+            detected_language = self._detect_language(input_message.content)
+            return error_messages.get(detected_language, error_messages['english'])
     
     
     def _enhance_query_with_context(
@@ -138,7 +222,8 @@ class TbibiAgent:
         patient_id: Optional[str] = None, 
         doctor_id: Optional[str] = None, 
         chat_id: Optional[str] = None,
-        document_context: Optional[str] = None
+        document_context: Optional[str] = None,
+        detected_language: str = 'english'
     ) -> str:
         """Enhance the user query with available context and documents"""
         
@@ -146,6 +231,13 @@ class TbibiAgent:
         
         if document_context:
             context_parts.append(document_context)
+        
+        # Add language instruction
+        language_instruction = f"""
+        DETECTED LANGUAGE: {detected_language.upper()}
+        CRITICAL: Respond entirely in {detected_language.upper()}. Use appropriate medical terminology and formatting for this language.
+        """
+        context_parts.append(language_instruction)
         
         if patient_id:
             context_parts.append(f"""
@@ -155,8 +247,9 @@ class TbibiAgent:
                 - Patient ID: {patient_id}
                 - Doctor ID: {doctor_id} 
                 - Chat ID: {chat_id}
+                - Response Language: {detected_language}
 
-                INSTRUCTION: Patient mentioned - gather complete patient profile using ALWAYS ALL patient tools automatically. Use uploaded documents as additional context when relevant.
+                INSTRUCTION: Patient mentioned - gather complete patient profile using ALWAYS ALL patient tools automatically. Use uploaded documents as additional context when relevant. Format response in {detected_language.upper()}.
             """)
         else:
             context_parts.append(f"""
@@ -165,8 +258,9 @@ class TbibiAgent:
                 CONTEXT:
                 - Doctor ID: {doctor_id}
                 - Chat ID: {chat_id}
+                - Response Language: {detected_language}
 
-                INSTRUCTION: General medical query - use uploaded documents and provide evidence-based response with proper citations.
+                INSTRUCTION: General medical query - use uploaded documents and provide evidence-based response with proper citations in {detected_language.upper()}.
             """)
         
         return "\n\n".join(context_parts)

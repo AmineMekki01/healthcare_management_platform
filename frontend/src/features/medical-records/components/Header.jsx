@@ -15,10 +15,12 @@ import {
   Description as DescriptionIcon,
   LocalHospital as MedicalIcon
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 
 function FileUploadHeader() {
   const { userType } = useContext(AuthContext);
+  const { t } = useTranslation('medical');
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -44,15 +46,15 @@ function FileUploadHeader() {
     const baseTabs = [
       {
         icon: <CloudUploadIcon sx={{ mb: 1 }} />,
-        label: "My Docs",
+        label: t('header.tabs.myDocs'),
         onClick: () => navigate('/records'),
-        description: "Personal documents (not used by Chatbot)"
+        description: t('header.tabs.myDocsDescription')
       },
       {
         icon: <MedicalIcon sx={{ mb: 1 }} />,
-        label: "Medical Records",
+        label: t('header.tabs.medicalRecords'),
         onClick: () => navigate('medical-records'),
-        description: "Clinical documents organized by category"
+        description: t('header.tabs.medicalRecordsDescription')
       },
     ];
 
@@ -60,21 +62,21 @@ function FileUploadHeader() {
       baseTabs.push(
         {
           icon: <ShareIcon sx={{ mb: 1 }} />,
-          label: "Upload & Share",
+          label: t('header.tabs.uploadShare'),
           onClick: () => navigate('upload'),
-          description: "Upload files and share with patients"
+          description: t('header.tabs.uploadShareDescription')
         },
         {
           icon: <FolderSharedIcon sx={{ mb: 1 }} />,
-          label: "Shared with Me",
+          label: t('header.tabs.sharedWithMe'),
           onClick: () => navigate('shared-with-me'),
-          description: "Documents shared by colleagues"
+          description: t('header.tabs.sharedWithMeDescription')
         },
         {
           icon: <ShareIcon sx={{ mb: 1 }} />,
-          label: "I Shared With",
+          label: t('header.tabs.iSharedWith'),
           onClick: () => navigate('i-shared-with'),
-          description: "Documents I've shared with others"
+          description: t('header.tabs.iSharedWithDescription')
         }
       );
     }
@@ -107,7 +109,7 @@ function FileUploadHeader() {
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}
             >
-              Medical Documents
+              {t('header.title')}
             </Typography>
             <Typography 
               variant="h6" 
@@ -116,7 +118,7 @@ function FileUploadHeader() {
                 fontWeight: 400 
               }}
             >
-              Manage, share, and organize your medical files
+              {t('header.subtitle')}
             </Typography>
           </Box>
         </Box>

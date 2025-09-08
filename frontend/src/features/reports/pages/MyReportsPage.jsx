@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../auth/context/AuthContext";
 import { ReportCard, ReportFilters } from "../components";
@@ -17,6 +18,7 @@ import {
 } from "@mui/icons-material";
 
 export default function MyReportsPage() {
+  const { t } = useTranslation('reports');
   const { userId } = useContext(AuthContext);
   const navigate = useNavigate();
   
@@ -56,16 +58,16 @@ export default function MyReportsPage() {
   const handleDeleteReport = async (event, reportId) => {
     event.stopPropagation();
     
-    if (window.confirm('Are you sure you want to delete this medical report? This action cannot be undone.')) {
+    if (window.confirm(t('confirmations.deleteReport'))) {
       setDeleteLoading(true);
       try {
         const success = await deleteReportFromService(reportId);
         if (success) {
-          alert('Report deleted successfully');
+          alert(t('messages.deleteSuccess'));
         }
       } catch (error) {
         console.error('Error deleting report:', error);
-        alert('Failed to delete report. Please try again.');
+        alert(t('messages.deleteError'));
       } finally {
         setDeleteLoading(false);
       }
@@ -97,7 +99,7 @@ export default function MyReportsPage() {
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}
             >
-              Medical Reports
+              {t('pages.myReports.title')}
             </Typography>
             <Typography 
               variant="h6" 
@@ -106,7 +108,7 @@ export default function MyReportsPage() {
                 fontWeight: 400 
               }}
             >
-              Manage and review your patient reports
+              {t('pages.myReports.subtitle')}
             </Typography>
           </Box>
         </Box>
@@ -174,7 +176,7 @@ export default function MyReportsPage() {
               mb: 1
             }}
           >
-            No Reports Found
+            {t('pages.myReports.noReportsTitle')}
           </Typography>
           <Typography 
             variant="body1" 
@@ -184,7 +186,7 @@ export default function MyReportsPage() {
               mx: 'auto'
             }}
           >
-            Try adjusting your search criteria or create a new report to get started.
+            {t('pages.myReports.noReportsMessage')}
           </Typography>
         </Box>
       )}

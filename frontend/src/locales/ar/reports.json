@@ -1,0 +1,42 @@
+{
+  "labels": {
+    "patient": "مريض",
+    "diagnosis": "التشخيص",
+    "referredTo": "محال إلى",
+    "created": "تم الإنشاء"
+  },
+  "actions": {
+    "viewReport": "عرض التقرير",
+    "editReport": "تعديل التقرير",
+    "deleteReport": "حذف التقرير"
+  },
+  "filters": {
+    "title": "تصفية التقارير",
+    "year": "السنة",
+    "month": "الشهر",
+    "day": "اليوم",
+    "anyYear": "أي سنة",
+    "anyMonth": "أي شهر",
+    "anyDay": "أي يوم",
+    "patientName": "اسم المريض",
+    "diagnosis": "التشخيص",
+    "referralDoctor": "الطبيب المحيل",
+    "searching": "جارٍ البحث...",
+    "searchReports": "البحث في التقارير"
+  },
+  "pages": {
+    "myReports": {
+      "title": "التقارير الطبية",
+      "subtitle": "إدارة ومراجعة تقارير المرضى",
+      "noReportsTitle": "لم يتم العثور على تقارير",
+      "noReportsMessage": "حاول تعديل معايير البحث أو إنشاء تقرير جديد للبدء."
+    }
+  },
+  "confirmations": {
+    "deleteReport": "هل أنت متأكد من أنك تريد حذف هذا التقرير الطبي؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "messages": {
+    "deleteSuccess": "تم حذف التقرير بنجاح",
+    "deleteError": "فشل في حذف التقرير. يرجى المحاولة مرة أخرى."
+  }
+}

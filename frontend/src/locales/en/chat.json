@@ -1,0 +1,79 @@
+{
+  "header": {
+    "selectChat": "Select a chat to start messaging",
+    "online": "Online",
+    "hide": "← Hide",
+    "show": "→ Show"
+  },
+  "input": {
+    "placeholder": "Type your message...",
+    "attach": "Attach file",
+    "send": "Send message",
+    "removePreview": "Remove"
+  },
+  "search": {
+    "placeholder": "Search users...",
+    "error": "Failed to search users. Please try again."
+  },
+  "messages": {
+    "photo": "Photo",
+    "justNow": "just now",
+    "yesterday": "Yesterday",
+    "today": "Today"
+  },
+  "chats": {
+    "noChats": "No conversations yet",
+    "startChat": "Search for users to start a conversation",
+    "unreadMessages": "unread messages"
+  },
+  "navbar": {
+    "title": "Messages",
+    "newChat": "New Chat",
+    "settings": "Chat Settings"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "typing": "Typing...",
+    "lastSeen": "Last seen"
+  },
+  "actions": {
+    "deleteChat": "Delete Chat",
+    "muteChat": "Mute Chat",
+    "blockUser": "Block User",
+    "reportUser": "Report User"
+  },
+  "notifications": {
+    "newMessage": "New message from",
+    "chatCreated": "Chat created successfully",
+    "chatDeleted": "Chat deleted",
+    "userBlocked": "User blocked",
+    "messageDeleted": "Message deleted"
+  },
+  "errors": {
+    "failedToSend": "Failed to send message",
+    "failedToLoad": "Failed to load messages",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "fileUploadFailed": "File upload failed",
+    "fileTooLarge": "File is too large",
+    "invalidFileType": "Invalid file type",
+    "uploadFailed": "Upload failed. Please try again.",
+    "uploadError": "Error uploading file. Please try again."
+  },
+  "welcome": {
+    "title": "Welcome to TBIBI Chat",
+    "subtitle": "Connect with healthcare professionals and patients in a secure, user-friendly environment.",
+    "features": {
+      "secure": "Secure and private messaging",
+      "realtime": "Real-time communication",
+      "files": "Share images and files",
+      "network": "Professional healthcare network"
+    }
+  },
+  "ui": {
+    "hideSidebar": "← Hide",
+    "showSidebar": "→ Show",
+    "justNow": "just now",
+    "uploadedImage": "uploaded image"
+  }
+}

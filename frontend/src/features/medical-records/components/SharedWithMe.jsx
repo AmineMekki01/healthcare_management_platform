@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
   Container,
@@ -43,6 +44,7 @@ import {
 } from '../services/medicalRecordsService';
 
 const SharedWithMe = () => {
+  const { t } = useTranslation('medical');
   const { userId } = useContext(AuthContext);
   const navigate = useNavigate();
   
@@ -235,7 +237,7 @@ const SharedWithMe = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search by user name or file name..."
+          placeholder={t('shared.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -403,7 +405,7 @@ const SharedWithMe = () => {
                     mb: 1
                   }}
                 >
-                  {searchTerm ? 'No Matching Files' : 'No Shared Files'}
+                  {searchTerm ? t('shared.noMatchingFiles') : t('shared.noSharedFiles')}
                 </Typography>
                 <Typography 
                   variant="body1" 
@@ -414,8 +416,8 @@ const SharedWithMe = () => {
                   }}
                 >
                   {searchTerm 
-                    ? 'No files or folders match your search criteria. Try adjusting your search term.'
-                    : 'No files or folders have been shared with you yet. When someone shares medical documents with you, they will appear here.'
+                    ? t('shared.noMatchingDescription')
+                    : t('shared.noSharedDescription')
                   }
                 </Typography>
               </Box>

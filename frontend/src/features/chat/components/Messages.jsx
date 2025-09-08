@@ -1,5 +1,5 @@
-import React from 'react'
-import styled from 'styled-components'
+import React from 'react';
+import styled from 'styled-components';
 import MessageComponent from './Message'
 
 
@@ -12,6 +12,7 @@ const Messages = styled.div`
     flex-direction: column;
     gap: 16px;
     position: relative;
+    direction: ltr; /* Force LTR for message container to maintain positioning */
     
     &::before {
         content: '';

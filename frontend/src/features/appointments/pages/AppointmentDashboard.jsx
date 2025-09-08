@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
 import { useAppointments } from '../hooks/useAppointments';
@@ -13,6 +14,7 @@ import {
 import { Title, Container } from '../styles/appointmentStyles';
 
 const AppointmentDashboard = () => {
+  const { t } = useTranslation(['appointments', 'common']);
   const { userType, userId } = useContext(AuthContext);
   const { activeMode, switchToMode, canSwitchModes } = useRoleMode();
   const location = useLocation();
@@ -47,7 +49,7 @@ const AppointmentDashboard = () => {
   if (loading) {
     return (
       <Container>
-        <Title>Loading Appointments...</Title>
+        <Title>{t('appointments:dashboard.loading')}</Title>
       </Container>
     );
   }
@@ -55,11 +57,11 @@ const AppointmentDashboard = () => {
   if (error) {
     return (
       <Container>
-        <Title>Error Loading Appointments</Title>
+        <Title>{t('appointments:dashboard.error')}</Title>
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <p>{error}</p>
           <button onClick={refreshAppointments}>
-            Try Again
+            {t('appointments:dashboard.tryAgain')}
           </button>
         </div>
       </Container>
@@ -69,9 +71,9 @@ const AppointmentDashboard = () => {
   return (
     <Container>
       <Title>
-          {activeMode === 'patient' ? 'My Appointments as Patient' : 
-          activeMode === 'doctor' ? 'My Appointments as Doctor' : 
-          'My Appointments as Receptionist'}
+          {activeMode === 'patient' ? t('appointments:dashboard.titlePatient') : 
+          activeMode === 'doctor' ? t('appointments:dashboard.titleDoctor') : 
+          t('appointments:dashboard.titleReceptionist')}
       </Title>
       
       <AppointmentStats 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -31,6 +32,7 @@ import receptionistPatientService from '../services/receptionistPatientService';
 
 const ReceptionistDashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,7 +54,7 @@ const ReceptionistDashboard = () => {
       setUserFullName(fullName || 'Receptionist');
       fetchDashboardData();
     } else {
-      setError('No assigned doctor found. Please contact administrator.');
+      setError(t('receptionist.errors.noAssignedDoctor'));
       setLoading(false);
     }
   }, []);
@@ -83,7 +85,7 @@ const ReceptionistDashboard = () => {
       setRecentPatients(recentPatientsResponse.data.patients || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setError(error.response?.data?.error || 'Failed to load dashboard data');
+      setError(error.response?.data?.error || t('receptionist.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -120,10 +122,10 @@ const ReceptionistDashboard = () => {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           <DashboardIcon sx={{ mr: 2, verticalAlign: 'middle' }} />
-          Receptionist Dashboard
+          {t('navigation.receptionistDashboard')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back, {userFullName}! Managing patients for Dr. {doctorName}
+          {t('receptionist.welcome', { name: userFullName, doctor: doctorName })}
         </Typography>
       </Box>
 
@@ -136,7 +138,7 @@ const ReceptionistDashboard = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Quick Actions
+            {t('receptionist.quickActions')}
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
@@ -147,7 +149,7 @@ const ReceptionistDashboard = () => {
                 onClick={handleSearchPatients}
                 sx={{ py: 2 }}
               >
-                Search Patients
+                {t('navigation.patientSearch')}
               </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -158,7 +160,7 @@ const ReceptionistDashboard = () => {
                 onClick={handleCreatePatient}
                 sx={{ py: 2 }}
               >
-                Add New Patient
+                {t('receptionist.actions.addNewPatient')}
               </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -169,7 +171,7 @@ const ReceptionistDashboard = () => {
                 onClick={handleCreateAppointment}
                 sx={{ py: 2 }}
               >
-                Schedule Appointment
+                {t('navigation.scheduleAppointment')}
               </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -180,7 +182,7 @@ const ReceptionistDashboard = () => {
                 onClick={() => {/* Navigate to reports */}}
                 sx={{ py: 2 }}
               >
-                View Reports
+                {t('receptionist.actions.viewReports')}
               </Button>
             </Grid>
           </Grid>
@@ -193,7 +195,7 @@ const ReceptionistDashboard = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 <EventIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Appointment Statistics
+                {t('receptionist.stats.appointments')}
               </Typography>
               
               {appointmentStats ? (
@@ -201,30 +203,30 @@ const ReceptionistDashboard = () => {
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.light', color: 'white' }}>
                       <Typography variant="h4">{appointmentStats.todayAppointments}</Typography>
-                      <Typography variant="body2">Today</Typography>
+                      <Typography variant="body2">{t('common.today')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'white' }}>
                       <Typography variant="h4">{appointmentStats.upcomingAppointments}</Typography>
-                      <Typography variant="body2">Upcoming</Typography>
+                      <Typography variant="body2">{t('receptionist.stats.upcoming')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.light', color: 'white' }}>
                       <Typography variant="h4">{appointmentStats.completedAppointments}</Typography>
-                      <Typography variant="body2">Completed</Typography>
+                      <Typography variant="body2">{t('status.completed')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', color: 'white' }}>
                       <Typography variant="h4">{appointmentStats.totalAppointments}</Typography>
-                      <Typography variant="body2">Total</Typography>
+                      <Typography variant="body2">{t('common.total')}</Typography>
                     </Paper>
                   </Grid>
                 </Grid>
               ) : (
-                <Typography color="text.secondary">No appointment data available</Typography>
+                <Typography color="text.secondary">{t('receptionist.noData.appointments')}</Typography>
               )}
             </CardContent>
           </Card>
@@ -235,7 +237,7 @@ const ReceptionistDashboard = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 <PeopleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Patient Statistics
+                {t('receptionist.stats.patients')}
               </Typography>
               
               {patientStats ? (
@@ -243,30 +245,30 @@ const ReceptionistDashboard = () => {
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'secondary.light', color: 'white' }}>
                       <Typography variant="h4">{patientStats.newPatientsToday}</Typography>
-                      <Typography variant="body2">New Today</Typography>
+                      <Typography variant="body2">{t('receptionist.stats.newToday')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.main', color: 'white' }}>
                       <Typography variant="h4">{patientStats.activePatients}</Typography>
-                      <Typography variant="body2">Active</Typography>
+                      <Typography variant="body2">{t('status.active')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.main', color: 'white' }}>
                       <Typography variant="h4">{patientStats.newPatientsWeek}</Typography>
-                      <Typography variant="body2">This Week</Typography>
+                      <Typography variant="body2">{t('receptionist.stats.thisWeek')}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={6}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
                       <Typography variant="h4">{patientStats.totalPatients}</Typography>
-                      <Typography variant="body2">Total</Typography>
+                      <Typography variant="body2">{t('common.total')}</Typography>
                     </Paper>
                   </Grid>
                 </Grid>
               ) : (
-                <Typography color="text.secondary">No patient data available</Typography>
+                <Typography color="text.secondary">{t('receptionist.noData.patients')}</Typography>
               )}
             </CardContent>
           </Card>
@@ -278,7 +280,7 @@ const ReceptionistDashboard = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h6">
                   <PeopleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Recent Patients
+                  {t('receptionist.recentPatients')}
                 </Typography>
                 <Button
                   variant="outlined"
@@ -286,7 +288,7 @@ const ReceptionistDashboard = () => {
                   onClick={handleSearchPatients}
                   startIcon={<SearchIcon />}
                 >
-                  View All
+                  {t('actions.viewAll')}
                 </Button>
               </Box>
 
@@ -298,7 +300,7 @@ const ReceptionistDashboard = () => {
                         secondaryAction={
                           <Box>
                             <Chip
-                              label={patient.hasActiveAppointments ? 'Active' : 'Inactive'}
+                              label={patient.hasActiveAppointments ? t('status.active') : t('status.inactive')}
                               color={patient.hasActiveAppointments ? 'success' : 'default'}
                               size="small"
                               sx={{ mr: 1 }}
@@ -325,8 +327,8 @@ const ReceptionistDashboard = () => {
                                 {patient.email} • {patient.phoneNumber}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                Last visit: {patient.lastAppointmentDate ? new Date(patient.lastAppointmentDate).toLocaleDateString() : 'Never'} •
-                                Total appointments: {patient.totalAppointments}
+                                {t('patient.fields.lastVisit')}: {patient.lastAppointmentDate ? new Date(patient.lastAppointmentDate).toLocaleDateString() : t('patient.fields.never')} •
+                                {t('receptionist.totalAppointments')}: {patient.totalAppointments}
                               </Typography>
                             </Box>
                           }
@@ -340,10 +342,10 @@ const ReceptionistDashboard = () => {
                 <Box textAlign="center" py={4}>
                   <PeopleIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                   <Typography variant="body1" color="text.secondary" gutterBottom>
-                    No patients found
+                    {t('patient.noResults.title')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Start by adding a new patient or searching existing ones
+                    {t('receptionist.noPatients.description')}
                   </Typography>
                 </Box>
               )}

@@ -1,0 +1,158 @@
+{
+  "dashboard": {
+    "title": "Appointment Dashboard",
+    "myAppointments": "My Appointments",
+    "pastAppointments": "Past Appointments",
+    "todayAppointments": "Today's Appointments",
+    "thisWeekAppointments": "This Week's Appointments",
+    "scheduleAppointment": "Schedule Appointment",
+    "rescheduleAppointment": "Reschedule Appointment",
+    "cancelAppointment": "Cancel Appointment",
+    "confirmAppointment": "Confirm Appointment",
+    "noAppointments": "No appointments found",
+    "loadingAppointments": "Loading appointments...",
+    "loading": "Loading Appointments...",
+    "error": "Error Loading Appointments",
+    "tryAgain": "Try Again",
+    "titlePatient": "My Appointments as Patient",
+    "titleDoctor": "My Appointments as Doctor",
+    "titleReceptionist": "My Appointments as Receptionist",
+    "as": "as",
+    "upcomingAppointments": "Upcoming Appointments",
+    "completedAppointments": "Completed Appointments",
+    "canceledAppointments": "Canceled Appointments",
+    "allAppointments": "All Appointments"
+  },
+  "status": {
+    "scheduled": "Scheduled",
+    "confirmed": "Confirmed",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "noShow": "No Show",
+    "rescheduled": "Rescheduled",
+    "pending": "Pending Confirmation"
+  },
+  "filters": {
+    "all": "All Appointments",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "byStatus": "Filter by Status",
+    "byDoctor": "Filter by Doctor",
+    "bySpecialty": "Filter by Specialty",
+    "clearFilters": "Clear Filters"
+  },
+  "details": {
+    "appointmentWith": "Appointment with",
+    "patientName": "Patient Name",
+    "doctorName": "Doctor Name",
+    "specialty": "Specialty",
+    "date": "Date",
+    "time": "Time",
+    "duration": "Duration",
+    "location": "Location",
+    "reason": "Reason for Visit",
+    "notes": "Notes",
+    "instructions": "Pre-appointment Instructions",
+    "reminderSent": "Reminder Sent",
+    "appointmentId": "Appointment ID",
+    "bookedOn": "Booked On",
+    "lastModified": "Last Modified"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "editAppointment": "Edit Appointment",
+    "joinVideo": "Join Video Call",
+    "startConsultation": "Start Consultation",
+    "markCompleted": "Mark as Completed",
+    "markNoShow": "Mark as No Show",
+    "sendReminder": "Send Reminder",
+    "printDetails": "Print Details",
+    "exportCalendar": "Export to Calendar"
+  },
+  "booking": {
+    "selectDoctor": "Select Doctor",
+    "selectDate": "Select Date",
+    "selectTime": "Select Time Slot",
+    "availableSlots": "Available Time Slots",
+    "noSlotsAvailable": "No slots available for selected date",
+    "reasonForVisit": "Reason for Visit",
+    "additionalNotes": "Additional Notes",
+    "confirmBooking": "Confirm Booking",
+    "bookingSuccess": "Appointment booked successfully!",
+    "bookingError": "Failed to book appointment. Please try again.",
+    "selectAnotherDate": "Select Another Date",
+    "morningSlots": "Morning Slots",
+    "afternoonSlots": "Afternoon Slots",
+    "eveningSlots": "Evening Slots"
+  },
+  "notifications": {
+    "appointmentReminder": "Appointment Reminder",
+    "appointmentConfirmed": "Appointment Confirmed",
+    "appointmentCancelled": "Appointment Cancelled",
+    "appointmentRescheduled": "Appointment Rescheduled",
+    "reminderSent": "Reminder sent successfully",
+    "confirmationSent": "Confirmation sent to patient"
+  },
+  "card": {
+    "appointmentWith": "Appointment with {{doctorName}}",
+    "specialty": "Specialty: {{specialty}}",
+    "onlineConsultation": "Online Consultation",
+    "appointmentDetails": "Appointment Details",
+    "shareText": "Appointment with {{doctorName}} on {{date}} at {{time}}",
+    "sharingNotSupported": "Sharing is not supported on this browser",
+    "cancelSuccess": "Appointment canceled successfully.",
+    "cancelError": "An error occurred while canceling the appointment.",
+    "patientAge": "Patient Age: {{age}}",
+    "viewProfile": "View Profile",
+    "cancel": "Cancel",
+    "createReport": "Create Report",
+    "status": {
+      "canceled": "Canceled",
+      "completed": "Completed",
+      "upcoming": "Upcoming"
+    }
+  },
+  "modal": {
+    "cancelTitle": "Cancel Appointment",
+    "reasonLabel": "Cancellation Reason",
+    "reasonRequired": "Please provide a reason for cancellation.",
+    "cancelButton": "Cancel",
+    "confirmButton": "Confirm"
+  },
+  "filter": {
+    "searchPlaceholder": "🔍 Search by doctor or patient name..."
+  },
+  "stats": {
+    "totalAs": "Total as {{role}}",
+    "upcomingAs": "Upcoming as {{role}}",
+    "totalAppointments": "Total Appointments",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "canceled": "Canceled"
+  },
+  "userTypes": {
+    "doctor": "Doctor",
+    "receptionist": "Receptionist",
+    "patient": "Patient"
+  },
+  "tabs": {
+    "all": "All",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "canceled": "Canceled",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "asPatient": "As Patient",
+    "asDoctor": "As Doctor",
+    "asReceptionist": "As Receptionist"
+  },
+  "grid": {
+    "showingAppointments": "Showing {{filtered}} of {{total}} appointments",
+    "noAppointmentsFound": "No {{tab}} appointments found",
+    "noMatchingAppointments": "No appointments match your search criteria"
+  }
+}

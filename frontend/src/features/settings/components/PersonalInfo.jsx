@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from '../../../components/axiosConfig';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
@@ -24,6 +25,7 @@ import {
 import { settingsService } from '../services/settingsService';
 
 export default function PersonalInfo({ userId }) {
+  const { t } = useTranslation('settings');
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
@@ -60,7 +62,7 @@ export default function PersonalInfo({ userId }) {
       setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setError('Failed to load profile information');
+      setError(t('personalInfo.errors.loadFailed'));
     }
   };
 
@@ -113,7 +115,7 @@ export default function PersonalInfo({ userId }) {
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError(error.response?.data?.error || 'Error updating profile. Please try again.');
+      setError(error.response?.data?.error || t('personalInfo.errors.updateFailed'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export default function PersonalInfo({ userId }) {
       
       {success && (
         <StatusMessage type="success">
-          Profile updated successfully!
+          {t('personalInfo.success.profileUpdated')}
         </StatusMessage>
       )}
 
@@ -160,10 +162,10 @@ export default function PersonalInfo({ userId }) {
             <label htmlFor="profilePhoto">
               <UploadIcon />
               <FileUploadText>
-                {selectedFile ? selectedFile.name : 'Upload Profile Photo'}
+                {selectedFile ? selectedFile.name : t('personalInfo.profilePhoto.upload')}
               </FileUploadText>
               <FileUploadSubtext>
-                Click to select a new photo (JPG, PNG, max 5MB)
+                {t('personalInfo.profilePhoto.instructions')}
               </FileUploadSubtext>
             </label>
           </FileUploadArea>
@@ -172,21 +174,21 @@ export default function PersonalInfo({ userId }) {
 
       <FormRow>
         <FormGroup>
-          <Label htmlFor="firstName">First Name</Label>
+          <Label htmlFor="firstName">{t('personalInfo.fields.firstName.label')}</Label>
           <Input
             id="firstName"
             name="firstName"
-            placeholder="Enter your first name"
+            placeholder={t('personalInfo.fields.firstName.placeholder')}
             value={profile.firstName || ''}
             onChange={handleChange}
           />
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="lastName">{t('personalInfo.fields.lastName.label')}</Label>
           <Input
             id="lastName"
             name="lastName"
-            placeholder="Enter your last name"
+            placeholder={t('personalInfo.fields.lastName.placeholder')}
             value={profile.lastName || ''}
             onChange={handleChange}
           />
@@ -195,23 +197,23 @@ export default function PersonalInfo({ userId }) {
 
       <FormRow>
         <FormGroup>
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">{t('personalInfo.fields.email.label')}</Label>
           <Input
             id="email"
             name="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder={t('personalInfo.fields.email.placeholder')}
             value={profile.email || ''}
             onChange={handleChange}
           />
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Label htmlFor="phoneNumber">{t('personalInfo.fields.phoneNumber.label')}</Label>
           <Input
             id="phoneNumber"
             name="phoneNumber"
             type="tel"
-            placeholder="Enter your phone number"
+            placeholder={t('personalInfo.fields.phoneNumber.placeholder')}
             value={profile.phoneNumber || ''}
             onChange={handleChange}
           />
@@ -222,7 +224,7 @@ export default function PersonalInfo({ userId }) {
       {profile.birthDate && (
         <FormRow>
           <FormGroup>
-            <Label htmlFor="birthDate">Date of Birth</Label>
+            <Label htmlFor="birthDate">{t('personalInfo.fields.birthDate.label')}</Label>
             <Input
               id="birthDate"
               name="birthDate"
@@ -233,11 +235,11 @@ export default function PersonalInfo({ userId }) {
             />
           </FormGroup>
           <FormGroup>
-            <Label htmlFor="sex">Gender</Label>
+            <Label htmlFor="sex">{t('personalInfo.fields.gender.label')}</Label>
             <Input
               id="sex"
               name="sex"
-              placeholder="Gender"
+              placeholder={t('personalInfo.fields.gender.placeholder')}
               value={profile.sex || ''}
               onChange={handleChange}
               readOnly
@@ -247,11 +249,11 @@ export default function PersonalInfo({ userId }) {
       )}
 
       <FormGroup>
-        <Label htmlFor="streetAddress">Street Address</Label>
+        <Label htmlFor="streetAddress">{t('personalInfo.fields.streetAddress.label')}</Label>
         <Input
           id="streetAddress"
           name="streetAddress"
-          placeholder="Enter your street address"
+          placeholder={t('personalInfo.fields.streetAddress.placeholder')}
           value={profile.streetAddress || ''}
           onChange={handleChange}
         />
@@ -259,21 +261,21 @@ export default function PersonalInfo({ userId }) {
 
       <FormRow>
         <FormGroup>
-          <Label htmlFor="cityName">City</Label>
+          <Label htmlFor="cityName">{t('personalInfo.fields.city.label')}</Label>
           <Input
             id="cityName"
             name="cityName"
-            placeholder="Enter your city"
+            placeholder={t('personalInfo.fields.city.placeholder')}
             value={profile.cityName || ''}
             onChange={handleChange}
           />
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="stateName">State/Province</Label>
+          <Label htmlFor="stateName">{t('personalInfo.fields.state.label')}</Label>
           <Input
             id="stateName"
             name="stateName"
-            placeholder="Enter your state/province"
+            placeholder={t('personalInfo.fields.state.placeholder')}
             value={profile.stateName || ''}
             onChange={handleChange}
           />
@@ -282,21 +284,21 @@ export default function PersonalInfo({ userId }) {
 
       <FormRow>
         <FormGroup>
-          <Label htmlFor="zipCode">Zip Code</Label>
+          <Label htmlFor="zipCode">{t('personalInfo.fields.zipCode.label')}</Label>
           <Input
             id="zipCode"
             name="zipCode"
-            placeholder="Enter your zip code"
+            placeholder={t('personalInfo.fields.zipCode.placeholder')}
             value={profile.zipCode || ''}
             onChange={handleChange}
           />
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="countryName">Country</Label>
+          <Label htmlFor="countryName">{t('personalInfo.fields.country.label')}</Label>
           <Input
             id="countryName"
             name="countryName"
-            placeholder="Enter your country"
+            placeholder={t('personalInfo.fields.country.placeholder')}
             value={profile.countryName || ''}
             onChange={handleChange}
           />
@@ -304,11 +306,11 @@ export default function PersonalInfo({ userId }) {
       </FormRow>
 
       <FormGroup>
-        <Label htmlFor="bio">Bio</Label>
+        <Label htmlFor="bio">{t('personalInfo.fields.bio.label')}</Label>
         <TextArea
           id="bio"
           name="bio"
-          placeholder="Tell us about yourself..."
+          placeholder={t('personalInfo.fields.bio.placeholder')}
           value={profile.bio || ''}
           onChange={handleChange}
         />
@@ -316,7 +318,7 @@ export default function PersonalInfo({ userId }) {
 
       <Button onClick={handleSubmit} disabled={loading}>
         {loading ? <LoadingIcon /> : <SaveIcon />}
-        {loading ? 'Updating...' : 'Update Profile'}
+        {loading ? t('personalInfo.buttons.updating') : t('personalInfo.buttons.updateProfile')}
       </Button>
     </FormContainer>
   );

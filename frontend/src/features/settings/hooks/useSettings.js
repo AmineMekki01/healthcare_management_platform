@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useEffect, useRef, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 import { settingsService } from '../services/settingsService';
 import {
@@ -14,6 +15,7 @@ import {
 } from '../utils/settingsUtils';
 
 export const useSettings = (initialSection = 'personal') => {
+    const { t } = useTranslation('settings');
     const { userId, userType, setUserFullName, setUserProfilePhotoUrl } = useContext(AuthContext);
     
     const [loading, setLoading] = useState(false);
@@ -98,7 +100,7 @@ export const useSettings = (initialSection = 'personal') => {
             const fullName = formatFullName(updated.firstName, updated.lastName);
             setUserFullName(fullName);
             
-            setSuccess('Personal information updated successfully');
+            setSuccess(t('personalInfo.success.profileUpdated'));
             setHasUnsavedChanges(false);
             originalDataRef.current.personalInfo = { ...updated };
 
@@ -114,7 +116,7 @@ export const useSettings = (initialSection = 'personal') => {
         } finally {
             setSaving(false);
         }
-    }, [userId, personalInfo, setUserFullName]);
+    }, [userId, personalInfo, setUserFullName, t]);
 
     const uploadProfilePicture = useCallback(async (file) => {
         if (!userId || !file) return;
@@ -139,7 +141,7 @@ export const useSettings = (initialSection = 'personal') => {
             
             setUserProfilePhotoUrl(result.imageUrl);
             
-            setSuccess('Profile picture updated successfully');
+            setSuccess(t('personalInfo.success.profileUpdated'));
             setProfilePictureFile(null);
             setProfilePicturePreview(null);
 
@@ -151,7 +153,7 @@ export const useSettings = (initialSection = 'personal') => {
             setSaving(false);
             setUploadProgress(0);
         }
-    }, [userId, setUserProfilePhotoUrl]);
+    }, [userId, setUserProfilePhotoUrl, t]);
 
     const loadFollowedDoctors = useCallback(async () => {
         if (!userId) return;
@@ -185,7 +187,7 @@ export const useSettings = (initialSection = 'personal') => {
                 doctor.id !== doctorId && doctor.userId !== doctorId
             ));
             
-            setSuccess('Doctor unfollowed successfully');
+            setSuccess(t('followedDoctors.success.unfollowed', { doctorName: 'Doctor' }));
         } catch (err) {
             const errorMessage = formatSettingsError(err, 'unfollowing doctor');
             setError(errorMessage);
@@ -193,7 +195,7 @@ export const useSettings = (initialSection = 'personal') => {
         } finally {
             setSaving(false);
         }
-    }, [userId]);
+    }, [userId, t]);
 
 
     const loadProfessionalInfo = useCallback(async () => {
@@ -239,7 +241,7 @@ export const useSettings = (initialSection = 'personal') => {
             const updated = await settingsService.updateDoctorAdditionalInfo(userId, updatedInfo);
             setProfessionalInfo(updated);
             
-            setSuccess('Professional information updated successfully');
+            setSuccess(t('doctorInfo.success.informationUpdated'));
             setHasUnsavedChanges(false);
             originalDataRef.current.professionalInfo = { ...updated };
 
@@ -250,7 +252,7 @@ export const useSettings = (initialSection = 'personal') => {
         } finally {
             setSaving(false);
         }
-    }, [userId, userType, professionalInfo]);
+    }, [userId, userType, professionalInfo, t]);
 
     const loadSchedule = useCallback(async (dateRange = {}) => {
         if (!userId || userType !== 'doctor') return;
@@ -287,7 +289,7 @@ export const useSettings = (initialSection = 'personal') => {
             const updated = await settingsService.updateDoctorSchedule(userId, updatedSchedule);
             setScheduleData(updated);
             
-            setSuccess('Schedule updated successfully');
+            setSuccess(t('availability.success.scheduleSaved'));
             setHasUnsavedChanges(false);
             originalDataRef.current.scheduleData = { ...updated };
 
@@ -298,7 +300,7 @@ export const useSettings = (initialSection = 'personal') => {
         } finally {
             setSaving(false);
         }
-    }, [userId, userType, scheduleData]);
+    }, [userId, userType, scheduleData, t]);
 
     const addScheduleException = useCallback(async (exception) => {
         if (!userId || userType !== 'doctor') return;

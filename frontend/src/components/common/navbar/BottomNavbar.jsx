@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   BottomNavigation,
   BottomNavigationAction,
@@ -40,6 +41,7 @@ import { AuthContext } from '../../../features/auth/context/AuthContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
 
 const BottomNavbar = () => {
+  const { t } = useTranslation('common');
   const { 
     isLoggedIn, 
     logout, 
@@ -82,17 +84,17 @@ const BottomNavbar = () => {
   const getMainNavItems = () => {
     const baseItems = [
       {
-        label: 'Home',
+        label: t('navigation.home'),
         value: '/',
         icon: <HomeIcon />,
       },
       {
-        label: 'Find Doctors',
+        label: t('navigation.findDoctors'),
         value: '/SearchBar',
         icon: <DoctorSearchIcon />,
       },
       {
-        label: 'Health Feed',
+        label: t('navigation.healthFeed'),
         value: '/feed',
         icon: <FeedIcon />,
       },
@@ -100,19 +102,19 @@ const BottomNavbar = () => {
 
     if (activeMode === 'patient') {
       baseItems.push({
-        label: 'Appointments',
+        label: t('navigation.appointments'),
         value: '/appointments',
         icon: <CalendarIcon />,
       });
     } else if (activeMode === 'doctor') {
       baseItems.push({
-        label: 'Schedule',
+        label: t('navigation.schedule'),
         value: '/appointments',
         icon: <CalendarIcon />,
       });
     } else if (activeMode === 'receptionist') {
       baseItems.push({
-        label: 'Dashboard',
+        label: t('navigation.dashboard'),
         value: '/receptionist-dashboard',
         icon: <DashboardIcon />,
       });
@@ -126,11 +128,11 @@ const BottomNavbar = () => {
   const getMenuItems = () => {
     const baseItems = [
       {
-        label: 'Profile',
+        label: t('navigation.profile'),
         href: profileHref,
         icon: <ProfileIcon />,
       },{
-        label: 'Messages',
+        label: t('navigation.messages'),
         value: '/Messages',
         icon: <MessagesIcon />,
       },
@@ -142,22 +144,22 @@ const BottomNavbar = () => {
     } else if (activeMode === 'doctor') {
       baseItems.unshift(
         {
-          label: 'Medical Reports',
+          label: t('navigation.medicalReports'),
           href: `/medical-report/${userId}`,
           icon: <ReportsIcon />,
         },
         {
-          label: 'Staff Management',
+          label: t('navigation.staffManagement'),
           href: '/staff-management',
           icon: <StaffIcon />,
         },
         {
-          label: 'Create Post',
+          label: t('navigation.createPost'),
           href: '/create-post',
           icon: <CreateIcon />,
         },
         {
-          label: 'My Articles',
+          label: t('navigation.myArticles'),
           href: '/doctor-posts',
           icon: <NewsIcon />,
         }
@@ -166,17 +168,17 @@ const BottomNavbar = () => {
 
     baseItems.push(
         {
-            label: 'My Documents',
+            label: t('navigation.myDocuments'),
             href: '/records',
             icon: <DescriptionIcon />,
         },
         {
-            label: 'Settings',
+            label: t('navigation.settings'),
             href: `/settings/${userId}`,
             icon: <SettingsIcon />,
         },
         {
-            label: 'Logout',
+            label: t('navigation.logout'),
             action: logout,
             icon: <LogoutIcon />,
         }
@@ -278,7 +280,7 @@ const BottomNavbar = () => {
             
             {/* More menu button */}
             <BottomNavigationAction
-              label="More"
+              label={t('navigation.more')}
               icon={<MoreVertIcon />}
               onClick={handleMenuClick}
               sx={{
@@ -380,7 +382,7 @@ const BottomNavbar = () => {
                   {activeMode === 'doctor' ? <PersonOutlineIcon /> : <BadgeIcon />}
                 </ListItemIcon>
                 <ListItemText 
-                  primary={`Switch to ${activeMode === 'doctor' ? 'Patient' : 'Doctor'} View`}
+                  primary={t('navigation.switchTo', { mode: activeMode === 'doctor' ? t('userTypes.patient') : t('userTypes.doctor') })}
                   sx={{
                     '& .MuiListItemText-primary': {
                       fontSize: '0.875rem',

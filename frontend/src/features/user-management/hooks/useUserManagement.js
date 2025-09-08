@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services';
 import { userUtils } from '../utils';
 
 export const useUserManagement = (userId = null, userType = null, options = {}) => {
+  const { t } = useTranslation('userManagement');
   const [state, setState] = useState({
     user: null,
     users: [],
@@ -80,6 +82,7 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
     console.log(`Fetching user: ${id}, type: ${type}`);
     try {
       const userData = await userService.getUserProfile(id, type);
+      console.log('User data:', userData);
       let userStats = null;
       if (includeStats) {
         try {
@@ -97,13 +100,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
 
       return userData;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to fetch user';
+      const errorMessage = err.message || t('hooks.errors.fetchUser');
       setError('user', errorMessage);
       throw err;
     } finally {
       setLoading('user', false);
     }
-  }, [userId, userType, setLoading, clearError, setError]);
+  }, [userId, userType, setLoading, clearError, setError, t]);
 
 
   const fetchUsersByType = useCallback(async (type, filters = {}, pagination = {}) => {
@@ -133,13 +136,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
 
       return usersData;
     } catch (err) {
-      const errorMessage = err.message || `Failed to fetch ${type}s`;
+      const errorMessage = err.message || t('hooks.errors.fetchUsers', { type });
       setError('users', errorMessage);
       throw err;
     } finally {
       setLoading('users', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
   const updateUser = useCallback(async (id, type, profileData) => {
     setLoading('update', true);
@@ -154,7 +157,7 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       }));
 
       if (!validation.isValid) {
-        throw new Error('Please correct the validation errors');
+        throw new Error(t('hooks.errors.validationErrors'));
       }
 
       const updatedUser = await userService.updateUserProfile(id, type, profileData);
@@ -169,13 +172,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       
       return updatedUser;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to update user';
+      const errorMessage = err.message || t('hooks.errors.updateUser');
       setError('update', errorMessage);
       throw err;
     } finally {
       setLoading('update', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
 
   const searchUsers = useCallback(async (searchCriteria, useLocalSearch = false) => {
@@ -199,13 +202,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
 
       return results;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to search users';
+      const errorMessage = err.message || t('hooks.errors.searchUsers');
       setError('search', errorMessage);
       throw err;
     } finally {
       setLoading('search', false);
     }
-  }, [state.users, setLoading, clearError, setError]);
+  }, [state.users, setLoading, clearError, setError, t]);
 
 
   const uploadUserImage = useCallback(async (id, type, imageFile, onProgress = null) => {
@@ -224,13 +227,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       
       return newImageUrl;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to upload image';
+      const errorMessage = err.message || t('hooks.errors.uploadImage');
       setError('upload', errorMessage);
       throw err;
     } finally {
       setLoading('upload', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
   /**
    * Toggle user status with confirmation
@@ -251,13 +254,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       
       return updatedUser;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to toggle user status';
+      const errorMessage = err.message || t('hooks.errors.toggleStatus');
       setError('update', errorMessage);
       throw err;
     } finally {
       setLoading('update', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
   /**
    * Delete user with confirmation
@@ -278,13 +281,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       
       return true;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to delete user';
+      const errorMessage = err.message || t('hooks.errors.deleteUser');
       setError('delete', errorMessage);
       throw err;
     } finally {
       setLoading('delete', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
 
   const updateFilters = useCallback((newFilters) => {
@@ -328,13 +331,13 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
       
       return stats;
     } catch (err) {
-      const errorMessage = err.message || 'Failed to fetch user statistics';
+      const errorMessage = err.message || t('hooks.errors.fetchStats');
       setError('stats', errorMessage);
       throw err;
     } finally {
       setLoading('stats', false);
     }
-  }, [setLoading, clearError, setError]);
+  }, [setLoading, clearError, setError, t]);
 
   const fetchUserNotifications = useCallback(async (id, page = 1, limit = 20) => {
     try {

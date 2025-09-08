@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from '../../../components/axiosConfig';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
   Container,
@@ -24,8 +24,8 @@ import {
 import { settingsService } from '../services/settingsService';
 
 export default function DoctorAdditionalInfo() {
+  const { t } = useTranslation('settings');
   const { userId } = useContext(AuthContext);
-
   const [hospitals, setHospitals] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [awards, setAwards] = useState([]);
@@ -58,17 +58,17 @@ export default function DoctorAdditionalInfo() {
             languages,
         });
         console.log('Information updated:', data);
-        alert('Information updated successfully!');
+        alert(t('doctorInfo.success.informationUpdated'));
     } catch (error) {
         console.error('Error updating additional info:', error);
-        alert('Failed to update information.');
+        alert(t('doctorInfo.errors.updateFailed'));
     }
   };
 
   return (
     <Container maxWidth="md" style={{ marginTop: '20px' }}>
       <InfoSection
-        title="Hospitals"
+        title={t('doctorInfo.sections.hospitals.title')}
         icon={<HospitalIcon fontSize="large" />}
         items={hospitals}
         setItems={setHospitals}
@@ -80,16 +80,16 @@ export default function DoctorAdditionalInfo() {
           description: '',
         }}
         fields={[
-          { name: 'hospitalName', label: 'Hospital Name' },
-          { name: 'position', label: 'Position' },
-          { name: 'startDate', label: 'Start Date', type: 'date' },
-          { name: 'endDate', label: 'End Date', type: 'date' },
-          { name: 'description', label: 'Description', multiline: true },
+          { name: 'hospitalName', label: t('doctorInfo.sections.hospitals.fields.hospitalName') },
+          { name: 'position', label: t('doctorInfo.sections.hospitals.fields.position') },
+          { name: 'startDate', label: t('doctorInfo.sections.hospitals.fields.startDate'), type: 'date' },
+          { name: 'endDate', label: t('doctorInfo.sections.hospitals.fields.endDate'), type: 'date' },
+          { name: 'description', label: t('doctorInfo.sections.hospitals.fields.description'), multiline: true },
         ]}
       />
 
       <InfoSection
-        title="Organizations"
+        title={t('doctorInfo.sections.organizations.title')}
         icon={<OrganizationIcon fontSize="large" />}
         items={organizations}
         setItems={setOrganizations}
@@ -101,16 +101,16 @@ export default function DoctorAdditionalInfo() {
           description: '',
         }}
         fields={[
-          { name: 'organizationName', label: 'Organization Name' },
-          { name: 'role', label: 'Role' },
-          { name: 'startDate', label: 'Start Date', type: 'date' },
-          { name: 'endDate', label: 'End Date', type: 'date' },
-          { name: 'description', label: 'Description', multiline: true },
+          { name: 'organizationName', label: t('doctorInfo.sections.organizations.fields.organizationName') },
+          { name: 'role', label: t('doctorInfo.sections.organizations.fields.role') },
+          { name: 'startDate', label: t('doctorInfo.sections.organizations.fields.startDate'), type: 'date' },
+          { name: 'endDate', label: t('doctorInfo.sections.organizations.fields.endDate'), type: 'date' },
+          { name: 'description', label: t('doctorInfo.sections.organizations.fields.description'), multiline: true },
         ]}
       />
 
       <InfoSection
-        title="Awards"
+        title={t('doctorInfo.sections.awards.title')}
         icon={<AwardIcon fontSize="large" />}
         items={awards}
         setItems={setAwards}
@@ -121,15 +121,15 @@ export default function DoctorAdditionalInfo() {
           description: '',
         }}
         fields={[
-          { name: 'awardName', label: 'Award Name' },
-          { name: 'dateAwarded', label: 'Date Awarded', type: 'date' },
-          { name: 'issuingOrganization', label: 'Issuing Organization' },
-          { name: 'description', label: 'Description', multiline: true },
+          { name: 'awardName', label: t('doctorInfo.sections.awards.fields.awardName') },
+          { name: 'dateAwarded', label: t('doctorInfo.sections.awards.fields.dateAwarded'), type: 'date' },
+          { name: 'issuingOrganization', label: t('doctorInfo.sections.awards.fields.issuingOrganization') },
+          { name: 'description', label: t('doctorInfo.sections.awards.fields.description'), multiline: true },
         ]}
       />
 
       <InfoSection
-        title="Certifications"
+        title={t('doctorInfo.sections.certifications.title')}
         icon={<CertificationIcon fontSize="large" />}
         items={certifications}
         setItems={setCertifications}
@@ -141,16 +141,16 @@ export default function DoctorAdditionalInfo() {
           description: '',
         }}
         fields={[
-          { name: 'certificationName', label: 'Certification Name' },
-          { name: 'issuedBy', label: 'Issued By' },
-          { name: 'issueDate', label: 'Issue Date', type: 'date' },
-          { name: 'expirationDate', label: 'Expiration Date', type: 'date' },
-          { name: 'description', label: 'Description', multiline: true },
+          { name: 'certificationName', label: t('doctorInfo.sections.certifications.fields.certificationName') },
+          { name: 'issuedBy', label: t('doctorInfo.sections.certifications.fields.issuedBy') },
+          { name: 'issueDate', label: t('doctorInfo.sections.certifications.fields.issueDate'), type: 'date' },
+          { name: 'expirationDate', label: t('doctorInfo.sections.certifications.fields.expirationDate'), type: 'date' },
+          { name: 'description', label: t('doctorInfo.sections.certifications.fields.description'), multiline: true },
         ]}
       />
 
       <InfoSection
-        title="Languages"
+        title={t('doctorInfo.sections.languages.title')}
         icon={<LanguageIcon fontSize="large" />}
         items={languages}
         setItems={setLanguages}
@@ -159,12 +159,12 @@ export default function DoctorAdditionalInfo() {
           proficiencyLevel: '',
         }}
         fields={[
-          { name: 'languageName', label: 'Language Name' },
+          { name: 'languageName', label: t('doctorInfo.sections.languages.fields.languageName') },
           {
             name: 'proficiencyLevel',
-            label: 'Proficiency Level',
+            label: t('doctorInfo.sections.languages.fields.proficiencyLevel'),
             select: true,
-            options: ['Basic', 'Conversational', 'Fluent', 'Native'],
+            options: [t('doctorInfo.sections.languages.proficiency.basic'), t('doctorInfo.sections.languages.proficiency.conversational'), t('doctorInfo.sections.languages.proficiency.fluent'), t('doctorInfo.sections.languages.proficiency.native')],
           },
         ]}
       />
@@ -175,13 +175,14 @@ export default function DoctorAdditionalInfo() {
         onClick={handleSubmit}
         style={{ marginTop: '20px' }}
       >
-        Save Information
+        {t('doctorInfo.buttons.saveInformation')}
       </Button>
     </Container>
   );
 }
 
 function InfoSection({ title, items, setItems, newItem, fields, icon }) {
+  const { t } = useTranslation('settings');
   return (
     <Paper style={{ padding: '20px', marginBottom: '30px' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
@@ -192,11 +193,22 @@ function InfoSection({ title, items, setItems, newItem, fields, icon }) {
       </div>
       <Button
         variant="outlined"
-        startIcon={<AddIcon />}
         onClick={() => setItems((prev) => [...prev, { ...newItem }])}
-        style={{ marginBottom: '20px' }}
+        style={{ 
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '5px 10px',
+        }}
       >
-        Add {title.slice(0, -1)}
+        <AddIcon style={{
+          fontSize: '1.3rem',
+        }}/>
+        <Typography variant="body2">
+          {t('doctorInfo.buttons.add')}
+        </Typography>
       </Button>
       {items.map((item, index) => (
         <Paper

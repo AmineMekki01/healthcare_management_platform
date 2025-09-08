@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../../auth/context/AuthContext';
 import remarkGfm from 'remark-gfm';
 import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadContainer, FilesUploadTitle, ChatInputContainer, Header, BackButton, ChatTitle} from './ChatInterface.styles';
@@ -9,6 +10,7 @@ import { PatientMention } from '../PatientMention';
 import { messageService } from '../../services';
 
 const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, toggleChatHistory, isSmallScreen }) => {
+  const { t } = useTranslation(['chatbot', 'common']);
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [mentionedPatients, setMentionedPatients] = useState(new Map());
@@ -17,7 +19,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
   const fileUploadRef = useRef();
   const inputRef = useRef();
 
-  const { userId, userRole } = useContext(AuthContext);
+  const { userId } = useContext(AuthContext);
 
   const updateChatHistory = (chatId, lastMessageDate) => {
     setChats(prevChats => {
@@ -32,7 +34,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
   };
 
   const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+    if (!window.confirm(t('chatbot:interface.confirmDelete'))) {
       return;
     }
 
@@ -41,7 +43,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
       setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
     } catch (error) {
       console.error('Error deleting message:', error);
-      alert(`Failed to delete message: ${error.message || 'Unknown error'}`);
+      alert(t('chatbot:interface.deleteError', { error: error.message || t('chatbot:interface.unknownError') }));
     }
   };
   const handleInputChange = (event) => {
@@ -94,13 +96,12 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
     if (!userInput.trim()) return;
 
     if (!userId || userId === 'null' || userId === null || userId === undefined) {
-      alert('Please log in to send messages');
+      alert(t('chatbot:interface.loginRequired'));
       return;
     }
 
     const mentionedPatientsList = extractMentionedPatients(userInput);
     console.log('Mentioned patients list:', mentionedPatientsList);
-    const patientMention = mentionedPatientsList.length > 0 ? mentionedPatientsList[0].full_name : null;
     const patientId = mentionedPatientsList.length > 0 ? mentionedPatientsList[0].patient_id : null;
 
   
@@ -128,7 +129,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
       updateChatHistory(chatId, new Date().toISOString());
     } catch (error) {
       console.error('Error during chat interaction:', error);
-      alert('Failed to send message. Please try again.');
+      alert(t('chatbot:interface.sendError'));
     }
   };
 
@@ -156,11 +157,11 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
           <BackButton onClick={toggleChatHistory}>
             &#8592;
           </BackButton>
-          <ChatTitle>Chat</ChatTitle>
+          <ChatTitle>{t('chatbot:interface.chatTitle')}</ChatTitle>
         </Header>
       )}
       <FileUploadContainer>
-        <FilesUploadTitle>Documents</FilesUploadTitle>
+        <FilesUploadTitle>{t('chatbot:documentManagement.title')}</FilesUploadTitle>
         <DocumentList 
           documents={documents} 
           onSelectDocument={handleSelectDocument}
@@ -173,7 +174,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
       <ChatInterfaceMessages>
         {messages.length === 0 && (
           <div style={{ color: '#888', fontSize: '14px', margin: '8px 0' }}>
-            No messages yet.
+            {t('chatbot:interface.noMessages')}
           </div>
         )}
         {messages.map((msg, index) => {
@@ -208,7 +209,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
                   }}
                   onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1.1)'; }}
                   onMouseLeave={(e) => { e.target.style.opacity = '0.7'; e.target.style.transform = 'scale(1)'; }}
-                  title="Delete message"
+                  title={t('chatbot:interface.deleteMessage')}
                 >
                   ×
                 </button>
@@ -241,7 +242,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
                   }}
                   onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1.1)'; }}
                   onMouseLeave={(e) => { e.target.style.opacity = '0.7'; e.target.style.transform = 'scale(1)'; }}
-                  title="Delete message"
+                  title={t('chatbot:interface.deleteMessage')}
                 >
                   ×
                 </button>
@@ -261,7 +262,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
             value={userInput}
             onChange={handleInputChange}
             onSelect={(e) => setCursorPosition(e.target.selectionStart)}
-            placeholder="Type your message... Use @patient_name to mention patients"
+            placeholder={t('chatbot:interface.messagePlaceholder')}
           />
           <ChatInterfaceSubmitButton type="submit">
             <span className='span1'>→</span>

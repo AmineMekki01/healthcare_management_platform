@@ -42,6 +42,7 @@ class AppointmentService {
       const response = await axios.get('/api/v1/appointments/stats', {
         params: { userId: userId, userType: userType }
       });
+      console.log("Appointment stats:", response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching appointment stats:', error);

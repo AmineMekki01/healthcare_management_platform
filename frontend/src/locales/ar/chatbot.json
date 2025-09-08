@@ -1,0 +1,132 @@
+{
+  "interface": {
+    "messagePlaceholder": "اكتب رسالتك... استخدم @اسم_المريض لذكر المرضى",
+    "placeholder": "اكتب رسالتك... استخدم @اسم_المريض لذكر المرضى",
+    "noMessages": "لا توجد رسائل حتى الآن.",
+    "sendMessage": "إرسال الرسالة",
+    "newChat": "محادثة جديدة",
+    "chatHistory": "تاريخ المحادثات",
+    "documents": "الوثائق",
+    "uploadDocument": "رفع وثيقة",
+    "dragDropText": "اسحب وأفلت الملفات هنا أو انقر للتصفح",
+    "supportedFormats": "الصيغ المدعومة: PDF, DOC, DOCX, TXT, JPG, PNG",
+    "maxFileSize": "الحد الأقصى لحجم الملف: 10 ميجابايت",
+    "selectFiles": "اختيار الملفات",
+    "uploading": "جارٍ الرفع...",
+    "uploadSuccess": "تم رفع الملف بنجاح",
+    "uploadError": "فشل الرفع. يرجى المحاولة مرة أخرى.",
+    "deleteDocument": "حذف الوثيقة",
+    "downloadDocument": "تحميل الوثيقة",
+    "documentUploaded": "تم رفع الوثيقة",
+    "documentDeleted": "تم حذف الوثيقة",
+    "processingDocument": "جارٍ معالجة الوثيقة...",
+    "documentProcessed": "تم معالجة الوثيقة بنجاح",
+    "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteMessage": "حذف الرسالة",
+    "deleteError": "فشل في حذف الرسالة: {{error}}",
+    "unknownError": "خطأ غير معروف",
+    "loginRequired": "يرجى تسجيل الدخول لإرسال الرسائل.",
+    "sendError": "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى."
+  },
+  "patientMention": {
+    "searchPatients": "البحث عن المرضى...",
+    "noPatients": "لم يتم العثور على مرضى",
+    "selectPatient": "اختر مريضاً للإشارة إليه",
+    "patientSelected": "تم اختيار المريض: {{name}}",
+    "enhancedTools": "تم تفعيل الأدوات المحسنة لسياق المريض",
+    "age": "العمر",
+    "sex": "الجنس"
+  },
+  "documentManagement": {
+    "title": "إدارة المستندات",
+    "uploadedFiles": "الملفات المرفوعة",
+    "fileSize": "حجم الملف",
+    "uploadDate": "تاريخ الرفع",
+    "storageType": "نوع التخزين",
+    "tokenCount": "عدد الرموز",
+    "contextStorage": "التخزين السياقي",
+    "temporaryStorage": "التخزين المؤقت",
+    "persistentStorage": "التخزين الدائم",
+    "storageDescription": {
+      "context": "المستندات الصغيرة المخزنة مباشرة في سياق المحادثة",
+      "temporary": "المستندات المتوسطة المخزنة مؤقتاً (7 أيام)",
+      "persistent": "المستندات الكبيرة المخزنة بشكل دائم (30 يوماً)"
+    },
+    "noDocuments": "لم يتم رفع أي مستندات حتى الآن",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا المستند؟",
+    "deleteSuccess": "تم حذف المستند بنجاح",
+    "deleteError": "فشل في حذف المستند"
+  },
+  "chat": {
+    "thinking": "جاري التفكير...",
+    "typing": "الذكي الاصطناعي يكتب...",
+    "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "retry": "إعادة المحاولة",
+    "copy": "نسخ",
+    "copied": "تم النسخ!",
+    "regenerate": "إعادة التوليد",
+    "feedback": "تقديم ملاحظات",
+    "helpful": "مفيد",
+    "notHelpful": "غير مفيد",
+    "reportIssue": "الإبلاغ عن مشكلة"
+  },
+  "citations": {
+    "sources": "المصادر",
+    "fromDocument": "من المستند: {{filename}}",
+    "viewSource": "عرض المصدر",
+    "page": "الصفحة {{number}}",
+    "section": "القسم {{name}}"
+  },
+  "documents": {
+    "noDocuments": "لا توجد مستندات متاحة",
+    "deleteDocument": "حذف المستند",
+    "storageTypes": {
+      "context": "السياق المباشر",
+      "temporary": "تخزين مؤقت",
+      "persistent": "دائم"
+    }
+  },
+  "input": {
+    "placeholder": "اكتب رسالتك...",
+    "removePreview": "×",
+    "attach": "إرفاق",
+    "send": "إرسال"
+  },
+  "search": {
+    "placeholder": "البحث عن المستخدمين...",
+    "error": "فشل البحث. يرجى المحاولة مرة أخرى."
+  },
+  "chatHistory": {
+    "title": "تاريخ المحادثات",
+    "newChat": "محادثة جديدة",
+    "loginRequired": "يرجى تسجيل الدخول لإنشاء محادثة جديدة.",
+    "enterChatName": "أدخل اسم المحادثة:",
+    "defaultChatName": "محادثة جديدة",
+    "createChatError": "خطأ في إنشاء المحادثة. يرجى المحاولة مرة أخرى.",
+    "loginToView": "يرجى تسجيل الدخول لعرض تاريخ المحادثات.",
+    "loadingChats": "جارٍ تحميل المحادثات..."
+  },
+  "chatList": {
+    "justNow": "الآن",
+    "confirmDelete": "هل أنت متأكد من حذف '{{chatTitle}}'؟",
+    "deleteError": "خطأ في حذف المحادثة: {{error}}",
+    "unknownError": "خطأ غير معروف",
+    "deleteFailure": "فشل في حذف المحادثة. يرجى المحاولة مرة أخرى.",
+    "deleteConversation": "حذف المحادثة"
+  },
+  "fileUpload": {
+    "validationError": "{{fileName}}: {{error}}",
+    "dropFiles": "اسقط الملفات هنا",
+    "dragDrop": "اسحب وأسقط الملفات هنا",
+    "clickToBrowse": "أو انقر للتصفح",
+    "uploadFiles": "رفع {{count}} ملف",
+    "clear": "مسح"
+  },
+  "errors": {
+    "uploadError": "فشل الرفع. يرجى المحاولة مرة أخرى.",
+    "fetchDocumentsError": "فشل في جلب المستندات. يرجى المحاولة مرة أخرى."
+  },
+  "common": {
+    "error": "خطأ"
+  }
+}

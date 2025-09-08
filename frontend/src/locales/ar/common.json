@@ -1,0 +1,227 @@
+{
+  "navigation": {
+    "home": "الرئيسية",
+    "login": "تسجيل الدخول",
+    "register": "التسجيل",
+    "platformName": "منصة الرعاية الصحية",
+    "findDoctors": "البحث عن أطباء",
+    "myDocuments": "مستنداتي",
+    "messages": "الرسائل",
+    "healthFeed": "المنشورات",
+    "myAppointments": "مواعيدي",
+    "appointments": "المواعيد",
+    "schedule": "الجدول",
+    "dashboard": "لوحة التحكم",
+    "receptionistDashboard": "لوحة تحكم الاستقبال",
+    "patientManagement": "إدارة المرضى",
+    "medicalTools": "الأدوات الطبية",
+    "aiAssistant": "المساعد الذكي",
+    "practiceManagement": "إدارة العيادة",
+    "mySchedule": "جدولي",
+    "medicalReports": "التقارير الطبية",
+    "staffManagement": "إدارة الموظفين",
+    "contentManagement": "إدارة المحتوى",
+    "createPost": "إنشاء مقال",
+    "myPosts": "مقالاتي",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج",
+    "more": "المزيد",
+    "switchTo": "التبديل إلى عرض {{mode}}",
+    "patientSearch": "البحث عن المرضى",
+    "createPatient": "إنشاء مريض",
+    "scheduleAppointment": "جدولة موعد",
+    "talentPool": "مجموعة المواهب"
+  },
+  "buttons": {
+    "getStartedToday": "ابدأ اليوم",
+    "goToDashboard": "الانتقال إلى لوحة التحكم",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "next": "التالي",
+    "finish": "إنهاء",
+    "upload": "رفع",
+    "download": "تحميل",
+    "search": "بحث",
+    "filter": "تصفية",
+    "clear": "مسح",
+    "confirm": "تأكيد",
+    "close": "إغلاق",
+    "viewMore": "عرض المزيد",
+    "loadMore": "تحميل المزيد",
+    "refresh": "تحديث",
+    "tryAgain": "حاول مرة أخرى"
+  },
+  "status": {
+    "loading": "جاري التحميل...",
+    "saving": "جاري الحفظ...",
+    "uploading": "جاري الرفع...",
+    "processing": "جاري المعالجة...",
+    "success": "نجح",
+    "error": "خطأ",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "pending": "في الانتظار",
+    "completed": "مكتمل",
+    "cancelled": "ملغي",
+    "archived": "مؤرشف",
+    "active": "نشط",
+    "inactive": "غير نشط"
+  },
+  "common": {
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "or": "أو",
+    "and": "و",
+    "of": "من",
+    "in": "في",
+    "at": "في",
+    "on": "على",
+    "by": "بواسطة",
+    "for": "لـ",
+    "with": "مع",
+    "from": "من",
+    "to": "إلى",
+    "all": "الكل",
+    "none": "لا شيء",
+    "select": "اختر",
+    "optional": "اختياري",
+    "required": "مطلوب",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "address": "العنوان",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "description": "الوصف",
+    "notes": "ملاحظات",
+    "type": "النوع",
+    "category": "الفئة",
+    "priority": "الأولوية",
+    "status": "الحالة"
+  },
+  "userTypes": {
+    "patient": "مريض",
+    "doctor": "طبيب",
+    "receptionist": "موظف استقبال"
+  },
+  "time": {
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "tomorrow": "غداً",
+    "thisWeek": "هذا الأسبوع",
+    "lastWeek": "الأسبوع الماضي",
+    "nextWeek": "الأسبوع القادم",
+    "thisMonth": "هذا الشهر",
+    "lastMonth": "الشهر الماضي",
+    "nextMonth": "الشهر القادم",
+    "morning": "الصباح",
+    "afternoon": "بعد الظهر",
+    "evening": "المساء",
+    "night": "الليل"
+  },
+  "homepage": {
+    "hero": {
+      "title": "صحتك، أولويتنا",
+      "subtitle": "اكتشف إدارة الرعاية الصحية الحديثة مع منصتنا الشاملة المصممة للمرضى والأطباء ومتخصصي الرعاية الصحية."
+    },
+    "services": {
+      "expertCare": {
+        "title": "رعاية طبية متخصصة",
+        "description": "تواصل مع متخصصي الرعاية الصحية المؤهلين"
+      },
+      "easyBooking": {
+        "title": "حجز المواعيد بسهولة",
+        "description": "جدولة المواعيد بنقرات قليلة فقط"
+      },
+      "medicalChat": {
+        "title": "دردشة طبية 24/7",
+        "description": "احصل على المشورة الطبية الفورية من خلال روبوت الدردشة بالذكاء الاصطناعي"
+      },
+      "telemedicine": {
+        "title": "الطب عن بُعد",
+        "description": "استشارات عن بُعد من راحة منزلك"
+      },
+      "secure": {
+        "title": "آمن وخاص",
+        "description": "بياناتك الطبية محمية بأمان على مستوى المؤسسات"
+      },
+      "efficient": {
+        "title": "سريع وفعال",
+        "description": "عمليات مبسطة لرعاية صحية أفضل"
+      }
+    },
+    "stats": {
+      "happyPatients": "مرضى راضون",
+      "expertDoctors": "أطباء خبراء",
+      "medicalSpecialties": "تخصصات طبية",
+      "emergencySupport": "دعم الطوارئ"
+    },
+    "sections": {
+      "whyChoose": "لماذا تختار منصتنا؟",
+      "trustedByThousands": "موثوق به من قبل الآلاف",
+      "ourCommunity": "مجتمعنا",
+      "whatUsersSay": "ما يقوله مستخدمونا"
+    },
+    "cta": {
+      "title": "هل أنت مستعد لتحويل تجربة الرعاية الصحية الخاصة بك؟",
+      "subtitle": "انضم إلى آلاف المرضى ومقدمي الرعاية الصحية الراضين على منصتنا."
+    }
+  },
+  "actions": {
+    "viewDetails": "عرض التفاصيل",
+    "editPatient": "تعديل المريض",
+    "viewProfile": "عرض الملف الشخصي",
+    "bookAppointment": "حجز موعد"
+  },
+  "patient": {
+    "yearsOld": "{{age}} سنة",
+    "nextAppointment": "الموعد القادم",
+    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو الهاتف أو المعرف...",
+    "searchingPatients": "جاري البحث عن المرضى...",
+    "patientsFound": "تم العثور على {{count}} مريض",
+    "filters": {
+      "allStatus": "جميع الحالات",
+      "allGenders": "جميع الأجناس",
+      "allAges": "جميع الأعمار"
+    },
+    "gender": {
+      "male": "ذكر",
+      "female": "أنثى",
+      "other": "أخرى"
+    },
+    "ageRanges": {
+      "child": "0-18 سنة",
+      "young": "19-35 سنة",
+      "adult": "36-50 سنة",
+      "senior": "51-65 سنة",
+      "elderly": "65+ سنة"
+    },
+    "views": {
+      "grid": "شبكة",
+      "list": "قائمة"
+    },
+    "noResults": {
+      "title": "لم يتم العثور على مرضى",
+      "description": "جرب تعديل مصطلحات البحث أو المرشحات"
+    },
+    "searchPrompt": {
+      "title": "البحث عن المرضى",
+      "description": "أدخل اسم أو بريد إلكتروني أو رقم هاتف أو معرف المريض للبدء"
+    },
+    "fields": {
+      "age": "العمر",
+      "gender": "الجنس",
+      "lastVisit": "آخر زيارة",
+      "status": "الحالة",
+      "never": "أبداً"
+    }
+  }
+}

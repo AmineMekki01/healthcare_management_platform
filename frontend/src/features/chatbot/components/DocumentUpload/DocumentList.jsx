@@ -1,11 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DocumentContainer, DocumentElement, DocumentInfo, DocumentName, DocumentMeta, StorageBadge, DeleteButton } from './DocumentList.styles';  
 
 const DocumentList = ({ documents, onSelectDocument, onDeleteDocument }) => {
+  const { t } = useTranslation('chatbot');
+  
   if (!Array.isArray(documents) || documents.length === 0) {
     return (
       <DocumentContainer>
-        <DocumentElement>No documents available</DocumentElement>
+        <DocumentElement>{t('documents.noDocuments')}</DocumentElement>
       </DocumentContainer>
     );
   }
@@ -29,9 +32,9 @@ const DocumentList = ({ documents, onSelectDocument, onDeleteDocument }) => {
 
   const formatStorageType = (storageType) => {
     switch (storageType) {
-      case 'context': return 'Direct Context';
-      case 'temporary': return 'Temp Storage';
-      case 'persistent': return 'Persistent';
+      case 'context': return t('documents.storageTypes.context');
+      case 'temporary': return t('documents.storageTypes.temporary');
+      case 'persistent': return t('documents.storageTypes.persistent');
       default: return storageType;
     }
   };
@@ -62,7 +65,7 @@ const DocumentList = ({ documents, onSelectDocument, onDeleteDocument }) => {
                   e.stopPropagation();
                   onDeleteDocument(doc.id);
                 }}
-                title="Delete document"
+                title={t('documents.deleteDocument')}
               >
                 ×
               </DeleteButton>

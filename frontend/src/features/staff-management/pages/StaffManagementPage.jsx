@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffList from '../components/StaffList';
 import useStaffManagement from '../hooks/useStaffManagement';
@@ -121,11 +122,6 @@ const MainContent = styled.div`
   gap: 24px;
 `;
 
-const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
-`;
 
 const LoadingMessage = styled.div`
   text-align: center;
@@ -168,16 +164,14 @@ const EmptyStateDescription = styled.p`
 `;
 
 const StaffManagementPage = () => {
-  const [viewMode, setViewMode] = useState('grid');
+  const { t } = useTranslation('staff');
   const { doctorId } = useContext(AuthContext);
 
   const {
     receptionists,
-    talentPool,
     loading,
     error,
     fetchStaff,
-    fetchTalentPool,
     activateReceptionist,
     deactivateReceptionist,
     dismissReceptionist,
@@ -208,7 +202,7 @@ const StaffManagementPage = () => {
           await deactivateReceptionist(staff.id);
           break;
         case 'dismiss':
-          if (window.confirm(`Are you sure you want to dismiss ${staff.fullName}?`)) {
+          if (window.confirm(t('messages.confirmDismiss', { name: staff.fullName }))) {
             await dismissReceptionist(staff.id);
           }
           break;
@@ -226,9 +220,9 @@ const StaffManagementPage = () => {
       <PageHeader>
         <HeaderTop>
           <div>
-            <PageTitle>Staff Management</PageTitle>
+            <PageTitle>{t('page.title')}</PageTitle>
             <PageSubtitle>
-              Manage your receptionist staff and talent pool
+              {t('page.subtitle')}
             </PageSubtitle>
           </div>
           
@@ -237,7 +231,7 @@ const StaffManagementPage = () => {
               className="primary"
               onClick={() => console.log('Add new staff')}
             >
-              Add Staff
+              {t('actions.addStaff')}
             </ActionButton>
           </HeaderActions>
         </HeaderTop>
@@ -246,25 +240,25 @@ const StaffManagementPage = () => {
           <StatCard $gradient="#dbeafe 0%, #bfdbfe 100%">
             <StatIcon>👥</StatIcon>
             <StatNumber $color="#1e40af">{stats.total}</StatNumber>
-            <StatLabel $color="#1e40af">Total Staff</StatLabel>
+            <StatLabel $color="#1e40af">{t('stats.totalStaff')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#d1fae5 0%, #a7f3d0 100%">
             <StatIcon>✅</StatIcon>
             <StatNumber $color="#059669">{stats.active}</StatNumber>
-            <StatLabel $color="#059669">Active</StatLabel>
+            <StatLabel $color="#059669">{t('stats.active')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#fee2e2 0%, #fecaca 100%">
             <StatIcon>❌</StatIcon>
             <StatNumber $color="#dc2626">{stats.inactive}</StatNumber>
-            <StatLabel $color="#dc2626">Inactive</StatLabel>
+            <StatLabel $color="#dc2626">{t('stats.inactive')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#fef3c7 0%, #fde68a 100%">
             <StatIcon>📋</StatIcon>
             <StatNumber $color="#d97706">{stats.assigned}</StatNumber>
-            <StatLabel $color="#d97706">Assigned</StatLabel>
+            <StatLabel $color="#d97706">{t('stats.assigned')}</StatLabel>
           </StatCard>
         </HeaderStats>
       </PageHeader>
@@ -289,15 +283,15 @@ const StaffManagementPage = () => {
 
       <MainContent>
         {loading ? (
-          <LoadingMessage>Loading staff...</LoadingMessage>
+          <LoadingMessage>{t('messages.loadingStaff')}</LoadingMessage>
         ) : receptionists.length === 0 ? (
           <EmptyState>
             <EmptyStateIcon>👥</EmptyStateIcon>
             <EmptyStateTitle>
-            'No Staff Members'
+              {t('messages.noStaffTitle')}
             </EmptyStateTitle>
             <EmptyStateDescription>
-              You haven't hired any staff members yet. Browse the talent pool to find qualified receptionists.
+              {t('messages.noStaffDescription')}
             </EmptyStateDescription>
           </EmptyState>
         ) : (

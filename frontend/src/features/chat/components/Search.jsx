@@ -1,4 +1,5 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { ChatContext } from '../contexts/ChatContext'; 
@@ -210,11 +211,12 @@ const ErrorMessage = styled.div`
 `;
 
 const SearchComponent = ({ onUserSelect, onSelectChat }) => {
+  const { t } = useTranslation('chat');
   const [username, setUsername] = useState('');
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(false);
   const { userId, userType } = useContext(AuthContext);
-  const { state, dispatch } = useContext(ChatContext);
+  const { dispatch } = useContext(ChatContext);
 
   const handleSearch = async () => {
     if (!username.trim()) {
@@ -290,7 +292,7 @@ const SearchComponent = ({ onUserSelect, onSelectChat }) => {
     <SearchContainer>
       <SearchInputWrapper>
         <SearchInput
-          placeholder="Search for users..."
+          placeholder={t('search.placeholder')}
           value={username}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
@@ -299,8 +301,9 @@ const SearchComponent = ({ onUserSelect, onSelectChat }) => {
       
       {users.length > 0 && (
         <SearchResults>
-          {users.map((user, index) => (
-            console.log('Rendering user:', user),
+          {users.map((user, index) => {
+            console.log('Rendering user:', user);
+            return (
             <UserResult key={user.userId || index} onClick={() => handleSelect(user)}>
               <UserAvatar
                 src={user.profile_photo_url || user.profile_photo}
@@ -315,13 +318,14 @@ const SearchComponent = ({ onUserSelect, onSelectChat }) => {
                 )}
               </UserInfo>
             </UserResult>
-          ))}
+            );
+          })}
         </SearchResults>
       )}
 
       {error && (
         <ErrorMessage>
-          Search failed. Please try again.
+          {t('search.error')}
         </ErrorMessage>
       )}
     </SearchContainer>

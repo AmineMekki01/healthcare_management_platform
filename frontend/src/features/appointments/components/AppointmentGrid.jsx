@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flex, EmptyState, ContentContainer, AppointmentCounter } from '../styles/appointmentStyles';
 import AppointmentCard from './AppointmentCard';
 
@@ -12,22 +13,26 @@ const AppointmentGrid = ({
   activeTab,
   onAppointmentUpdate 
 }) => {
+  const { t } = useTranslation('appointments');
+  
   const getEffectiveUserType = () => {
     return activeMode === 'patient' ? 'patient' : userType;
   };
 
   const getEmptyMessage = () => {
     if (appointments.length === 0) {
-      return `No ${activeTab} appointments found`;
+      return t('grid.noAppointmentsFound', { tab: t(`tabs.${activeTab}`) });
     }
-    return 'No appointments match your search criteria';
+    return t('grid.noMatchingAppointments');
   };
 
   return (
     <ContentContainer>
       <AppointmentCounter>
-        Showing {filteredAppointments.length} of {appointments.length} appointments
-        <span>{tabTitle}</span>
+        {t('grid.showingAppointments', { 
+          filtered: filteredAppointments.length, 
+          total: appointments.length 
+        })}
       </AppointmentCounter>
 
       {filteredAppointments.length > 0 ? (

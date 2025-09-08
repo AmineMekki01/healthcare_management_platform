@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -114,32 +115,33 @@ const FeatureItem = styled(Box)(({ theme }) => ({
 
 const RegisterPage = () => {
   const theme = useTheme();
+  const { t } = useTranslation(['auth', 'common']);
 
   const patientFeatures = [
-    'Book appointments with doctors',
-    'Access medical records',
-    'Chat with AI health assistant',
-    'Manage prescriptions',
-    'Track health metrics',
-    'Receive appointment reminders',
+    t('auth:register.patient.features.bookAppointments'),
+    t('auth:register.patient.features.accessRecords'),
+    t('auth:register.patient.features.chatAssistant'),
+    t('auth:register.patient.features.managePrescriptions'),
+    t('auth:register.patient.features.trackMetrics'),
+    t('auth:register.patient.features.receiveReminders'),
   ];
 
   const doctorFeatures = [
-    'Manage patient appointments',
-    'Create medical reports',
-    'Access patient history',
-    'Share medical documents',
-    'Communicate with patients',
-    'Advanced analytics dashboard',
+    t('auth:register.doctor.features.manageAppointments'),
+    t('auth:register.doctor.features.createReports'),
+    t('auth:register.doctor.features.accessHistory'),
+    t('auth:register.doctor.features.shareDocuments'),
+    t('auth:register.doctor.features.communicatePatients'),
+    t('auth:register.doctor.features.analyticsDashboard'),
   ];
 
   const receptionistFeatures = [
-    'Manage doctor appointments',
-    'Register new patients',
-    'Verify patient documents',
-    'Handle appointment scheduling',
-    'Process patient check-ins',
-    'Administrative dashboard',
+    t('auth:register.receptionist.features.manageDoctorAppointments'),
+    t('auth:register.receptionist.features.registerPatients'),
+    t('auth:register.receptionist.features.verifyDocuments'),
+    t('auth:register.receptionist.features.handleScheduling'),
+    t('auth:register.receptionist.features.processCheckins'),
+    t('auth:register.receptionist.features.adminDashboard'),
   ];
 
   return (
@@ -147,10 +149,10 @@ const RegisterPage = () => {
       <RegisterPaper elevation={10}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-            Join Our Platform 🎉
+            {t('auth:register.title')}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-            Choose your registration type to get started with our comprehensive healthcare management system
+            {t('auth:register.subtitle')}
           </Typography>
         </Box>
 
@@ -163,10 +165,10 @@ const RegisterPage = () => {
                   <PersonIcon />
                 </IconWrapper>
                 <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-                  Patient
+                  {t('auth:register.patient.title')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" gutterBottom>
-                  Register as a patient to access healthcare services, book appointments, and manage your medical records.
+                  {t('auth:register.patient.description')}
                 </Typography>
                 
                 <FeatureList>
@@ -186,7 +188,7 @@ const RegisterPage = () => {
                   to="/register-patient"
                   endIcon={<ArrowForward />}
                 >
-                  Register as Patient
+                  {t('auth:register.patient.button')}
                 </RegisterButton>
               </CardActions>
             </OptionCard>
@@ -200,10 +202,10 @@ const RegisterPage = () => {
                   <HospitalIcon />
                 </IconWrapper>
                 <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-                  Doctor
+                  {t('auth:register.doctor.title')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" gutterBottom>
-                  Register as a healthcare professional to manage patients, create reports, and provide medical consultations.
+                  {t('auth:register.doctor.description')}
                 </Typography>
                 
                 <FeatureList>
@@ -223,7 +225,7 @@ const RegisterPage = () => {
                   to="/register-doctor"
                   endIcon={<ArrowForward />}
                 >
-                  Register as Doctor
+                  {t('auth:register.doctor.button')}
                 </RegisterButton>
               </CardActions>
             </OptionCard>
@@ -237,10 +239,10 @@ const RegisterPage = () => {
                   <SupportIcon />
                 </IconWrapper>
                 <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-                  Receptionist
+                  {t('auth:register.receptionist.title')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" gutterBottom>
-                  Register as a medical receptionist to manage appointments, assist patients, and handle administrative tasks.
+                  {t('auth:register.receptionist.description')}
                 </Typography>
                 
                 <FeatureList>
@@ -260,7 +262,7 @@ const RegisterPage = () => {
                   to="/register-receptionist"
                   endIcon={<ArrowForward />}
                 >
-                  Register as Receptionist
+                  {t('auth:register.receptionist.button')}
                 </RegisterButton>
               </CardActions>
             </OptionCard>
@@ -269,7 +271,7 @@ const RegisterPage = () => {
 
         <Box sx={{ textAlign: 'center', mt: 6 }}>
           <Typography variant="body1" color="text.secondary">
-            Already have an account?{' '}
+            {t('auth:register.alreadyHaveAccount')}{' '}
             <Button
               component={Link}
               to="/login"
@@ -283,7 +285,7 @@ const RegisterPage = () => {
                 '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
               }}
             >
-              Sign In
+              {t('common:buttons.signIn')}
             </Button>
           </Typography>
         </Box>

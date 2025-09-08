@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
-import styled from 'styled-components'
+import { useTranslation } from 'react-i18next';
+import styled from 'styled-components';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 
 const Navbar = styled.div`
@@ -131,17 +132,18 @@ const UserName = styled.span`
 
 
 const NavbarComponent = () => {
+    const { t } = useTranslation('chat');
     const { userFullName, userProfilePictureUrl } = useContext(AuthContext);
     return (
         
         <Navbar>
-            <Logo className='logo'>TBIBI Chat</Logo>
+            <Logo className='logo'>{t('navbar.title')}</Logo>
             <User className='user'>
                 <ProfileContainer>
                     <ProfileImg src={userProfilePictureUrl} alt=""/>
                     <OnlineStatusIndicator />
                 </ProfileContainer>
-                <UserName>{userFullName && userFullName.split(' ')[0] || ''}</UserName>
+                <UserName>{(userFullName && userFullName.split(' ')[0]) || ''}</UserName>
             </User>
         </Navbar>
     )

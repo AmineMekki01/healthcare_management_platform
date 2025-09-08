@@ -146,6 +146,8 @@ export const useAppointments = (userId, userType) => {
         upcomingAsPatient: patientReservations.active?.length || 0,
         completedAsDoctor: doctorReservations.passed?.length || 0,
         completedAsPatient: patientReservations.passed?.length || 0,
+        canceledAsDoctor: doctorReservations.canceled?.length || 0,
+        canceledAsPatient: patientReservations.canceled?.length || 0,
       };
     } else {
       const total = 

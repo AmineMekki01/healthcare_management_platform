@@ -1,0 +1,208 @@
+{
+  "actions": {
+    "edit": "Edit",
+    "schedule": "Schedule",
+    "permissions": "Permissions",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "dismiss": "Dismiss",
+    "viewProfile": "View Profile",
+    "viewSchedule": "View Schedule",
+    "managePermissions": "Manage Permissions",
+    "export": "Export",
+    "delete": "Delete",
+    "clearFilters": "Clear Filters",
+    "clearAllFilters": "Clear All Filters",
+    "addStaff": "Add Staff"
+  },
+  "labels": {
+    "phone": "Phone",
+    "joined": "Joined",
+    "assigned": "Assigned",
+    "verified": "Verified",
+    "permissions": "Permissions",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "messages": {
+    "noPermissions": "No specific permissions set",
+    "scheduleNotSet": "Schedule not set",
+    "confirmDismiss": "Are you sure you want to dismiss {{name}}?"
+  },
+  "page": {
+    "title": "Staff Management",
+    "subtitle": "Manage your healthcare team members"
+  },
+  "stats": {
+    "totalStaff": "Total Staff",
+    "assigned": "Assigned",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "schedule": {
+    "daysPerWeek": "{{days}} days/week",
+    "fullTime": "Full-time"
+  },
+  "roles": {
+    "receptionist": "Receptionist",
+    "doctor": "Doctor",
+    "nurse": "Nurse"
+  },
+  "list": {
+    "title": "Staff Members",
+    "searchPlaceholder": "Search staff by name, email, phone, or specialization...",
+    "loading": "Loading...",
+    "staffMembersFound": "{{count}} staff members found",
+    "selected": "{{count}} selected",
+    "noStaffFound": "No staff members found",
+    "noStaffAdded": "No staff members have been added yet.",
+    "adjustFilters": "Try adjusting your search terms or filters.",
+    "views": {
+      "grid": "Grid",
+      "list": "List",
+      "compact": "Compact"
+    },
+    "filters": {
+      "allRoles": "All Roles",
+      "allStatus": "All Status",
+      "allDepartments": "All Departments"
+    },
+    "sort": {
+      "name": "Sort by Name",
+      "role": "Sort by Role",
+      "department": "Sort by Department",
+      "experience": "Sort by Experience",
+      "status": "Sort by Status"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "bulkActions": {
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "export": "Export",
+      "delete": "Delete"
+    }
+  },
+  "search": {
+    "title": "Staff Search",
+    "placeholder": "Search by name, role, specialization, or department...",
+    "button": "Search",
+    "searching": "Searching...",
+    "quickFilters": {
+      "doctors": "👨‍⚕️ Doctors",
+      "receptionists": "👩‍💼 Receptionists", 
+      "nurses": "👩‍⚕️ Nurses",
+      "available": "🟢 Available"
+    },
+    "advancedFilters": "Advanced Filters",
+    "filters": {
+      "allStatus": "All Status",
+      "available": "Available",
+      "busy": "Busy",
+      "offline": "Offline",
+      "onBreak": "On Break",
+      "allDepartments": "All Departments",
+      "cardiology": "Cardiology",
+      "neurology": "Neurology",
+      "orthopedics": "Orthopedics",
+      "pediatrics": "Pediatrics",
+      "emergency": "Emergency",
+      "anyExperience": "Any Experience",
+      "experience0to2": "0-2 years",
+      "experience3to5": "3-5 years",
+      "experience6to10": "6-10 years",
+      "experience10plus": "10+ years",
+      "allShifts": "All Shifts",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "night": "Night",
+      "weekend": "Weekend"
+    },
+    "results": {
+      "searching": "Searching...",
+      "found": "{{count}} staff members found",
+      "noResults": "No staff members found",
+      "noResultsDesc": "Try adjusting your search terms or filters",
+      "searchPrompt": "Search for staff members",
+      "searchPromptDesc": "Enter a name, role, or department to get started"
+    },
+    "error": "Error: {{message}}"
+  },
+  "status": {
+    "online": "Online",
+    "available": "Available", 
+    "active": "Active",
+    "busy": "Busy",
+    "offline": "Offline",
+    "unavailable": "Unavailable",
+    "inactive": "Inactive",
+    "break": "On Break"
+  },
+  "talentPool": {
+    "title": "Talent Pool",
+    "subtitle": "Browse and hire qualified receptionists for your practice",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "loading": "Loading talent pool...",
+    "availableReceptionists": "Available Receptionists ({{count}})",
+    "noReceptionistsTitle": "No Receptionists Available",
+    "noReceptionistsDescription": "There are no receptionists in the talent pool at the moment. Please check back later.",
+    "noResultsTitle": "No Results Found",
+    "noResultsDescription": "Try adjusting your search criteria or filters to find more results.",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search by name, email...",
+      "experience": "Experience",
+      "allLevels": "All Levels",
+      "entryLevel": "Entry Level (0-2 years)",
+      "midLevel": "Mid Level (2-5 years)",
+      "seniorLevel": "Senior (5+ years)",
+      "availability": "Availability",
+      "all": "All",
+      "sortBy": "Sort By"
+    },
+    "sort": {
+      "name": "Name",
+      "experience": "Experience",
+      "rating": "Rating"
+    },
+    "stats": {
+      "total": "Total",
+      "available": "Available",
+      "experienced": "Experienced",
+      "topRated": "Top Rated"
+    },
+    "actions": {
+      "hire": "Hire",
+      "viewProfile": "View Profile"
+    }
+  },
+  "errors": {
+    "failedOperation": "Failed to {{operation}}",
+    "doctorIdRequired": "Doctor ID is required to fetch staff"
+  },
+  "utils": {
+    "unknownUser": "Unknown User",
+    "notAvailable": "N/A",
+    "invalidDate": "Invalid Date",
+    "invalidDateTime": "Invalid DateTime",
+    "unknown": "Unknown",
+    "contractTypes": {
+      "fullTime": "Full Time",
+      "partTime": "Part Time",
+      "contract": "Contract",
+      "temporary": "Temporary",
+      "intern": "Intern"
+    },
+    "filterSummary": {
+      "status": "Status: {{statuses}}",
+      "role": "Role: {{roles}}",
+      "experience": "Experience: {{experience}}",
+      "verification": "Verification: {{verification}}",
+      "dateRange": "Date Range Applied",
+      "search": "Search: \"{{query}}\""
+    }
+  }
+}

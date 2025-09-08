@@ -1,5 +1,6 @@
 import React, {useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -150,6 +151,7 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[0-9]{10}$/;
 
 const RegisterDoctorPage = () => {
+  const { t } = useTranslation('auth');
   const theme = useTheme();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -197,7 +199,12 @@ const RegisterDoctorPage = () => {
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
 
-  const steps = ['Account Details', 'Personal Information', 'Professional Details', 'Location & Bio'];
+  const steps = [
+    t('doctorRegistration.steps.accountDetails'),
+    t('doctorRegistration.steps.personalInformation'),
+    t('doctorRegistration.steps.professionalDetails'),
+    t('doctorRegistration.steps.locationAndBio')
+  ];
 
   useEffect(() => {
     setValidation(prev => ({
@@ -397,13 +404,13 @@ const RegisterDoctorPage = () => {
                         marginBottom: 8
                       }} 
                     />
-                    <Typography variant="body2">Click to change photo</Typography>
+                    <Typography variant="body2">{t('doctorRegistration.clickToChange')}</Typography>
                   </Box>
                 ) : (
                   <Box>
                     <PhotoCameraIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      Click to upload profile picture
+                      {t('doctorRegistration.clickToUpload')}
                     </Typography>
                   </Box>
                 )}
@@ -413,14 +420,14 @@ const RegisterDoctorPage = () => {
             {/* Gender */}
             <Grid item xs={12}>
               <FormControl component="fieldset">
-                <FormLabel component="legend">Gender</FormLabel>
+                <FormLabel component="legend">{t('doctorRegistration.gender')}</FormLabel>
                 <RadioGroup
                   row
                   value={formData.sex}
                   onChange={handleInputChange('sex')}
                 >
-                  <FormControlLabel value="Male" control={<Radio />} label="Male" />
-                  <FormControlLabel value="Female" control={<Radio />} label="Female" />
+                  <FormControlLabel value="Male" control={<Radio />} label={t('doctorRegistration.male')} />
+                  <FormControlLabel value="Female" control={<Radio />} label={t('doctorRegistration.female')} />
                 </RadioGroup>
               </FormControl>
             </Grid>
@@ -429,7 +436,7 @@ const RegisterDoctorPage = () => {
             <Grid item xs={12}>
               <StyledTextField
                 fullWidth
-                label="Username"
+                label={t('doctorRegistration.username')}
                 value={formData.username}
                 onChange={handleInputChange('username')}
                 onFocus={handleFocus('username')}
@@ -437,7 +444,7 @@ const RegisterDoctorPage = () => {
                 error={focus.username && formData.username && !validation.username}
                 helperText={
                   focus.username && formData.username && !validation.username
-                    ? 'Username must be 4-24 characters long and start with a letter'
+                    ? t('doctorRegistration.fillRequiredFields')
                     : ''
                 }
                 InputProps={{
@@ -461,7 +468,7 @@ const RegisterDoctorPage = () => {
               <StyledTextField
                 fullWidth
                 type="email"
-                label="Email Address"
+                label={t('doctorRegistration.emailLabel', 'Email Address')}
                 value={formData.email}
                 onChange={handleInputChange('email')}
                 onFocus={handleFocus('email')}
@@ -469,7 +476,7 @@ const RegisterDoctorPage = () => {
                 error={focus.email && formData.email && !validation.email}
                 helperText={
                   focus.email && formData.email && !validation.email
-                    ? 'Please enter a valid email address'
+                    ? t('validation.email.invalid')
                     : ''
                 }
                 InputProps={{

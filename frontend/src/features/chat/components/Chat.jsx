@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import MessagesComponent from './Messages';
@@ -15,6 +16,7 @@ const Chat = styled.div`
   flex-direction: column;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   position: relative;
+  direction: ltr; /* Force LTR for chat container to maintain message positioning */
   
   &::before {
     content: '';
@@ -146,6 +148,7 @@ const ToggleSidebarButton = styled.button`
 `;
 
 const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
+  const { t } = useTranslation('chat');
   const { userId, userProfilePictureUrl } = useContext(AuthContext);
   const { state, dispatch} = useContext(ChatContext);
   const { messages, chats } = state;
@@ -235,12 +238,12 @@ const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
       <ChatInfo>
         <ChatInfoContent>
           <ChatUserName>
-            {actualCurrentChat ? `${actualCurrentChat.firstNameRecipient} ${actualCurrentChat.lastNameRecipient}` : 'Select a chat'}
+            {actualCurrentChat ? `${actualCurrentChat.firstNameRecipient} ${actualCurrentChat.lastNameRecipient}` : t('ui.selectChatPrompt')}
           </ChatUserName>
           {actualCurrentChat && <OnlineIndicator />}
         </ChatInfoContent>
         <ToggleSidebarButton onClick={toggleSidebar}>
-          {isSidebarVisible ? '← Hide' : '→ Show'}
+          {isSidebarVisible ? t('ui.hideSidebar') : t('ui.showSidebar')}
         </ToggleSidebarButton>
       </ChatInfo>
       {actualCurrentChat ? (
@@ -262,7 +265,7 @@ const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
           color: '#64748b',
           fontSize: '16px'
         }}>
-          Select a chat to start messaging
+          {t('ui.selectChatPrompt')}
         </div>
       )}
     </Chat>

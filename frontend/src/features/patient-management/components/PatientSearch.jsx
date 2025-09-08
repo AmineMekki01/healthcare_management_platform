@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { UserCard } from '../../user-management';
 import { usePatientManagement } from '../hooks/usePatientManagement';
 
@@ -185,6 +186,7 @@ const PatientSearch = ({
   initialQuery = '',
   className 
 }) => {
+  const { t } = useTranslation('common');
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState({
     status: '',
@@ -253,12 +255,12 @@ const PatientSearch = ({
 
   const getPatientActions = (patient) => [
     {
-      label: 'View Profile',
+      label: t('actions.viewProfile'),
       variant: 'primary',
       onClick: handlePatientClick
     },
     {
-      label: 'Book Appointment',
+      label: t('actions.bookAppointment'),
       variant: 'secondary',
       onClick: (patient) => {
         console.log('Book appointment for', patient);
@@ -267,10 +269,10 @@ const PatientSearch = ({
   ];
 
   const getPatientMetaFields = (patient) => [
-    { label: 'Age', value: patient.age || 'N/A' },
-    { label: 'Gender', value: patient.gender || 'N/A' },
-    { label: 'Last Visit', value: patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never' },
-    { label: 'Status', value: patient.isActive ? 'Active' : 'Inactive' }
+    { label: t('patient.fields.age'), value: patient.age || t('common.notAvailable') },
+    { label: t('patient.fields.gender'), value: patient.gender || t('common.notAvailable') },
+    { label: t('patient.fields.lastVisit'), value: patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : t('patient.fields.never') },
+    { label: t('patient.fields.status'), value: patient.isActive ? t('status.active') : t('status.inactive') }
   ];
 
   useEffect(() => {
@@ -284,11 +286,11 @@ const PatientSearch = ({
   return (
     <SearchContainer className={className}>
       <SearchHeader>
-        <SearchTitle>Patient Search</SearchTitle>
+        <SearchTitle>{t('navigation.patientSearch')}</SearchTitle>
         <SearchInputContainer>
           <SearchInput
             type="text"
-            placeholder="Search by name, email, phone, or ID..."
+            placeholder={t('patient.searchPlaceholder')}
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -297,7 +299,7 @@ const PatientSearch = ({
             onClick={handleSearch}
             disabled={loading}
           >
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? t('status.loading') : t('buttons.search')}
           </SearchButton>
         </SearchInputContainer>
 
@@ -307,31 +309,31 @@ const PatientSearch = ({
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
             >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="">{t('patient.filters.allStatus')}</option>
+              <option value="active">{t('status.active')}</option>
+              <option value="inactive">{t('status.inactive')}</option>
             </FilterSelect>
 
             <FilterSelect
               value={filters.gender}
               onChange={(e) => handleFilterChange('gender', e.target.value)}
             >
-              <option value="">All Genders</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="">{t('patient.filters.allGenders')}</option>
+              <option value="male">{t('patient.gender.male')}</option>
+              <option value="female">{t('patient.gender.female')}</option>
+              <option value="other">{t('patient.gender.other')}</option>
             </FilterSelect>
 
             <FilterSelect
               value={filters.ageRange}
               onChange={(e) => handleFilterChange('ageRange', e.target.value)}
             >
-              <option value="">All Ages</option>
-              <option value="0-18">0-18 years</option>
-              <option value="19-35">19-35 years</option>
-              <option value="36-50">36-50 years</option>
-              <option value="51-65">51-65 years</option>
-              <option value="65+">65+ years</option>
+              <option value="">{t('patient.filters.allAges')}</option>
+              <option value="0-18">{t('patient.ageRanges.child')}</option>
+              <option value="19-35">{t('patient.ageRanges.young')}</option>
+              <option value="36-50">{t('patient.ageRanges.adult')}</option>
+              <option value="51-65">{t('patient.ageRanges.senior')}</option>
+              <option value="65+">{t('patient.ageRanges.elderly')}</option>
             </FilterSelect>
           </FiltersContainer>
         )}
@@ -340,27 +342,27 @@ const PatientSearch = ({
       <SearchBody>
         {error && (
           <ErrorState>
-            Error: {error}
+{t('status.error')}: {error}
           </ErrorState>
         )}
 
         {hasSearched && (
           <ResultsHeader>
             <ResultsCount>
-              {loading ? 'Searching...' : `${searchResults.length} patients found`}
+              {loading ? t('status.loading') : t('patient.patientsFound', { count: searchResults.length })}
             </ResultsCount>
             <ViewToggle>
               <ViewButton 
                 $active={view === 'grid'} 
                 onClick={() => setView('grid')}
               >
-                Grid
+                {t('patient.views.grid')}
               </ViewButton>
               <ViewButton 
                 $active={view === 'list'} 
                 onClick={() => setView('list')}
               >
-                List
+                {t('patient.views.list')}
               </ViewButton>
             </ViewToggle>
           </ResultsHeader>
@@ -368,16 +370,16 @@ const PatientSearch = ({
 
         {loading && (
           <LoadingState>
-            Searching patients...
+            {t('patient.searchingPatients')}
           </LoadingState>
         )}
 
         {!loading && hasSearched && searchResults.length === 0 && (
           <EmptyState>
             <EmptyIcon>🔍</EmptyIcon>
-            <EmptyTitle>No patients found</EmptyTitle>
+            <EmptyTitle>{t('patient.noResults.title')}</EmptyTitle>
             <EmptyDescription>
-              Try adjusting your search terms or filters
+              {t('patient.noResults.description')}
             </EmptyDescription>
           </EmptyState>
         )}
@@ -385,9 +387,9 @@ const PatientSearch = ({
         {!loading && !hasSearched && (
           <EmptyState>
             <EmptyIcon>👥</EmptyIcon>
-            <EmptyTitle>Search for patients</EmptyTitle>
+            <EmptyTitle>{t('patient.searchPrompt.title')}</EmptyTitle>
             <EmptyDescription>
-              Enter a name, email, phone number, or patient ID to get started
+              {t('patient.searchPrompt.description')}
             </EmptyDescription>
           </EmptyState>
         )}

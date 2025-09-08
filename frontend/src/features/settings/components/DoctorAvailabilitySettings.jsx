@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useTranslation } from 'react-i18next';
 import axios from "../../../components/axiosConfig";
 import { AuthContext } from "./../../../features/auth/context/AuthContext";
 
@@ -20,6 +21,7 @@ function getWeeksInMonth(year, month) {
 }
 
 export default function DoctorAvailabilitySettings() {
+  const { t } = useTranslation('settings');
   const { userId } = useContext(AuthContext);
   const today = new Date();
 
@@ -120,7 +122,7 @@ export default function DoctorAvailabilitySettings() {
     const qs = `start=${range.start.toISOString().slice(0,10)}&end=${range.end.toISOString().slice(0,10)}`;
     axios
       .post(`/api/v1/doctors/availabilities/${userId}?${qs}`, weeklySchedule)
-      .then(() => alert('Schedule saved just for this week!'));
+      .then(() => alert(t('availability.success.scheduleSaved')));
   };
 
   const clearAllSchedule = () => {
@@ -131,7 +133,7 @@ export default function DoctorAvailabilitySettings() {
     axios
       .delete(`/api/v1/doctors/availabilities/${userId}`)
       .then(() => {
-        alert('All schedules cleared successfully!');
+        alert(t('availability.success.schedulesCleared'));
         const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
         const clearedSchedule = weekdays.map(weekday => ({
           weekday,
@@ -144,7 +146,7 @@ export default function DoctorAvailabilitySettings() {
         setShowClearConfirm(false);
       })
       .catch((error) => {
-        alert('Error clearing schedules: ' + error.message);
+        alert(t('availability.errors.clearingSchedules') + ': ' + error.message);
         setShowClearConfirm(false);
       });
   };
@@ -175,7 +177,7 @@ export default function DoctorAvailabilitySettings() {
       }}
     >
       <h2 style={{ textAlign: "center", marginBottom: 24 }}>
-        Doctor Availability Settings
+        {t('availability.title')}
       </h2>
 
       <div
@@ -235,17 +237,17 @@ export default function DoctorAvailabilitySettings() {
         >
           <thead>
             <tr style={{ background: "#f7f7f7" }}>
-              <th>Day</th>
-              <th>Enabled</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Slot Duration</th>
+              <th>{t('availability.table.day')}</th>
+              <th>{t('availability.table.enabled')}</th>
+              <th>{t('availability.table.start')}</th>
+              <th>{t('availability.table.end')}</th>
+              <th>{t('availability.table.slotDuration')}</th>
             </tr>
           </thead>
           <tbody>
             {weeklySchedule.map((day, idx) => (
               <tr key={day.weekday}>
-                <td>{day.weekday}</td>
+                <td>{t(`availability.days.${day.weekday}`)}</td>
                 <td>
                   <input
                     type="checkbox"
@@ -317,7 +319,7 @@ export default function DoctorAvailabilitySettings() {
               fontWeight: 600,
             }}
           >
-            Save Schedule
+            {t('availability.buttons.saveSchedule')}
           </button>
           <button
             type="button"
@@ -331,13 +333,13 @@ export default function DoctorAvailabilitySettings() {
               fontWeight: 600,
             }}
           >
-            Clear All Schedule
+            {t('availability.buttons.clearAllSchedule')}
           </button>
         </div>
       </form>
 
       <div style={{ marginTop: 32 }}>
-        <h3 style={{ marginBottom: 12 }}>Exceptions (Time Off / Overrides)</h3>
+        <h3 style={{ marginBottom: 12 }}>{t('availability.exceptions.title')}</h3>
         {(() => {
           const weekStart = weeks[selectedWeekIdx]?.start;
           const weekEnd = weeks[selectedWeekIdx]?.end;
@@ -351,7 +353,7 @@ export default function DoctorAvailabilitySettings() {
             <ul style={{ marginBottom: 16 }}>
               {filteredExceptions.length === 0 && (
                 <li style={{ color: "#888" }}>
-                  No exceptions added for this week.
+                  {t('availability.exceptions.noExceptions')}
                 </li>
               )}
               {filteredExceptions.map((exc, idx) => (
@@ -413,8 +415,8 @@ export default function DoctorAvailabilitySettings() {
             }
             style={{ width: 110 }}
           >
-            <option value="off">Time Off</option>
-            <option value="override">Override</option>
+            <option value="off">{t('availability.exceptions.timeOff')}</option>
+            <option value="override">{t('availability.exceptions.override')}</option>
           </select>
           <button
             type="submit"
@@ -427,7 +429,7 @@ export default function DoctorAvailabilitySettings() {
               fontWeight: 500,
             }}
           >
-            Add Exception
+            {t('availability.buttons.addException')}
           </button>
         </form>
       </div>
@@ -456,10 +458,10 @@ export default function DoctorAvailabilitySettings() {
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
           }}>
             <h3 style={{ marginBottom: '16px', color: '#dc2626' }}>
-              Clear All Schedules?
+              {t('availability.confirmDialog.title')}
             </h3>
             <p style={{ marginBottom: '24px', color: '#374151' }}>
-              Are you sure you want to clear ALL availability schedules? This will remove all your saved availability slots and cannot be undone.
+              {t('availability.confirmDialog.message')}
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
@@ -474,7 +476,7 @@ export default function DoctorAvailabilitySettings() {
                   cursor: 'pointer'
                 }}
               >
-                Cancel
+                {t('availability.buttons.cancel')}
               </button>
               <button
                 onClick={confirmClearSchedule}
@@ -488,7 +490,7 @@ export default function DoctorAvailabilitySettings() {
                   cursor: 'pointer'
                 }}
               >
-                Yes, Clear All
+                {t('availability.buttons.yesClearAll')}
               </button>
             </div>
           </div>

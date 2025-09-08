@@ -1,7 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { TabContainer, Tab } from '../styles/appointmentStyles';
 
 const AppointmentTabs = ({ tabs, activeTab, onTabChange }) => {
+  const { t } = useTranslation('appointments');
+  
   return (
     <TabContainer>
       {tabs.map(tab => (
@@ -10,7 +13,7 @@ const AppointmentTabs = ({ tabs, activeTab, onTabChange }) => {
           $active={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
         >
-          {tab.label} {tab.count > 0 && `(${tab.count})`}
+          {t(`tabs.${tab.id}`) || tab.label} {tab.count > 0 && `(${tab.count})`}
         </Tab>
       ))}
     </TabContainer>

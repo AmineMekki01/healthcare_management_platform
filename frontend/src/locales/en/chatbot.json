@@ -1,0 +1,132 @@
+{
+  "interface": {
+    "messagePlaceholder": "Type your message... Use @patient_name to mention patients",
+    "placeholder": "Type your message... Use @patient_name to mention patients",
+    "noMessages": "No messages yet.",
+    "sendMessage": "Send Message",
+    "newChat": "New Chat",
+    "chatHistory": "Chat History",
+    "documents": "Documents",
+    "uploadDocument": "Upload Document",
+    "dragDropText": "Drag and drop files here or click to browse",
+    "supportedFormats": "Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG",
+    "maxFileSize": "Maximum file size: 10MB",
+    "selectFiles": "Select Files",
+    "uploading": "Uploading...",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Upload failed. Please try again.",
+    "deleteDocument": "Delete Document",
+    "downloadDocument": "Download Document",
+    "documentUploaded": "Document uploaded",
+    "documentDeleted": "Document deleted",
+    "processingDocument": "Processing document...",
+    "documentProcessed": "Document processed successfully",
+    "confirmDelete": "Are you sure you want to delete this message? This action cannot be undone.",
+    "deleteMessage": "Delete message",
+    "deleteError": "Failed to delete message: {{error}}",
+    "unknownError": "Unknown error",
+    "loginRequired": "Please log in to send messages.",
+    "sendError": "Failed to send message. Please try again."
+  },
+  "patientMention": {
+    "searchPatients": "Search patients...",
+    "noPatients": "No patients found",
+    "selectPatient": "Select a patient to mention",
+    "patientSelected": "Patient selected: {{name}}",
+    "enhancedTools": "Enhanced tools activated for patient context",
+    "age": "Age",
+    "sex": "Sex"
+  },
+  "documentManagement": {
+    "title": "Document Management",
+    "uploadedFiles": "Uploaded Files",
+    "fileSize": "File Size",
+    "uploadDate": "Upload Date",
+    "storageType": "Storage Type",
+    "tokenCount": "Token Count",
+    "contextStorage": "Context Storage",
+    "temporaryStorage": "Temporary Storage",
+    "persistentStorage": "Persistent Storage",
+    "storageDescription": {
+      "context": "Small documents stored directly in chat context",
+      "temporary": "Medium documents stored temporarily (7 days)",
+      "persistent": "Large documents stored persistently (30 days)"
+    },
+    "noDocuments": "No documents uploaded yet",
+    "deleteConfirm": "Are you sure you want to delete this document?",
+    "deleteSuccess": "Document deleted successfully",
+    "deleteError": "Failed to delete document"
+  },
+  "chat": {
+    "thinking": "Thinking...",
+    "typing": "AI is typing...",
+    "error": "Something went wrong. Please try again.",
+    "retry": "Retry",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "regenerate": "Regenerate",
+    "feedback": "Provide Feedback",
+    "helpful": "Helpful",
+    "notHelpful": "Not Helpful",
+    "reportIssue": "Report Issue"
+  },
+  "citations": {
+    "sources": "Sources",
+    "fromDocument": "From document: {{filename}}",
+    "viewSource": "View Source",
+    "page": "Page {{number}}",
+    "section": "Section {{name}}"
+  },
+  "documents": {
+    "noDocuments": "No documents available",
+    "deleteDocument": "Delete document",
+    "storageTypes": {
+      "context": "Direct Context",
+      "temporary": "Temp Storage",
+      "persistent": "Persistent"
+    }
+  },
+  "input": {
+    "placeholder": "Type your message...",
+    "removePreview": "×",
+    "attach": "Attach",
+    "send": "Send"
+  },
+  "search": {
+    "placeholder": "Search for users...",
+    "error": "Search failed. Please try again."
+  },
+  "chatHistory": {
+    "title": "Chat History",
+    "newChat": "New Chat",
+    "loginRequired": "Please log in to create a new chat.",
+    "enterChatName": "Enter chat name:",
+    "defaultChatName": "New Chat",
+    "createChatError": "Error creating chat. Please try again.",
+    "loginToView": "Please log in to view your chat history.",
+    "loadingChats": "Loading chats..."
+  },
+  "chatList": {
+    "justNow": "Just now",
+    "confirmDelete": "Are you sure you want to delete '{{chatTitle}}'?",
+    "deleteError": "Error deleting chat: {{error}}",
+    "unknownError": "Unknown error",
+    "deleteFailure": "Failed to delete chat. Please try again.",
+    "deleteConversation": "Delete conversation"
+  },
+  "fileUpload": {
+    "validationError": "{{fileName}}: {{error}}",
+    "dropFiles": "Drop files here",
+    "dragDrop": "Drag and drop files here",
+    "clickToBrowse": "or click to browse",
+    "uploadFiles": "Upload {{count}} file(s)",
+    "clear": "Clear"
+  },
+  "errors": {
+    "uploadError": "Upload failed. Please try again.",
+    "fetchDocumentsError": "Failed to fetch documents. Please try again."
+  },
+  "common": {
+    "error": "Error"
+  }
+}

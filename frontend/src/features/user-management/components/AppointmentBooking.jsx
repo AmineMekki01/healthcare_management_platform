@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services/userService';
 
 const BookingContainer = styled.div`
@@ -294,12 +295,9 @@ const UserInfoText = styled.p`
   font-size: 14px;
 `;
 
-const UserInfoName = styled.span`
-  font-weight: 600;
-  color: #065f46;
-`;
 
 const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }) => {
+  const { t } = useTranslation('userManagement');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -317,13 +315,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
 
   const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    if (selectedDate) {
-      fetchAvailableSlots();
-    }
-  }, [selectedDate, doctorId]);
-
-  const fetchAvailableSlots = async () => {
+  const fetchAvailableSlots = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -349,12 +341,18 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
       setAvailableSlots(slots);
     } catch (error) {
       console.error('Error fetching availabilities:', error);
-      setError('Failed to fetch available time slots');
+      setError(t('appointmentBooking.messages.slotsFailed'));
       setAvailableSlots([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId, selectedDate, t]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchAvailableSlots();
+    }
+  }, [selectedDate, fetchAvailableSlots]);
 
   const handleDateChange = (event) => {
     setSelectedDate(event.target.value);
@@ -393,17 +391,17 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
 
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTimeSlot || !bookingData.title) {
-      setError('Please fill in all required fields and select a time slot');
+      setError(t('appointmentBooking.messages.fillRequired'));
       return;
     }
 
     if (bookingFor === 'other' && (!bookingData.patientName || !bookingData.patientEmail)) {
-      setError('Please provide patient name and email when booking for someone else');
+      setError(t('appointmentBooking.messages.providePatientInfo'));
       return;
     }
 
     if (!currentUser?.userId) {
-      setError('Please log in to book an appointment');
+      setError(t('appointmentBooking.messages.loginRequired'));
       return;
     }
 
@@ -426,7 +424,10 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
       };
 
       const result = await userService.createAppointment(appointmentData);
-      setSuccess(`Appointment booked successfully ${bookingFor === 'self' ? 'for you' : 'for ' + bookingData.patientName}!`);
+      const successMessage = bookingFor === 'self' 
+        ? t('appointmentBooking.messages.successSelf')
+        : t('appointmentBooking.messages.successOther', { name: bookingData.patientName });
+      setSuccess(successMessage);
       
       setSelectedDate('');
       setSelectedTimeSlot(null);
@@ -444,7 +445,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
       }
     } catch (error) {
       console.error('Booking error:', error);
-      setError(error.response?.data?.error || 'Failed to book appointment. Please try again.');
+      setError(error.response?.data?.error || t('appointmentBooking.messages.bookingFailed'));
     } finally {
       setLoading(false);
     }
@@ -468,7 +469,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
   return (
     <BookingContainer>
       <BookingHeader>
-        <BookingTitle>Book Appointment</BookingTitle>
+        <BookingTitle>{t('appointmentBooking.title')}</BookingTitle>
       </BookingHeader>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -476,7 +477,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
 
       <BookingGrid>
         <CalendarSection>
-          <SectionTitle>Select Date</SectionTitle>
+          <SectionTitle>{t('appointmentBooking.sections.selectDate')}</SectionTitle>
           <DatePicker
             type="date"
             value={selectedDate}
@@ -486,9 +487,9 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
         </CalendarSection>
 
         <TimeSlotSection>
-          <SectionTitle>Available Time Slots</SectionTitle>
+          <SectionTitle>{t('appointmentBooking.sections.availableSlots')}</SectionTitle>
           {loading ? (
-            <LoadingMessage>Loading available slots...</LoadingMessage>
+            <LoadingMessage>{t('appointmentBooking.messages.loading')}</LoadingMessage>
           ) : (
             <TimeSlotGrid>
               {availableSlots.map((slot) => (
@@ -503,7 +504,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
               ))}
               {selectedDate && availableSlots.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#64748b' }}>
-                  No available slots for this date
+                  {t('appointmentBooking.messages.noSlots')}
                 </div>
               )}
             </TimeSlotGrid>
@@ -514,7 +515,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
         {selectedTimeSlot && (
         <BookingForm>
           <BookingTypeSection>
-            <SectionTitle>Who is this appointment for?</SectionTitle>
+            <SectionTitle>{t('appointmentBooking.sections.bookingFor')}</SectionTitle>
             <BookingTypeOptions>
               <BookingTypeOption $selected={bookingFor === 'self'}>
                 <BookingTypeRadio
@@ -524,7 +525,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
                   checked={bookingFor === 'self'}
                   onChange={() => handleBookingTypeChange('self')}
                 />
-                <BookingTypeLabel>For myself</BookingTypeLabel>
+                <BookingTypeLabel>{t('appointmentBooking.bookingType.self')}</BookingTypeLabel>
               </BookingTypeOption>
               <BookingTypeOption $selected={bookingFor === 'other'}>
                 <BookingTypeRadio
@@ -534,7 +535,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
                   checked={bookingFor === 'other'}
                   onChange={() => handleBookingTypeChange('other')}
                 />
-                <BookingTypeLabel>For someone else</BookingTypeLabel>
+                <BookingTypeLabel>{t('appointmentBooking.bookingType.other')}</BookingTypeLabel>
               </BookingTypeOption>
             </BookingTypeOptions>
           </BookingTypeSection>
@@ -542,7 +543,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
           {bookingFor === 'self' && (
             <UserInfoDisplay>
               <UserInfoText>
-                Booking appointment for: <UserInfoName>{currentUser?.userFullName}</UserInfoName>
+                {t('appointmentBooking.messages.bookingFor', { name: currentUser?.userFullName })}
               </UserInfoText>
               <UserInfoText>Email: {currentUser?.email}</UserInfoText>
               {currentUser?.phone && <UserInfoText>Phone: {currentUser?.phone}</UserInfoText>}
@@ -551,73 +552,73 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
 
           {bookingFor === 'other' && (
             <>
-              <SectionTitle>Patient Information</SectionTitle>
+              <SectionTitle>{t('appointmentBooking.sections.patientInfo')}</SectionTitle>
               <FormGrid>
                 <FormGroup>
-                  <FormLabel>Patient Name *</FormLabel>
+                  <FormLabel>{t('appointmentBooking.fields.patientName')} *</FormLabel>
                   <FormInput
                     type="text"
                     value={bookingData.patientName}
                     onChange={(e) => handleInputChange('patientName', e.target.value)}
-                    placeholder="Enter patient name"
+                    placeholder={t('appointmentBooking.placeholders.patientName')}
                   />
                 </FormGroup>
                 
                 <FormGroup>
-                  <FormLabel>Email *</FormLabel>
+                  <FormLabel>{t('appointmentBooking.fields.email')} *</FormLabel>
                   <FormInput
                     type="email"
                     value={bookingData.patientEmail}
                     onChange={(e) => handleInputChange('patientEmail', e.target.value)}
-                    placeholder="Enter email address"
+                    placeholder={t('appointmentBooking.placeholders.email')}
                   />
                 </FormGroup>
                 
                 <FormGroup>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>{t('appointmentBooking.fields.phoneNumber')}</FormLabel>
                   <FormInput
                     type="tel"
                     value={bookingData.patientPhone}
                     onChange={(e) => handleInputChange('patientPhone', e.target.value)}
-                    placeholder="Enter phone number"
+                    placeholder={t('appointmentBooking.placeholders.phoneNumber')}
                   />
                 </FormGroup>
               </FormGrid>
             </>
           )}
           
-          <SectionTitle>Appointment Details</SectionTitle>
+          <SectionTitle>{t('appointmentBooking.sections.appointmentDetails')}</SectionTitle>
           <FormGrid>
             <FormGroup>
-              <FormLabel>Reason for Visit *</FormLabel>
+              <FormLabel>{t('appointmentBooking.fields.reasonForVisit')} *</FormLabel>
               <FormInput
                 type="text"
                 value={bookingData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Brief reason for visit"
+                placeholder={t('appointmentBooking.placeholders.reasonForVisit')}
               />
             </FormGroup>
           </FormGrid>
           
           <FormGroup>
-            <FormLabel>Additional Notes</FormLabel>
+            <FormLabel>{t('appointmentBooking.fields.additionalNotes')}</FormLabel>
             <FormTextarea
               value={bookingData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Any additional information or special requests"
+              placeholder={t('appointmentBooking.placeholders.additionalNotes')}
             />
           </FormGroup>
 
           <BookingActions>
             <BookingButton $variant="secondary" onClick={handleCancel}>
-              Cancel
+              {t('appointmentBooking.buttons.cancel')}
             </BookingButton>
             <BookingButton 
               $variant="primary" 
               onClick={handleBookAppointment}
               disabled={loading || !bookingData.title}
             >
-              {loading ? 'Booking...' : 'Book Appointment'}
+              {loading ? t('appointmentBooking.buttons.booking') : t('appointmentBooking.buttons.bookAppointment')}
             </BookingButton>
           </BookingActions>
         </BookingForm>

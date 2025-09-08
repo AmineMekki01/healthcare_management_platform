@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import feedService from '../services/feedService';
 import CommentsSection from './CommentsSection';
@@ -19,6 +20,7 @@ import {
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 
 const FullPost = () => {
+    const { t } = useTranslation('feed');
     const { postId } = useParams();
     const { userId, userType } = useContext(AuthContext);
     const [post, setPost] = useState(null);
@@ -79,7 +81,7 @@ const FullPost = () => {
     };
 
     if (!post) {
-        return <div>Loading...</div>;
+        return <div>{t('loading')}</div>;
     }
 
     return (
@@ -96,13 +98,13 @@ const FullPost = () => {
 
             <PostActions>
                 <PostStats>
-                    <LikesCount>{likes} Likes</LikesCount>
-                    <CommentsCount>{commentsCount} Comments</CommentsCount>
+                    <LikesCount>{t('post.likesCount', { count: likes })}</LikesCount>
+                    <CommentsCount>{t('post.commentsCount', { count: commentsCount })}</CommentsCount>
                 </PostStats>
 
                 <ActionButtonsContainer>
-                    <ActionButton onClick={handleLike}>{liked ? 'Unlike' : 'Like'}</ActionButton>
-                    <ActionButton onClick={toggleComments}>Comments</ActionButton>
+                    <ActionButton onClick={handleLike}>{liked ? t('post.unlike') : t('post.like')}</ActionButton>
+                    <ActionButton onClick={toggleComments}>{t('post.comments')}</ActionButton>
                 </ActionButtonsContainer>
             </PostActions>
 

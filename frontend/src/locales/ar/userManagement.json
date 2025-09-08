@@ -1,0 +1,249 @@
+{
+  "appointmentBooking": {
+    "title": "حجز موعد",
+    "sections": {
+      "selectDate": "اختيار التاريخ",
+      "availableSlots": "الأوقات المتاحة",
+      "bookingFor": "لمن هذا الموعد؟",
+      "patientInfo": "معلومات المريض",
+      "appointmentDetails": "تفاصيل الموعد"
+    },
+    "bookingType": {
+      "self": "لنفسي",
+      "other": "لشخص آخر"
+    },
+    "fields": {
+      "patientName": "اسم المريض",
+      "email": "البريد الإلكتروني",
+      "phoneNumber": "رقم الهاتف",
+      "reasonForVisit": "سبب الزيارة",
+      "additionalNotes": "ملاحظات إضافية"
+    },
+    "placeholders": {
+      "patientName": "أدخل اسم المريض",
+      "email": "أدخل عنوان البريد الإلكتروني",
+      "phoneNumber": "أدخل رقم الهاتف",
+      "reasonForVisit": "سبب مختصر للزيارة",
+      "additionalNotes": "معلومات إضافية أو طلبات خاصة"
+    },
+    "buttons": {
+      "cancel": "إلغاء",
+      "bookAppointment": "حجز موعد",
+      "booking": "جاري الحجز..."
+    },
+    "messages": {
+      "loading": "جاري تحميل الأوقات المتاحة...",
+      "noSlots": "لا توجد أوقات متاحة لهذا التاريخ",
+      "bookingFor": "حجز موعد لـ: {{name}}",
+      "successSelf": "تم حجز الموعد بنجاح لك!",
+      "successOther": "تم حجز الموعد بنجاح لـ {{name}}!",
+      "fillRequired": "يرجى ملء جميع الحقول المطلوبة واختيار وقت",
+      "providePatientInfo": "يرجى تقديم اسم المريض والبريد الإلكتروني عند الحجز لشخص آخر",
+      "loginRequired": "يرجى تسجيل الدخول لحجز موعد",
+      "bookingFailed": "فشل في حجز الموعد. يرجى المحاولة مرة أخرى.",
+      "slotsFailed": "فشل في تحميل الأوقات المتاحة"
+    }
+  },
+  "appointmentManager": {
+    "title": "إدارة المواعيد",
+    "tabs": {
+      "all": "الكل",
+      "upcoming": "القادمة",
+      "past": "السابقة",
+      "cancelled": "الملغاة"
+    },
+    "status": {
+      "scheduled": "مجدول",
+      "confirmed": "مؤكد",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "past": "سابق",
+      "noShow": "لم يحضر"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "reschedule": "إعادة جدولة",
+      "complete": "إكمال",
+      "viewDetails": "عرض التفاصيل"
+    },
+    "messages": {
+      "noAppointments": "لم يتم العثور على مواعيد",
+      "loading": "جاري تحميل المواعيد...",
+      "cancelSuccess": "هل أنت متأكد من إلغاء هذا الموعد؟",
+      "cancelFailed": "فشل في إلغاء الموعد",
+      "rescheduleSuccess": "تم إعادة جدولة الموعد بنجاح",
+      "rescheduleFailed": "فشل في إعادة جدولة الموعد"
+    }
+  },
+  "userProfile": {
+    "title": "الملف الشخصي للمستخدم",
+    "sections": {
+      "personalInfo": "المعلومات الشخصية",
+      "contactInfo": "معلومات الاتصال",
+      "medicalInfo": "المعلومات الطبية",
+      "preferences": "التفضيلات"
+    },
+    "fields": {
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "عنوان البريد الإلكتروني",
+      "phoneNumber": "رقم الهاتف",
+      "dateOfBirth": "تاريخ الميلاد",
+      "gender": "الجنس",
+      "address": "العنوان",
+      "emergencyContact": "جهة الاتصال في حالات الطوارئ",
+      "medicalHistory": "التاريخ الطبي",
+      "allergies": "الحساسيات",
+      "medications": "الأدوية الحالية"
+    },
+    "buttons": {
+      "edit": "تعديل الملف الشخصي",
+      "save": "حفظ التغييرات",
+      "cancel": "إلغاء",
+      "changePassword": "تغيير كلمة المرور"
+    },
+    "messages": {
+      "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
+      "updateFailed": "فشل في تحديث الملف الشخصي",
+      "loading": "جاري تحميل الملف الشخصي...",
+      "saving": "جاري الحفظ...",
+      "saveChanges": "حفظ التغييرات؟",
+      "unknownUser": "مستخدم غير معروف",
+      "userNotFound": "المستخدم غير موجود"
+    }
+  },
+  "doctorProfile": {
+    "title": "ملف الطبيب",
+    "sections": {
+      "overview": "نظرة عامة",
+      "specialties": "التخصصات",
+      "experience": "الخبرة",
+      "education": "التعليم",
+      "reviews": "المراجعات",
+      "availability": "التوفر",
+      "statistics": "الإحصائيات",
+      "hospitals": "المستشفيات",
+      "certifications": "الشهادات",
+      "languages": "اللغات",
+      "awards": "الجوائز"
+    },
+    "fields": {
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "phoneNumber": "الهاتف",
+      "username": "اسم المستخدم",
+      "specialty": "التخصص",
+      "licenseNumber": "رخصة الطب",
+      "experience": "سنوات الخبرة",
+      "qualification": "المؤهل",
+      "consultationFee": "رسوم الاستشارة",
+      "bio": "السيرة الذاتية",
+      "birthDate": "تاريخ الميلاد",
+      "gender": "الجنس",
+      "address": "العنوان",
+      "city": "المدينة",
+      "state": "الولاية",
+      "zipCode": "الرمز البريدي",
+      "country": "البلد"
+    },
+    "stats": {
+      "experience": "سنوات الخبرة",
+      "patients": "المرضى",
+      "rating": "التقييم",
+      "reviews": "إجمالي المراجعات",
+      "followers": "المتابعون"
+    },
+    "actions": {
+      "bookAppointment": "حجز موعد",
+      "hideBooking": "إخفاء الحجز",
+      "follow": "متابعة",
+      "unfollow": "إلغاء المتابعة",
+      "message": "إرسال رسالة",
+      "viewSchedule": "عرض الجدول"
+    },
+    "messages": {
+      "loading": "جاري تحميل ملف الطبيب...",
+      "loadError": "خطأ في تحميل ملف الطبيب",
+      "notFound": "الطبيب غير موجود",
+      "followSuccess": "تمت متابعة الطبيب بنجاح",
+      "unfollowSuccess": "تم إلغاء متابعة الطبيب بنجاح",
+      "followFailed": "فشل في متابعة الطبيب",
+      "unfollowFailed": "فشل في إلغاء متابعة الطبيب"
+    }
+  },
+  "patientProfile": {
+    "title": "ملف المريض الشخصي",
+    "sections": {
+      "overview": "نظرة عامة",
+      "appointments": "المواعيد",
+      "medicalHistory": "التاريخ الطبي",
+      "documents": "المستندات",
+      "billing": "الفواتير"
+    },
+    "stats": {
+      "totalAppointments": "إجمالي المواعيد",
+      "upcomingAppointments": "القادمة",
+      "completedAppointments": "المكتملة",
+      "lastVisit": "آخر زيارة"
+    }
+  },
+  "receptionistProfile": {
+    "title": "ملف موظف الاستقبال الشخصي",
+    "sections": {
+      "overview": "نظرة عامة",
+      "schedule": "الجدول",
+      "responsibilities": "المسؤوليات",
+      "performance": "الأداء"
+    },
+    "stats": {
+      "appointmentsManaged": "المواعيد المدارة",
+      "patientsAssisted": "المرضى المساعدون",
+      "callsHandled": "المكالمات المعالجة",
+      "efficiency": "تقييم الكفاءة"
+    }
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "online": "متصل",
+    "offline": "غير متصل",
+    "available": "متاح",
+    "notAvailable": "غير متاح",
+    "busy": "مشغول",
+    "roles": {
+      "doctor": "طبيب",
+      "patient": "مريض",
+      "receptionist": "موظف استقبال"
+    }
+  },
+  "hooks": {
+    "errors": {
+      "fetchUser": "فشل في جلب بيانات المستخدم",
+      "fetchUsers": "فشل في جلب بيانات {{type}}",
+      "validationErrors": "يرجى تصحيح أخطاء التحقق",
+      "updateUser": "فشل في تحديث بيانات المستخدم",
+      "searchUsers": "فشل في البحث عن المستخدمين",
+      "uploadImage": "فشل في رفع الصورة",
+      "toggleStatus": "فشل في تغيير حالة المستخدم",
+      "deleteUser": "فشل في حذف المستخدم",
+      "fetchStats": "فشل في جلب إحصائيات المستخدم"
+    }
+  }
+}

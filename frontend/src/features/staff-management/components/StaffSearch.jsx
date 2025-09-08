@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffCard from './StaffCard';
 import useStaffManagement from '../hooks/useStaffManagement';
@@ -249,6 +250,7 @@ const StaffSearch = ({
   initialQuery = '',
   className 
 }) => {
+  const { t } = useTranslation('staff');
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState({
     role: '',
@@ -275,6 +277,17 @@ const StaffSearch = ({
     clearSearchResults 
   } = useStaffManagement();
 
+  const performSearch = useCallback(async (searchQuery, searchFilters) => {
+    setHasSearched(true);
+    clearError();
+    
+    try {
+      await searchStaff(searchQuery, searchFilters);
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
+  }, [searchStaff, clearError, setHasSearched]);
+
   const debouncedSearch = useCallback((searchQuery, searchFilters) => {
     if (searchTimeout) {
       clearTimeout(searchTimeout);
@@ -287,18 +300,7 @@ const StaffSearch = ({
     }, 300);
 
     setSearchTimeout(timeout);
-  }, [searchTimeout]);
-
-  const performSearch = async (searchQuery, searchFilters) => {
-    setHasSearched(true);
-    clearError();
-    
-    try {
-      await searchStaff(searchQuery, searchFilters);
-    } catch (error) {
-      console.error('Search failed:', error);
-    }
-  };
+  }, [searchTimeout, performSearch]);
 
   const handleSearch = () => {
     performSearch(query, filters);
@@ -349,12 +351,12 @@ const StaffSearch = ({
   const getStaffActions = (staff) => {
     const actions = [
       {
-        label: 'View Profile',
+        label: t('actions.viewProfile'),
         variant: 'primary',
         onClick: handleStaffClick
       },
       {
-        label: 'Edit',
+        label: t('actions.edit'),
         variant: 'secondary',
         onClick: (staff) => onStaffEdit?.(staff)
       }
@@ -362,7 +364,7 @@ const StaffSearch = ({
 
     if (staff.role === 'doctor') {
       actions.push({
-        label: 'View Schedule',
+        label: t('actions.viewSchedule'),
         variant: 'secondary',
         onClick: (staff) => onViewSchedule?.(staff)
       });
@@ -370,7 +372,7 @@ const StaffSearch = ({
 
     if (staff.role === 'receptionist') {
       actions.push({
-        label: 'Manage Permissions',
+        label: t('actions.managePermissions'),
         variant: 'secondary',
         onClick: (staff) => onManagePermissions?.(staff)
       });
@@ -407,12 +409,12 @@ const StaffSearch = ({
   return (
     <SearchContainer className={className}>
       <SearchHeader>
-        <SearchTitle>Staff Search</SearchTitle>
+        <SearchTitle>{t('search.title')}</SearchTitle>
         
         <SearchInputContainer>
           <SearchInput
             type="text"
-            placeholder="Search by name, role, specialization, or department..."
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -421,7 +423,7 @@ const StaffSearch = ({
             onClick={handleSearch}
             disabled={loading}
           >
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? t('search.searching') : t('search.searchButton')}
           </SearchButton>
         </SearchInputContainer>
 
@@ -430,32 +432,32 @@ const StaffSearch = ({
             $active={quickFilter === 'doctor'}
             onClick={() => handleQuickFilter('doctor')}
           >
-            👨‍⚕️ Doctors
+            👨‍⚕️ {t('search.quickFilters.doctors')}
           </QuickFilterButton>
           <QuickFilterButton
             $active={quickFilter === 'receptionist'}
             onClick={() => handleQuickFilter('receptionist')}
           >
-            👩‍💼 Receptionists
+            👩‍💼 {t('search.quickFilters.receptionists')}
           </QuickFilterButton>
           <QuickFilterButton
             $active={quickFilter === 'nurse'}
             onClick={() => handleQuickFilter('nurse')}
           >
-            👩‍⚕️ Nurses
+            👩‍⚕️ {t('search.quickFilters.nurses')}
           </QuickFilterButton>
           <QuickFilterButton
             $active={filters.status === 'available'}
             onClick={() => handleFilterChange('status', filters.status === 'available' ? '' : 'available')}
           >
-            🟢 Available
+            🟢 {t('search.quickFilters.available')}
           </QuickFilterButton>
         </QuickFilters>
 
         {showAdvancedFilters && (
           <AdvancedFilters>
             <FilterToggle onClick={() => setShowAdvanced(!showAdvanced)}>
-              {showAdvanced ? '▼' : '▶'} Advanced Filters
+              {showAdvanced ? '▼' : '▶'} {t('search.advancedFilters')}
             </FilterToggle>
             
             {showAdvanced && (
@@ -464,45 +466,45 @@ const StaffSearch = ({
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                 >
-                  <option value="">All Status</option>
-                  <option value="available">Available</option>
-                  <option value="busy">Busy</option>
-                  <option value="offline">Offline</option>
-                  <option value="break">On Break</option>
+                  <option value="">{t('search.filters.allStatus')}</option>
+                  <option value="available">{t('status.available')}</option>
+                  <option value="busy">{t('status.busy')}</option>
+                  <option value="offline">{t('status.offline')}</option>
+                  <option value="break">{t('status.break')}</option>
                 </FilterSelect>
 
                 <FilterSelect
                   value={filters.department}
                   onChange={(e) => handleFilterChange('department', e.target.value)}
                 >
-                  <option value="">All Departments</option>
-                  <option value="cardiology">Cardiology</option>
-                  <option value="neurology">Neurology</option>
-                  <option value="orthopedics">Orthopedics</option>
-                  <option value="pediatrics">Pediatrics</option>
-                  <option value="emergency">Emergency</option>
+                  <option value="">{t('search.filters.allDepartments')}</option>
+                  <option value="cardiology">{t('search.filters.departments.cardiology')}</option>
+                  <option value="neurology">{t('search.filters.departments.neurology')}</option>
+                  <option value="orthopedics">{t('search.filters.departments.orthopedics')}</option>
+                  <option value="pediatrics">{t('search.filters.departments.pediatrics')}</option>
+                  <option value="emergency">{t('search.filters.departments.emergency')}</option>
                 </FilterSelect>
 
                 <FilterSelect
                   value={filters.experience}
                   onChange={(e) => handleFilterChange('experience', e.target.value)}
                 >
-                  <option value="">Any Experience</option>
-                  <option value="0-2">0-2 years</option>
-                  <option value="3-5">3-5 years</option>
-                  <option value="6-10">6-10 years</option>
-                  <option value="10+">10+ years</option>
+                  <option value="">{t('search.filters.anyExperience')}</option>
+                  <option value="0-2">{t('search.filters.experience.junior')}</option>
+                  <option value="3-5">{t('search.filters.experience.mid')}</option>
+                  <option value="6-10">{t('search.filters.experience.senior')}</option>
+                  <option value="10+">{t('search.filters.experience.expert')}</option>
                 </FilterSelect>
 
                 <FilterSelect
                   value={filters.shift}
                   onChange={(e) => handleFilterChange('shift', e.target.value)}
                 >
-                  <option value="">All Shifts</option>
-                  <option value="morning">Morning</option>
-                  <option value="afternoon">Afternoon</option>
-                  <option value="night">Night</option>
-                  <option value="weekend">Weekend</option>
+                  <option value="">{t('search.filters.allShifts')}</option>
+                  <option value="morning">{t('search.filters.shifts.morning')}</option>
+                  <option value="afternoon">{t('search.filters.shifts.afternoon')}</option>
+                  <option value="night">{t('search.filters.shifts.night')}</option>
+                  <option value="weekend">{t('search.filters.shifts.weekend')}</option>
                 </FilterSelect>
               </FilterGrid>
             )}
@@ -513,38 +515,38 @@ const StaffSearch = ({
       <SearchBody>
         {error && (
           <ErrorState>
-            Error: {error}
+            {t('search.error')}: {error}
           </ErrorState>
         )}
 
         {hasSearched && (
           <ResultsHeader>
             <ResultsCount>
-              {loading ? 'Searching...' : `${sortedResults.length} staff members found`}
+              {loading ? t('search.searching') : t('search.resultsFound', { count: sortedResults.length })}
             </ResultsCount>
             <ViewOptions>
               <SortSelect
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="name">Sort by Name</option>
-                <option value="role">Sort by Role</option>
-                <option value="department">Sort by Department</option>
-                <option value="experience">Sort by Experience</option>
-                <option value="status">Sort by Status</option>
+                <option value="name">{t('search.sort.name')}</option>
+                <option value="role">{t('search.sort.role')}</option>
+                <option value="department">{t('search.sort.department')}</option>
+                <option value="experience">{t('search.sort.experience')}</option>
+                <option value="status">{t('search.sort.status')}</option>
               </SortSelect>
               <ViewToggle>
                 <ViewButton 
                   $active={view === 'grid'} 
                   onClick={() => setView('grid')}
                 >
-                  Grid
+                  {t('search.views.grid')}
                 </ViewButton>
                 <ViewButton 
                   $active={view === 'list'} 
                   onClick={() => setView('list')}
                 >
-                  List
+                  {t('search.views.list')}
                 </ViewButton>
               </ViewToggle>
             </ViewOptions>
@@ -565,23 +567,23 @@ const StaffSearch = ({
                 cursor: 'pointer'
               }}
             >
-              Clear All Filters
+              {t('search.clearAllFilters')}
             </button>
           </div>
         )}
 
         {loading && (
           <LoadingState>
-            Searching staff members...
+            {t('search.searchingStaff')}
           </LoadingState>
         )}
 
         {!loading && hasSearched && sortedResults.length === 0 && (
           <EmptyState>
             <EmptyIcon>🔍</EmptyIcon>
-            <EmptyTitle>No staff members found</EmptyTitle>
+            <EmptyTitle>{t('search.noResultsTitle')}</EmptyTitle>
             <EmptyDescription>
-              Try adjusting your search terms or filters
+              {t('search.noResultsDescription')}
             </EmptyDescription>
           </EmptyState>
         )}
@@ -589,9 +591,9 @@ const StaffSearch = ({
         {!loading && !hasSearched && (
           <EmptyState>
             <EmptyIcon>👥</EmptyIcon>
-            <EmptyTitle>Search for staff members</EmptyTitle>
+            <EmptyTitle>{t('search.searchPromptTitle')}</EmptyTitle>
             <EmptyDescription>
-              Enter a name, role, or department to get started
+              {t('search.searchPromptDescription')}
             </EmptyDescription>
           </EmptyState>
         )}

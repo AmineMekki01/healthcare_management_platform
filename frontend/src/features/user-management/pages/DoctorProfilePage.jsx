@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import UserProfile from '../components/UserProfile';
 import { useUserManagement } from '../hooks/useUserManagement';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -95,7 +96,7 @@ const SpecialtiesList = styled.div`
   gap: 8px;
 `;
 
-const SpecialtyTag = styled.span`
+const SpecialtyTag = styled.div`
   display: inline-block;
   padding: 8px 16px;
   background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
@@ -132,22 +133,19 @@ const ErrorMessage = styled.div`
 `;
 
 const DoctorProfilePage = () => {
-    const navigate = useNavigate();
+  const { t } = useTranslation('userManagement');
+  const navigate = useNavigate();
   const { doctorId } = useParams();
   const { user: doctor, loading, error, fetchUser } = useUserManagement();
 
   const { currentUser } = useAuth();
-  const { 
-    isFollowing, 
-    followerCount, 
-    isFollowingInProgress,
-    isUnfollowingInProgress,
-    isCheckingStatus,
-    followButtonDisabled,
-    error: followError, 
-    toggleFollow 
-  } = useFollow(doctorId, currentUser);
-  
+  const {
+    followUser,
+    unfollowUser,
+    isFollowing,
+    followLoading
+  } = useFollow(doctorId);
+
   const [doctorStats, setDoctorStats] = useState({
     patients: 0,
     experience: 0,
@@ -155,7 +153,6 @@ const DoctorProfilePage = () => {
     followers: 0
   });
   const [showBooking, setShowBooking] = useState(false);
-  const [showAppointments, setShowAppointments] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const bookingRef = useRef(null);
 
@@ -164,46 +161,33 @@ const DoctorProfilePage = () => {
   const canFollowDoctor = currentUser && currentUser.userId !== doctorId;
 
   const doctorFields = [
-    { key: 'firstName', label: 'First Name', type: 'text' },
-    { key: 'lastName', label: 'Last Name', type: 'text' },
-    { key: 'email', label: 'Email', type: 'email' },
-    { key: 'phoneNumber', label: 'Phone', type: 'tel' },
-    { key: 'username', label: 'Username', type: 'text' },
-    { key: 'specialization', label: 'Specialization', type: 'text' },
-    { key: 'licenseNumber', label: 'Medical License', type: 'text' },
-    { key: 'experience', label: 'Years of Experience', type: 'text' },
-    { key: 'qualification', label: 'Qualification', type: 'text' },
-    { key: 'consultationFee', label: 'Consultation Fee', type: 'number' },
-    { key: 'bio', label: 'Biography', type: 'textarea' },
-    { key: 'dateOfBirth', label: 'Birth Date', type: 'date' },
-    { key: 'gender', label: 'Gender', type: 'text' },
-    { key: 'address', label: 'Address', type: 'text' },
-    { key: 'city', label: 'City', type: 'text' },
-    { key: 'state', label: 'State', type: 'text' },
-    { key: 'zipCode', label: 'Zip Code', type: 'text' },
-    { key: 'country', label: 'Country', type: 'text' },
+    { key: 'firstName', label: t('doctorProfile.fields.firstName'), type: 'text' },
+    { key: 'lastName', label: t('doctorProfile.fields.lastName'), type: 'text' },
+    { key: 'email', label: t('doctorProfile.fields.email'), type: 'email' },
+    { key: 'phoneNumber', label: t('doctorProfile.fields.phoneNumber'), type: 'tel' },
+    { key: 'username', label: t('doctorProfile.fields.username'), type: 'text' },
+    { key: 'specialty', label: t('doctorProfile.fields.specialty'), type: 'text' },
+    { key: 'experience', label: t('doctorProfile.fields.experience'), type: 'text' },
+    { key: 'qualification', label: t('doctorProfile.fields.qualification'), type: 'text' },
+    { key: 'consultationFee', label: t('doctorProfile.fields.consultationFee'), type: 'number' },
+    { key: 'bio', label: t('doctorProfile.fields.bio'), type: 'textarea' },
+    { key: 'birthDate', label: t('doctorProfile.fields.birthDate'), type: 'date' },
+    { key: 'sex', label: t('doctorProfile.fields.gender'), type: 'text' },
+    { key: 'address', label: t('doctorProfile.fields.address'), type: 'text' },
+    { key: 'cityName', label: t('doctorProfile.fields.city'), type: 'text' },
+    { key: 'stateName', label: t('doctorProfile.fields.state'), type: 'text' },
+    { key: 'zipCode', label: t('doctorProfile.fields.zipCode'), type: 'text' },
+    { key: 'countryName', label: t('doctorProfile.fields.country'), type: 'text' },
   ];
 
-  useEffect(() => {
-    if (doctorId) {
-      fetchUser(doctorId, 'doctor');
-    }
-  }, [doctorId, fetchUser]);
-
-  useEffect(() => {
-    if (doctor) {
-      fetchDoctorStats();
-    }
-  }, [doctor, followerCount]);
-
-  const fetchDoctorStats = () => {
+  const fetchDoctorStats = useCallback(() => {
     try {
       if (doctor) {
         setDoctorStats({
           patients: doctor?.totalReviews || 0,
           experience: parseInt(doctor?.experience) || 0,
-          rating: doctor?.rating || 4.8,
-          followers: followerCount || doctor?.totalReviews || 0
+          rating: `${doctor?.ratingScore} (${doctor?.ratingCount})` || 'NA',
+          followers: doctor?.totalReviews || 0
         });
       }
     } catch (error) {
@@ -215,7 +199,19 @@ const DoctorProfilePage = () => {
         followers: 0
       });
     }
-  };
+  }, [doctor]);
+
+  useEffect(() => {
+    if (doctorId) {
+      fetchUser(doctorId, 'doctor');
+    }
+  }, [doctorId, fetchUser]);
+
+  useEffect(() => {
+    if (doctor) {
+      fetchDoctorStats();
+    }
+  }, [doctor, fetchDoctorStats]);
 
   const handleProfileSave = (updatedDoctor) => {
     console.log('Doctor profile updated:', updatedDoctor);
@@ -230,27 +226,42 @@ const DoctorProfilePage = () => {
     const next = !showBooking;
     setActiveTab(next ? 'book' : 'profile');
     setShowBooking(next);
-    setShowAppointments(false);
     if (next) {
       setTimeout(() => {
-        if (bookingRef.current) {
-          bookingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        try {
+          if (bookingRef.current) {
+            bookingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } catch (error) {
+          console.warn('Scroll error (likely browser extension interference):', error);
         }
       }, 50);
     }
   };
 
+  const toggleFollow = async () => {
+    try {
+      if (isFollowing) {
+        await unfollowUser();
+      } else {
+        await followUser();
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+    }
+  };
+
 
   if (loading.user) {
-    return <LoadingMessage>Loading doctor profile...</LoadingMessage>;
+    return <LoadingMessage>{t('doctorProfile.messages.loading')}</LoadingMessage>;
   }
 
   if (error.user) {
-    return <ErrorMessage>Error loading doctor profile: {error.user}</ErrorMessage>;
+    return <ErrorMessage>{t('doctorProfile.messages.loadError')}: {error.user}</ErrorMessage>;
   }
 
   if (!doctor) {
-    return <ErrorMessage>Doctor not found</ErrorMessage>;
+    return <ErrorMessage>{t('doctorProfile.messages.notFound')}</ErrorMessage>;
   }
 
   return (
@@ -266,20 +277,20 @@ const DoctorProfilePage = () => {
             onSave={handleProfileSave}
             headerActions={[
               ...(canBookAppointment ? [{
-                label: activeTab === 'book' ? 'Hide Booking' : 'Book Appointment',
+                label: activeTab === 'book' ? t('doctorProfile.actions.hideBooking') : t('doctorProfile.actions.bookAppointment'),
                 variant: 'primary',
                 onClick: toggleBooking,
                 small: true
               }] : []),
               ...(canFollowDoctor ? [{
-                label: (isFollowingInProgress || isUnfollowingInProgress || isCheckingStatus) ? 'Loading...' : (isFollowing ? 'Unfollow' : 'Follow'),
+                label: followLoading ? t('common.loading') : (isFollowing ? t('doctorProfile.actions.unfollow') : t('doctorProfile.actions.follow')),
                 variant: isFollowing ? 'secondary' : 'primary',
                 onClick: toggleFollow,
-                disabled: followButtonDisabled,
+                disabled: followLoading,
                 small: true
               }] : []),
               ...(currentUser && currentUser.userId !== doctorId ? [{
-                label: 'Send Message',
+                label: t('doctorProfile.actions.message'),
                 variant: 'secondary',
                 onClick: () => navigate('/Messages'),
                 small: true
@@ -291,33 +302,33 @@ const DoctorProfilePage = () => {
         <Sidebar>
           {/* Doctor Statistics */}
           <StatsCard>
-            <SectionTitle>Statistics</SectionTitle>
+            <SectionTitle>{t('doctorProfile.sections.statistics')}</SectionTitle>
             <StatsGrid>
               <StatItem>
                 <StatNumber>{doctorStats.patients || 0}</StatNumber>
-                <StatLabel>Patients</StatLabel>
+                <StatLabel>{t('doctorProfile.stats.patients')}</StatLabel>
               </StatItem>
               <StatItem>
                 <StatNumber>{doctorStats.experience || doctor?.experience || 0}</StatNumber>
-                <StatLabel>Years Exp.</StatLabel>
+                <StatLabel>{t('doctorProfile.stats.experience')}</StatLabel>
               </StatItem>
               <StatItem>
                 <StatNumber>{doctorStats.rating || doctor?.rating || '4.8'}</StatNumber>
-                <StatLabel>Rating</StatLabel>
+                <StatLabel>{t('doctorProfile.stats.rating')}</StatLabel>
               </StatItem>
               <StatItem>
                 <StatNumber>{doctorStats.followers || 0}</StatNumber>
-                <StatLabel>Followers</StatLabel>
+                <StatLabel>{t('doctorProfile.stats.followers')}</StatLabel>
               </StatItem>
             </StatsGrid>
           </StatsCard>
 
           {/* Specialties */}
-          {doctor?.specialization && (
+          {doctor?.specialty && (
             <SpecialtiesCard>
-              <SectionTitle>Specialization</SectionTitle>
+              <SectionTitle>{t('doctorProfile.sections.specialties')}</SectionTitle>
               <SpecialtiesList>
-                <SpecialtyTag>{doctor.specialization}</SpecialtyTag>
+                <SpecialtyTag>{doctor.specialty}</SpecialtyTag>
               </SpecialtiesList>
             </SpecialtiesCard>
           )}
@@ -325,22 +336,41 @@ const DoctorProfilePage = () => {
           {/* Hospitals */}
           {doctor?.hospitals && doctor.hospitals.length > 0 && (
             <SpecialtiesCard>
-              <SectionTitle>Hospitals</SectionTitle>
+              <SectionTitle>{t('doctorProfile.sections.hospitals')}</SectionTitle>
               <SpecialtiesList>
                 {doctor.hospitals.map((hospital, index) => (
-                  <SpecialtyTag key={index}>{hospital.hospital_name || hospital.name}</SpecialtyTag>
+                  <SpecialtyTag key={index}>
+                    <p>
+                      {hospital.hospitalName}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {hospital.position}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {hospital.startDate} - {hospital.endDate}
+                    </p>
+
+                  </SpecialtyTag>
                 ))}
               </SpecialtiesList>
             </SpecialtiesCard>
           )}
 
-          {/* Organizations */}
-          {doctor?.organizations && doctor.organizations.length > 0 && (
+          {/* Certifications */}
+          {doctor?.certifications && doctor.certifications.length > 0 && (
             <SpecialtiesCard>
-              <SectionTitle>Organizations</SectionTitle>
+              <SectionTitle>{t('doctorProfile.sections.certifications')}</SectionTitle>
               <SpecialtiesList>
-                {doctor.organizations.map((org, index) => (
-                  <SpecialtyTag key={index}>{org.organization_name || org.name}</SpecialtyTag>
+                {doctor.certifications.map((cert, index) => (
+                  <SpecialtyTag key={index}>
+                    {cert.certificationName}
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                    Issued by :  {cert.issuedBy}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {cert.issueDate} - {cert.expirationDate}
+                    </p>
+                  </SpecialtyTag>
                 ))}
               </SpecialtiesList>
             </SpecialtiesCard>
@@ -349,16 +379,40 @@ const DoctorProfilePage = () => {
           {/* Languages */}
           {doctor?.languages && doctor.languages.length > 0 && (
             <SpecialtiesCard>
-              <SectionTitle>Languages</SectionTitle>
+              <SectionTitle>{t('doctorProfile.sections.languages')}</SectionTitle>
               <SpecialtiesList>
                 {doctor.languages.map((lang, index) => (
-                  <SpecialtyTag key={index}>{lang.language_name || lang.name} ({lang.proficiency_level || lang.level})</SpecialtyTag>
+                  <SpecialtyTag key={index}>
+                    <p>{lang.languageName}</p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {lang.proficiencyLevel}
+                    </p>
+                  </SpecialtyTag>
                 ))}
               </SpecialtiesList>
             </SpecialtiesCard>
           )}
 
-          {/* Quick Actions moved into header */}
+          {/* Awards */}
+          {doctor?.awards && doctor.awards.length > 0 && (
+            <SpecialtiesCard>
+              <SectionTitle>{t('doctorProfile.sections.awards')}</SectionTitle>
+              <SpecialtiesList>
+                {doctor.awards.map((award, index) => (
+                  <SpecialtyTag key={index}>
+                    <p>{award.awardName}</p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {award.dateAwarded}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      Awarded by: {award.issuingOrganization}
+                    </p>
+                  </SpecialtyTag>
+                ))}
+              </SpecialtiesList>
+            </SpecialtiesCard>
+          )}
+
         </Sidebar>
       </ProfileGrid>
 

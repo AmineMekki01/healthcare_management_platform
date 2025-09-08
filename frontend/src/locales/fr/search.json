@@ -1,0 +1,58 @@
+{
+  "header": {
+    "title": "Trouvez Votre Médecin",
+    "subtitle": "Recherchez des professionnels de santé par nom, spécialité, localisation, ou décrivez vos symptômes pour des recommandations IA"
+  },
+  "placeholders": {
+    "searchByName": "Rechercher par nom...",
+    "searchBySpecialty": "Rechercher par spécialité...",
+    "searchByLocation": "Rechercher par localisation...",
+    "describeSymptoms": "Décrivez vos symptômes pour des recommandations de médecins par IA..."
+  },
+  "buttons": {
+    "analyzeSymptoms": "Analyser les Symptômes",
+    "analyzing": "Analyse en cours...",
+    "clearAll": "Tout Effacer"
+  },
+  "suggestions": {
+    "title": "Préoccupations de Santé Populaires",
+    "generalCheckup": {
+      "title": "Bilan de Santé Général",
+      "description": "Surveillance de santé régulière et soins préventifs"
+    },
+    "heartProblems": {
+      "title": "Problèmes Cardiaques",
+      "description": "Douleur thoracique, rythme cardiaque irrégulier, problèmes de tension"
+    },
+    "skinIssues": {
+      "title": "Problèmes de Peau",
+      "description": "Éruptions cutanées, acné, grains de beauté, affections cutanées"
+    },
+    "mentalHealth": {
+      "title": "Santé Mentale",
+      "description": "Anxiété, dépression, gestion du stress"
+    }
+  },
+  "results": {
+    "title": "Résultats de Recherche",
+    "doctorsFound_one": "{{count}} médecin trouvé",
+    "doctorsFound_other": "{{count}} médecins trouvés",
+    "noDoctorsTitle": "Aucun médecin trouvé",
+    "noDoctorsMessage": "Essayez d'ajuster vos critères de recherche ou votre localisation"
+  },
+  "messages": {
+    "locationError": "Impossible d'obtenir votre position. Veuillez saisir manuellement.",
+    "noResults": "Aucun médecin trouvé correspondant à vos critères.",
+    "searchError": "Une erreur s'est produite lors de la recherche. Veuillez réessayer."
+  },
+  "specialties": {
+    "cardiology": "Cardiologie",
+    "dermatology": "Dermatologie",
+    "pediatrics": "Pédiatrie",
+    "orthopedics": "Orthopédie",
+    "neurology": "Neurologie",
+    "psychiatry": "Psychiatrie",
+    "internalMedicine": "Médecine Interne",
+    "surgery": "Chirurgie"
+  }
+}

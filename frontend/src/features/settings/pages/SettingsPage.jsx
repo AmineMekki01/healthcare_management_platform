@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { useSettingsNavigation } from '../hooks/useSettingsNavigation';
 import SettingsNavigation from '../components/SettingsNavigation';
@@ -16,6 +17,7 @@ import {
 } from '../styles/settingsStyles';
 
 const SettingsPage = () => {
+  const { t } = useTranslation(['settings', 'common']);
   const { userId, userType } = useContext(AuthContext);
   
   const {
@@ -43,8 +45,8 @@ const SettingsPage = () => {
   return (
     <SettingsContainer>
       <SettingsHeader>
-        <SettingsTitle>Settings</SettingsTitle>
-        <SettingsSubtitle>Manage your account preferences and information</SettingsSubtitle>
+        <SettingsTitle>{t('settings:page.title')}</SettingsTitle>
+        <SettingsSubtitle>{t('settings:page.subtitle')}</SettingsSubtitle>
       </SettingsHeader>
 
       <SettingsNavigation

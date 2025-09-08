@@ -1,0 +1,237 @@
+{
+  "specialties": {
+    "generalPractice": "General Practice",
+    "internalMedicine": "Internal Medicine",
+    "pediatrics": "Pediatrics",
+    "cardiology": "Cardiology",
+    "dermatology": "Dermatology",
+    "endocrinology": "Endocrinology",
+    "gastroenterology": "Gastroenterology",
+    "hematology": "Hematology",
+    "infectiousDisease": "Infectious Disease",
+    "nephrology": "Nephrology",
+    "neurology": "Neurology",
+    "oncology": "Oncology",
+    "ophthalmology": "Ophthalmology",
+    "orthopedics": "Orthopedics",
+    "otolaryngology": "Otolaryngology",
+    "pathology": "Pathology",
+    "psychiatry": "Psychiatry",
+    "pulmonology": "Pulmonology",
+    "radiology": "Radiology",
+    "rheumatology": "Rheumatology",
+    "surgery": "Surgery",
+    "urology": "Urology",
+    "emergencyMedicine": "Emergency Medicine",
+    "familyMedicine": "Family Medicine",
+    "anesthesiology": "Anesthesiology",
+    "obstetricsGynecology": "Obstetrics and Gynecology",
+    "physicalMedicine": "Physical Medicine",
+    "plasticSurgery": "Plastic Surgery",
+    "sportsMedicine": "Sports Medicine"
+  },
+  "terms": {
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "appointment": "Appointment",
+    "diagnosis": "Diagnosis",
+    "treatment": "Treatment",
+    "prescription": "Prescription",
+    "medication": "Medication",
+    "dosage": "Dosage",
+    "symptoms": "Symptoms",
+    "medicalHistory": "Medical History",
+    "allergies": "Allergies",
+    "bloodPressure": "Blood Pressure",
+    "heartRate": "Heart Rate",
+    "temperature": "Temperature",
+    "weight": "Weight",
+    "height": "Height",
+    "bmi": "BMI",
+    "labResults": "Lab Results",
+    "xray": "X-Ray",
+    "mri": "MRI",
+    "ctScan": "CT Scan",
+    "ultrasound": "Ultrasound",
+    "bloodTest": "Blood Test",
+    "urineTest": "Urine Test",
+    "vaccination": "Vaccination",
+    "surgery": "Surgery",
+    "consultation": "Consultation",
+    "followUp": "Follow-up",
+    "referral": "Referral",
+    "insurance": "Insurance",
+    "copay": "Co-pay",
+    "deductible": "Deductible",
+    "emergencyContact": "Emergency Contact",
+    "nextOfKin": "Next of Kin",
+    "medicalRecord": "Medical Record",
+    "patientId": "Patient ID",
+    "doctorId": "Doctor ID",
+    "appointmentId": "Appointment ID",
+    "medicalLicense": "Medical License",
+    "hospitalAffiliation": "Hospital Affiliation",
+    "clinicLocation": "Clinic Location"
+  },
+  "documentTypes": {
+    "labReport": "Lab Report",
+    "imagingStudy": "Imaging Study",
+    "prescription": "Prescription",
+    "dischargeSummary": "Discharge Summary",
+    "operativeReport": "Operative Report",
+    "consultationNote": "Consultation Note",
+    "progressNote": "Progress Note",
+    "vaccinationRecord": "Vaccination Record",
+    "insuranceCard": "Insurance Card",
+    "referralLetter": "Referral Letter",
+    "medicalClearance": "Medical Clearance",
+    "pathologyReport": "Pathology Report",
+    "radiologyReport": "Radiology Report",
+    "ecg": "ECG/EKG",
+    "echocardiogram": "Echocardiogram",
+    "stressTest": "Stress Test",
+    "allergyTest": "Allergy Test",
+    "biopsyReport": "Biopsy Report",
+    "geneticTest": "Genetic Test",
+    "mentalHealthAssessment": "Mental Health Assessment"
+  },
+  "categories": {
+    "labResults": {
+      "label": "Lab Results",
+      "description": "Laboratory test results and analysis"
+    },
+    "ctScan": {
+      "label": "CT Scan",
+      "description": "Computed tomography imaging"
+    },
+    "xRay": {
+      "label": "X-Ray",
+      "description": "X-ray imaging and radiographs"
+    },
+    "ultrasound": {
+      "label": "Ultrasound",
+      "description": "Ultrasound imaging and sonography"
+    },
+    "mammography": {
+      "label": "Mammography",
+      "description": "Mammography imaging"
+    },
+    "mri": {
+      "label": "MRI",
+      "description": "Magnetic resonance imaging"
+    },
+    "petScan": {
+      "label": "PET Scan",
+      "description": "Positron emission tomography"
+    },
+    "clinicalReports": {
+      "label": "Clinical Reports",
+      "description": "Clinical assessments and reports"
+    },
+    "discharge": {
+      "label": "Discharge",
+      "description": "Discharge summaries and documents"
+    },
+    "other": {
+      "label": "Other",
+      "description": "Other medical documents"
+    }
+  },
+  "bodyParts": {
+    "head": "Head",
+    "neck": "Neck",
+    "chest": "Chest",
+    "abdomen": "Abdomen",
+    "pelvis": "Pelvis",
+    "spine": "Spine",
+    "arm": "Arm",
+    "hand": "Hand",
+    "leg": "Leg",
+    "foot": "Foot",
+    "brain": "Brain",
+    "heart": "Heart",
+    "lungs": "Lungs",
+    "kidney": "Kidney",
+    "liver": "Liver",
+    "knee": "Knee",
+    "shoulder": "Shoulder",
+    "hip": "Hip",
+    "ankle": "Ankle",
+    "wrist": "Wrist",
+    "fullBody": "Full Body",
+    "other": "Other"
+  },
+  "upload": {
+    "title": "Upload Medical Documents",
+    "subtitle": "Securely upload and organize your medical files",
+    "dragDrop": "Drag and drop files here or click to browse",
+    "supportedFormats": "Supported formats: PDF, DOC, DOCX, JPG, PNG, DICOM",
+    "maxFileSize": "Maximum file size: 50MB per file",
+    "selectFiles": "Select Files",
+    "uploading": "Uploading...",
+    "uploadSuccess": "Files uploaded successfully!",
+    "uploadError": "Upload failed. Please try again.",
+    "noFilesSelected": "No files selected",
+    "newFolder": "New Folder",
+    "uploadFile": "Upload File",
+    "noFiles": "No Files or Folders",
+    "uploadFirst": "Upload Your First File"
+  },
+  "uploadAndShare" :{
+      "configuration":"Configuration",
+      "medicalCategory": "Medical Category",
+      "studyDate": "Study Date",
+      "shareWithPatient": "Share With Patient",
+      "uploadAndShareButton": "Upload & Share",
+      "bodyPart": "Body Part",
+      "selectFiles": "Select Files",
+      "chooseFiles": "Choose Files",
+      "autoGeneratedFolder": "Auto Generated Folder",
+      "folderDescription": "Folder Description",
+      "selectedCategory": "Selected Category",
+      "uploading": "Uploading",
+      "successMessage": "Upload and Share successful!"
+  },
+  "shared": {
+    "searchPlaceholder": "Search by user name or file name...",
+    "noSharedFiles": "No Shared Files",
+    "noMatchingFiles": "No Matching Files",
+    "noSharedDescription": "No files or folders have been shared with you yet. When someone shares medical documents with you, they will appear here.",
+    "noMatchingDescription": "No files or folders match your search criteria. Try adjusting your search term."
+  },
+  "labels": {
+    "folder": "Folder",
+    "file": "File",
+    "documents": "Documents",
+    "documentCount": "{{count}} document",
+    "documentCount_plural": "{{count}} documents",
+    "fileCount": "{{count}} file",
+    "fileCount_plural": "{{count}} files",
+    "untitledDocument": "Untitled Document",
+    "doctor": "Dr. {{name}}",
+    "viewDocuments": "View Documents",
+    "close": "Close",
+    "downloadFolder": "Download entire folder"
+  },
+  "errors": {
+    "failedToLoadPatients": "Failed to load patients",
+    "selectCategoryAndFiles": "Please select category and files to upload",
+    "selectPatientToShare": "Please select a patient to share with"
+  },
+  "header": {
+    "title": "Medical Documents",
+    "subtitle": "Manage, share, and organize your medical files",
+    "tabs": {
+      "myDocs": "My Docs",
+      "myDocsDescription": "Personal documents (not used by Chatbot)",
+      "medicalRecords": "Medical Records",
+      "medicalRecordsDescription": "Clinical documents organized by category",
+      "uploadShare": "Upload & Share",
+      "uploadShareDescription": "Upload files and share with patients",
+      "sharedWithMe": "Shared with Me",
+      "sharedWithMeDescription": "Documents shared by colleagues",
+      "iSharedWith": "I Shared With",
+      "iSharedWithDescription": "Documents I've shared with others"
+    }
+  }
+}

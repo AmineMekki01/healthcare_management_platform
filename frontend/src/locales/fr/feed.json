@@ -1,0 +1,107 @@
+{
+  "title": "Flux de Connaissances Médicales",
+  "search": {
+    "label": "Rechercher des Articles",
+    "placeholder": "Rechercher par titre, contenu ou mots-clés..."
+  },
+  "filter": {
+    "label": "Filtrer par Spécialité",
+    "placeholder": "Toutes les Spécialités"
+  },
+  "loading": "Chargement des articles...",
+  "noPosts": "Aucun article trouvé",
+  "error": {
+    "message": "Erreur lors du chargement des articles : {{error}}"
+  },
+  "post": {
+    "viewFull": "Voir l'Article Complet",
+    "showMore": "Voir Plus",
+    "showLess": "Voir Moins",
+    "likesCount": "{{count}} J'aime",
+    "commentsCount": "{{count}} Commentaires",
+    "like": "J'aime",
+    "unlike": "Je n'aime plus",
+    "comments": "Commentaires",
+    "readingTime": "{{minutes}} min de lecture",
+    "publishedOn": "Publié le {{date}}",
+    "lastUpdated": "Dernière mise à jour {{date}}",
+    "author": "Par {{name}}",
+    "tags": "Étiquettes",
+    "share": "Partager",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet article ?",
+    "deleteSuccess": "Article supprimé avec succès",
+    "deleteError": "Erreur lors de la suppression de l'article"
+  },
+  "comments": {
+    "title": "Commentaires",
+    "placeholder": "Écrire un commentaire...",
+    "submit": "Publier le Commentaire",
+    "submitting": "Publication...",
+    "noComments": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
+    "loadMore": "Charger Plus de Commentaires",
+    "reply": "Répondre",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+    "loginRequired": "Veuillez vous connecter pour commenter",
+    "error": "Erreur lors de la publication du commentaire. Veuillez réessayer."
+  },
+  "create": {
+    "title": "Créer un Nouvel Article",
+    "titleLabel": "Titre de l'Article",
+    "titlePlaceholder": "Entrez le titre de l'article...",
+    "contentLabel": "Contenu",
+    "contentPlaceholder": "Rédigez le contenu de votre article...",
+    "tagsLabel": "Étiquettes",
+    "tagsExtraLabel": "Appuyez sur Entrée pour ajouter",
+    "tagsPlaceholder": "Ajouter des étiquettes (séparées par des virgules)...",
+    "categoryLabel": "Catégorie",
+    "categoryPlaceholder": "Sélectionner une catégorie...",
+    "imageLabel": "Image à la Une",
+    "imageUpload": "Télécharger une Image",
+    "publish": "Publier l'Article",
+    "saveDraft": "Enregistrer comme Brouillon",
+    "preview": "Aperçu",
+    "publishing": "Publication...",
+    "success": "Article publié avec succès !",
+    "error": "Erreur lors de la publication de l'article. Veuillez réessayer.",
+    "validation": {
+      "titleRequired": "Le titre est requis",
+      "contentRequired": "Le contenu est requis",
+      "titleMinLength": "Le titre doit contenir au moins 5 caractères",
+      "contentMinLength": "Le contenu doit contenir au moins 50 caractères"
+    }
+  },
+  "edit": {
+    "title": "Modifier l'Article",
+    "update": "Mettre à Jour l'Article",
+    "updating": "Mise à jour...",
+    "success": "Article mis à jour avec succès !",
+    "error": "Erreur lors de la mise à jour de l'article. Veuillez réessayer.",
+    "unsavedChanges": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir partir ?"
+  },
+  "doctorPosts": {
+    "title": "Vos Articles Médicaux",
+    "searchLabel": "Rechercher Vos Articles",
+    "searchPlaceholder": "Rechercher par titre, contenu, spécialité ou mots-clés...",
+    "noResultsFound": "Aucun article trouvé pour \"{{query}}\"",
+    "oneResultFound": "1 article trouvé correspondant à \"{{query}}\"",
+    "multipleResultsFound": "{{count}} articles trouvés correspondant à \"{{query}}\"",
+    "view": "Voir",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet article ?",
+    "showMore": "Voir Plus",
+    "showLess": "Voir Moins",
+    "likesCount": "{{count}} J'aime",
+    "commentsCount": "{{count}} Commentaires",
+    "noPostsFoundTitle": "Aucun article trouvé",
+    "noPostsFoundMessage": "Aucun article ne correspond à votre recherche pour \"{{query}}\". Essayez des mots-clés différents ou effacez la recherche pour voir tous les articles.",
+    "noPostsYetTitle": "Aucun article pour le moment",
+    "noPostsYetMessage": "Vous n'avez pas encore créé d'articles. Commencez à partager vos connaissances médicales !"
+  }
+}

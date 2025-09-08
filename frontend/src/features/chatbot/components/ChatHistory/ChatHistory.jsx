@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import ChatList from './ChatList';
 import { AuthContext } from '../../../auth/context/AuthContext';
 import { chatService } from '../../services';
@@ -79,16 +80,17 @@ const LoadingMessage = styled.div`
 `;
 
 const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScreen, setView }) => {
+  const { t } = useTranslation('chatbot');
   const [isLoading, setIsLoading] = useState(true);
   const { userId } = useContext(AuthContext);
   
   const onClickCreateChat = async () => {
     if (!userId || userId === 'null' || userId === null || userId === undefined) {
-      alert('Please log in to create a chat');
+      alert(t('chatHistory.loginRequired'));
       return;
     }
 
-    const chatName = prompt("Please enter the name of the chat : ", "New Chat");
+    const chatName = prompt(t('chatHistory.enterChatName'), t('chatHistory.defaultChatName'));
     if (chatName) {
       try {
         const newChat = await chatService.createChat(userId, chatName);
@@ -103,7 +105,7 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
         handleSelectChat(newChat.id);
       } catch (error) {
         console.error('Error creating Chat:', error);
-        alert('Failed to create chat. Please try again.');
+        alert(t('chatHistory.createChatError'));
       }
     }
   };
@@ -153,18 +155,18 @@ const ChatHistory = ({ chats, setChats, onChatSelect, selectedChatId, isSmallScr
   return (
     <ChatHist>
       <ChatHistoryHeader>
-        <ChatHistoryTitle>Chat History</ChatHistoryTitle>
+        <ChatHistoryTitle>{t('chatHistory.title')}</ChatHistoryTitle>
       </ChatHistoryHeader>
       
       {(!userId || userId === 'null') ? (
-        <LoadingMessage>Please log in to view chats</LoadingMessage>
+        <LoadingMessage>{t('chatHistory.loginToView')}</LoadingMessage>
       ) : (
         <>
           <CreateNewChat onClick={onClickCreateChat}>
-            New Chat
+            {t('chatHistory.newChat')}
           </CreateNewChat>
           {isLoading ? (
-            <LoadingMessage>Loading chats...</LoadingMessage>
+            <LoadingMessage>{t('chatHistory.loadingChats')}</LoadingMessage>
           ) : (
             <ChatList 
               chats={chats} 

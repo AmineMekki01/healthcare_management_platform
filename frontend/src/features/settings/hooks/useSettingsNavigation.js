@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const UserIcon = () => (
   <svg fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
@@ -30,30 +31,31 @@ const CalendarIcon = () => (
  * @returns {Object} - Navigation state and utilities
  */
 export const useSettingsNavigation = (userType) => {
+  const { t } = useTranslation('settings');
   const [activeSection, setActiveSection] = useState('personal');
 
   const navigationItems = [
     {
       id: 'personal',
-      label: 'Personal Information',
+      label: t('navigation.personal'),
       icon: <UserIcon />,
       available: true,
     },
     {
       id: 'doctors',
-      label: 'Follow Settings',
+      label: t('navigation.followSettings'),
       icon: <HeartIcon />,
       available: true,
     },
     {
       id: 'availability',
-      label: 'Availability Settings',
+      label: t('navigation.availability'),
       icon: <CalendarIcon />,
       available: userType === 'doctor',
     },
     {
       id: 'additionalDoctorsInfo',
-      label: 'Professional Info',
+      label: t('navigation.professionalInfo'),
       icon: <MedicalIcon />,
       available: userType === 'doctor',
     },
@@ -62,15 +64,15 @@ export const useSettingsNavigation = (userType) => {
   const getSectionTitle = (sectionId) => {
     switch (sectionId) {
       case 'personal':
-        return 'Personal Information';
+        return t('navigation.personal');
       case 'doctors':
-        return 'Doctors I Follow';
+        return t('navigation.followedDoctors');
       case 'additionalDoctorsInfo':
-        return 'Professional Information';
+        return t('navigation.professionalInfo');
       case 'availability':
-        return 'Availability Settings';
+        return t('navigation.availability');
       default:
-        return 'Settings';
+        return t('page.title');
     }
   };
 

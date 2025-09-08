@@ -1,0 +1,92 @@
+{
+  "required": "Ce champ est requis",
+  "email": {
+    "invalid": "Veuillez saisir une adresse email valide",
+    "required": "L'adresse email est requise",
+    "alreadyExists": "Cette adresse email est déjà enregistrée"
+  },
+  "password": {
+    "required": "Le mot de passe est requis",
+    "minLength": "Le mot de passe doit contenir au moins {{min}} caractères",
+    "maxLength": "Le mot de passe ne doit pas dépasser {{max}} caractères",
+    "uppercase": "Le mot de passe doit contenir au moins une lettre majuscule",
+    "lowercase": "Le mot de passe doit contenir au moins une lettre minuscule",
+    "number": "Le mot de passe doit contenir au moins un chiffre",
+    "specialChar": "Le mot de passe doit contenir au moins un caractère spécial",
+    "noMatch": "Les mots de passe ne correspondent pas",
+    "weak": "Le mot de passe est trop faible",
+    "medium": "Force du mot de passe : Moyen",
+    "strong": "Force du mot de passe : Fort"
+  },
+  "username": {
+    "required": "Le nom d'utilisateur est requis",
+    "minLength": "Le nom d'utilisateur doit contenir au moins {{min}} caractères",
+    "maxLength": "Le nom d'utilisateur ne doit pas dépasser {{max}} caractères",
+    "alphanumeric": "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores",
+    "alreadyExists": "Ce nom d'utilisateur est déjà pris",
+    "available": "Le nom d'utilisateur est disponible"
+  },
+  "name": {
+    "firstName": "Le prénom est requis",
+    "lastName": "Le nom de famille est requis",
+    "minLength": "Le nom doit contenir au moins {{min}} caractères",
+    "maxLength": "Le nom ne doit pas dépasser {{max}} caractères",
+    "lettersOnly": "Le nom ne peut contenir que des lettres et des espaces"
+  },
+  "phone": {
+    "required": "Le numéro de téléphone est requis",
+    "invalid": "Veuillez saisir un numéro de téléphone valide",
+    "format": "Format du numéro : +33 1 23 45 67 89"
+  },
+  "date": {
+    "required": "La date est requise",
+    "invalid": "Veuillez saisir une date valide",
+    "future": "La date ne peut pas être dans le futur",
+    "past": "La date ne peut pas être dans le passé",
+    "minAge": "Vous devez avoir au moins {{age}} ans",
+    "maxAge": "L'âge ne peut pas dépasser {{age}} ans"
+  },
+  "medical": {
+    "licenseRequired": "Le numéro de licence médicale est requis",
+    "licenseInvalid": "Veuillez saisir un numéro de licence médicale valide",
+    "specialtyRequired": "La spécialité médicale est requise",
+    "experienceRequired": "Les années d'expérience sont requises",
+    "experienceInvalid": "Veuillez saisir un nombre d'années valide",
+    "experienceRange": "L'expérience doit être entre {{min}} et {{max}} années"
+  },
+  "address": {
+    "required": "L'adresse est requise",
+    "cityRequired": "La ville est requise",
+    "stateRequired": "L'état/province est requis",
+    "zipRequired": "Le code postal est requis",
+    "zipInvalid": "Veuillez saisir un code postal valide",
+    "countryRequired": "Le pays est requis"
+  },
+  "coordinates": {
+    "latitudeRequired": "La latitude est requise",
+    "longitudeRequired": "La longitude est requise",
+    "latitudeInvalid": "La latitude doit être entre -90 et 90",
+    "longitudeInvalid": "La longitude doit être entre -180 et 180"
+  },
+  "file": {
+    "required": "Veuillez sélectionner un fichier",
+    "tooLarge": "La taille du fichier ne doit pas dépasser {{maxSize}}",
+    "invalidType": "Type de fichier invalide. Types autorisés : {{allowedTypes}}",
+    "uploadFailed": "Échec du téléchargement. Veuillez réessayer."
+  },
+  "appointment": {
+    "dateRequired": "La date du rendez-vous est requise",
+    "timeRequired": "L'heure du rendez-vous est requise",
+    "reasonRequired": "Le motif de la visite est requis",
+    "doctorRequired": "Veuillez sélectionner un médecin",
+    "patientRequired": "Veuillez sélectionner un patient"
+  },
+  "general": {
+    "selectOption": "Veuillez sélectionner une option",
+    "acceptTerms": "Vous devez accepter les conditions générales",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+    "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import feedService from '../services/feedService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
@@ -30,6 +31,7 @@ const SaveButton = styled.button`
 `;
 
 const EditPost = () => {
+  const { t } = useTranslation('feed');
   const { postId } = useParams();
   const { userId, userType } = useContext(AuthContext);
   const [postContent, setPostContent] = useState('');
@@ -67,12 +69,12 @@ const EditPost = () => {
 
   return (
     <CreatePostContainer>
-      <h1>Edit Post</h1>
+      <h1>{t('edit.title')}</h1>
       <TitleInput
         type="text"
         value={postTitle}
         onChange={(e) => setPostTitle(e.target.value)}
-        placeholder="Post Title"
+        placeholder={t('create.titlePlaceholder')}
       />
       <ReactQuill
         value={postContent}
@@ -97,9 +99,9 @@ const EditPost = () => {
           'link',
           'image',
         ]}
-        placeholder="Post Content"
+        placeholder={t('create.contentPlaceholder')}
       />
-      <SaveButton onClick={handleSave}>Save Changes</SaveButton>
+      <SaveButton onClick={handleSave}>{t('edit.update')}</SaveButton>
     </CreatePostContainer>
   );
 };

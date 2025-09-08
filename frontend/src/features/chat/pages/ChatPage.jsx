@@ -34,7 +34,6 @@ const ChatPage = () => {
             )}
             
             {selectedChatId ? (
-                console.log('Rendering ChatComponent with selectedChatId:', selectedChatId) ||
               <ChatComponent 
                 chatId={selectedChatId}
                 isSidebarVisible={isSidebarVisible}

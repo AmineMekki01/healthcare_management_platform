@@ -3,12 +3,14 @@ import { createEvent } from 'ics';
 import { Typography } from '@mui/material';
 import { Share, GetApp, Person, Cancel as CancelIcon, AccessTime, CalendarToday, MedicalServices } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer, StatusChip, CreateReportButton } from '../styles/appointmentStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import appointmentService from '../services/appointmentService';
 
 export default function AppointmentCard({ reservation, userType, onAppointmentUpdate }) {
   console.log("reservation : ", reservation)
+  const { t } = useTranslation('appointments');
   const navigate = useNavigate();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -30,9 +32,9 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
     const event = createEvent({
       start: [start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes()],
       end: [end.getFullYear(), end.getMonth() + 1, end.getDate(), end.getHours(), end.getMinutes()],
-      title: `Appointment with ${reservation.doctorFirstName} ${reservation.doctorLastName}`,
-      description: `Specialty: ${reservation.specialty}`,
-      location: 'Online Consultation',
+      title: t('card.appointmentWith', { doctorName: `${reservation.doctorFirstName} ${reservation.doctorLastName}` }),
+      description: t('card.specialty', { specialty: reservation.specialty }),
+      location: t('card.onlineConsultation'),
     });
 
     if (event.error) {
@@ -51,14 +53,18 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
 
   const shareAppointment = () => {
     const shareData = {
-      title: 'Appointment Details',
-      text: `Appointment with ${reservation.doctorFirstName} ${reservation.doctorLastName} on ${formatDate(reservation.appointmentStart)} at ${formatTime(reservation.appointmentStart)}`,
+      title: t('card.appointmentDetails'),
+      text: t('card.shareText', {
+        doctorName: `${reservation.doctorFirstName} ${reservation.doctorLastName}`,
+        date: formatDate(reservation.appointmentStart),
+        time: formatTime(reservation.appointmentStart)
+      }),
     };
 
     if (navigator.share) {
       navigator.share(shareData);
     } else {
-      alert('Sharing is not supported on this browser');
+      alert(t('card.sharingNotSupported'));
     }
   };
 
@@ -70,7 +76,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
         reason
       );
 
-      alert('Appointment canceled successfully.');
+      alert(t('card.cancelSuccess'));
       setShowCancelModal(false);
       
       if (onAppointmentUpdate) {
@@ -79,7 +85,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
 
     } catch (error) {
       console.error('Error canceling appointment:', error);
-      alert('An error occurred while canceling the appointment.');
+      alert(t('card.cancelError'));
     }
   };
   const getAppointmentStatus = () => {
@@ -89,9 +95,9 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
   };
 
   const getStatusText = () => {
-    if (isCanceledAppointment) return 'Canceled';
-    if (isPastAppointment) return 'Completed';
-    return 'Upcoming';
+    if (isCanceledAppointment) return t('card.status.canceled');
+    if (isPastAppointment) return t('card.status.completed');
+    return t('card.status.upcoming');
   };
 
   return (
@@ -118,14 +124,14 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
         )}
         {userType === 'doctor' && (
           <Typography variant="body2">
-            <Person /> Patient Age: {reservation.age}
+            <Person /> {t('card.patientAge', { age: reservation.age })}
           </Typography>
         )}
         
       </CardBody>
       <CardFooter>
         <IconButton onClick={() => navigate(userType === 'patient' ? `/doctor-profile/${reservation.doctorId}` : `/patient-profile/${reservation.patientId}`)}>
-          View Profile
+          {t('card.viewProfile')}
         </IconButton>
         <IconButton onClick={createICSFile}>
           <GetApp />
@@ -138,7 +144,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
       {!isPastAppointment && !isCanceledAppointment && (
         <CancelButtonContainer>
           <CancelButton onClick={() => setShowCancelModal(true)}>
-            <CancelIcon /> Cancel
+            <CancelIcon /> {t('card.cancel')}
           </CancelButton>
           <CancelAppointmentModal
             open={showCancelModal}
@@ -150,7 +156,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
       
       {userType === 'doctor' && !reservation.reportExists && !reservation.isDoctorPatient && isPastAppointment && (
         <CreateReportButton onClick={() => navigate(`/create-medical-report/${reservation.appointmentId}`)}>
-          Create Report
+          {t('card.createReport')}
         </CreateReportButton>
       )}
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffCard from './StaffCard';
 
@@ -224,6 +225,12 @@ const PaginationButton = styled.button`
   }
 `;
 
+const PaginationInfo = styled.span`
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 12px;
+`;
+
 const BulkActions = styled.div`
   display: flex;
   gap: 12px;
@@ -271,10 +278,12 @@ const StaffList = ({
   showSearch = true,
   showFilters = true,
   showBulkActions = true,
+  showPagination = true,
   compact = false,
-  title = "Staff Members",
+  title,
   className 
 }) => {
+  const { t } = useTranslation('staff');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -360,23 +369,6 @@ const StaffList = ({
     }
   };
 
-  const handleBulkSelect = (staffId, selected) => {
-    const newSelected = new Set(selectedStaff);
-    if (selected) {
-      newSelected.add(staffId);
-    } else {
-      newSelected.delete(staffId);
-    }
-    setSelectedStaff(newSelected);
-  };
-
-  const handleSelectAll = () => {
-    if (selectedStaff.size === paginatedStaff.length) {
-      setSelectedStaff(new Set());
-    } else {
-      setSelectedStaff(new Set(paginatedStaff.map(s => s.id)));
-    }
-  };
 
   const handleBulkAction = (action) => {
     if (onBulkAction && selectedStaff.size > 0) {
@@ -397,32 +389,32 @@ const StaffList = ({
     <ListContainer className={className}>
       <ListHeader>
         <HeaderTop>
-          <ListTitle>{title}</ListTitle>
+          <ListTitle>{title || t('list.title')}</ListTitle>
           <ListActions>
             <ViewToggle>
               <ViewButton 
                 $active={view === 'grid'} 
                 onClick={() => setView('grid')}
               >
-                Grid
+                {t('list.views.grid')}
               </ViewButton>
               <ViewButton 
                 $active={view === 'list'} 
                 onClick={() => setView('list')}
               >
-                List
+                {t('list.views.list')}
               </ViewButton>
               {!compact && (
                 <ViewButton 
                   $active={view === 'compact'} 
                   onClick={() => setView('compact')}
                 >
-                  Compact
+                  {t('list.views.compact')}
                 </ViewButton>
               )}
             </ViewToggle>
             <ActionButton onClick={resetFilters}>
-              Clear Filters
+              {t('actions.clearFilters')}
             </ActionButton>
           </ListActions>
         </HeaderTop>
@@ -431,7 +423,7 @@ const StaffList = ({
           <SearchAndFilters>
             <SearchInput
               type="text"
-              placeholder="Search staff by name, email, phone, or specialization..."
+              placeholder={t('list.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -442,10 +434,10 @@ const StaffList = ({
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
                 >
-                  <option value="">All Roles</option>
+                  <option value="">{t('list.filters.allRoles')}</option>
                   {uniqueRoles.map(role => (
                     <option key={role} value={role}>
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                      {t(`roles.${role}`, role.charAt(0).toUpperCase() + role.slice(1))}
                     </option>
                   ))}
                 </FilterSelect>
@@ -454,10 +446,10 @@ const StaffList = ({
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                  <option value="">All Status</option>
+                  <option value="">{t('list.filters.allStatus')}</option>
                   {uniqueStatuses.map(status => (
                     <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {t(`status.${status}`, status.charAt(0).toUpperCase() + status.slice(1))}
                     </option>
                   ))}
                 </FilterSelect>
@@ -466,7 +458,7 @@ const StaffList = ({
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
                 >
-                  <option value="">All Departments</option>
+                  <option value="">{t('list.filters.allDepartments')}</option>
                   {uniqueDepartments.map(dept => (
                     <option key={dept} value={dept}>
                       {dept}
@@ -482,57 +474,57 @@ const StaffList = ({
       <ListBody>
         <ListControls>
           <ResultsInfo>
-            {loading ? 'Loading...' : `${filteredStaff.length} staff members found`}
-            {selectedStaff.size > 0 && ` (${selectedStaff.size} selected)`}
+            {loading ? t('list.loading') : t('list.staffMembersFound', { count: filteredStaff.length })}
+            {selectedStaff.size > 0 && ` (${t('list.selected', { count: selectedStaff.size })})`}
           </ResultsInfo>
           
           <SortSelect
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="name">Sort by Name</option>
-            <option value="role">Sort by Role</option>
-            <option value="department">Sort by Department</option>
-            <option value="experience">Sort by Experience</option>
-            <option value="status">Sort by Status</option>
+            <option value="name">{t('list.sort.name')}</option>
+            <option value="role">{t('list.sort.role')}</option>
+            <option value="department">{t('list.sort.department')}</option>
+            <option value="experience">{t('list.sort.experience')}</option>
+            <option value="status">{t('list.sort.status')}</option>
           </SortSelect>
         </ListControls>
 
         {showBulkActions && selectedStaff.size > 0 && (
           <BulkActions $visible={selectedStaff.size > 0}>
             <span style={{ fontSize: '14px', color: '#64748b' }}>
-              {selectedStaff.size} selected
+              {t('list.selected', { count: selectedStaff.size })}
             </span>
             <BulkActionButton onClick={() => handleBulkAction('activate')}>
-              Activate
+              {t('list.bulkActions.activate')}
             </BulkActionButton>
             <BulkActionButton onClick={() => handleBulkAction('deactivate')}>
-              Deactivate
+              {t('list.bulkActions.deactivate')}
             </BulkActionButton>
             <BulkActionButton onClick={() => handleBulkAction('export')}>
-              Export
+              {t('list.bulkActions.export')}
             </BulkActionButton>
             <BulkActionButton 
               className="danger" 
               onClick={() => handleBulkAction('delete')}
             >
-              Delete
+              {t('list.bulkActions.delete')}
             </BulkActionButton>
           </BulkActions>
         )}
 
         {loading && (
-          <LoadingState>Loading staff members...</LoadingState>
+          <LoadingState>{t('list.loading')}</LoadingState>
         )}
 
         {!loading && filteredStaff.length === 0 && (
           <EmptyState>
             <EmptyIcon>👥</EmptyIcon>
-            <EmptyTitle>No staff members found</EmptyTitle>
+            <EmptyTitle>{t('list.noStaffFound')}</EmptyTitle>
             <EmptyDescription>
               {staff.length === 0 
-                ? "No staff members have been added yet." 
-                : "Try adjusting your search terms or filters."
+                ? t('list.noStaffAdded')
+                : t('list.adjustFilters')
               }
             </EmptyDescription>
           </EmptyState>
@@ -560,45 +552,24 @@ const StaffList = ({
           </StaffGrid>
         )}
 
-        {!loading && totalPages > 1 && (
+        {showPagination && totalPages > 1 && (
           <Pagination>
-            <PaginationButton
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            <PaginationButton 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
-              Previous
+              {t('list.pagination.previous')}
             </PaginationButton>
             
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const page = i + 1;
-              return (
-                <PaginationButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </PaginationButton>
-              );
-            })}
+            <PaginationInfo>
+              {t('list.pagination.pageInfo', { current: currentPage, total: totalPages })}
+            </PaginationInfo>
             
-            {totalPages > 5 && (
-              <>
-                <span style={{ color: '#64748b' }}>...</span>
-                <PaginationButton
-                  $active={currentPage === totalPages}
-                  onClick={() => setCurrentPage(totalPages)}
-                >
-                  {totalPages}
-                </PaginationButton>
-              </>
-            )}
-            
-            <PaginationButton
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            <PaginationButton 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
             >
-              Next
+              {t('list.pagination.next')}
             </PaginationButton>
           </Pagination>
         )}

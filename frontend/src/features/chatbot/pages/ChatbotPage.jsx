@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 import ChatInterface from '../components/ChatInterface/ChatInterface';
 import {FileContainer, ChatContainer} from '../styles/ChatbotPage.styles';
@@ -10,6 +11,7 @@ import { documentService } from '../services';
 function ChatbotPage() {
   const { chatId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation(['chatbot']);
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState(null);
   const [currentChatId, setCurrentChatId] = useState(chatId || null);
@@ -40,7 +42,7 @@ function ChatbotPage() {
       console.log('[UPLOAD] Documents fetched:', documentsData);
       setDocuments(documentsData);
     } catch (error) {
-      setError('There was an error uploading the file!');
+      setError(t('chatbot:errors.uploadError'));
       console.error('There was an error!', error);
     }
   };
@@ -53,10 +55,10 @@ function ChatbotPage() {
       const documentsData = await documentService.getChatDocuments(chatId, userId);
       setDocuments(documentsData);
     } catch (error) {
-      setError('Error fetching documents for the selected chat.');
+      setError(t('chatbot:errors.fetchDocumentsError'));
       console.error('Error fetching documents:', error);
     }
-  }, [navigate, userId]);
+  }, [navigate, userId, t]);
 
   const toggleChatHistory = () => {
     if (isSmallScreen) {
@@ -87,7 +89,7 @@ function ChatbotPage() {
   }, [view]);
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div>{t('chatbot:common.error')}: {error}</div>;
   }
 
 return (
