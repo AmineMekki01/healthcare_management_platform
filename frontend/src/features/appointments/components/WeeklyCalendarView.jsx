@@ -39,7 +39,7 @@ const WeeklyCalendarView = ({
   activeMode,
   onAppointmentUpdate 
 }) => {
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
   const navigate = useNavigate();
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -49,6 +49,8 @@ const WeeklyCalendarView = ({
     showPassed: true,
     showCanceled: true
   });
+
+  const isRTL = i18n.language === 'ar';
 
   function getStartOfWeek(date) {
     const d = new Date(date);
@@ -144,9 +146,14 @@ const WeeklyCalendarView = ({
     setCurrentWeekStart(getStartOfWeek(new Date()));
   };
 
+  const getMonthName = (date) => {
+    const monthIndex = date.getMonth();
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    return t(`calendar.months.${monthKeys[monthIndex]}`);
+  };
+
   const formatDate = (date) => {
-    const options = { month: 'short', day: 'numeric' };
-    return date.toLocaleDateString(undefined, options);
+    return `${getMonthName(date)} ${date.getDate()}`;
   };
 
   const formatWeekRange = () => {
@@ -274,11 +281,11 @@ const WeeklyCalendarView = ({
         <CalendarHeader>
           <WeekNavigator>
             <NavButton onClick={goToPreviousWeek}>
-              <ChevronLeft />
+              {isRTL ? <ChevronRight /> : <ChevronLeft />}
             </NavButton>
             <CurrentWeekLabel>{formatWeekRange()}</CurrentWeekLabel>
             <NavButton onClick={goToNextWeek}>
-              <ChevronRight />
+              {isRTL ? <ChevronLeft /> : <ChevronRight />}
             </NavButton>
           </WeekNavigator>
           <TodayButton onClick={goToToday}>
