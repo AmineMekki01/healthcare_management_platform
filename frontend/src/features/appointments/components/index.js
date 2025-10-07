@@ -4,3 +4,6 @@ export { default as AppointmentFilter } from './AppointmentFilter';
 export { default as AppointmentTabs } from './AppointmentTabs';
 export { default as AppointmentGrid } from './AppointmentGrid';
 export { default as CancelAppointmentModal } from './CancelAppointmentModal';
+export { default as ViewToggle } from './ViewToggle';
+export { default as WeeklyCalendarView } from './WeeklyCalendarView';
+export { default as CalendarViewFilter } from './CalendarViewFilter';

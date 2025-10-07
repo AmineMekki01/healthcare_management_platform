@@ -154,5 +154,25 @@
     "showingAppointments": "Showing {{filtered}} of {{total}} appointments",
     "noAppointmentsFound": "No {{tab}} appointments found",
     "noMatchingAppointments": "No appointments match your search criteria"
+  },
+  "calendar": {
+    "today": "Today",
+    "gridView": "Grid View",
+    "calendarView": "Calendar View",
+    "noAppointments": "No appointments",
+    "filters": {
+      "upcoming": "Upcoming",
+      "passed": "Passed",
+      "canceled": "Canceled"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   }
 }

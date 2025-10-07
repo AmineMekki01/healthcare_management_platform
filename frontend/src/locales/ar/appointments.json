@@ -154,5 +154,25 @@
     "showingAppointments": "عرض {{filtered}} من {{total}} مواعيد",
     "noAppointmentsFound": "لا توجد مواعيد {{tab}}",
     "noMatchingAppointments": "لا توجد مواعيد تطابق معايير البحث الخاصة بك"
+  },
+  "calendar": {
+    "today": "اليوم",
+    "gridView": "عرض الشبكة",
+    "calendarView": "عرض التقويم",
+    "noAppointments": "لا توجد مواعيد",
+    "filters": {
+      "upcoming": "القادمة",
+      "passed": "السابقة",
+      "canceled": "الملغاة"
+    },
+    "days": {
+      "mon": "الإثنين",
+      "tue": "الثلاثاء",
+      "wed": "الأربعاء",
+      "thu": "الخميس",
+      "fri": "الجمعة",
+      "sat": "السبت",
+      "sun": "الأحد"
+    }
   }
 }

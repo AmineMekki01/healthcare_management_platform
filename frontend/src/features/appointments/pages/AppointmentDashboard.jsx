@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
@@ -9,7 +9,9 @@ import {
   AppointmentStats,
   AppointmentFilter,
   AppointmentTabs,
-  AppointmentGrid
+  AppointmentGrid,
+  ViewToggle,
+  WeeklyCalendarView
 } from '../components';
 import { Title, Container } from '../styles/appointmentStyles';
 
@@ -18,6 +20,7 @@ const AppointmentDashboard = () => {
   const { userType, userId } = useContext(AuthContext);
   const { activeMode, switchToMode, canSwitchModes } = useRoleMode();
   const location = useLocation();
+  const [view, setView] = useState('grid');
 
   useEffect(() => {
     if (location.pathname === '/patient-appointments' && canSwitchModes) {
@@ -45,6 +48,15 @@ const AppointmentDashboard = () => {
     tabs,
     tabTitle
   } = useAppointmentFilters(doctorReservations, patientReservations, userType, activeMode);
+
+  const allAppointments = useMemo(() => {
+    const reservations = activeMode === 'patient' ? patientReservations : doctorReservations;
+    return [
+      ...(reservations.active || []),
+      ...(reservations.passed || []),
+      ...(reservations.canceled || [])
+    ];
+  }, [doctorReservations, patientReservations, activeMode]);
 
   if (loading) {
     return (
@@ -82,26 +94,42 @@ const AppointmentDashboard = () => {
         activeMode={activeMode}
       />
 
-      <AppointmentFilter
-        filterText={filterText}
-        onFilterChange={setFilterText}
+      <ViewToggle 
+        view={view} 
+        onViewChange={setView} 
       />
 
-      <AppointmentTabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {view === 'grid' ? (
+        <>
+          <AppointmentFilter
+            filterText={filterText}
+            onFilterChange={setFilterText}
+          />
 
-      <AppointmentGrid
-        appointments={currentAppointments}
-        filteredAppointments={filteredAppointments}
-        userType={userType}
-        activeMode={activeMode}
-        tabTitle={tabTitle}
-        activeTab={activeTab}
-        onAppointmentUpdate={refreshAppointments}
-      />
+          <AppointmentTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+
+          <AppointmentGrid
+            appointments={currentAppointments}
+            filteredAppointments={filteredAppointments}
+            userType={userType}
+            activeMode={activeMode}
+            tabTitle={tabTitle}
+            activeTab={activeTab}
+            onAppointmentUpdate={refreshAppointments}
+          />
+        </>
+      ) : (
+        <WeeklyCalendarView
+          appointments={allAppointments}
+          userType={userType}
+          activeMode={activeMode}
+          onAppointmentUpdate={refreshAppointments}
+        />
+      )}
     </Container>
   );
 };

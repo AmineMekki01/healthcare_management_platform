@@ -154,5 +154,25 @@
     "showingAppointments": "Affichage de {{filtered}} sur {{total}} rendez-vous",
     "noAppointmentsFound": "Aucun rendez-vous {{tab}} trouvé",
     "noMatchingAppointments": "Aucun rendez-vous ne correspond à vos critères de recherche"
+  },
+  "calendar": {
+    "today": "Aujourd'hui",
+    "gridView": "Vue Grille",
+    "calendarView": "Vue Calendrier",
+    "noAppointments": "Aucun rendez-vous",
+    "filters": {
+      "upcoming": "À venir",
+      "passed": "Passés",
+      "canceled": "Annulés"
+    },
+    "days": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    }
   }
 }
