@@ -11,6 +11,7 @@ import (
 	"healthcare_backend/pkg/middleware"
 	"healthcare_backend/pkg/routes/appointment"
 	"healthcare_backend/pkg/routes/auth"
+	"healthcare_backend/pkg/routes/calendar"
 	"healthcare_backend/pkg/routes/chat"
 	"healthcare_backend/pkg/routes/doctor"
 	"healthcare_backend/pkg/routes/feed"
@@ -84,6 +85,8 @@ func SetupRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.Config) {
 		search.SetupSearchRoutes(protected, db, cfg)
 
 		appointment.SetupAppointmentRoutes(protected, db, cfg)
+
+		calendar.SetupCalendarRoutes(protected, db, cfg)
 
 		chat.SetupChatRoutes(protected, db, cfg, wsClients)
 

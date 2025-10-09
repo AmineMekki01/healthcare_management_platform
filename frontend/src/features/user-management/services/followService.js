@@ -86,11 +86,11 @@ class FollowService {
     }, 'get user following');
   }
 
-  async getFollowStats(doctorId) {
+  async getDoctorFollowersCount(doctorId) {
     return this.handleApiCall(async () => {
-      const response = await this.axiosInstance.get(`${this.apiBaseUrl}/doctor-follow-stats/${doctorId}`);
-      return response;
-    }, 'get follow statistics');
+      const response = await this.axiosInstance.get(`${this.apiBaseUrl}/doctor-follow-count/${doctorId}`);
+      return response.data.followerCount;
+    }, 'get doctor followers count');
   }
 
   async getFollowSuggestions(userId, userType, filters = {}) {

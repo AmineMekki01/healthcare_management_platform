@@ -154,5 +154,119 @@
     "showingAppointments": "Showing {{filtered}} of {{total}} appointments",
     "noAppointmentsFound": "No {{tab}} appointments found",
     "noMatchingAppointments": "No appointments match your search criteria"
+  },
+  "calendar": {
+    "today": "Today",
+    "gridView": "Grid View",
+    "calendarView": "Calendar View",
+    "noAppointments": "No appointments",
+    "filters": {
+      "upcoming": "Upcoming",
+      "passed": "Passed",
+      "canceled": "Canceled"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "eventTypes": {
+      "appointment": "Appointment",
+      "personal": "Personal Event",
+      "blocked": "Blocked Time",
+      "meeting": "Meeting",
+      "conference": "Conference",
+      "break": "Break"
+    },
+    "labels": {
+      "date": "Date",
+      "time": "Time",
+      "doctor": "Doctor",
+      "patient": "Patient",
+      "location": "Location",
+      "description": "Description"
+    },
+    "actions": {
+      "delete": "Delete Event",
+      "confirmDelete": "Yes, Delete",
+      "cancel": "Cancel",
+      "deleting": "Deleting..."
+    },
+    "confirmDelete": {
+      "message": "Are you sure you want to delete this event?",
+      "recurringMessage": "This is a recurring event. Do you want to delete all occurrences?",
+      "recurringPrompt": "This is a recurring event. Delete all occurrences?"
+    },
+    "deleteError": "Failed to delete event. Please try again."
+  },
+  "quickSchedule": {
+    "title": "Create Appointment",
+    "patient": "Patient",
+    "selectPatient": "Please select a patient",
+    "selectPatientPlaceholder": "Search and select patient...",
+    "duration": "Duration",
+    "minutes": "minutes",
+    "type": "Appointment Type",
+    "types": {
+      "consultation": "Consultation",
+      "followup": "Follow-up",
+      "checkup": "Check-up",
+      "emergency": "Emergency"
+    },
+    "notes": "Notes (Optional)",
+    "notesPlaceholder": "Add any relevant notes...",
+    "start": "Start Time",
+    "end": "End Time",
+    "create": "Create Appointment",
+    "createError": "Failed to create appointment"
+  },
+  "personalEvent": {
+    "title": "Add Personal Event",
+    "eventTitle": "Event Title",
+    "titlePlaceholder": "e.g., Team Meeting, Lunch Break",
+    "titleRequired": "Event title is required",
+    "eventType": "Event Type",
+    "types": {
+      "personal": "Personal Event",
+      "blocked": "Blocked Time"
+    },
+    "time": "Time",
+    "start": "Start",
+    "end": "End",
+    "blockAppointments": "Block appointment booking during this time",
+    "blockWarning": "This will prevent patients from booking appointments during this time",
+    "recurring": "Recurring",
+    "recurringTypes": {
+      "none": "Does not repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "selectDays": "Select days",
+    "endDate": "End date",
+    "optional": "Optional",
+    "color": "Color",
+    "description": "Description (Optional)",
+    "descriptionPlaceholder": "Add any relevant details...",
+    "create": "Create Event",
+    "createError": "Failed to create event"
   }
 }

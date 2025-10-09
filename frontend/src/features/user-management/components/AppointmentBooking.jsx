@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { userService } from '../services/userService';
+import calendarEventService from '../../appointments/services/calendarEventService';
 
 const BookingContainer = styled.div`
   background: white;
@@ -295,6 +296,35 @@ const UserInfoText = styled.p`
   font-size: 14px;
 `;
 
+const InfoBox = styled.div`
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+`;
+
+const InfoText = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: #1e40af;
+  line-height: 1.5;
+  
+  &:not(:last-child) {
+    margin-bottom: 6px;
+  }
+`;
+
+const InfoTitle = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
 
 const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }) => {
   const { t } = useTranslation('userManagement');
@@ -316,31 +346,43 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
   const today = new Date().toISOString().split('T')[0];
 
   const fetchAvailableSlots = useCallback(async () => {
+    if (!selectedDate) return;
+    
     setLoading(true);
     setError('');
     try {
-  const availabilities = await userService.getDoctorAvailabilities({
+      const startDateStr = selectedDate;
+      const endDateStr = selectedDate;
+      
+      const response = await calendarEventService.findAvailableSlots(
         doctorId,
-        date: selectedDate
-      });
-  console.log('Fetched availabilities:', availabilities);
-  const availArray = Array.isArray(availabilities) ? availabilities : [];
-  const slots = availArray.map(availability => ({
-        id: availability.availabilityId,
-        availabilityId: availability.availabilityId,
-        time: new Date(availability.availabilityStart).toLocaleTimeString('en-US', {
+        startDateStr,
+        endDateStr,
+        30,
+        50
+      );
+      
+      console.log('Calendar-aware available slots:', response);
+      
+      const slots = (response.slots || []).map(slot => ({
+        id: slot.startTime,
+        time: new Date(slot.startTime).toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
         }),
-        startTime: availability.availabilityStart,
-        endTime: availability.availabilityEnd,
-        isBooked: false
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        isAvailable: true
       }));
       
       setAvailableSlots(slots);
+      
+      if (slots.length === 0) {
+        setError(t('appointmentBooking.messages.noAvailableSlots'));
+      }
     } catch (error) {
-      console.error('Error fetching availabilities:', error);
+      console.error('Error fetching available slots:', error);
       setError(t('appointmentBooking.messages.slotsFailed'));
       setAvailableSlots([]);
     } finally {
@@ -410,6 +452,11 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
     setSuccess('');
 
     try {
+
+      let isDoctorPatient = false;
+      if (bookingFor === 'self' && currentUser.userType === 'doctor') {
+          isDoctorPatient = true; 
+      }
       const appointmentData = {
         doctorId,
         date: selectedDate,
@@ -420,7 +467,8 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
         patientId: bookingFor === 'self' ? currentUser.userId : null,
         patientName: bookingFor === 'self' ? currentUser.userFullName : bookingData.patientName,
         patientEmail: bookingFor === 'self' ? currentUser.email : bookingData.patientEmail,
-        patientPhone: bookingFor === 'self' ? currentUser.phone : bookingData.patientPhone
+        patientPhone: bookingFor === 'self' ? currentUser.phone : bookingData.patientPhone,
+        isDoctorPatient: isDoctorPatient
       };
 
       const result = await userService.createAppointment(appointmentData);
@@ -488,6 +536,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
 
         <TimeSlotSection>
           <SectionTitle>{t('appointmentBooking.sections.availableSlots')}</SectionTitle>
+        
           {loading ? (
             <LoadingMessage>{t('appointmentBooking.messages.loading')}</LoadingMessage>
           ) : (

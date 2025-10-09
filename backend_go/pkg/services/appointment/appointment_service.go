@@ -268,7 +268,7 @@ func (s *AppointmentService) GetDoctorWeeklySchedule(doctorId string, rangeStart
 	return reservations, nil
 }
 
-func (s *AppointmentService) CreateReservation(reservation models.Reservation, userType string) error {
+func (s *AppointmentService) CreateReservation(reservation models.Reservation) error {
 	appointmentID := uuid.New()
 	reservation.AppointmentID = appointmentID
 
@@ -279,11 +279,6 @@ func (s *AppointmentService) CreateReservation(reservation models.Reservation, u
 	}
 	defer tx.Rollback(context.Background())
 
-	isDoctorPatient := false
-	if userType == "doctor" {
-		isDoctorPatient = true
-	}
-
 	_, err = tx.Exec(context.Background(),
 		"INSERT INTO appointments (appointment_id, appointment_start, appointment_end, doctor_id, patient_id, title, notes, is_doctor_patient) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 		reservation.AppointmentID,
@@ -293,7 +288,7 @@ func (s *AppointmentService) CreateReservation(reservation models.Reservation, u
 		reservation.PatientID,
 		reservation.Title,
 		reservation.Notes,
-		isDoctorPatient,
+		reservation.IsDoctorPatient,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert appointment: %v", err)

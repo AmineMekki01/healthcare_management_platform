@@ -450,6 +450,51 @@ func createTables(conn *pgxpool.Pool) error {
 			notes TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_calendar_events (
+			event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			title VARCHAR(255) NOT NULL,
+			description TEXT,
+			event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('personal', 'blocked', 'recurring_block')),
+			start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+			end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+			all_day BOOLEAN DEFAULT FALSE,
+			blocks_appointments BOOLEAN DEFAULT FALSE,
+			recurring_pattern JSONB,
+			parent_event_id UUID REFERENCES doctor_calendar_events(event_id) ON DELETE CASCADE,
+			color VARCHAR(7) DEFAULT '#FFB84D',
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_doctor_events_doctor ON doctor_calendar_events(doctor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_doctor_events_time ON doctor_calendar_events(start_time, end_time)`,
+		`CREATE INDEX IF NOT EXISTS idx_doctor_events_blocking ON doctor_calendar_events(blocks_appointments)`,
+
+		`CREATE TABLE IF NOT EXISTS public_holidays (
+			holiday_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			name VARCHAR(255) NOT NULL,
+			name_ar VARCHAR(255),
+			name_fr VARCHAR(255),
+			description TEXT,
+			holiday_date DATE NOT NULL,
+			duration_days INT DEFAULT 1,
+			country_code VARCHAR(2),
+			region VARCHAR(100),
+			is_recurring BOOLEAN DEFAULT TRUE,
+			affects_booking BOOLEAN DEFAULT TRUE,
+			display_in_calendar BOOLEAN DEFAULT TRUE,
+			institution_id UUID,
+			color VARCHAR(7) DEFAULT '#FBB6CE',
+			created_by UUID,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_holidays_date ON public_holidays(holiday_date)`,
+		`CREATE INDEX IF NOT EXISTS idx_holidays_country ON public_holidays(country_code)`,
+		`CREATE INDEX IF NOT EXISTS idx_holidays_affecting ON public_holidays(affects_booking)`,
 	}
 
 	for _, query := range sqlQueries {

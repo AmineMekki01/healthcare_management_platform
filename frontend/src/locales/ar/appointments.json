@@ -154,5 +154,119 @@
     "showingAppointments": "عرض {{filtered}} من {{total}} مواعيد",
     "noAppointmentsFound": "لا توجد مواعيد {{tab}}",
     "noMatchingAppointments": "لا توجد مواعيد تطابق معايير البحث الخاصة بك"
+  },
+  "calendar": {
+    "today": "اليوم",
+    "gridView": "عرض الشبكة",
+    "calendarView": "عرض التقويم",
+    "noAppointments": "لا توجد مواعيد",
+    "filters": {
+      "upcoming": "القادمة",
+      "passed": "السابقة",
+      "canceled": "الملغاة"
+    },
+    "days": {
+      "mon": "الإثنين",
+      "tue": "الثلاثاء",
+      "wed": "الأربعاء",
+      "thu": "الخميس",
+      "fri": "الجمعة",
+      "sat": "السبت",
+      "sun": "الأحد"
+    },
+    "months": {
+      "jan": "يناير",
+      "feb": "فبراير",
+      "mar": "مارس",
+      "apr": "أبريل",
+      "may": "مايو",
+      "jun": "يونيو",
+      "jul": "يوليو",
+      "aug": "أغسطس",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    },
+    "eventTypes": {
+      "appointment": "موعد",
+      "personal": "حدث شخصي",
+      "blocked": "وقت محجوز",
+      "meeting": "اجتماع",
+      "conference": "مؤتمر",
+      "break": "استراحة"
+    },
+    "labels": {
+      "date": "التاريخ",
+      "time": "الوقت",
+      "doctor": "الطبيب",
+      "patient": "المريض",
+      "location": "الموقع",
+      "description": "الوصف"
+    },
+    "actions": {
+      "delete": "حذف الحدث",
+      "confirmDelete": "نعم، احذف",
+      "cancel": "إلغاء",
+      "deleting": "جاري الحذف..."
+    },
+    "confirmDelete": {
+      "message": "هل أنت متأكد من حذف هذا الحدث؟",
+      "recurringMessage": "هذا حدث متكرر. هل تريد حذف جميع التكرارات؟",
+      "recurringPrompt": "هذا حدث متكرر. حذف جميع التكرارات؟"
+    },
+    "deleteError": "فشل حذف الحدث. يرجى المحاولة مرة أخرى."
+  },
+  "quickSchedule": {
+    "title": "إنشاء موعد",
+    "patient": "المريض",
+    "selectPatient": "الرجاء اختيار مريض",
+    "selectPatientPlaceholder": "ابحث واختر مريض...",
+    "duration": "المدة",
+    "minutes": "دقيقة",
+    "type": "نوع الموعد",
+    "types": {
+      "consultation": "استشارة",
+      "followup": "متابعة",
+      "checkup": "فحص",
+      "emergency": "طوارئ"
+    },
+    "notes": "ملاحظات (اختياري)",
+    "notesPlaceholder": "أضف ملاحظات مهمة...",
+    "start": "وقت البداية",
+    "end": "وقت الانتهاء",
+    "create": "إنشاء موعد",
+    "createError": "فشل إنشاء الموعد"
+  },
+  "personalEvent": {
+    "title": "إضافة حدث شخصي",
+    "eventTitle": "عنوان الحدث",
+    "titlePlaceholder": "مثال: اجتماع فريق، استراحة غداء",
+    "titleRequired": "عنوان الحدث مطلوب",
+    "eventType": "نوع الحدث",
+    "types": {
+      "personal": "حدث شخصي",
+      "blocked": "وقت محظور"
+    },
+    "time": "الوقت",
+    "start": "البداية",
+    "end": "النهاية",
+    "blockAppointments": "حظر حجز المواعيد خلال هذا الوقت",
+    "blockWarning": "سيمنع هذا المرضى من حجز مواعيد خلال هذا الوقت",
+    "recurring": "متكرر",
+    "recurringTypes": {
+      "none": "لا يتكرر",
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري"
+    },
+    "selectDays": "اختر الأيام",
+    "endDate": "تاريخ الانتهاء",
+    "optional": "اختياري",
+    "color": "اللون",
+    "description": "الوصف (اختياري)",
+    "descriptionPlaceholder": "أضف أي تفاصيل مهمة...",
+    "create": "إنشاء حدث",
+    "createError": "فشل إنشاء الحدث"
   }
 }

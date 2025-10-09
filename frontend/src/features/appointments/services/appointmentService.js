@@ -49,6 +49,39 @@ class AppointmentService {
       throw error;
     }
   }
+
+  async fetchDoctorPatients(doctorId) {
+    try {
+      const response = await axios.get(`/api/v1/doctors/${doctorId}/patients`);
+      return response.data.patients || [];
+    } catch (error) {
+      console.error('Error fetching doctor patients:', error);
+      return [];
+    }
+  }
+
+  async createAppointment(appointmentData) {
+    try {
+      const startTime = new Date(appointmentData.appointmentStart);
+      const endTime = new Date(startTime.getTime() + appointmentData.duration * 60000);
+
+      const requestData = {
+        AppointmentStart: appointmentData.appointmentStart,
+        AppointmentEnd: endTime.toISOString(),
+        DoctorID: appointmentData.doctorId,
+        PatientID: appointmentData.patientId,
+        Title: appointmentData.appointmentType || 'Consultation',
+        Notes: appointmentData.notes || '',
+        IsDoctorPatient: appointmentData.isDoctorPatient || false
+      };
+
+      const response = await axios.post('/api/v1/reservations', requestData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AppointmentService();

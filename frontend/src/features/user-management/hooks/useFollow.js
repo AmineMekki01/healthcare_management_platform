@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { followService } from '../services';
 
-/**
- * Enhanced hook for managing doctor following functionality
- * @param {string} doctorId - ID of the doctor
- * @param {Object} currentUser - Current user object
- * @param {Object} options - Additional configuration options
- */
 export const useFollow = (doctorId, currentUser, options = {}) => {
   const [state, setState] = useState({
     isFollowing: false,
@@ -89,8 +83,11 @@ export const useFollow = (doctorId, currentUser, options = {}) => {
     }
   }, [doctorId, currentUser?.userId, currentUser?.userType, setLoading, clearError, setError]);
 
-  const followDoctor = useCallback(async () => {
+  const followUser = useCallback(async () => {
+    console.log("currentUser :", currentUser);
+    console.log("doctorId :", doctorId);
     if (!currentUser?.userId || !doctorId) {
+      console.error('User must be logged in to follow doctors');
       setError('follow', 'User must be logged in to follow doctors');
       return;
     }
@@ -126,12 +123,14 @@ export const useFollow = (doctorId, currentUser, options = {}) => {
       setError('follow', errorMessage);
       throw err;
     } finally {
+      console.log('Follow status updated');
       setLoading('follow', false);
     }
   }, [doctorId, currentUser, state.isFollowing, setLoading, clearError, setError, options]);
 
-  const unfollowDoctor = useCallback(async () => {
+  const unfollowUser = useCallback(async () => {
     if (!currentUser?.userId || !doctorId) {
+      console.error('User must be logged in to unfollow doctors');
       setError('unfollow', 'User must be logged in to unfollow doctors');
       return;
     }
@@ -163,6 +162,7 @@ export const useFollow = (doctorId, currentUser, options = {}) => {
       setError('unfollow', errorMessage);
       throw err;
     } finally {
+      console.log('Unfollow status updated');
       setLoading('unfollow', false);
     }
   }, [doctorId, currentUser, state.isFollowing, setLoading, clearError, setError, options]);
@@ -170,15 +170,39 @@ export const useFollow = (doctorId, currentUser, options = {}) => {
   const toggleFollow = useCallback(async () => {
     try {
       if (state.isFollowing) {
-        await unfollowDoctor();
+        await unfollowUser();
       } else {
-        await followDoctor();
+        await followUser();
       }
     } catch (err) {
       console.error('Error toggling follow status:', err);
     }
-  }, [state.isFollowing, followDoctor, unfollowDoctor]);
+  }, [state.isFollowing, followUser, unfollowUser]);
 
+    const getDoctorFollowersCount = useCallback(async () => {
+      if (!doctorId) return;
+      
+      setLoading('followers', true);
+      clearError('followers');
+      
+      try {
+        const response = await followService.getDoctorFollowersCount(doctorId);
+        
+        setState(prev => ({
+          ...prev,
+          followerCount: response || 0
+        }));
+        
+        return response;
+      } catch (err) {
+        console.error('Error fetching followers count', err);
+        const errorMessage = err.message || 'Failed to fetch followers count';
+        setError('followersCount', errorMessage);
+        return 0;
+      } finally {
+        setLoading('followersCount', false);
+      }
+    }, [doctorId, setLoading, clearError, setError]);
   
   const getDoctorFollowers = useCallback(async (page = 1, limit = 20) => {
     if (!doctorId) return;
@@ -329,12 +353,13 @@ export const useFollow = (doctorId, currentUser, options = {}) => {
     following: state.following,
     loading: state.loading,
     error: state.error,
-    followDoctor,
-    unfollowDoctor,
+    followUser,
+    unfollowUser,
     toggleFollow,
     getDoctorFollowers,
     getUserFollowing,
     getFollowStats,
+    getDoctorFollowersCount,
     bulkFollowDoctors,
     bulkUnfollowDoctors,
     checkFollowStatus,

@@ -258,13 +258,7 @@ func (h *AppointmentHandler) CreateReservation(c *gin.Context) {
 		return
 	}
 
-	userType, exists := c.Get("userType")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User type not found"})
-		return
-	}
-
-	err := h.appointmentService.CreateReservation(reservation, userType.(string))
+	err := h.appointmentService.CreateReservation(reservation)
 	if err != nil {
 		log.Printf("Error creating reservation: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
