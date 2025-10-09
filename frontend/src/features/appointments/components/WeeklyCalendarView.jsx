@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, 
   ChevronRight, 
   Person, 
   AccessTime, 
   MedicalServices,
-  Cancel as CancelIcon 
+  Cancel as CancelIcon,
+  Block
 } from '@mui/icons-material';
 import {
   CalendarContainer,
@@ -31,19 +31,32 @@ import {
 } from '../styles/calendarStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import CalendarViewFilter from './CalendarViewFilter';
+import QuickScheduleModal from './QuickScheduleModal';
+import PersonalEventModal from './PersonalEventModal';
+import EventDetailsModal from './EventDetailsModal';
 import appointmentService from '../services/appointmentService';
+import calendarEventService from '../services/calendarEventService';
 
 const WeeklyCalendarView = ({ 
   appointments, 
-  userType, 
+  userType,
+  userId,
   activeMode,
   onAppointmentUpdate 
 }) => {
   const { t, i18n } = useTranslation('appointments');
-  const navigate = useNavigate();
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showQuickSchedule, setShowQuickSchedule] = useState(false);
+  const [showPersonalEvent, setShowPersonalEvent] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState({ date: null, time: null });
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [patients, setPatients] = useState([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState({
     showUpcoming: true,
     showPassed: true,
@@ -115,20 +128,34 @@ const WeeklyCalendarView = ({
         const aptDate = new Date(apt.appointmentStart);
         return aptDate.toDateString() === day.toDateString();
       });
+
+      const dayEvents = calendarEvents.filter(event => {
+        const eventDate = new Date(event.startTime);
+        return eventDate.toDateString() === day.toDateString();
+      }).map(event => ({
+        ...event,
+        appointmentStart: event.startTime,
+        appointmentEnd: event.endTime,
+        isPersonalEvent: true,
+        title: event.title,
+        canceled: false
+      }));
+
+      const allItems = [...dayAppointments, ...dayEvents];
       
-      dayAppointments.forEach((apt, i) => {
-        apt.overlaps = [];
-        dayAppointments.forEach((otherApt, j) => {
-          if (i !== j && appointmentsOverlap(apt, otherApt)) {
-            apt.overlaps.push(otherApt);
+      allItems.forEach((item, i) => {
+        item.overlaps = [];
+        allItems.forEach((otherItem, j) => {
+          if (i !== j && appointmentsOverlap(item, otherItem)) {
+            item.overlaps.push(otherItem);
           }
         });
       });
       
-      grouped[index] = dayAppointments;
+      grouped[index] = allItems;
     });
     return grouped;
-  }, [weekAppointments, weekDays]);
+  }, [weekAppointments, weekDays, calendarEvents]);
 
   const goToPreviousWeek = () => {
     const newDate = new Date(currentWeekStart);
@@ -146,6 +173,50 @@ const WeeklyCalendarView = ({
     setCurrentWeekStart(getStartOfWeek(new Date()));
   };
 
+  useEffect(() => {
+    const fetchPatients = async () => {
+      if (activeMode === 'doctor' && userId) {
+        setLoadingPatients(true);
+        try {
+          const patientList = await appointmentService.fetchDoctorPatients(userId);
+          setPatients(patientList);
+        } catch (error) {
+          console.error('Error fetching patients:', error);
+          setPatients([]);
+        } finally {
+          setLoadingPatients(false);
+        }
+      }
+    };
+
+    fetchPatients();
+  }, [activeMode, userId]);
+
+  useEffect(() => {
+    const fetchCalendarEvents = async () => {
+      if (activeMode === 'doctor' && userId) {
+        setLoadingEvents(true);
+        try {
+          const weekEnd = new Date(currentWeekStart);
+          weekEnd.setDate(currentWeekStart.getDate() + 7);
+          
+          const startDate = currentWeekStart.toISOString().split('T')[0];
+          const endDate = weekEnd.toISOString().split('T')[0];
+          
+          const response = await calendarEventService.getCalendarEvents(userId, startDate, endDate);
+          setCalendarEvents(response.events || []);
+        } catch (error) {
+          console.error('Error fetching calendar events:', error);
+          setCalendarEvents([]);
+        } finally {
+          setLoadingEvents(false);
+        }
+      }
+    };
+
+    fetchCalendarEvents();
+  }, [activeMode, userId, currentWeekStart]);
+
   const getMonthName = (date) => {
     const monthIndex = date.getMonth();
     const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -159,7 +230,15 @@ const WeeklyCalendarView = ({
   const formatWeekRange = () => {
     const weekEnd = new Date(currentWeekStart);
     weekEnd.setDate(currentWeekStart.getDate() + 6);
-    return `${formatDate(currentWeekStart)} - ${formatDate(weekEnd)}`;
+    
+    const startYear = currentWeekStart.getFullYear();
+    const endYear = weekEnd.getFullYear();
+    
+    if (startYear === endYear) {
+      return `${formatDate(currentWeekStart)} - ${formatDate(weekEnd)}, ${startYear}`;
+    } else {
+      return `${formatDate(currentWeekStart)}, ${startYear} - ${formatDate(weekEnd)}, ${endYear}`;
+    }
   };
 
   const isToday = (date) => {
@@ -233,18 +312,51 @@ const WeeklyCalendarView = ({
 
   const handleAppointmentClick = (appointment, event) => {
     event.stopPropagation();
-    const effectiveUserType = activeMode === 'patient' ? 'patient' : userType;
-    if (effectiveUserType === 'patient') {
-      navigate(`/doctor-profile/${appointment.doctorId}`);
-    } else {
-      navigate(`/patient-profile/${appointment.patientId}`);
-    }
+    setSelectedEvent(appointment);
+    setShowEventDetails(true);
   };
 
   const handleCancelClick = (appointment, event) => {
-    event.stopPropagation();
-    setSelectedAppointment(appointment);
-    setShowCancelModal(true);
+  };
+
+  const handleSlotClick = (day, timeSlot) => {
+    if (activeMode !== 'doctor') return;
+    
+    const [hours, minutes] = timeSlot.split(':');
+    const slotDate = new Date(day);
+    slotDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    setSelectedSlot({
+      date: slotDate,
+      time: timeSlot
+    });
+    setShowQuickSchedule(true);
+  };
+
+  const handleSlotRightClick = (day, timeSlot, event) => {
+    event.preventDefault();
+    
+    if (activeMode !== 'doctor') return;
+    
+    const [hours, minutes] = timeSlot.split(':');
+    const slotDate = new Date(day);
+    slotDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    setSelectedSlot({
+      date: slotDate,
+      time: timeSlot
+    });
+    setShowPersonalEvent(true);
+  };
+
+  const handleQuickScheduleSuccess = () => {
+    setShowQuickSchedule(false);
+    onAppointmentUpdate();
+  };
+
+  const handlePersonalEventSuccess = () => {
+    setShowPersonalEvent(false);
+    onAppointmentUpdate();
   };
 
   const handleCancelAppointment = async (reason) => {
@@ -267,6 +379,44 @@ const WeeklyCalendarView = ({
     } catch (error) {
       console.error('Error canceling appointment:', error);
       alert(t('card.cancelError'));
+    }
+  };
+
+  const handleDeleteEvent = async (event) => {
+    if (!event || !event.eventId) return;
+    
+    const isRecurring = event.recurringPattern && Object.keys(event.recurringPattern).length > 0;
+    let deleteAll = false;
+    
+    if (isRecurring) {
+      const confirmDelete = window.confirm(
+        t('calendar.confirmDelete.recurringPrompt') || 
+        'This is a recurring event. Delete all occurrences?'
+      );
+      if (confirmDelete === null) return;
+      deleteAll = confirmDelete;
+    }
+    
+    try {
+      await calendarEventService.deletePersonalEvent(userId, event.eventId, deleteAll);
+      
+      setCalendarEvents(prev => prev.filter(e => 
+        deleteAll ? e.parentEventId !== event.eventId && e.eventId !== event.eventId : e.eventId !== event.eventId
+      ));
+      
+      if (onAppointmentUpdate) {
+        onAppointmentUpdate();
+      }
+      
+      const weekEnd = new Date(currentWeekStart);
+      weekEnd.setDate(currentWeekStart.getDate() + 6);
+      const startDate = currentWeekStart.toISOString().split('T')[0];
+      const endDate = weekEnd.toISOString().split('T')[0];
+      const response = await calendarEventService.getCalendarEvents(userId, startDate, endDate);
+      setCalendarEvents(response.events || []);
+    } catch (error) {
+      console.error('Error deleting calendar event:', error);
+      alert(t('calendar.deleteError') || 'Failed to delete event');
     }
   };
 
@@ -321,12 +471,25 @@ const WeeklyCalendarView = ({
                   {timeSlots.map((time, timeIndex) => (
                     <div
                       key={`${dayIndex}-${timeIndex}`}
+                      onClick={() => handleSlotClick(day, time)}
+                      onContextMenu={(e) => handleSlotRightClick(day, time, e)}
                       style={{
                         height: '60px',
                         borderBottom: '1px solid #e2e8f0',
                         borderRight: dayIndex < 6 ? '1px solid #e2e8f0' : 'none',
                         boxSizing: 'border-box',
+                        cursor: activeMode === 'doctor' ? 'pointer' : 'default',
+                        transition: 'background-color 0.2s',
                       }}
+                      onMouseEnter={(e) => {
+                        if (activeMode === 'doctor') {
+                          e.currentTarget.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                      title={activeMode === 'doctor' ? 'Left-click: Schedule appointment | Right-click: Add personal event' : ''}
                     />
                   ))}
                   
@@ -339,35 +502,76 @@ const WeeklyCalendarView = ({
                     
                     return (
                       <AppointmentBlock
-                        key={appointment.appointmentId}
-                        style={style}
+                        key={appointment.isPersonalEvent ? appointment.eventId : appointment.appointmentId}
+                        style={{
+                          ...style,
+                          background: appointment.isPersonalEvent 
+                            ? `linear-gradient(135deg, ${appointment.color || '#FFB84D'}, ${appointment.color || '#FFB84D'}dd)`
+                            : style.background,
+                          borderLeft: appointment.isPersonalEvent 
+                            ? `4px solid ${appointment.color || '#FFB84D'}`
+                            : style.borderLeft,
+                          cursor: 'pointer'
+                        }}
                         $status={status}
-                        onClick={(e) => handleAppointmentClick(appointment, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (appointment.isPersonalEvent) {
+                            setSelectedEvent(appointment);
+                            setShowEventDetails(true);
+                          } else {
+                            handleAppointmentClick(appointment, e);
+                          }
+                        }}
                       >
                         <AppointmentContent>
-                          <AppointmentTitle>
-                            {effectiveUserType === 'patient' 
-                              ? `Dr. ${appointment.doctorFirstName} ${appointment.doctorLastName}`
-                              : `${appointment.patientFirstName} ${appointment.patientLastName}`
-                            }
-                          </AppointmentTitle>
-                          <AppointmentTime>
-                            <AccessTime style={{ fontSize: '0.8rem' }} />
-                            {formatTime(appointment.appointmentStart)} - {formatTime(appointment.appointmentEnd)}
-                          </AppointmentTime>
-                          {effectiveUserType === 'patient' && (
-                            <AppointmentInfo>
-                              <MedicalServices style={{ fontSize: '0.8rem' }} />
-                              {appointment.specialty}
-                            </AppointmentInfo>
+                          {appointment.isPersonalEvent ? (
+                            <>
+                              <AppointmentTitle style={{ color: 'white', fontWeight: '600' }}>
+                                {appointment.title}
+                              </AppointmentTitle>
+                              <AppointmentTime style={{ color: 'rgba(255,255,255,0.9)' }}>
+                                <AccessTime style={{ fontSize: '0.8rem' }} />
+                                {formatTime(appointment.appointmentStart)} - {formatTime(appointment.appointmentEnd)}
+                              </AppointmentTime>
+                              {appointment.description && (
+                                <AppointmentInfo style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem' }}>
+                                  {appointment.description}
+                                </AppointmentInfo>
+                              )}
+                              {appointment.blocksAppointments && (
+                                <AppointmentInfo style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+                                  <Block style={{ fontSize: '0.8rem' }} /> Blocks appointments
+                                </AppointmentInfo>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <AppointmentTitle>
+                                {effectiveUserType === 'patient' 
+                                  ? `Dr. ${appointment.doctorFirstName} ${appointment.doctorLastName}`
+                                  : `${appointment.patientFirstName} ${appointment.patientLastName}`
+                                }
+                              </AppointmentTitle>
+                              <AppointmentTime>
+                                <AccessTime style={{ fontSize: '0.8rem' }} />
+                                {formatTime(appointment.appointmentStart)} - {formatTime(appointment.appointmentEnd)}
+                              </AppointmentTime>
+                              {effectiveUserType === 'patient' && (
+                                <AppointmentInfo>
+                                  <MedicalServices style={{ fontSize: '0.8rem' }} />
+                                  {appointment.specialty}
+                                </AppointmentInfo>
+                              )}
+                              {effectiveUserType === 'doctor' && (
+                                <AppointmentInfo>
+                                  <Person style={{ fontSize: '0.8rem' }} />
+                                  {t('card.patientAge', { age: appointment.age })}
+                                </AppointmentInfo>
+                              )}
+                            </>
                           )}
-                          {effectiveUserType === 'doctor' && (
-                            <AppointmentInfo>
-                              <Person style={{ fontSize: '0.8rem' }} />
-                              {t('card.patientAge', { age: appointment.age })}
-                            </AppointmentInfo>
-                          )}
-                          {!isPast && !isCanceled && (
+                          {!isPast && !isCanceled && !appointment.isPersonalEvent && (
                             <button
                               onClick={(e) => handleCancelClick(appointment, e)}
                               style={{
@@ -413,6 +617,41 @@ const WeeklyCalendarView = ({
         }}
         handleCancel={handleCancelAppointment}
       />
+
+      {selectedSlot.date && (
+        <QuickScheduleModal
+          isOpen={showQuickSchedule}
+          onClose={() => setShowQuickSchedule(false)}
+          selectedDate={selectedSlot.date}
+          selectedTime={selectedSlot.time}
+          doctorId={userType === 'doctor' ? userId : null}
+          patients={patients}
+          loading={loadingPatients}
+          onSuccess={handleQuickScheduleSuccess}
+        />
+      )}
+
+      {selectedSlot.date && (
+        <PersonalEventModal
+          isOpen={showPersonalEvent}
+          onClose={() => setShowPersonalEvent(false)}
+          selectedDate={selectedSlot.date}
+          selectedTime={selectedSlot.time}
+          doctorId={userId}
+          onSuccess={handlePersonalEventSuccess}
+        />
+      )}
+
+      {showEventDetails && selectedEvent && (
+        <EventDetailsModal
+          event={selectedEvent}
+          onClose={() => {
+            setShowEventDetails(false);
+            setSelectedEvent(null);
+          }}
+          onDelete={handleDeleteEvent}
+        />
+      )}
     </>
   );
 };

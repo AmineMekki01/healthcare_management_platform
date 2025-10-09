@@ -187,6 +187,86 @@
       "oct": "Oct",
       "nov": "Nov",
       "dec": "Déc"
-    }
+    },
+    "eventTypes": {
+      "appointment": "Rendez-vous",
+      "personal": "Événement personnel",
+      "blocked": "Temps bloqué",
+      "meeting": "Réunion",
+      "conference": "Conférence",
+      "break": "Pause"
+    },
+    "labels": {
+      "date": "Date",
+      "time": "Heure",
+      "doctor": "Médecin",
+      "patient": "Patient",
+      "location": "Emplacement",
+      "description": "Description"
+    },
+    "actions": {
+      "delete": "Supprimer l'événement",
+      "confirmDelete": "Oui, Supprimer",
+      "cancel": "Annuler",
+      "deleting": "Suppression..."
+    },
+    "confirmDelete": {
+      "message": "Êtes-vous sûr de vouloir supprimer cet événement?",
+      "recurringMessage": "Ceci est un événement récurrent. Voulez-vous supprimer toutes les occurrences?",
+      "recurringPrompt": "Ceci est un événement récurrent. Supprimer toutes les occurrences?"
+    },
+    "deleteError": "Échec de la suppression de l'événement. Veuillez réessayer."
+  },
+  "quickSchedule": {
+    "title": "Créer un rendez-vous",
+    "patient": "Patient",
+    "selectPatient": "Veuillez sélectionner un patient",
+    "selectPatientPlaceholder": "Rechercher et sélectionner un patient...",
+    "duration": "Durée",
+    "minutes": "minutes",
+    "type": "Type de rendez-vous",
+    "types": {
+      "consultation": "Consultation",
+      "followup": "Suivi",
+      "checkup": "Examen",
+      "emergency": "Urgence"
+    },
+    "notes": "Notes (Optionnel)",
+    "notesPlaceholder": "Ajouter des notes pertinentes...",
+    "start": "Heure de début",
+    "end": "Heure de fin",
+    "create": "Créer le rendez-vous",
+    "createError": "Échec de la création du rendez-vous"
+  },
+  "personalEvent": {
+    "title": "Ajouter un événement personnel",
+    "eventTitle": "Titre de l'événement",
+    "titlePlaceholder": "par ex., Réunion d'équipe, Pause déjeuner",
+    "titleRequired": "Le titre de l'événement est requis",
+    "eventType": "Type d'événement",
+    "types": {
+      "personal": "Événement personnel",
+      "blocked": "Temps bloqué"
+    },
+    "time": "Heure",
+    "start": "Début",
+    "end": "Fin",
+    "blockAppointments": "Bloquer les réservations pendant cette période",
+    "blockWarning": "Cela empêchera les patients de prendre rendez-vous pendant cette période",
+    "recurring": "Récurrent",
+    "recurringTypes": {
+      "none": "Ne se répète pas",
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel"
+    },
+    "selectDays": "Sélectionner les jours",
+    "endDate": "Date de fin",
+    "optional": "Optionnel",
+    "color": "Couleur",
+    "description": "Description (Optionnel)",
+    "descriptionPlaceholder": "Ajouter des détails pertinents...",
+    "create": "Créer l'événement",
+    "createError": "Échec de la création de l'événement"
   }
 }

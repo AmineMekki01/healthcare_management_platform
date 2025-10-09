@@ -44,7 +44,6 @@ const AppointmentDashboard = () => {
     setActiveTab,
     currentAppointments,
     filteredAppointments,
-    stats,
     tabs,
     tabTitle
   } = useAppointmentFilters(doctorReservations, patientReservations, userType, activeMode);
@@ -126,6 +125,7 @@ const AppointmentDashboard = () => {
         <WeeklyCalendarView
           appointments={allAppointments}
           userType={userType}
+          userId={userId}
           activeMode={activeMode}
           onAppointmentUpdate={refreshAppointments}
         />
