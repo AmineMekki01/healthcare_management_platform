@@ -143,20 +143,20 @@ const DoctorProfilePage = () => {
     followUser,
     unfollowUser,
     isFollowing,
-    followLoading
-  } = useFollow(doctorId);
+    followLoading,
+    followerCount
+  } = useFollow(doctorId, currentUser); 
 
-  const [doctorStats, setDoctorStats] = useState({
-    patients: 0,
-    experience: 0,
-    rating: 0,
-    followers: 0
-  });
+  const doctorStats = {
+    patients: doctor?.patients || 'N/A',
+    experience: doctor?.experience || 'N/A',
+    rating: doctor?.ratingScore || 'N/A',
+    followersCount: followerCount || 'N/A'
+  };
   const [showBooking, setShowBooking] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const bookingRef = useRef(null);
 
-  console.log("doctor :", doctor);
   const canBookAppointment = currentUser && currentUser.userId !== doctorId;
   const canFollowDoctor = currentUser && currentUser.userId !== doctorId;
 
@@ -180,38 +180,12 @@ const DoctorProfilePage = () => {
     { key: 'countryName', label: t('doctorProfile.fields.country'), type: 'text' },
   ];
 
-  const fetchDoctorStats = useCallback(() => {
-    try {
-      if (doctor) {
-        setDoctorStats({
-          patients: doctor?.totalReviews || 0,
-          experience: parseInt(doctor?.experience) || 0,
-          rating: `${doctor?.ratingScore} (${doctor?.ratingCount})` || 'NA',
-          followers: doctor?.totalReviews || 0
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching doctor stats:', error);
-      setDoctorStats({
-        patients: 0,
-        experience: 0,
-        rating: 0,
-        followers: 0
-      });
-    }
-  }, [doctor]);
 
   useEffect(() => {
     if (doctorId) {
       fetchUser(doctorId, 'doctor');
     }
   }, [doctorId, fetchUser]);
-
-  useEffect(() => {
-    if (doctor) {
-      fetchDoctorStats();
-    }
-  }, [doctor, fetchDoctorStats]);
 
   const handleProfileSave = (updatedDoctor) => {
     console.log('Doctor profile updated:', updatedDoctor);
@@ -242,8 +216,10 @@ const DoctorProfilePage = () => {
   const toggleFollow = async () => {
     try {
       if (isFollowing) {
+        console.log('Unfollowing doctor:', doctorId);
         await unfollowUser();
       } else {
+        console.log('Following doctor:', doctorId);
         await followUser();
       }
     } catch (error) {
@@ -305,19 +281,19 @@ const DoctorProfilePage = () => {
             <SectionTitle>{t('doctorProfile.sections.statistics')}</SectionTitle>
             <StatsGrid>
               <StatItem>
-                <StatNumber>{doctorStats.patients || 0}</StatNumber>
+                <StatNumber>{doctorStats.patients}</StatNumber>
                 <StatLabel>{t('doctorProfile.stats.patients')}</StatLabel>
               </StatItem>
               <StatItem>
-                <StatNumber>{doctorStats.experience || doctor?.experience || 0}</StatNumber>
+                <StatNumber>{doctorStats.experience}</StatNumber>
                 <StatLabel>{t('doctorProfile.stats.experience')}</StatLabel>
               </StatItem>
               <StatItem>
-                <StatNumber>{doctorStats.rating || doctor?.rating || '4.8'}</StatNumber>
+                <StatNumber>{doctorStats.rating}</StatNumber>
                 <StatLabel>{t('doctorProfile.stats.rating')}</StatLabel>
               </StatItem>
               <StatItem>
-                <StatNumber>{doctorStats.followers || 0}</StatNumber>
+                <StatNumber>{doctorStats.followersCount}</StatNumber>
                 <StatLabel>{t('doctorProfile.stats.followers')}</StatLabel>
               </StatItem>
             </StatsGrid>

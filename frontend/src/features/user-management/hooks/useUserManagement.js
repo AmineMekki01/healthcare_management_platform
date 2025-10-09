@@ -79,10 +79,9 @@ export const useUserManagement = (userId = null, userType = null, options = {}) 
     
     setLoading('user', true);
     clearError('user');
-    console.log(`Fetching user: ${id}, type: ${type}`);
+
     try {
       const userData = await userService.getUserProfile(id, type);
-      console.log('User data:', userData);
       let userStats = null;
       if (includeStats) {
         try {

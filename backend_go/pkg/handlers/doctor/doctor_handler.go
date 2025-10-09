@@ -2,6 +2,7 @@ package doctor
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -311,4 +312,22 @@ func (h *DoctorHandler) ResendVerificationEmail(c *gin.Context) {
 		"message": "Verification email sent successfully",
 		"email":   request.Email,
 	})
+}
+
+func (h *DoctorHandler) GetDoctorPatients(c *gin.Context) {
+	doctorID := c.Param("doctorId")
+
+	if doctorID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Doctor ID is required"})
+		return
+	}
+
+	patients, err := h.doctorService.GetDoctorPatients(doctorID)
+	if err != nil {
+		log.Printf("Error fetching doctor patients: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch patients"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"patients": patients})
 }

@@ -255,7 +255,6 @@ const UserProfile = ({
   useEffect(() => {
     if (user) {
       setEditData(user);
-      console.log('User data loaded:', user);
     }
   }, [user]);
 

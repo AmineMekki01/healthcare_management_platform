@@ -154,15 +154,11 @@ class UserService {
       }
 
       const response = await this.axiosInstance.get(endpoint, { params });
-      console.log(`${userType} profile fetched:`, response.data);
       
       const userData = userType === 'receptionist' 
         ? response.data.receptionist || response.data 
         : response.data;
         
-      const transformedData = this.transformUserData(userData, userType);
-      console.log(`Transformed ${userType} data:`, transformedData);
-      
       return {
         ...userData,
         firstName: userData.firstName || '',

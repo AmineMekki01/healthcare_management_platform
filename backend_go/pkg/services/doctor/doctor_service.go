@@ -460,3 +460,77 @@ func (s *DoctorService) MarkAccountAsVerified(email string) error {
 
 	return nil
 }
+
+// GetDoctorPatients retrieves all patients who have had appointments with this doctor
+func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interface{}, error) {
+	// parse doctorID to uuid
+	doctorIDUUID, err := uuid.Parse(doctorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse doctor ID: %v", err)
+	}
+	query := `
+		SELECT DISTINCT 
+			p.patient_id,
+			p.first_name,
+			p.last_name,
+			p.email,
+			p.phone_number,
+			p.age,
+			p.sex,
+			p.profile_photo_url
+		FROM patient_info p
+		INNER JOIN appointments a ON p.patient_id = a.patient_id::uuid
+		WHERE a.doctor_id = $1
+		ORDER BY p.first_name, p.last_name
+	`
+
+	rows, err := s.db.Query(context.Background(), query, doctorIDUUID)
+	if err != nil {
+		log.Printf("Error querying doctor patients: %v", err)
+		return nil, fmt.Errorf("failed to query patients: %v", err)
+	}
+	defer rows.Close()
+
+	var patients []map[string]interface{}
+	for rows.Next() {
+		var patientID, firstName, lastName, email, phoneNumber, sex string
+		var profilePhotoURL *string
+		var age *int
+
+		err := rows.Scan(
+			&patientID, &firstName, &lastName, &email, &phoneNumber,
+			&age, &sex, &profilePhotoURL,
+		)
+		if err != nil {
+			log.Printf("Error scanning patient row: %v", err)
+			continue
+		}
+
+		patient := map[string]interface{}{
+			"patientId":       patientID,
+			"patient_id":      patientID, // Both formats for compatibility
+			"firstName":       firstName,
+			"first_name":      firstName, // Both formats for compatibility
+			"lastName":        lastName,
+			"last_name":       lastName, // Both formats for compatibility
+			"email":           email,
+			"phoneNumber":     phoneNumber,
+			"phone_number":    phoneNumber, // Both formats for compatibility
+			"sex":             sex,
+			"profilePhotoUrl": profilePhotoURL,
+		}
+
+		if age != nil {
+			patient["age"] = *age
+		}
+
+		patients = append(patients, patient)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error iterating patient rows: %v", err)
+		return nil, fmt.Errorf("error reading patients: %v", err)
+	}
+
+	return patients, nil
+}
