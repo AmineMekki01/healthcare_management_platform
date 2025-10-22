@@ -1,4 +1,4 @@
-package auth
+﻿package auth
 
 import (
 	"healthcare_backend/pkg/config"
@@ -15,10 +15,10 @@ func SetupPublicAuthRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *confi
 	router.POST("/request-reset", authHandler.RequestReset)
 	router.POST("/reset-password", authHandler.UpdatePassword)
 
-	router.POST("/doctors/register", authHandler.RegisterDoctor)
-	router.POST("/doctors/login", authHandler.LoginDoctor)
-	router.POST("/patients/register", authHandler.RegisterPatient)
-	router.POST("/patients/login", authHandler.LoginPatient)
+	router.POST("/auth/register/doctor", authHandler.RegisterDoctor)
+	router.POST("/auth/login/doctor", authHandler.LoginDoctor)
+	router.POST("/auth/register/patient", authHandler.RegisterPatient)
+	router.POST("/auth/login/patient", authHandler.LoginPatient)
 
 	router.POST("/auth/register/receptionist", authHandler.RegisterReceptionist)
 	router.POST("/auth/login/receptionist", authHandler.LoginReceptionist)
