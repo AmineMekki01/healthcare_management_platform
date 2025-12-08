@@ -175,12 +175,14 @@ func (s *DoctorService) LoginDoctor(email, password string) (*models.Doctor, str
 		&doctor.Email, &hashedPassword, &salt, &doctor.ProfilePictureURL)
 
 	if err != nil {
-		return nil, "", "", fmt.Errorf("invalid credentials")
+		log.Println("No user found with email: ", email)
+		return nil, "", "", fmt.Errorf("user not found")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {
-		return nil, "", "", fmt.Errorf("invalid credentials")
+		log.Println("Invalid password")
+		return nil, "", "", fmt.Errorf("invalid password")
 	}
 
 	doctor.ProfilePictureURL, err = utils.GeneratePresignedObjectURL(doctor.ProfilePictureURL)
@@ -191,6 +193,7 @@ func (s *DoctorService) LoginDoctor(email, password string) (*models.Doctor, str
 	userIdString := doctor.DoctorID.String()
 	accessToken, refreshToken, err := auth.GenerateTokenPair(userIdString, "doctor")
 	if err != nil {
+		log.Println("Failed to generate token")
 		return nil, "", "", fmt.Errorf("failed to generate token: %v", err)
 	}
 
@@ -461,9 +464,7 @@ func (s *DoctorService) MarkAccountAsVerified(email string) error {
 	return nil
 }
 
-// GetDoctorPatients retrieves all patients who have had appointments with this doctor
 func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interface{}, error) {
-	// parse doctorID to uuid
 	doctorIDUUID, err := uuid.Parse(doctorID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse doctor ID: %v", err)
@@ -508,14 +509,14 @@ func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interfa
 
 		patient := map[string]interface{}{
 			"patientId":       patientID,
-			"patient_id":      patientID, // Both formats for compatibility
+			"patient_id":      patientID,
 			"firstName":       firstName,
-			"first_name":      firstName, // Both formats for compatibility
+			"first_name":      firstName,
 			"lastName":        lastName,
-			"last_name":       lastName, // Both formats for compatibility
+			"last_name":       lastName,
 			"email":           email,
 			"phoneNumber":     phoneNumber,
-			"phone_number":    phoneNumber, // Both formats for compatibility
+			"phone_number":    phoneNumber,
 			"sex":             sex,
 			"profilePhotoUrl": profilePhotoURL,
 		}

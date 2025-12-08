@@ -16,7 +16,7 @@ export const useAuth = () => {
     
     try {
       const result = await authService.login(credentials);
-      
+      console.log("Login result: ", result);      
       if (authContext && authContext.login) {
         authContext.login(result.userId, result.userType);
       }

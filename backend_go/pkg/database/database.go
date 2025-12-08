@@ -319,26 +319,6 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);`,
 
-		`CREATE TABLE IF NOT EXISTS public.medications(
-			medication_id uuid NOT NULL DEFAULT gen_random_uuid(),
-			patient_id uuid NOT NULL,
-			medication_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
-			dosage character varying(100) COLLATE pg_catalog."default" NOT NULL,
-			frequency character varying(100) COLLATE pg_catalog."default" NOT NULL,
-			duration character varying(100) COLLATE pg_catalog."default" NOT NULL,
-			instructions text COLLATE pg_catalog."default",
-			prescribing_doctor_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
-			prescribing_doctor_id uuid NOT NULL,
-			report_id uuid,
-			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-			updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-			CONSTRAINT medications_pkey PRIMARY KEY (medication_id),
-			CONSTRAINT medications_report_id_fkey FOREIGN KEY (report_id)
-				REFERENCES public.medical_reports (report_id) MATCH SIMPLE
-				ON UPDATE NO ACTION
-				ON DELETE CASCADE
-		)`,
-
 		`CREATE TABLE IF NOT EXISTS medical_reports (
 			report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			appointment_id UUID REFERENCES appointments(appointment_id),
@@ -360,6 +340,26 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 			);
 		`,
+
+		`CREATE TABLE IF NOT EXISTS public.medications(
+			medication_id uuid NOT NULL DEFAULT gen_random_uuid(),
+			patient_id uuid NOT NULL,
+			medication_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+			dosage character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			frequency character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			duration character varying(100) COLLATE pg_catalog."default" NOT NULL,
+			instructions text COLLATE pg_catalog."default",
+			prescribing_doctor_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+			prescribing_doctor_id uuid NOT NULL,
+			report_id uuid,
+			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+			updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT medications_pkey PRIMARY KEY (medication_id),
+			CONSTRAINT medications_report_id_fkey FOREIGN KEY (report_id)
+				REFERENCES public.medical_reports (report_id) MATCH SIMPLE
+				ON UPDATE NO ACTION
+				ON DELETE CASCADE
+		)`,
 
 		`CREATE TABLE IF NOT EXISTS medical_referrals (
 			referral_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -377,7 +377,7 @@ class UserService {
       };
 
       const response = await this.axiosInstance.post('/api/v1/reservations', backendData);
-      return response.data;
+      return response;
     }, 'create appointment');
   }
 

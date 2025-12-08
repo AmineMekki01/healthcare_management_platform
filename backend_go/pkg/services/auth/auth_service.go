@@ -31,6 +31,10 @@ func (s *AuthService) ActivateAccount(token string) error {
 		return fmt.Errorf("invalid token")
 	}
 
+	if s.db == nil {
+		return fmt.Errorf("database not configured")
+	}
+
 	var email string
 	err := s.db.QueryRow(context.Background(), "SELECT email FROM verification_tokens WHERE token = $1 AND type = $2", token, "Account Validation").Scan(&email)
 	if err != nil {
@@ -88,6 +92,14 @@ func (s *AuthService) ActivateAccount(token string) error {
 }
 
 func (s *AuthService) RequestPasswordReset(email string) error {
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+
+	if s.db == nil {
+		return fmt.Errorf("database not configured")
+	}
+
 	var userExists bool
 	err := s.db.QueryRow(context.Background(),
 		"SELECT EXISTS(SELECT 1 FROM patient_info WHERE email = $1) OR EXISTS(SELECT 1 FROM doctor_info WHERE email = $1)",
@@ -115,9 +127,8 @@ func (s *AuthService) RequestPasswordReset(email string) error {
 	}
 
 	resetLink := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
-	err = s.SendResetPasswordEmail(email, resetLink)
-	if err != nil {
-		return err
+	if err := s.SendResetPasswordEmail(email, resetLink); err != nil {
+		log.Printf("Error sending reset email: %v", err)
 	}
 
 	return nil
@@ -126,6 +137,10 @@ func (s *AuthService) RequestPasswordReset(email string) error {
 func (s *AuthService) UpdatePassword(token, newPassword string) error {
 	if token == "" || newPassword == "" {
 		return fmt.Errorf("token and password are required")
+	}
+
+	if s.db == nil {
+		return fmt.Errorf("database not configured")
 	}
 
 	var email string

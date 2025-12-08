@@ -223,7 +223,7 @@ func (h *AuthHandler) RegisterDoctor(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":   "Doctor registered successfully",
+		"success":   true,
 		"doctor_id": registeredDoctor.DoctorID,
 		"email":     registeredDoctor.Email,
 		"name":      registeredDoctor.FirstName + " " + registeredDoctor.LastName,

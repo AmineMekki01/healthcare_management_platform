@@ -79,6 +79,11 @@ func SaveVerificationToken(email, token string, pool *pgxpool.Pool) error {
 }
 
 func IsUserAccountVerified(email string, table_name string, pool *pgxpool.Pool) (bool, error) {
+	if pool == nil {
+		log.Println("IsUserAccountVerified called with nil pool")
+		return false, fmt.Errorf("database not configured")
+	}
+
 	var isVerified bool
 	err := pool.QueryRow(context.Background(), fmt.Sprintf("SELECT is_verified FROM %s WHERE email = $1", table_name), email).Scan(&isVerified)
 	if err != nil {

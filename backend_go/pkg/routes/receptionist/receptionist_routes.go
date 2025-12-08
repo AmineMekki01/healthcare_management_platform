@@ -17,12 +17,6 @@ func SetupReceptionistRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.C
 	receptionistHandler := receptionistHandlers.NewReceptionistHandler(receptionistSvc)
 	receptionistPatientHandler := receptionistHandlers.NewReceptionistPatientHandler(receptionistPatientSvc)
 
-	public := router.Group("/api/receptionist")
-	{
-		public.POST("/register", receptionistHandler.RegisterReceptionist)
-		public.POST("/login", receptionistHandler.LoginReceptionist)
-	}
-
 	protected := router.Group("/api/v1/receptionist")
 	protected.Use(middleware.AuthMiddleware())
 	{

@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"healthcare_backend/pkg/models"
 	"healthcare_backend/pkg/services/patient"
 	"healthcare_backend/pkg/utils"
-	"healthcare_backend/pkg/utils/validators"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -23,121 +21,6 @@ func NewPatientHandler(patientService *patient.PatientService) *PatientHandler {
 	return &PatientHandler{
 		patientService: patientService,
 	}
-}
-
-func (h *PatientHandler) RegisterPatient(c *gin.Context) {
-	var patient models.Patient
-
-	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
-		log.Println("Failed to parse form : ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
-		return
-	}
-
-	patient.PatientID = uuid.New()
-
-	patient.Username = c.PostForm("Username")
-	patient.Password = c.PostForm("Password")
-	patient.Email = c.PostForm("Email")
-	patient.PhoneNumber = c.PostForm("PhoneNumber")
-	patient.FirstName = c.PostForm("FirstName")
-	patient.LastName = c.PostForm("LastName")
-	patient.BirthDate = c.PostForm("BirthDate")
-	patient.StreetAddress = c.PostForm("StreetAddress")
-	patient.CityName = c.PostForm("CityName")
-	patient.StateName = c.PostForm("StateName")
-	patient.ZipCode = c.PostForm("ZipCode")
-	patient.CountryName = c.PostForm("CountryName")
-	patient.Sex = c.PostForm("Sex")
-	patient.Bio = c.PostForm("PatientBio")
-
-	file, handler, err := c.Request.FormFile("file")
-	if err != nil {
-		log.Println("Failed to upload file : ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload file"})
-		return
-	}
-	defer file.Close()
-
-	fileName := fmt.Sprintf("images/profile_photos/%s.jpg", patient.PatientID.String())
-	err = utils.UploadToS3(file, handler, fileName)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload profile photo"})
-		return
-	}
-	patient.ProfilePictureURL = fileName
-
-	err = h.patientService.RegisterPatient(patient)
-	if err != nil {
-		if err.Error() == "email already exists" || err.Error() == "username already exists" {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed: " + err.Error()})
-		return
-	}
-
-	verificationLink := validators.GenerateVerificationLink(patient.Email, c, h.patientService.GetDBPool())
-	if verificationLink == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate verification link"})
-		return
-	}
-
-	err = validators.SendVerificationEmail(patient.Email, verificationLink)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send verification email: " + err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"success": "true",
-		"message": "Patient created successfully. Please check your email to verify your account.",
-	})
-}
-
-func (h *PatientHandler) LoginPatient(c *gin.Context) {
-	var loginRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	if err := c.ShouldBindJSON(&loginRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
-		return
-	}
-
-	if loginRequest.Email == "" || loginRequest.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
-		return
-	}
-
-	patient, accessToken, refreshToken, err := h.patientService.LoginPatient(loginRequest.Email, loginRequest.Password)
-	if err != nil {
-		if err.Error() == "account not verified" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Account Not Verified, Please check your email to verify your account.",
-			})
-			return
-		}
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Invalid email or password",
-		})
-		return
-	}
-
-	response := gin.H{
-		"success":           true,
-		"accessToken":       accessToken,
-		"refreshToken":      refreshToken,
-		"userId":            patient.PatientID.String(),
-		"firstName":         patient.FirstName,
-		"lastName":          patient.LastName,
-		"profilePictureUrl": patient.ProfilePictureURL,
-	}
-
-	c.JSON(http.StatusOK, response)
 }
 
 func (h *PatientHandler) GetPatientProfile(c *gin.Context) {
