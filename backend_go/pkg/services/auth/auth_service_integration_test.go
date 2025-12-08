@@ -34,7 +34,7 @@ func setupIntegrationTest(t *testing.T) (*AuthService, context.Context, func()) 
 
 	cfg := &config.Config{
 		SMTPEmail:    "test@example.com",
-		SMTPPassword: "",  // Empty for tests - not a real password
+		SMTPPassword: "",
 		SMTPHost:     "smtp.example.com",
 		SMTPPort:     "587",
 	}
@@ -57,7 +57,7 @@ func TestActivateAccount_Integration_DoctorSuccess(t *testing.T) {
 
 	email := "doctor.integration@test.com"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestDoctor(ctx, email, string(hashedPassword), "John", "Doe", false)
 	require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestActivateAccount_Integration_DoctorSuccess(t *testing.T) {
 	assert.NoError(t, err, "Should activate account successfully")
 
 	var isVerified bool
-	err = testDB.Pool.QueryRow(ctx, 
+	err = testDB.Pool.QueryRow(ctx,
 		"SELECT is_verified FROM doctor_info WHERE email = $1", email).Scan(&isVerified)
 	require.NoError(t, err)
 	assert.True(t, isVerified, "Doctor should be verified")
@@ -87,7 +87,7 @@ func TestActivateAccount_Integration_PatientSuccess(t *testing.T) {
 
 	email := "patient.integration@test.com"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestPatient(ctx, email, string(hashedPassword), "Jane", "Smith", false)
 	require.NoError(t, err)
 
@@ -115,7 +115,7 @@ func TestActivateAccount_Integration_InvalidToken(t *testing.T) {
 	service, ctx, cleanup := setupIntegrationTest(t)
 	defer cleanup()
 	_ = ctx
-	
+
 	err := service.ActivateAccount("non-existent-token")
 	assert.Error(t, err, "Should fail with invalid token")
 	assert.Contains(t, err.Error(), "no longer valid", "Error should mention token is invalid")
@@ -153,7 +153,7 @@ func TestRequestPasswordReset_Integration_ExistingDoctor(t *testing.T) {
 
 	email := "doctor.reset@test.com"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestDoctor(ctx, email, string(hashedPassword), "John", "Reset", true)
 	require.NoError(t, err)
 
@@ -173,7 +173,7 @@ func TestRequestPasswordReset_Integration_ExistingPatient(t *testing.T) {
 
 	email := "patient.reset@test.com"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestPatient(ctx, email, string(hashedPassword), "Jane", "Reset", true)
 	require.NoError(t, err)
 
@@ -203,7 +203,7 @@ func TestUpdatePassword_Integration_ValidTokenDoctor(t *testing.T) {
 	email := "doctor.update@test.com"
 	oldPassword := "oldPassword123"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(oldPassword), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestDoctor(ctx, email, string(hashedPassword), "John", "Update", true)
 	require.NoError(t, err)
 
@@ -240,7 +240,7 @@ func TestUpdatePassword_Integration_ValidTokenPatient(t *testing.T) {
 	email := "patient.update@test.com"
 	oldPassword := "oldPatientPass123"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(oldPassword), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestPatient(ctx, email, string(hashedPassword), "Jane", "UpdatePatient", true)
 	require.NoError(t, err)
 
@@ -318,7 +318,7 @@ func TestFullPasswordResetFlow_Integration(t *testing.T) {
 	email := "fullflow@test.com"
 	originalPassword := "originalPassword123"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(originalPassword), bcrypt.DefaultCost)
-	
+
 	err := testDB.CreateTestDoctor(ctx, email, string(hashedPassword), "Full", "Flow", true)
 	require.NoError(t, err)
 

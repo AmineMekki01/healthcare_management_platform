@@ -138,12 +138,12 @@ func (s *PatientService) LoginPatient(email, password string) (*models.Patient, 
 		email).Scan(&patient.PatientID, &patient.Email, &hashedPassword, &patient.FirstName, &patient.LastName, &patient.ProfilePictureURL)
 
 	if err != nil {
-		return nil, "", "", fmt.Errorf("invalid credentials")
+		return nil, "", "", fmt.Errorf("no account found")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {
-		return nil, "", "", fmt.Errorf("invalid credentials")
+		return nil, "", "", fmt.Errorf("invalid password")
 	}
 
 	if patient.ProfilePictureURL != "" {

@@ -1,4 +1,4 @@
-﻿package testhelpers
+package testhelpers
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func (db *LocalTestDatabase) Cleanup(ctx context.Context) error {
 
 func (db *LocalTestDatabase) CreateTestDoctor(ctx context.Context, email, password, firstName, lastName string, isVerified bool) error {
 	_, _ = db.Pool.Exec(ctx, "DELETE FROM doctor_info WHERE email = $1", email)
-	
+
 	_, err := db.Pool.Exec(ctx, `
 		INSERT INTO doctor_info (
 			username, first_name, last_name, age, sex, hashed_password, salt,
@@ -64,36 +64,36 @@ func (db *LocalTestDatabase) CreateTestDoctor(ctx context.Context, email, passwo
 		VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
 		)
-	`, 
-		email, 
-		firstName, lastName, 
-		35, 
-		"Male", 
-		password, 
+	`,
+		email,
+		firstName, lastName,
+		35,
+		"Male",
+		password,
 		"test-salt",
-		"Cardiology", 
-		"5 years", 
-		0, 
-		"TEST-LIC-"+email, 
-		isVerified, 
-		"Test doctor bio", 
-		email, 	
-		"+212-600-000-000", 
-		"123 Test Street", 
-		"Casablanca", 
-		"Casablanca-Settat", 
-		"20000", 
-		"Morocco", 
-		"1990-01-01", 
-		"Casablanca, Morocco", 
-		"https://example.com/photo.jpg", 
+		"Cardiology",
+		"5 years",
+		0,
+		"TEST-LIC-"+email,
+		isVerified,
+		"Test doctor bio",
+		email,
+		"+212-600-000-000",
+		"123 Test Street",
+		"Casablanca",
+		"Casablanca-Settat",
+		"20000",
+		"Morocco",
+		"1990-01-01",
+		"Casablanca, Morocco",
+		"https://example.com/photo.jpg",
 	)
 	return err
 }
 
 func (db *LocalTestDatabase) CreateTestPatient(ctx context.Context, email, password, firstName, lastName string, isVerified bool) error {
 	_, _ = db.Pool.Exec(ctx, "DELETE FROM patient_info WHERE email = $1", email)
-	
+
 	_, err := db.Pool.Exec(ctx, `
 		INSERT INTO patient_info (
 			username, first_name, last_name, age, sex, hashed_password, salt, is_verified,
@@ -136,7 +136,7 @@ func (db *LocalTestDatabase) CreateVerificationToken(ctx context.Context, email,
 
 func (db *LocalTestDatabase) CleanupTestUser(ctx context.Context, emailPrefix string) error {
 	tables := []string{"doctor_info", "patient_info", "receptionist_info"}
-	
+
 	for _, table := range tables {
 		query := fmt.Sprintf("DELETE FROM %s WHERE email LIKE $1", table)
 		_, err := db.Pool.Exec(ctx, query, emailPrefix+"%")
@@ -144,11 +144,11 @@ func (db *LocalTestDatabase) CleanupTestUser(ctx context.Context, emailPrefix st
 			return fmt.Errorf("failed to cleanup %s: %w", table, err)
 		}
 	}
-	
+
 	_, err := db.Pool.Exec(ctx, "DELETE FROM verification_tokens WHERE email LIKE $1", emailPrefix+"%")
 	if err != nil {
 		return fmt.Errorf("failed to cleanup verification_tokens: %w", err)
 	}
-	
+
 	return nil
 }

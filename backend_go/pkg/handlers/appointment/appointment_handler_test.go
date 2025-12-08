@@ -13,7 +13,7 @@ import (
 	"healthcare_backend/pkg/config"
 	"healthcare_backend/pkg/models"
 	"healthcare_backend/pkg/services/appointment"
-	"healthcare_backend/pkg/testhelpers"
+	testhelpers "healthcare_backend/pkg/testhelpers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -109,7 +109,7 @@ func TestSetDoctorAvailability_Success(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping in short mode")
 	}
-	
+
 	handler, ctx, cleanup := setupHandlerTest(t)
 	defer cleanup()
 
@@ -126,7 +126,6 @@ func TestSetDoctorAvailability_Success(t *testing.T) {
 	})
 	router.POST("/availability", handler.SetDoctorAvailability)
 
-	// Use only 2 days to prevent slow DB inserts
 	startDate := time.Now().Add(24 * time.Hour).Format("2006-01-02")
 	endDate := time.Now().Add(48 * time.Hour).Format("2006-01-02")
 
@@ -144,14 +143,13 @@ func TestSetDoctorAvailability_Success(t *testing.T) {
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	
-	// Use a channel to timeout if the request hangs
+
 	done := make(chan bool, 1)
 	go func() {
 		router.ServeHTTP(w, req)
 		done <- true
 	}()
-	
+
 	select {
 	case <-done:
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -322,7 +320,7 @@ func TestCancelAppointment_Success(t *testing.T) {
 	cancelInfo := map[string]string{
 		"canceled_by":         patientID,
 		"cancellation_reason": "Test reason",
-		"appointment_id":      appointmentID.String(), // Handler expects this in body
+		"appointment_id":      appointmentID.String(),
 	}
 	body, _ := json.Marshal(cancelInfo)
 	url := fmt.Sprintf("/appointments/%s/cancel", appointmentID.String())
@@ -390,7 +388,6 @@ func TestGetAppointmentByID_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Handler returns 500 for not found (service error)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
@@ -587,11 +584,6 @@ func TestClearDoctorAvailabilities_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-// ============================================
-// PHASE 1: VALIDATION TESTS (5 NEW TESTS - ADJUSTED FOR ACTUAL BEHAVIOR)
-// ============================================
-
-// TestCreateReservation_InvalidDates tests various invalid date scenarios
 func TestCreateReservation_InvalidDates(t *testing.T) {
 	handler, ctx, cleanup := setupHandlerTest(t)
 	defer cleanup()
@@ -607,22 +599,22 @@ func TestCreateReservation_InvalidDates(t *testing.T) {
 	testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", "patvalid@test.com").Scan(&patientID)
 
 	tests := []struct {
-		name          string
-		startTime     time.Time
-		endTime       time.Time
-		expectedCode  int
+		name         string
+		startTime    time.Time
+		endTime      time.Time
+		expectedCode int
 	}{
 		{
 			name:         "Past appointment date",
 			startTime:    time.Now().Add(-24 * time.Hour),
 			endTime:      time.Now().Add(-23 * time.Hour),
-			expectedCode: http.StatusCreated, // DB allows, no handler validation
+			expectedCode: http.StatusCreated,
 		},
 		{
 			name:         "End before start",
 			startTime:    time.Now().Add(2 * time.Hour),
 			endTime:      time.Now().Add(1 * time.Hour),
-			expectedCode: http.StatusInternalServerError, // DB constraint violation
+			expectedCode: http.StatusInternalServerError,
 		},
 	}
 
@@ -728,7 +720,6 @@ func TestSetDoctorAvailability_InvalidDates(t *testing.T) {
 			name:  "End before start",
 			start: "2024-12-31",
 			end:   "2024-01-01",
-			// Note: Handler doesn't validate date order, service does
 		},
 		{
 			name:  "Invalid date format",
@@ -761,7 +752,6 @@ func TestSetDoctorAvailability_InvalidDates(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// Expect 400 for invalid formats, 200 for end before start (no validation)
 			if tt.start == "" || tt.start == "invalid-date" {
 				assert.Equal(t, http.StatusBadRequest, w.Code)
 			} else {
@@ -793,12 +783,12 @@ func TestGetReservations_InvalidUserType(t *testing.T) {
 		{
 			name:         "Invalid user type",
 			userType:     "INVALID_TYPE",
-			expectedCode: http.StatusOK, // Handler doesn't validate specific values, returns OK with empty results
+			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Empty user type",
 			userType:     "",
-			expectedCode: http.StatusBadRequest, // Handler validates not empty
+			expectedCode: http.StatusBadRequest,
 		},
 	}
 
@@ -836,7 +826,7 @@ func TestCancelAppointment_InvalidID(t *testing.T) {
 		{
 			name:          "Non-existent UUID",
 			appointmentID: uuid.New().String(),
-			expectedCode:  http.StatusBadRequest, // Handler returns 400 for missing canceled_by
+			expectedCode:  http.StatusBadRequest,
 		},
 	}
 
@@ -857,10 +847,6 @@ func TestCancelAppointment_InvalidID(t *testing.T) {
 		})
 	}
 }
-
-// ============================================
-// PHASE 2: AUTHORIZATION & SECURITY TESTS (4 NEW TESTS)
-// ============================================
 
 // TestGetReservations_Unauthorized tests accessing reservations without proper context
 func TestGetReservations_Unauthorized(t *testing.T) {
@@ -972,10 +958,6 @@ func TestSetDoctorAvailability_MissingQueryParams(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-// ============================================
-// PHASE 3: ERROR HANDLING TESTS (5 NEW TESTS)
-// ============================================
-
 // TestGetReservations_EmptyResults tests handling of no appointments
 func TestGetReservations_EmptyResults(t *testing.T) {
 	handler, ctx, cleanup := setupHandlerTest(t)
@@ -996,7 +978,6 @@ func TestGetReservations_EmptyResults(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	// Response can be nil or empty array - both are acceptable
 	assert.NotNil(t, w.Body)
 }
 
@@ -1021,7 +1002,6 @@ func TestUpdateReport_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Handler returns 500 for not found (service returns error)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
@@ -1040,7 +1020,6 @@ func TestDeleteReport_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Handler returns 200 even for non-existent (no error check)
 	assert.True(t, w.Code == http.StatusOK || w.Code == http.StatusNotFound)
 }
 
@@ -1074,7 +1053,6 @@ func TestGetAppointmentByID_InvalidUUID(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// Handler returns 500 for invalid UUID (service error)
 			assert.True(t, w.Code >= 400)
 		})
 	}
@@ -1095,13 +1073,8 @@ func TestGetReport_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Handler returns 500 for not found (service returns error)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
-
-// ============================================
-// PHASE 4: EDGE CASES & COMPLEX SCENARIOS (6 NEW TESTS)
-// ============================================
 
 // TestGetReservations_MultipleFilters tests combining multiple query filters
 func TestGetReservations_MultipleFilters(t *testing.T) {

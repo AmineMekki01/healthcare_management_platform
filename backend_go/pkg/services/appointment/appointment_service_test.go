@@ -68,7 +68,7 @@ func TestCreateReservation_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	var doctorID string
-	err = testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", 
+	err = testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1",
 		"docappt@test.com").Scan(&doctorID)
 	require.NoError(t, err)
 
@@ -76,7 +76,7 @@ func TestCreateReservation_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	var patientID string
-	err = testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", 
+	err = testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1",
 		"patappt@test.com").Scan(&patientID)
 	require.NoError(t, err)
 
@@ -107,14 +107,14 @@ func TestGetAppointmentByID_Success(t *testing.T) {
 	err := testDB.CreateTestDoctor(ctx, "docgetid@test.com", "pass", "Dr.", "GetID", true)
 	require.NoError(t, err)
 	var doctorID string
-	err = testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", 
+	err = testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1",
 		"docgetid@test.com").Scan(&doctorID)
 	require.NoError(t, err)
 
 	err = testDB.CreateTestPatient(ctx, "patgetid@test.com", "pass", "Alice", "GetID", true)
 	require.NoError(t, err)
 	var patientID string
-	err = testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", 
+	err = testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1",
 		"patgetid@test.com").Scan(&patientID)
 	require.NoError(t, err)
 
@@ -149,13 +149,13 @@ func TestCancelAppointment_Success(t *testing.T) {
 	err := testDB.CreateTestDoctor(ctx, "doccancel@test.com", "pass", "Dr.", "Cancel", true)
 	require.NoError(t, err)
 	var doctorID string
-	testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", 
+	testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1",
 		"doccancel@test.com").Scan(&doctorID)
 
 	err = testDB.CreateTestPatient(ctx, "patcancel@test.com", "pass", "Bob", "Cancel", true)
 	require.NoError(t, err)
 	var patientID string
-	testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", 
+	testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1",
 		"patcancel@test.com").Scan(&patientID)
 
 	startTime := time.Now().Add(48 * time.Hour)
@@ -610,16 +610,16 @@ func TestCreateReport_Success(t *testing.T) {
 		doctorID, patientID).Scan(&appointmentID)
 
 	report := models.MedicalReport{
-		AppointmentID:     appointmentID,
-		PatientID:         patientID,
-		DoctorID:          doctorID,
-		PatientFirstName:  "Pat",
-		PatientLastName:   "CreateReport",
-		DoctorFirstName:   "Dr.",
-		DoctorLastName:    "CreateReport",
-		DiagnosisName:     strPtr("Test Diagnosis"),
-		DiagnosisDetails:  strPtr("Test Details"),
-		DiagnosisMade:     true,
+		AppointmentID:    appointmentID,
+		PatientID:        patientID,
+		DoctorID:         doctorID,
+		PatientFirstName: "Pat",
+		PatientLastName:  "CreateReport",
+		DoctorFirstName:  "Dr.",
+		DoctorLastName:   "CreateReport",
+		DiagnosisName:    strPtr("Test Diagnosis"),
+		DiagnosisDetails: strPtr("Test Details"),
+		DiagnosisMade:    true,
 	}
 
 	createdReport, err := testService.CreateReport(report)
@@ -1743,7 +1743,7 @@ func TestCreateReservation_SameDayMultiple(t *testing.T) {
 	testDB.Pool.QueryRow(ctx, "SELECT patient_id FROM patient_info WHERE email = $1", "patsameday@test.com").Scan(&patientID)
 
 	tomorrow := time.Now().Add(24 * time.Hour)
-	
+
 	for i := 0; i < 2; i++ {
 		startTime := tomorrow.Add(time.Duration(i*2) * time.Hour)
 		reservation := models.Reservation{
@@ -2232,12 +2232,10 @@ func TestGetAvailabilities_MultipleDays(t *testing.T) {
 	var doctorID string
 	testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", "docmultiday@test.com").Scan(&doctorID)
 
-	// Use a fixed future date to avoid timing issues
 	futureDate := time.Now().Add(48 * time.Hour)
 	startDate := futureDate.Format("2006-01-02")
 	endDate := futureDate.Add(7 * 24 * time.Hour).Format("2006-01-02")
 
-	// Create availabilities for the future date
 	baseTime := time.Date(futureDate.Year(), futureDate.Month(), futureDate.Day(), 10, 0, 0, 0, time.UTC)
 	availabilities := []models.Availability{
 		{
@@ -2252,12 +2250,10 @@ func TestGetAvailabilities_MultipleDays(t *testing.T) {
 	err = testService.SetDoctorAvailability(doctorID, startDate, endDate, availabilities)
 	require.NoError(t, err)
 
-	// Query with current time - should return the future availability
 	queryTime := time.Now().Format(time.RFC3339)
 	slots, err := testService.GetAvailabilities(doctorID, startDate, queryTime)
 
 	assert.NoError(t, err)
-	// If no slots found, that's okay - the test validates the query works without error
 	assert.NotNil(t, slots)
 }
 

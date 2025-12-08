@@ -136,7 +136,7 @@ func TestRequestResetHandler_Integration_ValidEmail(t *testing.T) {
 
 	handler.RequestReset(c)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	var tokenCount int
 	err = testDB.Pool.QueryRow(ctx,
@@ -1209,10 +1209,6 @@ func TestRegisterDoctor_Integration_AllFieldsPopulated(t *testing.T) {
 	writer.WriteField("BirthDate", "1985-01-15")
 	writer.WriteField("Latitude", "42.3601")
 	writer.WriteField("Longitude", "-71.0589")
-
-	// Optional file (in real test with S3 mock)
-	// fileWriter, _ := writer.CreateFormFile("file", "profile.jpg")
-	// io.WriteString(fileWriter, "fake image content")
 
 	writer.Close()
 

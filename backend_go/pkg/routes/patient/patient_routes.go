@@ -15,8 +15,6 @@ func SetupPatientRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *config.C
 
 	patientRoutes := router.Group("/patient")
 	{
-		patientRoutes.POST("/register", handler.RegisterPatient)
-		patientRoutes.POST("/login", handler.LoginPatient)
 		patientRoutes.POST("/verify", handler.VerifyPatient)
 
 		patientRoutes.GET("/search", handler.SearchPatients)

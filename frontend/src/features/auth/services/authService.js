@@ -4,15 +4,15 @@ class AuthService {
   async login(credentials) {
     let url;
     if (credentials.userType === 'doctor') {
-      url = '/api/v1/doctors/login';
+      url = '/api/v1/auth/login/doctor';
     } else if (credentials.userType === 'receptionist') {
       url = '/api/v1/auth/login/receptionist';
     } else {
-      url = '/api/v1/patients/login';
+      url = '/api/v1/auth/login/patient';
     }
 
     const response = await axios.post(url, credentials);
-    
+
     if (credentials.userType === 'receptionist') {
       return {
         accessToken: response.data.accessToken,
@@ -31,7 +31,7 @@ class AuthService {
   }
 
   async registerDoctor(doctorData) {
-    const response = await axios.post('/api/v1/doctors/register', doctorData, {
+    const response = await axios.post('/api/v1/auth/register/doctor', doctorData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -40,7 +40,7 @@ class AuthService {
   }
 
   async registerPatient(patientData) {
-    const response = await axios.post('/api/v1/patients/register', patientData, {
+    const response = await axios.post('/api/v1/auth/register/patient', patientData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

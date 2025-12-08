@@ -1,4 +1,4 @@
-﻿package database
+package database
 
 import (
 	"context"
@@ -318,7 +318,7 @@ func createTables(conn *pgxpool.Pool) error {
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);`,
-		
+
 		`CREATE TABLE IF NOT EXISTS medical_reports (
 			report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			appointment_id UUID REFERENCES appointments(appointment_id),
@@ -341,7 +341,6 @@ func createTables(conn *pgxpool.Pool) error {
 			);
 		`,
 
-
 		`CREATE TABLE IF NOT EXISTS public.medications(
 			medication_id uuid NOT NULL DEFAULT gen_random_uuid(),
 			patient_id uuid NOT NULL,
@@ -361,7 +360,6 @@ func createTables(conn *pgxpool.Pool) error {
 				ON UPDATE NO ACTION
 				ON DELETE CASCADE
 		)`,
-
 
 		`CREATE TABLE IF NOT EXISTS medical_referrals (
 			referral_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

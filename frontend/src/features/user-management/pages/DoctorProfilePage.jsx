@@ -193,7 +193,7 @@ const DoctorProfilePage = () => {
 
   const handleBookingComplete = (appointment) => {
     console.log('Appointment booked:', appointment);
-    setShowBooking(false);
+    // setShowBooking(false);
   };
 
   const toggleBooking = () => {
