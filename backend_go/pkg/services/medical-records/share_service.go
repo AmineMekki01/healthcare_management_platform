@@ -185,30 +185,38 @@ func (s *ShareService) copyItemRecursively(item models.FileFolder, recipientID s
 }
 
 func (s *ShareService) GetSharedWithMe(userID string) ([]models.FileFolder, error) {
-	sql := `SELECT 
-    f.id, 
-    f.name, 
-    f.created_at, 
-    f.updated_at, 
-    f.type, 
-    f.size, 
-    f.extension, 
-    f.user_id, 
-    f.user_type, 
-    f.parent_id, 
-    f.path,
-    s.shared_by_id,
-    CASE 
-        WHEN f.user_type = 'doctor' THEN CONCAT(d.first_name, ' ', d.last_name)
-        WHEN f.user_type = 'patient' THEN CONCAT(p.first_name, ' ', p.last_name)
-        ELSE 'Unknown User'
-    END as shared_by_name,
-    f.user_type as shared_by_type
-	FROM shared_items s 
-	JOIN folder_file_info f ON s.item_id = f.id 
-	LEFT JOIN doctor_info d ON f.user_id = d.doctor_id AND f.user_type = 'doctor'
-	LEFT JOIN patient_info p ON f.user_id = p.patient_id AND f.user_type = 'patient'
-	WHERE s.shared_with_id = $1`
+	sql := `
+	SELECT
+		f.id,
+		f.name,
+		f.created_at,
+		f.updated_at,
+		f.type,
+		f.size,
+		f.extension,
+		f.user_id,
+		f.user_type,
+		f.parent_id,
+		f.path,
+		s.shared_by_id,
+		CASE 
+			WHEN s.shared_by_id IN (SELECT doctor_id::text FROM doctor_info) THEN 
+				(SELECT CONCAT(first_name, ' ', last_name) FROM doctor_info WHERE doctor_id::text = s.shared_by_id)
+			WHEN s.shared_by_id IN (SELECT patient_id::text FROM patient_info) THEN 
+				(SELECT CONCAT(first_name, ' ', last_name) FROM patient_info WHERE patient_id::text = s.shared_by_id)
+			WHEN s.shared_by_id IN (SELECT receptionist_id::text FROM receptionists) THEN 
+				(SELECT CONCAT(first_name, ' ', last_name) FROM receptionists WHERE receptionist_id::text = s.shared_by_id)
+			ELSE 'Unknown User'
+		END as shared_by_name,
+		CASE 
+			WHEN s.shared_by_id IN (SELECT doctor_id::text FROM doctor_info) THEN 'doctor'
+			WHEN s.shared_by_id IN (SELECT patient_id::text FROM patient_info) THEN 'patient'
+			WHEN s.shared_by_id IN (SELECT receptionist_id::text FROM receptionists) THEN 'receptionist'
+			ELSE 'unknown'
+		END as shared_by_type
+	FROM shared_items s
+	JOIN folder_file_info f ON s.item_id = f.id
+	WHERE s.shared_with_id = $1;`
 
 	rows, err := s.db.Query(context.Background(), sql, userID)
 	if err != nil {
