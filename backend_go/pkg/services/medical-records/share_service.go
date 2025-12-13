@@ -31,7 +31,7 @@ func NewShareService(db *pgxpool.Pool, cfg *config.Config) *ShareService {
 
 func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 	rows, err := s.db.Query(context.Background(),
-		"SELECT doctor_id, first_name, last_name, specialty FROM users WHERE user_type = 'doctor'")
+		"SELECT doctor_id, first_name, last_name, specialty FROM doctor_info")
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve doctors list: %v", err)
 	}

@@ -179,7 +179,7 @@ class MedicalRecordsService {
 
   async fetchDoctors() {
     try {
-      const response = await axios.get('/api/v1/records/doctors');
+      const response = await axios.get('/api/v1/records/share/doctors');
       const data = response.data;
       return Array.isArray(data) ? data : [];
     } catch (error) {
