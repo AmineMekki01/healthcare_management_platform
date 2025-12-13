@@ -32,28 +32,22 @@ const FullPost = () => {
     
     useEffect(() => {
         const fetchPost = async () => {
-            if (!userId && !userType) {
+            if (!userId || !userType) {
                 return;
             }
             try {
                 const response = await feedService.getPost(postId);
-
                 setPost(response);
-                setLikes(response.likes_count);
-                setCommentsCount(response.comments_count)
-                if (likes > 0) {
-                    setLiked(true);
-
-                } else {
-                    setLiked(false);
-                }
+                setLikes(response.likesCount);
+                setCommentsCount(response.commentsCount);
+                setLiked(response.isLiked);
             } catch (error) {
                 console.error('Error fetching post:', error);
             }
         };
 
         fetchPost();
-    }, [postId, userId, userType, likes]);
+    }, [postId, userId, userType]);
 
     const handleLike = async () => {
         if (!userId || !userType) {
