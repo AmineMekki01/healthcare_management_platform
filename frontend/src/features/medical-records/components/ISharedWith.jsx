@@ -18,6 +18,11 @@ import {
   AccordionDetails,
   Paper,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   Share as ShareIcon,
@@ -25,8 +30,9 @@ import {
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
   Person as PersonIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
-import { fetchSharedByMe } from '../services/medicalRecordsService';
+import { fetchSharedByMe, downloadFile } from '../services/medicalRecordsService';
 
 function ISharedWith() {
   const { t } = useTranslation('medical');
@@ -35,6 +41,8 @@ function ISharedWith() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const getSharedWith = async () => {
     if (!userId) return;
@@ -55,8 +63,40 @@ function ISharedWith() {
     getSharedWith();
   }, [userId]);
 
-  const viewFolder = (item) => {
-    setSharedItems(item.id); 
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
+  const handleOpenViewer = (item) => {
+    setSelectedItem(item);
+    setViewerOpen(true);
+  };
+
+  const handleCloseViewer = () => {
+    setViewerOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handleDownload = async () => {
+    if (!selectedItem) return;
+
+    try {
+      const blob = await downloadFile(selectedItem.folder_id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = selectedItem.name || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading shared item:', error);
+    }
   };
 
   const groupFilesByUser = () => {
@@ -295,114 +335,180 @@ function ISharedWith() {
                           </Box>
                         </Box>
                       </AccordionSummary>
-                      <AccordionDetails sx={{ p: 3 }}>
-                        <Grid container spacing={3}>
-                          {group.files.map((item, index) => {
-                            const isFolder = item.file_type === 'folder';
-                            
-                            return (
-                              <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
-                                <Card
-                                  sx={{
-                                    height: '100%',
-                                    borderRadius: '16px',
-                                    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-                                    border: '1px solid rgba(139, 92, 246, 0.1)',
-                                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    '&:hover': {
-                                      transform: 'translateY(-4px) scale(1.02)',
-                                      boxShadow: '0 8px 30px rgba(139, 92, 246, 0.15)',
-                                      '&::before': {
-                                        opacity: 1,
-                                      }
-                                    },
-                                    '&::before': {
-                                      content: '""',
-                                      position: 'absolute',
-                                      top: 0,
-                                      left: 0,
-                                      right: 0,
-                                      height: '3px',
-                                      background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)',
-                                      opacity: 0,
-                                      transition: 'opacity 0.3s ease',
-                                    }
-                                  }}
-                                  onClick={() => viewFolder(item)}
-                                >
-                                  <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <Box 
-                                      display="flex" 
-                                      justifyContent="center" 
-                                      alignItems="center" 
-                                      mb={1.5}
-                                      sx={{ flexGrow: 1 }}
+                          <AccordionDetails sx={{ p: 3 }}>
+                            <Grid container spacing={3}>
+                              {group.files.map((item, index) => {
+                                const isFolder = item.file_type === 'folder';
+                                
+                                return (
+                                  <Grid item xs={12} sm={6} md={4} lg={3} key={item.folder_id}>
+                                    <Card
+                                      sx={{
+                                        height: '100%',
+                                        borderRadius: '16px',
+                                        background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
+                                        border: '1px solid rgba(139, 92, 246, 0.1)',
+                                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        '&:hover': {
+                                          transform: 'translateY(-4px) scale(1.02)',
+                                          boxShadow: '0 8px 30px rgba(139, 92, 246, 0.15)',
+                                          '&::before': {
+                                            opacity: 1,
+                                          }
+                                        },
+                                        '&::before': {
+                                          content: '""',
+                                          position: 'absolute',
+                                          top: 0,
+                                          left: 0,
+                                          right: 0,
+                                          height: '3px',
+                                          background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)',
+                                          opacity: 0,
+                                          transition: 'opacity 0.3s ease',
+                                        }
+                                      }}
+                                      onClick={() => handleOpenViewer(item)}
                                     >
-                                      <Avatar
-                                        sx={{
-                                          width: 64,
-                                          height: 64,
-                                          background: isFolder 
-                                            ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' 
-                                            : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                                          fontSize: '1.5rem',
-                                        }}
-                                      >
-                                        {isFolder ? <ShareIcon sx={{ fontSize: '2rem' }} /> : <DescriptionIcon sx={{ fontSize: '2rem' }} />}
-                                      </Avatar>
-                                    </Box>
+                                      <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                        <Box 
+                                          display="flex" 
+                                          justifyContent="center" 
+                                          alignItems="center" 
+                                          mb={1.5}
+                                          sx={{ flexGrow: 1 }}
+                                        >
+                                          <Avatar
+                                            sx={{
+                                              width: 64,
+                                              height: 64,
+                                              background: isFolder 
+                                                ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' 
+                                                : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                                              fontSize: '1.5rem',
+                                            }}
+                                          >
+                                            {isFolder ? <ShareIcon sx={{ fontSize: '2rem' }} /> : <DescriptionIcon sx={{ fontSize: '2rem' }} />}
+                                          </Avatar>
+                                        </Box>
 
-                                    <Box textAlign="center">
-                                      <Typography 
-                                        variant="subtitle1" 
-                                        sx={{ 
-                                          fontWeight: 600,
-                                          color: '#2d3748',
-                                          mb: 0.5,
-                                          wordBreak: 'break-word',
-                                          display: '-webkit-box',
-                                          WebkitLineClamp: 2,
-                                          WebkitBoxOrient: 'vertical',
-                                          overflow: 'hidden',
-                                          fontSize: '0.9rem',
-                                        }}
-                                      >
-                                        {item.name}
-                                      </Typography>
-                                      <Chip
-                                        label={isFolder ? 'Shared Folder' : 'Shared File'}
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                                          color: '#8b5cf6',
-                                          fontWeight: 600,
-                                          fontSize: '0.75rem',
-                                        }}
-                                      />
-                                    </Box>
-                                  </CardContent>
-                                </Card>
-                              </Grid>
-                            );
-                          })}
-                        </Grid>
-                      </AccordionDetails>
-                    </Accordion>
-                  </Paper>
-                </Fade>
-              ))
-            )}
-          </Box>
-        </Fade>
-      )}
-    </Container>
-  );
-}
-    
+                                        <Box textAlign="center">
+                                          <Typography 
+                                            variant="subtitle1" 
+                                            sx={{ 
+                                              fontWeight: 600,
+                                              color: '#2d3748',
+                                              mb: 0.5,
+                                              wordBreak: 'break-word',
+                                              display: '-webkit-box',
+                                              WebkitLineClamp: 2,
+                                              WebkitBoxOrient: 'vertical',
+                                              overflow: 'hidden',
+                                              fontSize: '0.9rem',
+                                            }}
+                                          >
+                                            {item.name}
+                                          </Typography>
+                                          <Chip
+                                            label={isFolder ? 'Shared Folder' : 'Shared File'}
+                                            size="small"
+                                            sx={{
+                                              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                              color: '#8b5cf6',
+                                              fontWeight: 600,
+                                              fontSize: '0.75rem',
+                                            }}
+                                          />
+                                        </Box>
+                                      </CardContent>
+                                    </Card>
+                                  </Grid>
+                                );
+                              })}
+                            </Grid>
+                          </AccordionDetails>
+                        </Accordion>
+                      </Paper>
+                    </Fade>
+                  ))
+                )}
+              </Box>
+            </Fade>
+          )}
+          <Dialog
+            open={viewerOpen && !!selectedItem}
+            onClose={handleCloseViewer}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle>
+              {selectedItem?.name || 'Document details'}
+            </DialogTitle>
+            <DialogContent dividers>
+              {selectedItem && (
+                <Box>
+                  <Box display="flex" alignItems="center" gap={2} mb={2}>
+                    <Avatar
+                      sx={{
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        width: 48,
+                        height: 48,
+                      }}
+                    >
+                      <DescriptionIcon sx={{ color: '#8b5cf6' }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {selectedItem.name}
+                      </Typography>
+                      {selectedItem.shared_with_name && (
+                        <Typography variant="body2" color="text.secondary">
+                          Shared with {selectedItem.shared_with_name}
+                          {selectedItem.shared_with_type && ` (${selectedItem.shared_with_type})`}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
 
-export default ISharedWith;
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedItem.file_type === 'folder' ? 'Folder' : 'File'}
+                    </Typography>
+                    {selectedItem.size > 0 && (
+                      <Typography variant="body2" color="text.secondary">
+                        Size: {formatFileSize(selectedItem.size)}
+                      </Typography>
+                    )}
+                    {selectedItem.created_at && (
+                      <Typography variant="body2" color="text.secondary">
+                        Shared on {new Date(selectedItem.created_at).toLocaleString()}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseViewer}>
+                Close
+              </Button>
+              {selectedItem && selectedItem.file_type !== 'folder' && (
+                <Button
+                  variant="contained"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleDownload}
+                >
+                  Download
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
+        </Container>
+      );
+    }
 
+    export default ISharedWith;

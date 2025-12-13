@@ -297,6 +297,12 @@ function MyUploads() {
       alert('Please select a doctor to share with.');
       return;
     }
+
+    if (userType === 'doctor' && userId === doctorId) {
+      alert('You cannot share items with yourself. Please select another doctor.');
+      return;
+    }
+
     try {
       await shareItems([folderId], doctorId, userId, userType);
       alert('Folder shared successfully!');

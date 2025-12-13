@@ -44,6 +44,11 @@ func (h *ShareHandler) ShareItems(c *gin.Context) {
 		return
 	}
 
+	if req.UserType == "doctor" && req.UserID == req.SharedWithID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Doctors cannot share items with themselves"})
+		return
+	}
+
 	err := h.shareService.ShareItems(req)
 	if err != nil {
 		log.Printf("Error sharing items: %v", err)
