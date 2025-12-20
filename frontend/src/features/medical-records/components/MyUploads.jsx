@@ -478,45 +478,50 @@ function MyUploads() {
           )}
         </Box>
         
-        { userType === 'doctor' && (
-          selectedFiles.size === 1 && (
-            <Box mt={2} display="flex" gap={2} alignItems="center">
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>Select Doctor</InputLabel>
-                <Select
-                  value={selectedDoctor}
-                  onChange={(e) => setSelectedDoctor(e.target.value)}
-                  label="Select Doctor"
-                  sx={{ borderRadius: '8px' }}
-                >
-                  <MenuItem value="">
-                    <em>Choose a doctor</em>
-                  </MenuItem>
-                  {doctors.map((doctor) => (
-                    <MenuItem key={doctor.doctorId} value={doctor.doctorId}>
-                      Dr. {doctor.firstName} {doctor.lastName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button
-                variant="contained"
-                startIcon={<ShareIcon />}
-                onClick={() => shareFolder(Array.from(selectedFiles)[0], selectedDoctor)}
-                disabled={!selectedDoctor}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669, #047857)',
-                  }
-                }}
+        {selectedFiles.size > 0 && (
+          <Box mt={2} display="flex" gap={2} alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Select Doctor</InputLabel>
+              <Select
+                value={selectedDoctor}
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+                label="Select Doctor"
+                sx={{ borderRadius: '8px' }}
               >
-                Share with Doctor
-              </Button>
-            </Box>
-          )
+                <MenuItem value="">
+                  <em>Choose a doctor</em>
+                </MenuItem>
+                {doctors.map((doctor) => (
+                  <MenuItem key={doctor.doctorId} value={doctor.doctorId}>
+                    Dr. {doctor.firstName} {doctor.lastName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              startIcon={<ShareIcon />}
+              onClick={() => {
+                const selectedFileIds = Array.from(selectedFiles);
+                if (selectedFileIds.length === 1) {
+                  shareFolder(selectedFileIds[0], selectedDoctor);
+                } else {
+                  selectedFileIds.forEach(fileId => shareFolder(fileId, selectedDoctor));
+                }
+              }}
+              disabled={!selectedDoctor}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #059669, #047857)',
+                }
+              }}
+            >
+              Share {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''} with Doctor
+            </Button>
+          </Box>
         )}
         
       </Paper>
