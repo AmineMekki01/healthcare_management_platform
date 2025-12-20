@@ -216,7 +216,8 @@ func (s *ShareService) GetSharedWithMe(userID string) ([]models.FileFolder, erro
 		END as shared_by_type
 	FROM shared_items s
 	JOIN folder_file_info f ON s.item_id = f.id
-	WHERE s.shared_with_id = $1;`
+	WHERE s.shared_with_id = $1
+	AND f.folder_type = 'PERSONAL';`
 
 	rows, err := s.db.Query(context.Background(), sql, userID)
 	if err != nil {

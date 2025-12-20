@@ -398,6 +398,8 @@ func (s *MedicalRecordsService) GetFolders(userID, parentID string, isSharedWith
 			user_id = $1  
 		AND
 			folder_type = 'PERSONAL'
+		AND
+			shared_by_id IS NULL
 		`
 		args = []interface{}{userID}
 	}

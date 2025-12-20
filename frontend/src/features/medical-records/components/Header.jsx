@@ -65,7 +65,12 @@ function FileUploadHeader() {
           label: t('header.tabs.uploadShare'),
           onClick: () => navigate('upload'),
           description: t('header.tabs.uploadShareDescription')
-        },
+        }
+      );
+    }
+
+    if (userType === 'doctor' || userType === 'receptionist' || userType === 'patient') {
+      baseTabs.push(
         {
           icon: <FolderSharedIcon sx={{ mb: 1 }} />,
           label: t('header.tabs.sharedWithMe'),
