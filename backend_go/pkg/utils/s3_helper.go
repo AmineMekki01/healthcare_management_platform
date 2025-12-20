@@ -6,8 +6,10 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -189,9 +191,19 @@ func CopyS3Object(sourceKey, destKey string) error {
 		return fmt.Errorf("S3_BUCKET_NAME environment variable is not set")
 	}
 
+	pathSegments := strings.Split(sourceKey, "/")
+
+	encodedSegments := make([]string, len(pathSegments))
+	for i, seg := range pathSegments {
+		encodedSegments[i] = url.QueryEscape(seg)
+		encodedSegments[i] = strings.ReplaceAll(encodedSegments[i], "+", "%20")
+	}
+	encodedKey := strings.Join(encodedSegments, "/")
+	copySource := bucket + "/" + encodedKey
+
 	_, err = s3Client.CopyObject(context.TODO(), &s3.CopyObjectInput{
 		Bucket:     aws.String(bucket),
-		CopySource: aws.String(bucket + "/" + sourceKey),
+		CopySource: aws.String(copySource),
 		Key:        aws.String(destKey),
 	})
 

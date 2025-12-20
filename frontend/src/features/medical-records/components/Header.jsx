@@ -34,27 +34,21 @@ function FileUploadHeader() {
 
   const activeView = getCurrentTab();
   
-  const getActiveTab = () => {
-    if (activeView === 'medical-records') return 1;
-    if (activeView === 'upload') return 2;
-    if (activeView === 'shared-with-me') return 3;
-    if (activeView === 'i-shared-with') return 4;
-    return 0;
-  };
-
   const getVisibleTabs = () => {
     const baseTabs = [
       {
         icon: <CloudUploadIcon sx={{ mb: 1 }} />,
         label: t('header.tabs.myDocs'),
         onClick: () => navigate('/records'),
-        description: t('header.tabs.myDocsDescription')
+        description: t('header.tabs.myDocsDescription'),
+        value: 'my-docs'
       },
       {
         icon: <MedicalIcon sx={{ mb: 1 }} />,
         label: t('header.tabs.medicalRecords'),
         onClick: () => navigate('medical-records'),
-        description: t('header.tabs.medicalRecordsDescription')
+        description: t('header.tabs.medicalRecordsDescription'),
+        value: 'medical-records'
       },
     ];
 
@@ -64,7 +58,15 @@ function FileUploadHeader() {
           icon: <ShareIcon sx={{ mb: 1 }} />,
           label: t('header.tabs.uploadShare'),
           onClick: () => navigate('upload'),
-          description: t('header.tabs.uploadShareDescription')
+          description: t('header.tabs.uploadShareDescription'),
+          value: 'upload'
+        },
+        {
+          icon: <FolderSharedIcon sx={{ mb: 1 }} />,
+          label: t('header.tabs.sharedWithMe'),
+          onClick: () => navigate('shared-with-me'),
+          description: t('header.tabs.sharedWithMeDescription'),
+          value: 'shared-with-me'
         }
       );
     }
@@ -72,21 +74,22 @@ function FileUploadHeader() {
     if (userType === 'doctor' || userType === 'receptionist' || userType === 'patient') {
       baseTabs.push(
         {
-          icon: <FolderSharedIcon sx={{ mb: 1 }} />,
-          label: t('header.tabs.sharedWithMe'),
-          onClick: () => navigate('shared-with-me'),
-          description: t('header.tabs.sharedWithMeDescription')
-        },
-        {
           icon: <ShareIcon sx={{ mb: 1 }} />,
           label: t('header.tabs.iSharedWith'),
           onClick: () => navigate('i-shared-with'),
-          description: t('header.tabs.iSharedWithDescription')
+          description: t('header.tabs.iSharedWithDescription'),
+          value: 'i-shared-with'
         }
       );
     }
 
     return baseTabs;
+  };
+
+  const getActiveTab = () => {
+    const tabs = getVisibleTabs();
+    const activeIndex = tabs.findIndex(tab => tab.value === activeView);
+    return activeIndex >= 0 ? activeIndex : 0;
   };
 
   return (
