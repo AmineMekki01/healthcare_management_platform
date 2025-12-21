@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -95,7 +95,7 @@ function MedicalRecordsView({ onBackToMyDocs }) {
   const [categoryDocuments, setCategoryDocuments] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   console.log(categoryDocuments);
-  const MEDICAL_CATEGORIES = getMedicalCategories(t);
+  const MEDICAL_CATEGORIES = useMemo(() => getMedicalCategories(t), [t]);
 
   const extractFolderInfo = useCallback((doc) => {
     const path = doc.path || '';
