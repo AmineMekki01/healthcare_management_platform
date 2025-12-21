@@ -35,18 +35,18 @@ import {
   ExpandMore as ExpandMoreIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
 import {
   renameItem,
   downloadFile,
   deleteFolder,
-  fetchSharedWithMe
+  fetchSharedWithMe,
+  fetchFolders,
+  fetchBreadcrumbs
 } from '../services/medicalRecordsService';
 
 const SharedWithMe = () => {
   const { t } = useTranslation('medical');
-  const { userId } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { userId, userType } = useContext(AuthContext);
   
   const [folders, setFolders] = useState([]);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
@@ -55,14 +55,28 @@ const SharedWithMe = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [currentSharerInfo, setCurrentSharerInfo] = useState(null);
 
-  const fetchSharedWithMeItems = async () => {
+  const fetchSharedWithMeItems = async (parentFolderId = null) => {
     if (!userId) return;
-    
     setLoading(true);
     try {
-      const items = await fetchSharedWithMe(userId);
+      let items;
+      if (parentFolderId) {
+        items = await fetchFolders(userId, userType, parentFolderId, true);
+      } else {
+        items = await fetchSharedWithMe(userId);
+      }
+      
       setFolders(Array.isArray(items) ? items : []);
+      
+      if (parentFolderId) {
+        const breadcrumbData = await fetchBreadcrumbs(parentFolderId);
+        setBreadcrumbs(Array.isArray(breadcrumbData) ? breadcrumbData : []);
+      } else {
+        setBreadcrumbs([]);
+      }
     } catch (error) {
       console.error('Error fetching shared with me items:', error);
       setFolders([]);
@@ -72,11 +86,26 @@ const SharedWithMe = () => {
   };
 
   useEffect(() => {
-    fetchSharedWithMeItems();
-  }, [userId]);
+    fetchSharedWithMeItems(currentFolderId);
+  }, [userId, currentFolderId]);
 
-  const navigateToFolder = (subfolderId, file_type) => {
-    console.log('Navigate to shared item:', subfolderId, file_type);
+  const navigateToFolder = (subfolderId, file_type, sharerInfo = null) => {
+    if (file_type === 'folder') {
+      setCurrentFolderId(subfolderId);
+      
+      if (sharerInfo && !currentSharerInfo) {
+        setCurrentSharerInfo(sharerInfo);
+      }
+    }
+  };
+  
+  const navigateToRoot = () => {
+    setCurrentFolderId(null);
+    setCurrentSharerInfo(null);
+  };
+  
+  const navigateToBreadcrumb = (targetFolderId) => {
+    setCurrentFolderId(targetFolderId);
   };
 
   const toggleFileSelection = (folderId) => {
@@ -161,6 +190,17 @@ const SharedWithMe = () => {
 
   const groupFilesByUser = () => {
     if (!folders || !Array.isArray(folders)) return {};
+    
+    if (currentFolderId) {
+      return {
+        'current-folder': {
+          id: currentSharerInfo?.id || 'current-folder',
+          name: currentSharerInfo?.name || 'Current Folder',
+          type: currentSharerInfo?.type || 'folder',
+          files: folders
+        }
+      };
+    }
     
     const grouped = {};
     folders.forEach(item => {
@@ -282,7 +322,7 @@ const SharedWithMe = () => {
           <Link
             component="button"
             variant="body1"
-            onClick={() => navigate('/SharedWithMe')}
+            onClick={navigateToRoot}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -292,14 +332,14 @@ const SharedWithMe = () => {
             }}
           >
             <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
-            Shared Root
+            {t('navigation.sharedRoot')}
           </Link>
           {breadcrumbs.map((crumb) => (
             <Link
               key={crumb.folder_id}
               component="button"
               variant="body1"
-              onClick={() => navigateToFolder(crumb.folder_id, crumb.file_type)}
+              onClick={() => navigateToBreadcrumb(crumb.folder_id)}
               sx={{
                 color: '#667eea',
                 textDecoration: 'none',
@@ -322,6 +362,7 @@ const SharedWithMe = () => {
                 borderRadius: '12px',
                 textTransform: 'none',
                 fontWeight: 600,
+                gap: 1,
                 borderColor: '#f59e0b',
                 color: '#f59e0b',
                 '&:hover': {
@@ -340,6 +381,7 @@ const SharedWithMe = () => {
                 borderRadius: '12px',
                 textTransform: 'none',
                 fontWeight: 600,
+                gap: 1,
                 borderColor: '#ef4444',
                 color: '#ef4444',
                 '&:hover': {
@@ -359,6 +401,7 @@ const SharedWithMe = () => {
                   borderRadius: '12px',
                   textTransform: 'none',
                   fontWeight: 600,
+                  gap: 1,
                   borderColor: '#10b981',
                   color: '#10b981',
                   '&:hover': {
@@ -480,7 +523,7 @@ const SharedWithMe = () => {
                             </Typography>
                             <Box display="flex" gap={1} alignItems="center">
                               <Chip
-                                label={group.type === 'doctor' ? 'Doctor' : 'Patient'}
+                                label={group.type === 'doctor' ? t('terms.doctor') : t('terms.patient')}
                                 size="small"
                                 sx={{
                                   backgroundColor: group.type === 'doctor' 
@@ -491,7 +534,7 @@ const SharedWithMe = () => {
                                 }}
                               />
                               <Chip
-                                label={`${group.files.length} item${group.files.length !== 1 ? 's' : ''}`}
+                                label={t('labels.items', { count: group.files.length })}
                                 size="small"
                                 sx={{
                                   backgroundColor: 'rgba(102, 126, 234, 0.1)',
@@ -540,7 +583,7 @@ const SharedWithMe = () => {
                                       transition: 'opacity 0.3s ease',
                                     }
                                   }}
-                                  onClick={() => navigateToFolder(item.folder_id, item.file_type)}
+                                  onClick={() => navigateToFolder(item.folder_id, item.file_type, { id: group.id, name: group.name, type: group.type })}
                                 >
                                   <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
                                     {/* Selection Checkbox */}
@@ -602,7 +645,7 @@ const SharedWithMe = () => {
                                         {item.name}
                                       </Typography>
                                       <Chip
-                                        label={isFolder ? 'Shared Folder' : 'Shared File'}
+                                        label={isFolder ? t('common.sharedFolder') : t('common.sharedFile')}
                                         size="small"
                                         sx={{
                                           backgroundColor: 'rgba(16, 185, 129, 0.1)',

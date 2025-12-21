@@ -1,32 +1,32 @@
 {
   "specialties": {
     "generalPractice": "الطب العام",
-    "internalMedicine": "طب باطني",
+    "internalMedicine": "الطب الباطني",
     "pediatrics": "طب الأطفال",
-    "cardiology": "طب القلب",
-    "dermatology": "طب الجلد",
-    "orthopedics": "طب العظام",
+    "cardiology": "أمراض القلب",
+    "dermatology": "الأمراض الجلدية",
+    "orthopedics": "جراحة العظام والمفاصل",
     "neurology": "طب الأعصاب",
-    "psychiatry": "طب النفس",
-    "surgery": "جراحة",
-    "endocrinology": "الغدد الصماء",
+    "psychiatry": "الطب النفسي",
+    "surgery": "الجراحة",
+    "endocrinology": "أمراض الغدد",
     "gastroenterology": "أمراض الجهاز الهضمي",
     "hematology": "أمراض الدم",
     "infectiousDisease": "الأمراض المعدية",
     "nephrology": "أمراض الكلى",
-    "oncology": "علم الأورام",
+    "oncology": "طب الأورام",
     "ophthalmology": "طب العيون",
-    "otolaryngology": "أنف وأذن وحنجرة",
-    "pathology": "علم الأمراض",
-    "pulmonology": "أمراض الرئة",
+    "otolaryngology": "طب الأنف والأذن والحنجرة",
+    "pathology": "التشريح المرضي",
+    "pulmonology": "أمراض الصدر",
     "radiology": "الأشعة",
     "rheumatology": "أمراض الروماتيزم",
     "urology": "المسالك البولية",
-    "emergencyMedicine": "طب الطوارئ",
+    "emergencyMedicine": "طب المستعجلات",
     "familyMedicine": "طب الأسرة",
-    "anesthesiology": "التخدير",
+    "anesthesiology": "التخدير والإنعاش",
     "obstetricsGynecology": "النساء والتوليد",
-    "physicalMedicine": "الطب الطبيعي",
+    "physicalMedicine": "الطب الفيزيائي",
     "plasticSurgery": "الجراحة التجميلية",
     "sportsMedicine": "طب الرياضة"
   },
@@ -40,101 +40,101 @@
     "medication": "دواء",
     "dosage": "الجرعة",
     "symptoms": "الأعراض",
-    "medicalHistory": "التاريخ الطبي",
+    "medicalHistory": "السوابق المرضية",
     "allergies": "الحساسية",
     "bloodPressure": "ضغط الدم",
-    "heartRate": "معدل ضربات القلب",
+    "heartRate": "نبض القلب",
     "temperature": "درجة الحرارة",
     "weight": "الوزن",
     "height": "الطول",
     "bmi": "مؤشر كتلة الجسم",
-    "labResults": "نتائج المختبر",
+    "labResults": "نتائج التحاليل",
     "xray": "أشعة سينية",
-    "mri": "الرنين المغناطيسي",
-    "ctScan": "الأشعة المقطعية",
-    "ultrasound": "الموجات فوق الصوتية",
-    "bloodTest": "فحص الدم",
-    "urineTest": "فحص البول",
-    "vaccination": "التطعيم",
+    "mri": "الرنين المغناطيسي (IRM)",
+    "ctScan": "السكانير (الأشعة المقطعية)",
+    "ultrasound": "الموجات فوق الصوتية (إيكو)",
+    "bloodTest": "تحليل الدم",
+    "urineTest": "تحليل البول",
+    "vaccination": "التلقيح",
     "surgery": "جراحة",
     "consultation": "استشارة",
     "followUp": "متابعة",
     "referral": "إحالة",
     "insurance": "التأمين",
     "copay": "المشاركة في الدفع",
-    "deductible": "المبلغ المقتطع",
-    "emergencyContact": "جهة اتصال الطوارئ",
+    "deductible": "الفرانشيز (التحمّل)",
+    "emergencyContact": "شخص للاتصال عند الطوارئ",
     "nextOfKin": "أقرب الأقارب",
-    "medicalRecord": "السجل الطبي",
+    "medicalRecord": "الملف الطبي",
     "patientId": "رقم المريض",
     "doctorId": "رقم الطبيب",
     "appointmentId": "رقم الموعد",
-    "medicalLicense": "الترخيص الطبي",
-    "hospitalAffiliation": "الانتماء للمستشفى",
-    "clinicLocation": "موقع العيادة"
+    "medicalLicense": "رخصة مزاولة الطب",
+    "hospitalAffiliation": "المؤسسة الصحية التابعة لها",
+    "clinicLocation": "عنوان العيادة"
   },
   "documentTypes": {
-    "labReport": "تقرير المختبر",
-    "imagingStudy": "دراسة التصوير",
+    "labReport": "تقرير التحاليل",
+    "imagingStudy": "فحص تصوير طبي",
     "prescription": "وصفة طبية",
     "dischargeSummary": "ملخص الخروج",
     "operativeReport": "تقرير العملية",
-    "consultationNote": "مذكرة الاستشارة",
-    "progressNote": "مذكرة التقدم",
-    "vaccinationRecord": "سجل التطعيم",
+    "consultationNote": "تقرير الاستشارة",
+    "progressNote": "مذكرة المتابعة",
+    "vaccinationRecord": "سجل التلقيح",
     "insuranceCard": "بطاقة التأمين",
-    "referralLetter": "خطاب الإحالة",
-    "medicalClearance": "التصريح الطبي",
-    "pathologyReport": "تقرير علم الأمراض",
+    "referralLetter": "رسالة إحالة",
+    "medicalClearance": "شهادة طبية",
+    "pathologyReport": "تقرير التشريح المرضي",
     "radiologyReport": "تقرير الأشعة",
-    "ecg": "تخطيط القلب",
-    "echocardiogram": "مخطط صدى القلب",
-    "stressTest": "اختبار الإجهاد",
+    "ecg": "تخطيط كهربية القلب",
+    "echocardiogram": "إيكو القلب",
+    "stressTest": "اختبار الجهد",
     "allergyTest": "اختبار الحساسية",
     "biopsyReport": "تقرير الخزعة",
-    "geneticTest": "الاختبار الجيني",
+    "geneticTest": "فحص جيني",
     "mentalHealthAssessment": "تقييم الصحة النفسية"
   },
   "categories": {
     "labResults": {
-      "label": "نتائج المختبر",
-      "description": "نتائج وتحاليل الفحوصات المخبرية"
+      "label": "نتائج التحاليل",
+      "description": "نتائج التحاليل المخبرية وتفسيرها"
     },
     "ctScan": {
-      "label": "الأشعة المقطعية",
-      "description": "التصوير المقطعي المحوسب"
+      "label": "السكانير (الأشعة المقطعية)",
+      "description": "تصوير مقطعي محوسب (CT)"
     },
     "xRay": {
       "label": "الأشعة السينية",
-      "description": "التصوير بالأشعة السينية"
+      "description": "تصوير بالأشعة السينية"
     },
     "ultrasound": {
-      "label": "الموجات فوق الصوتية",
-      "description": "التصوير بالموجات فوق الصوتية"
+      "label": "الموجات فوق الصوتية (إيكو)",
+      "description": "تصوير بالموجات فوق الصوتية"
     },
     "mammography": {
-      "label": "تصوير الثدي الشعاعي",
-      "description": "التصوير الشعاعي للثدي"
+      "label": "ماموغرافيا (تصوير الثدي)",
+      "description": "تصوير الثدي بالأشعة"
     },
     "mri": {
-      "label": "الرنين المغناطيسي",
-      "description": "التصوير بالرنين المغناطيسي"
+      "label": "الرنين المغناطيسي (IRM)",
+      "description": "تصوير بالرنين المغناطيسي"
     },
     "petScan": {
-      "label": "مسح البوزيترون",
-      "description": "التصوير المقطعي بالإصدار البوزيتروني"
+      "label": "فحص PET (TEP)",
+      "description": "التصوير المقطعي بالإصدار البوزيتروني (PET)"
     },
     "clinicalReports": {
-      "label": "التقارير السريرية",
-      "description": "التقييمات والتقارير السريرية"
+      "label": "تقارير سريرية",
+      "description": "تقارير وتقييمات طبية سريرية"
     },
     "discharge": {
-      "label": "الخروج",
+      "label": "الخروج من المستشفى",
       "description": "ملخصات ووثائق الخروج"
     },
     "other": {
       "label": "أخرى",
-      "description": "وثائق طبية أخرى"
+      "description": "مستندات طبية أخرى"
     }
   },
   "bodyParts": {
@@ -158,80 +158,94 @@
     "hip": "الورك",
     "ankle": "الكاحل",
     "wrist": "المعصم",
-    "fullBody": "الجسم كاملاً",
+    "fullBody": "الجسم كامل",
     "other": "أخرى"
   },
   "upload": {
-      "title": "رفع الوثائق الطبية",
-      "subtitle": "ارفع ونظم ملفاتك الطبية بأمان",
-      "dragDrop": "اسحب وأفلت الملفات هنا أو انقر للتصفح",
-      "supportedFormats": "الصيغ المدعومة: PDF, DOC, DOCX, JPG, PNG, DICOM",
-      "maxFileSize": "الحد الأقصى لحجم الملف: 50 ميجابايت لكل ملف",
-      "selectFiles": "اختر الملفات",
-      "uploading": "جاري الرفع...",
-      "uploadSuccess": "تم رفع الملفات بنجاح!",
-      "uploadError": "فشل الرفع. يرجى المحاولة مرة أخرى.",
-      "noFilesSelected": "لم يتم اختيار ملفات",
-      "newFolder": "مجلد جديد",
-      "uploadFile": "رفع ملف",
-      "noFiles": "لا توجد ملفات أو مجلدات",
-      "uploadFirst": "ارفع ملفك الأول"
-    },
-    "uploadAndShare" :{
-      "configuration":"الإعدادات",
-      "medicalCategory": "الفئة الطبية",
-      "studyDate": "تاريخ الدراسة",
-      "shareWithPatient": "مشاركة مع المريض",
-      "bodyPart": "جزء الجسم",
-      "selectFiles": "اختيار الملفات",
-      "chooseFiles": "اختر الملفات للرفع",
-      "autoGeneratedFolder": "اسم المجلد المُنشأ تلقائياً:",
-      "folderDescription": "سيتم تنظيم الملفات في هذا المجلد للمريض",
-      "selectedCategory": "الفئة المختارة:",
-      "uploading": "جارٍ الرفع...",
-      "uploadAndShareButton": "رفع ومشاركة المستندات",
-      "successMessage": "تم رفع ومشاركة المستندات بنجاح!"
-    },
-    "shared": {
-      "searchPlaceholder": "البحث باسم المستخدم أو اسم الملف...",
-      "noSharedFiles": "لا توجد ملفات مشتركة",
-      "noMatchingFiles": "لا توجد ملفات مطابقة",
-      "noSharedDescription": "لم يتم مشاركة أي ملفات أو مجلدات معك بعد. عندما يشارك شخص ما وثائق طبية معك، ستظهر هنا.",
-      "noMatchingDescription": "لا توجد ملفات أو مجلدات تطابق معايير البحث الخاصة بك. حاول تعديل مصطلح البحث."
-    },
-    "labels": {
-      "folder": "مجلد",
-      "file": "ملف",
-      "documents": "وثائق",
-      "documentCount": "{{count}} وثيقة",
-      "documentCount_plural": "{{count}} وثائق",
-      "fileCount": "{{count}} ملف",
-      "fileCount_plural": "{{count}} ملفات",
-      "untitledDocument": "وثيقة بدون عنوان",
-      "doctor": "دكتور {{name}}",
-      "viewDocuments": "عرض الوثائق",
-      "close": "إغلاق",
-      "downloadFolder": "تحميل المجلد بالكامل"
-    },
+    "title": "رفع المستندات الطبية",
+    "subtitle": "ارفع ورتّب ملفاتك الطبية بأمان",
+    "dragDrop": "اسحب الملفات هنا وأفلتها أو انقر للتصفح",
+    "supportedFormats": "الصيغ المدعومة: PDF, DOC, DOCX, JPG, PNG, DICOM",
+    "maxFileSize": "الحد الأقصى لحجم الملف: 50 ميغابايت لكل ملف",
+    "selectFiles": "اختيار الملفات",
+    "uploading": "جارٍ الرفع...",
+    "uploadSuccess": "تم رفع الملفات بنجاح!",
+    "uploadError": "فشل الرفع. يرجى المحاولة مرة أخرى.",
+    "noFilesSelected": "لم يتم اختيار أي ملف",
+    "newFolder": "مجلد جديد",
+    "uploadFile": "رفع ملف",
+    "noFiles": "لا توجد ملفات أو مجلدات",
+    "uploadFirst": "ابدأ برفع أول ملف"
+  },
+  "uploadAndShare": {
+    "configuration": "الإعدادات",
+    "medicalCategory": "الفئة الطبية",
+    "studyDate": "تاريخ الفحص",
+    "shareWithPatient": "مشاركة مع المريض",
+    "bodyPart": "جزء من الجسم",
+    "selectFiles": "اختيار الملفات",
+    "chooseFiles": "اختر الملفات للرفع",
+    "autoGeneratedFolder": "اسم المجلد الذي سيُنشأ تلقائيًا",
+    "folderDescription": "سيتم تنظيم الملفات داخل هذا المجلد عند المريض",
+    "selectedCategory": "الفئة المختارة",
+    "uploading": "جارٍ الرفع...",
+    "uploadAndShareButton": "رفع ومشاركة",
+    "successMessage": "تم رفع ومشاركة المستندات بنجاح!"
+  },
+  "shared": {
+    "searchPlaceholder": "ابحث باسم المستخدم أو اسم الملف...",
+    "noSharedFiles": "لا توجد ملفات مشتركة",
+    "noMatchingFiles": "لا توجد نتائج مطابقة",
+    "noSharedDescription": "لم تتم مشاركة أي ملفات أو مجلدات معك بعد. عندما يشارك شخص ما مستندات طبية معك، ستظهر هنا.",
+    "noMatchingDescription": "لا توجد ملفات أو مجلدات تطابق بحثك. جرّب تغيير كلمة البحث."
+  },
+  "labels": {
+    "folder": "مجلد",
+    "file": "ملف",
+    "documents": "مستندات",
+    "documentCount": "{{count}} مستند",
+    "documentCount_plural": "{{count}} مستندات",
+    "fileCount": "{{count}} ملف",
+    "fileCount_plural": "{{count}} ملفات",
+    "itemsShared": "تمت مشاركة {{count}} عنصر",
+    "itemsShared_plural": "تمت مشاركة {{count}} عناصر",
+    "items": "{{count}} عنصر",
+    "items_plural": "{{count}} عناصر",
+    "untitledDocument": "مستند بدون عنوان",
+    "doctor": "د. {{name}}",
+    "viewDocuments": "عرض المستندات",
+    "close": "إغلاق",
+    "downloadFolder": "تحميل المجلد كاملاً"
+  },
   "errors": {
-    "failedToLoadPatients": "فشل في تحميل المرضى",
-    "selectCategoryAndFiles": "يرجى اختيار فئة وملفات للرفع",
-    "selectPatientToShare": "يرجى اختيار مريض للمشاركة معه"
+    "failedToLoadPatients": "تعذر تحميل قائمة المرضى",
+    "selectCategoryAndFiles": "يرجى اختيار الفئة والملفات للرفع",
+    "selectPatientToShare": "يرجى اختيار المريض للمشاركة معه"
   },
   "header": {
     "title": "المستندات الطبية",
     "subtitle": "إدارة ومشاركة وتنظيم ملفاتك الطبية",
     "tabs": {
       "myDocs": "مستنداتي",
-      "myDocsDescription": "المستندات الشخصية (غير مستخدمة من قبل الشات بوت)",
-      "medicalRecords": "السجلات الطبية",
-      "medicalRecordsDescription": "المستندات السريرية منظمة حسب الفئة",
+      "myDocsDescription": "مستندات شخصية (لا يستخدمها الشات بوت)",
+      "medicalRecords": "الملفات الطبية",
+      "medicalRecordsDescription": "مستندات طبية منظّمة حسب الفئة",
       "uploadShare": "رفع ومشاركة",
       "uploadShareDescription": "رفع الملفات ومشاركتها مع المرضى",
-      "sharedWithMe": "مشارك معي",
-      "sharedWithMeDescription": "المستندات المشتركة من قبل الزملاء",
-      "iSharedWith": "شاركت مع",
-      "iSharedWithDescription": "المستندات التي شاركتها مع الآخرين"
+      "sharedWithMe": "مشارَك معي",
+      "sharedWithMeDescription": "مستندات شاركها الزملاء معك",
+      "iSharedWith": "شاركتُ مع",
+      "iSharedWithDescription": "مستندات شاركتها مع الآخرين",
+      "sharedFolder": "مجلد مشترك",
+      "sharedFile": "ملف مشترك"
     }
+  },
+  "common": {
+    "sharedFolder": "مجلد مشترك",
+    "sharedFile": "ملف مشترك"
+  },
+  "navigation": {
+    "root": "مستنداتي",
+    "sharedRoot": "المجلد المشترك"
   }
 }

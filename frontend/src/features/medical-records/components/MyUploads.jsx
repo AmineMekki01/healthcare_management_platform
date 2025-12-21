@@ -359,7 +359,7 @@ function MyUploads() {
             }}
           >
             <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
-            Root
+            {t('navigation.root')}
           </Link>
           {breadcrumbs.map((crumb) => (
             <Link
@@ -386,6 +386,7 @@ function MyUploads() {
             disabled={loading}
             sx={{
               borderRadius: '12px',
+              gap: 1,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               textTransform: 'none',
               fontWeight: 600,
@@ -404,6 +405,7 @@ function MyUploads() {
             onClick={onClickCreateFolder}
             sx={{
               borderRadius: '12px',
+              gap: 1,
               textTransform: 'none',
               fontWeight: 600,
               borderColor: '#667eea',
@@ -427,6 +429,7 @@ function MyUploads() {
                 disabled={selectedFiles.size !== 1}
                 sx={{
                   borderRadius: '12px',
+                  gap: 1,
                   textTransform: 'none',
                   fontWeight: 600,
                   borderColor: '#f59e0b',
@@ -445,6 +448,7 @@ function MyUploads() {
                 onClick={deleteFolderAndContents}
                 sx={{
                   borderRadius: '12px',
+                  gap: 1,
                   textTransform: 'none',
                   fontWeight: 600,
                   borderColor: '#ef4444',
@@ -463,6 +467,7 @@ function MyUploads() {
                 onClick={handleMultipleDownload}
                 sx={{
                   borderRadius: '12px',
+                  gap: 1,
                   textTransform: 'none',
                   fontWeight: 600,
                   borderColor: '#10b981',
@@ -512,6 +517,7 @@ function MyUploads() {
               disabled={!selectedDoctor}
               sx={{
                 borderRadius: '8px',
+                gap: 1,
                 textTransform: 'none',
                 background: 'linear-gradient(135deg, #10b981, #059669)',
                 '&:hover': {
@@ -695,6 +701,7 @@ function MyUploads() {
               onClick={handleIconClick}
               sx={{
                 borderRadius: '12px',
+                gap: 1,
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 textTransform: 'none',
                 fontWeight: 600,

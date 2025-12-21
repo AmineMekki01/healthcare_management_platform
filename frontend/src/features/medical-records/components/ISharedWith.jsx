@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import {
   Container,
@@ -31,12 +32,14 @@ import {
   ExpandMore as ExpandMoreIcon,
   Person as PersonIcon,
   Download as DownloadIcon,
+  Folder as FolderIcon,
 } from '@mui/icons-material';
 import { fetchSharedByMe, downloadFile } from '../services/medicalRecordsService';
 
 function ISharedWith() {
   const { t } = useTranslation('medical');
   const { userId } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [sharedItems, setSharedItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,9 +74,15 @@ function ISharedWith() {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
-  const handleOpenViewer = (item) => {
-    setSelectedItem(item);
-    setViewerOpen(true);
+  const handleItemClick = (item) => {
+    const isFolder = item.file_type === 'folder';
+    
+    if (isFolder) {
+      navigate(`/records/${item.folder_id}`);
+    } else {
+      setSelectedItem(item);
+      setViewerOpen(true);
+    }
   };
 
   const handleCloseViewer = () => {
@@ -312,7 +321,7 @@ function ISharedWith() {
                             </Typography>
                             <Box display="flex" gap={1} alignItems="center">
                               <Chip
-                                label={group.type === 'doctor' ? 'Doctor' : 'Patient'}
+                                label={group.type === 'doctor' ? t('terms.doctor') : t('terms.patient')}
                                 size="small"
                                 sx={{
                                   backgroundColor: group.type === 'doctor' 
@@ -323,7 +332,7 @@ function ISharedWith() {
                                 }}
                               />
                               <Chip
-                                label={`${group.files.length} item${group.files.length !== 1 ? 's' : ''} shared`}
+                                label={t('labels.itemsShared', { count: group.files.length })}
                                 size="small"
                                 sx={{
                                   backgroundColor: 'rgba(139, 92, 246, 0.1)',
@@ -372,7 +381,7 @@ function ISharedWith() {
                                           transition: 'opacity 0.3s ease',
                                         }
                                       }}
-                                      onClick={() => handleOpenViewer(item)}
+                                      onClick={() => handleItemClick(item)}
                                     >
                                       <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
                                         <Box 
@@ -392,7 +401,7 @@ function ISharedWith() {
                                               fontSize: '1.5rem',
                                             }}
                                           >
-                                            {isFolder ? <ShareIcon sx={{ fontSize: '2rem' }} /> : <DescriptionIcon sx={{ fontSize: '2rem' }} />}
+                                            {isFolder ? <FolderIcon sx={{ fontSize: '2rem' }} /> : <DescriptionIcon sx={{ fontSize: '2rem' }} />}
                                           </Avatar>
                                         </Box>
 
@@ -414,7 +423,7 @@ function ISharedWith() {
                                             {item.name}
                                           </Typography>
                                           <Chip
-                                            label={isFolder ? 'Shared Folder' : 'Shared File'}
+                                            label={isFolder ? t('common.sharedFolder') : t('common.sharedFile')}
                                             size="small"
                                             sx={{
                                               backgroundColor: 'rgba(139, 92, 246, 0.1)',
@@ -501,6 +510,7 @@ function ISharedWith() {
                   variant="contained"
                   startIcon={<DownloadIcon />}
                   onClick={handleDownload}
+                  sx={{ gap: 1 }}
                 >
                   Download
                 </Button>
