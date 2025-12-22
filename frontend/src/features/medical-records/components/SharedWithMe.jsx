@@ -374,7 +374,7 @@ const SharedWithMe = () => {
                 }
               }}
             >
-              Rename
+              {t('actions.rename')}
             </Button>
 
             <Button
@@ -393,7 +393,7 @@ const SharedWithMe = () => {
                 }
               }}
             >
-              Delete
+              {t('actions.delete')}
             </Button>
 
             {selectedFileId && (
@@ -413,7 +413,7 @@ const SharedWithMe = () => {
                   }
                 }}
               >
-                Download
+                {t('actions.download')}
               </Button>
             )}
 
@@ -441,7 +441,7 @@ const SharedWithMe = () => {
                 }
               }}
             >
-              History
+              {t('actions.history')}
             </Button>
           </Box>
         )}

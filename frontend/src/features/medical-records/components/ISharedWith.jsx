@@ -246,7 +246,7 @@ function ISharedWith() {
                     mb: 1
                   }}
                 >
-                  {searchTerm ? 'No Matching Files' : 'No Shared Items'}
+                  {searchTerm ? t('messages.noMatchingFiles') : t('messages.noSharedItems')}
                 </Typography>
                 <Typography 
                   variant="body1" 
@@ -257,8 +257,8 @@ function ISharedWith() {
                   }}
                 >
                   {searchTerm 
-                    ? 'No files or folders match your search criteria. Try adjusting your search term.'
-                    : 'You haven\'t shared any files or folders yet. When you share medical documents with others, they will appear here.'
+                    ? t('messages.noMatchingDescription')
+                    : t('messages.noSharedItemsDescription')
                   }
                 </Typography>
               </Box>
@@ -512,7 +512,7 @@ function ISharedWith() {
                   onClick={handleDownload}
                   sx={{ gap: 1 }}
                 >
-                  Download
+                  {t('actions.download')}
                 </Button>
               )}
             </DialogActions>

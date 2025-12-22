@@ -443,7 +443,7 @@ function MyUploads() {
                   }
                 }}
               >
-                Rename
+                {t('actions.rename')}
               </Button>
 
               <Button
@@ -462,7 +462,7 @@ function MyUploads() {
                   }
                 }}
               >
-                Delete
+                {t('actions.delete')}
               </Button>
 
               <Button
@@ -481,7 +481,7 @@ function MyUploads() {
                   }
                 }}
               >
-                Download {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
+                {t('actions.download')} {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
               </Button>
 
               <Button
@@ -508,7 +508,7 @@ function MyUploads() {
                   }
                 }}
               >
-                History
+                {t('actions.history')}
               </Button>
             </>
           )}
@@ -517,11 +517,11 @@ function MyUploads() {
         {selectedFiles.size > 0 && (
           <Box mt={2} display="flex" gap={2} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Select Doctor</InputLabel>
+              <InputLabel>{t('actions.selectDoctor')}</InputLabel>
               <Select
                 value={selectedDoctor}
                 onChange={(e) => setSelectedDoctor(e.target.value)}
-                label="Select Doctor"
+                label={t('actions.selectDoctor')}
                 sx={{ borderRadius: '8px' }}
               >
                 <MenuItem value="">
@@ -556,7 +556,7 @@ function MyUploads() {
                 }
               }}
             >
-              Share {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''} with Doctor
+              {t('actions.share')} {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
             </Button>
           </Box>
         )}

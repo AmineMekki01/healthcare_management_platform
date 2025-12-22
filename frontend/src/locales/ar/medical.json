@@ -244,6 +244,24 @@
     "sharedFolder": "مجلد مشترك",
     "sharedFile": "ملف مشترك"
   },
+  "actions": {
+    "rename": "إعادة تسمية",
+    "delete": "حذف",
+    "download": "تحميل",
+    "history": "السجل",
+    "shareWithDoctor": "مشاركة مع طبيب",
+    "selectDoctor": "اختر طبيب",
+    "share": "مشاركة",
+    "upload": "رفع",
+    "createFolder": "إنشاء مجلد",
+    "newFolder": "مجلد جديد"
+  },
+  "messages": {
+    "noSharedItems": "لا توجد عناصر مشتركة",
+    "noMatchingFiles": "لا توجد ملفات مطابقة",
+    "noSharedItemsDescription": "لم تشارك أي ملفات بعد",
+    "noMatchingDescription": "حاول تعديل بحثك"
+  },
   "navigation": {
     "root": "مستنداتي",
     "sharedRoot": "المجلد المشترك"
@@ -263,6 +281,12 @@
     "renamedByYou": "قمت بإعادة التسمية من \"{{oldName}}\" إلى \"{{newName}}\"",
     "deleted": "{{user}} حذف هذا الملف",
     "deletedByYou": "قمت بحذف هذا الملف",
-    "unknown": "إجراء غير معروف"
+    "unknown": "إجراء غير معروف",
+    "actionTypes": {
+      "upload": "رفع",
+      "share": "مشاركة",
+      "rename": "إعادة تسمية",
+      "delete": "حذف"
+    }
   }
 }

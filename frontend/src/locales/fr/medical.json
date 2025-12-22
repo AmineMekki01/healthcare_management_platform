@@ -242,6 +242,24 @@
     "sharedFolder": "Dossier Partagé",
     "sharedFile": "Fichier Partagé"
   },
+  "actions": {
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "download": "Télécharger",
+    "history": "Historique",
+    "shareWithDoctor": "Partager avec un médecin",
+    "selectDoctor": "Sélectionner un médecin",
+    "share": "Partager",
+    "upload": "Téléverser",
+    "createFolder": "Créer un dossier",
+    "newFolder": "Nouveau dossier"
+  },
+  "messages": {
+    "noSharedItems": "Aucun élément partagé",
+    "noMatchingFiles": "Aucun fichier correspondant",
+    "noSharedItemsDescription": "Vous n'avez encore partagé aucun fichier",
+    "noMatchingDescription": "Essayez d'ajuster votre recherche"
+  },
   "navigation": {
     "root": "Mes Documents",
     "sharedRoot": "Racine Partagée"
@@ -261,6 +279,12 @@
     "renamedByYou": "Vous avez renommé de \"{{oldName}}\" à \"{{newName}}\"",
     "deleted": "{{user}} a supprimé ce fichier",
     "deletedByYou": "Vous avez supprimé ce fichier",
-    "unknown": "Action inconnue"
+    "unknown": "Action inconnue",
+    "actionTypes": {
+      "upload": "Téléchargement",
+      "share": "Partage",
+      "rename": "Renommage",
+      "delete": "Suppression"
+    }
   }
 }
