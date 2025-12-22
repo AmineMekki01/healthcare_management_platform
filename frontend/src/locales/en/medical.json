@@ -242,8 +242,49 @@
     "sharedFolder": "Shared Folder",
     "sharedFile": "Shared File"
   },
+  "actions": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "download": "Download",
+    "history": "History",
+    "shareWithDoctor": "Share with Doctor",
+    "selectDoctor": "Select Doctor",
+    "share": "Share",
+    "upload": "Upload",
+    "createFolder": "Create Folder",
+    "newFolder": "New Folder"
+  },
+  "messages": {
+    "noSharedItems": "No Shared Items",
+    "noMatchingFiles": "No Matching Files",
+    "noSharedItemsDescription": "You haven't shared any files yet",
+    "noMatchingDescription": "Try adjusting your search"
+  },
   "navigation": {
     "root": "My Documents",
     "sharedRoot": "Shared Root"
+  },
+  "history": {
+    "title": "File History",
+    "error": "Failed to load history",
+    "retry": "Retry",
+    "noHistory": "No history available for this item",
+    "close": "Close",
+    "uploaded": "{{user}} uploaded this file",
+    "uploadedByYou": "You uploaded this file",
+    "shared": "{{user}} shared this file with {{recipient}}",
+    "sharedByYou": "You shared this file with {{recipient}}",
+    "sharedWithYou": "{{user}} shared this file with you",
+    "renamed": "{{user}} renamed from \"{{oldName}}\" to \"{{newName}}\"",
+    "renamedByYou": "You renamed from \"{{oldName}}\" to \"{{newName}}\"",
+    "deleted": "{{user}} deleted this file",
+    "deletedByYou": "You deleted this file",
+    "unknown": "Unknown action",
+    "actionTypes": {
+      "upload": "Upload",
+      "share": "Share",
+      "rename": "Rename",
+      "delete": "Delete"
+    }
   }
 }

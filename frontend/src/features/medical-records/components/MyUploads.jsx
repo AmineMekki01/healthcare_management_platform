@@ -36,6 +36,7 @@ import {
   NavigateNext as NavigateNextIcon,
   Home as HomeIcon,
   Add as AddIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import {
   fetchFolders,
@@ -49,6 +50,7 @@ import {
   shareItems,
   fetchDoctors,
 } from '../services/medicalRecordsService';
+import FileHistoryModal from './FileHistoryModal';
 
 function MyUploads() {
   const { t } = useTranslation('medical');
@@ -63,6 +65,8 @@ function MyUploads() {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
   const fetchAllFolder = useCallback(async (folderId) => {
     if (!userId) {
@@ -439,7 +443,7 @@ function MyUploads() {
                   }
                 }}
               >
-                Rename
+                {t('actions.rename')}
               </Button>
 
               <Button
@@ -458,7 +462,7 @@ function MyUploads() {
                   }
                 }}
               >
-                Delete
+                {t('actions.delete')}
               </Button>
 
               <Button
@@ -477,7 +481,34 @@ function MyUploads() {
                   }
                 }}
               >
-                Download {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
+                {t('actions.download')} {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
+              </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<HistoryIcon />}
+                onClick={() => {
+                  if (selectedFiles.size === 1) {
+                    const itemId = Array.from(selectedFiles)[0];
+                    const item = folders.find(f => f.folder_id === itemId);
+                    setSelectedHistoryItem({ id: itemId, name: item?.name || 'Item' });
+                    setHistoryModalOpen(true);
+                  }
+                }}
+                disabled={selectedFiles.size !== 1}
+                sx={{
+                  borderRadius: '12px',
+                  gap: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: '#6366f1',
+                  color: '#6366f1',
+                  '&:hover': {
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                  }
+                }}
+              >
+                {t('actions.history')}
               </Button>
             </>
           )}
@@ -486,11 +517,11 @@ function MyUploads() {
         {selectedFiles.size > 0 && (
           <Box mt={2} display="flex" gap={2} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Select Doctor</InputLabel>
+              <InputLabel>{t('actions.selectDoctor')}</InputLabel>
               <Select
                 value={selectedDoctor}
                 onChange={(e) => setSelectedDoctor(e.target.value)}
-                label="Select Doctor"
+                label={t('actions.selectDoctor')}
                 sx={{ borderRadius: '8px' }}
               >
                 <MenuItem value="">
@@ -525,7 +556,7 @@ function MyUploads() {
                 }
               }}
             >
-              Share {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''} with Doctor
+              {t('actions.share')} {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
             </Button>
           </Box>
         )}
@@ -738,6 +769,16 @@ function MyUploads() {
       >
         <AddIcon />
       </Fab>
+
+      <FileHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setSelectedHistoryItem(null);
+        }}
+        itemId={selectedHistoryItem?.id}
+        itemName={selectedHistoryItem?.name}
+      />
     </Container>
   );
 }

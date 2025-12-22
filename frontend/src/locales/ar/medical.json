@@ -244,8 +244,49 @@
     "sharedFolder": "مجلد مشترك",
     "sharedFile": "ملف مشترك"
   },
+  "actions": {
+    "rename": "إعادة تسمية",
+    "delete": "حذف",
+    "download": "تحميل",
+    "history": "السجل",
+    "shareWithDoctor": "مشاركة مع طبيب",
+    "selectDoctor": "اختر طبيب",
+    "share": "مشاركة",
+    "upload": "رفع",
+    "createFolder": "إنشاء مجلد",
+    "newFolder": "مجلد جديد"
+  },
+  "messages": {
+    "noSharedItems": "لا توجد عناصر مشتركة",
+    "noMatchingFiles": "لا توجد ملفات مطابقة",
+    "noSharedItemsDescription": "لم تشارك أي ملفات بعد",
+    "noMatchingDescription": "حاول تعديل بحثك"
+  },
   "navigation": {
     "root": "مستنداتي",
     "sharedRoot": "المجلد المشترك"
+  },
+  "history": {
+    "title": "سجل الملف",
+    "error": "فشل تحميل السجل",
+    "retry": "إعادة المحاولة",
+    "noHistory": "لا يوجد سجل متاح لهذا العنصر",
+    "close": "إغلاق",
+    "uploaded": "{{user}} قام برفع هذا الملف",
+    "uploadedByYou": "قمت برفع هذا الملف",
+    "shared": "{{user}} شارك هذا الملف مع {{recipient}}",
+    "sharedByYou": "قمت بمشاركة هذا الملف مع {{recipient}}",
+    "sharedWithYou": "{{user}} شارك هذا الملف معك",
+    "renamed": "{{user}} أعاد التسمية من \"{{oldName}}\" إلى \"{{newName}}\"",
+    "renamedByYou": "قمت بإعادة التسمية من \"{{oldName}}\" إلى \"{{newName}}\"",
+    "deleted": "{{user}} حذف هذا الملف",
+    "deletedByYou": "قمت بحذف هذا الملف",
+    "unknown": "إجراء غير معروف",
+    "actionTypes": {
+      "upload": "رفع",
+      "share": "مشاركة",
+      "rename": "إعادة تسمية",
+      "delete": "حذف"
+    }
   }
 }

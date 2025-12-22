@@ -17,12 +17,14 @@ import (
 
 type MedicalRecordsHandler struct {
 	medicalRecordsService *medicalRecordsService.MedicalRecordsService
+	historyService        *medicalRecordsService.HistoryService
 	config                *config.Config
 }
 
 func NewMedicalRecordsHandler(db *pgxpool.Pool, cfg *config.Config) *MedicalRecordsHandler {
 	return &MedicalRecordsHandler{
 		medicalRecordsService: medicalRecordsService.NewMedicalRecordsService(db, cfg),
+		historyService:        medicalRecordsService.NewHistoryService(db),
 		config:                cfg,
 	}
 }
@@ -372,4 +374,21 @@ func (h *MedicalRecordsHandler) GetSubFolders(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, subfolders)
+}
+
+func (h *MedicalRecordsHandler) GetFileHistory(c *gin.Context) {
+	itemID := c.Param("itemId")
+	if itemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Item ID is required"})
+		return
+	}
+
+	history, err := h.historyService.GetHistory(itemID)
+	if err != nil {
+		log.Printf("Error getting file history: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, history)
 }

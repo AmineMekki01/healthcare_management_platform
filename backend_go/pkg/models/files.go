@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -169,4 +170,30 @@ func (bp BodyPart) GetDisplayName() string {
 	default:
 		return "Unknown"
 	}
+}
+
+type HistoryActionType string
+
+const (
+	ActionTypeUpload HistoryActionType = "upload"
+	ActionTypeShare  HistoryActionType = "share"
+	ActionTypeRename HistoryActionType = "rename"
+	ActionTypeMove   HistoryActionType = "move"
+	ActionTypeDelete HistoryActionType = "delete"
+)
+
+type FileFolderHistory struct {
+	ID              string            `json:"id"`
+	ItemID          string            `json:"item_id"`
+	ActionType      HistoryActionType `json:"action_type"`
+	PerformedByID   string            `json:"performed_by_id"`
+	PerformedByType string            `json:"performed_by_type"`
+	PerformedByName string            `json:"performed_by_name,omitempty"`
+	OldValue        *string           `json:"old_value,omitempty"`
+	NewValue        *string           `json:"new_value,omitempty"`
+	SharedWithID    *string           `json:"shared_with_id,omitempty"`
+	SharedWithType  *string           `json:"shared_with_type,omitempty"`
+	SharedWithName  *string           `json:"shared_with_name,omitempty"`
+	Metadata        json.RawMessage   `json:"metadata,omitempty"`
+	CreatedAt       time.Time         `json:"created_at"`
 }
