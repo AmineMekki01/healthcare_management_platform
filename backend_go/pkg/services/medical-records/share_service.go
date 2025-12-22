@@ -187,17 +187,17 @@ func (s *ShareService) copyItemRecursively(item models.FileFolder, recipientID s
 func (s *ShareService) GetSharedWithMe(userID string) ([]models.FileFolder, error) {
 	sql := `
 	SELECT
-		f.id,
-		f.name,
-		f.created_at,
-		f.updated_at,
-		f.type,
-		f.size,
-		f.extension,
-		f.user_id,
-		f.user_type,
-		f.parent_id,
-		f.path,
+		f_copy.id,
+		f_copy.name,
+		f_copy.created_at,
+		f_copy.updated_at,
+		f_copy.type,
+		f_copy.size,
+		f_copy.extension,
+		f_copy.user_id,
+		f_copy.user_type,
+		f_copy.parent_id,
+		f_copy.path,
 		s.shared_by_id,
 		CASE 
 			WHEN s.shared_by_id IN (SELECT doctor_id::text FROM doctor_info) THEN 
@@ -215,9 +215,17 @@ func (s *ShareService) GetSharedWithMe(userID string) ([]models.FileFolder, erro
 			ELSE 'unknown'
 		END as shared_by_type
 	FROM shared_items s
-	JOIN folder_file_info f ON s.item_id = f.id
+	JOIN folder_file_info f_original ON s.item_id = f_original.id
+	JOIN folder_file_info f_sharer_folder ON f_sharer_folder.user_id::text = s.shared_with_id 
+		AND f_sharer_folder.shared_by_id::text = s.shared_by_id
+		AND f_sharer_folder.path LIKE 'records/shared-with-me/%'
+		AND f_sharer_folder.parent_id IS NULL
+		AND f_sharer_folder.type = 'folder'
+	JOIN folder_file_info f_copy ON f_copy.parent_id = f_sharer_folder.id
+		AND f_copy.shared_by_id::text = s.shared_by_id
+		AND f_copy.size = f_original.size
 	WHERE s.shared_with_id = $1
-	AND f.folder_type = 'PERSONAL';`
+	AND f_original.folder_type = 'PERSONAL';`
 
 	rows, err := s.db.Query(context.Background(), sql, userID)
 	if err != nil {
