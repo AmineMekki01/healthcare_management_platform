@@ -207,6 +207,10 @@
     "documentCount_plural": "{{count}} documents",
     "fileCount": "{{count}} file",
     "fileCount_plural": "{{count}} files",
+    "itemsShared": "{{count}} item shared",
+    "itemsShared_plural": "{{count}} items shared",
+    "items": "{{count}} item",
+    "items_plural": "{{count}} items",
     "untitledDocument": "Untitled Document",
     "doctor": "Dr. {{name}}",
     "viewDocuments": "View Documents",
@@ -233,5 +237,13 @@
       "iSharedWith": "I Shared With",
       "iSharedWithDescription": "Documents I've shared with others"
     }
+  },
+  "common": {
+    "sharedFolder": "Shared Folder",
+    "sharedFile": "Shared File"
+  },
+  "navigation": {
+    "root": "My Documents",
+    "sharedRoot": "Shared Root"
   }
 }

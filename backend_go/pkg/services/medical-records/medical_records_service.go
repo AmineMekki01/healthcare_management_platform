@@ -371,21 +371,39 @@ func (s *MedicalRecordsService) GetFolders(userID, parentID string, isSharedWith
 	var args []interface{}
 
 	if isSharedWithMe {
-		baseQuery = `
-		SELECT 
-			id, name, created_at, updated_at, type, extension, path,
-			folder_type, category, owner_user_id, patient_id, 
-			uploaded_by_user_id, uploaded_by_role, included_in_rag
-		FROM 
-			folder_file_info 
-		WHERE 
-			user_id = $1 
-		AND 
-			shared_by_id IS NOT NULL 
-		AND
-			folder_type = 'PERSONAL'
-		`
-		args = []interface{}{userID}
+		if parentID != "" {
+			baseQuery = `
+			SELECT 
+				id, name, created_at, updated_at, type, extension, path,
+				folder_type, category, owner_user_id, patient_id, 
+				uploaded_by_user_id, uploaded_by_role, included_in_rag
+			FROM 
+				folder_file_info 
+			WHERE 
+				parent_id = $1
+			AND
+				folder_type = 'PERSONAL'
+			`
+			args = []interface{}{parentID}
+		} else {
+			baseQuery = `
+			SELECT 
+				id, name, created_at, updated_at, type, extension, path,
+				folder_type, category, owner_user_id, patient_id, 
+				uploaded_by_user_id, uploaded_by_role, included_in_rag
+			FROM 
+				folder_file_info 
+			WHERE 
+				user_id = $1 
+			AND 
+				shared_by_id IS NOT NULL 
+			AND
+				parent_id IS NULL
+			AND
+				folder_type = 'PERSONAL'
+			`
+			args = []interface{}{userID}
+		}
 	} else {
 		baseQuery = `
 		SELECT 
@@ -402,23 +420,26 @@ func (s *MedicalRecordsService) GetFolders(userID, parentID string, isSharedWith
 			shared_by_id IS NULL
 		`
 		args = []interface{}{userID}
-	}
 
-	if parentID != "" {
-		baseQuery += " AND parent_id = $2"
-		args = append(args, parentID)
-	} else {
-		baseQuery += " AND parent_id IS NULL"
+		if parentID != "" {
+			baseQuery += " AND parent_id = $2"
+			args = append(args, parentID)
+		} else {
+			baseQuery += " AND parent_id IS NULL"
+		}
 	}
 
 	rows, err := conn.Query(context.Background(), baseQuery, args...)
 	if err != nil {
+		log.Printf("Query execution error: %v", err)
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 	defer rows.Close()
 
 	var folders []models.FileFolder
+	rowCount := 0
 	for rows.Next() {
+		rowCount++
 		var folder models.FileFolder
 		var path *string
 		var folderTypeStr *string

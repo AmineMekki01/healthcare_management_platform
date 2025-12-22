@@ -227,6 +227,7 @@ function UploadAndShareView() {
                   sx={{ 
                     mb: 3, 
                     py: 2,
+                    gap: 1,
                     borderColor: '#667eea',
                     color: '#667eea',
                     '&:hover': {
@@ -392,6 +393,7 @@ function UploadAndShareView() {
                 startIcon={loading ? <CircularProgress size={20} /> : <UploadIcon />}
                 sx={{
                   py: 2,
+                  gap: 1,
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #5a67d8 0%, #6a4190 100%)',

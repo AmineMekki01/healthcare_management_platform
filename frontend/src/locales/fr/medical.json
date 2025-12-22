@@ -207,6 +207,10 @@
     "documentCount_plural": "{{count}} documents",
     "fileCount": "{{count}} fichier",
     "fileCount_plural": "{{count}} fichiers",
+    "itemsShared": "{{count}} élément partagé",
+    "itemsShared_plural": "{{count}} éléments partagés",
+    "items": "{{count}} élément",
+    "items_plural": "{{count}} éléments",
     "untitledDocument": "Document sans titre",
     "doctor": "Dr. {{name}}",
     "viewDocuments": "Voir les documents",
@@ -233,5 +237,13 @@
       "iSharedWith": "J'ai Partagé Avec",
       "iSharedWithDescription": "Documents que j'ai partagés avec d'autres"
     }
+  },
+  "common": {
+    "sharedFolder": "Dossier Partagé",
+    "sharedFile": "Fichier Partagé"
+  },
+  "navigation": {
+    "root": "Mes Documents",
+    "sharedRoot": "Racine Partagée"
   }
 }
