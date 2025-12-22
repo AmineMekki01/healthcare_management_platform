@@ -245,5 +245,22 @@
   "navigation": {
     "root": "My Documents",
     "sharedRoot": "Shared Root"
+  },
+  "history": {
+    "title": "File History",
+    "error": "Failed to load history",
+    "retry": "Retry",
+    "noHistory": "No history available for this item",
+    "close": "Close",
+    "uploaded": "{{user}} uploaded this file",
+    "uploadedByYou": "You uploaded this file",
+    "shared": "{{user}} shared this file with {{recipient}}",
+    "sharedByYou": "You shared this file with {{recipient}}",
+    "sharedWithYou": "{{user}} shared this file with you",
+    "renamed": "{{user}} renamed from \"{{oldName}}\" to \"{{newName}}\"",
+    "renamedByYou": "You renamed from \"{{oldName}}\" to \"{{newName}}\"",
+    "deleted": "{{user}} deleted this file",
+    "deletedByYou": "You deleted this file",
+    "unknown": "Unknown action"
   }
 }

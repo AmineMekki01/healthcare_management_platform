@@ -247,5 +247,22 @@
   "navigation": {
     "root": "مستنداتي",
     "sharedRoot": "المجلد المشترك"
+  },
+  "history": {
+    "title": "سجل الملف",
+    "error": "فشل تحميل السجل",
+    "retry": "إعادة المحاولة",
+    "noHistory": "لا يوجد سجل متاح لهذا العنصر",
+    "close": "إغلاق",
+    "uploaded": "{{user}} قام برفع هذا الملف",
+    "uploadedByYou": "قمت برفع هذا الملف",
+    "shared": "{{user}} شارك هذا الملف مع {{recipient}}",
+    "sharedByYou": "قمت بمشاركة هذا الملف مع {{recipient}}",
+    "sharedWithYou": "{{user}} شارك هذا الملف معك",
+    "renamed": "{{user}} أعاد التسمية من \"{{oldName}}\" إلى \"{{newName}}\"",
+    "renamedByYou": "قمت بإعادة التسمية من \"{{oldName}}\" إلى \"{{newName}}\"",
+    "deleted": "{{user}} حذف هذا الملف",
+    "deletedByYou": "قمت بحذف هذا الملف",
+    "unknown": "إجراء غير معروف"
   }
 }

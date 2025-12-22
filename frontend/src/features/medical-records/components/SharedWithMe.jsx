@@ -34,6 +34,7 @@ import {
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
   Person as PersonIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import {
   renameItem,
@@ -43,6 +44,7 @@ import {
   fetchFolders,
   fetchBreadcrumbs
 } from '../services/medicalRecordsService';
+import FileHistoryModal from './FileHistoryModal';
 
 const SharedWithMe = () => {
   const { t } = useTranslation('medical');
@@ -57,6 +59,8 @@ const SharedWithMe = () => {
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [currentSharerInfo, setCurrentSharerInfo] = useState(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
   const fetchSharedWithMeItems = async (parentFolderId = null) => {
     if (!userId) return;
@@ -412,6 +416,33 @@ const SharedWithMe = () => {
                 Download
               </Button>
             )}
+
+            <Button
+              variant="outlined"
+              startIcon={<HistoryIcon />}
+              onClick={() => {
+                if (selectedFiles.size === 1) {
+                  const itemId = Array.from(selectedFiles)[0];
+                  const item = folders.find(f => f.folder_id === itemId);
+                  setSelectedHistoryItem({ id: itemId, name: item?.name || 'Item' });
+                  setHistoryModalOpen(true);
+                }
+              }}
+              disabled={selectedFiles.size !== 1}
+              sx={{
+                borderRadius: '12px',
+                gap: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#6366f1',
+                color: '#6366f1',
+                '&:hover': {
+                  backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                }
+              }}
+            >
+              History
+            </Button>
           </Box>
         )}
       </Paper>
@@ -670,6 +701,16 @@ const SharedWithMe = () => {
           </Box>
         </Fade>
       )}
+
+      <FileHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setSelectedHistoryItem(null);
+        }}
+        itemId={selectedHistoryItem?.id}
+        itemName={selectedHistoryItem?.name}
+      />
     </Container>
   );
 };

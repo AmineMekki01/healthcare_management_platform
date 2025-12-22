@@ -26,14 +26,16 @@ import (
 )
 
 type MedicalRecordsService struct {
-	db  *pgxpool.Pool
-	cfg *config.Config
+	db             *pgxpool.Pool
+	cfg            *config.Config
+	historyService *HistoryService
 }
 
 func NewMedicalRecordsService(db *pgxpool.Pool, cfg *config.Config) *MedicalRecordsService {
 	return &MedicalRecordsService{
-		db:  db,
-		cfg: cfg,
+		db:             db,
+		cfg:            cfg,
+		historyService: NewHistoryService(db),
 	}
 }
 
@@ -142,6 +144,27 @@ func (s *MedicalRecordsService) UploadFile(fileInfo *models.FileFolder, file io.
 	if err != nil {
 		return fmt.Errorf("failed to insert file info: %v", err)
 	}
+
+	performedByID := fileInfo.UserID
+	performedByType := fileInfo.UserType
+	if fileInfo.UploadedByUserID != nil && *fileInfo.UploadedByUserID != "" {
+		performedByID = *fileInfo.UploadedByUserID
+		if fileInfo.UploadedByRole != nil {
+			performedByType = *fileInfo.UploadedByRole
+		}
+	}
+
+	historyEntry := models.FileFolderHistory{
+		ItemID:          fileInfo.ID,
+		ActionType:      models.ActionTypeUpload,
+		PerformedByID:   performedByID,
+		PerformedByType: performedByType,
+		NewValue:        &fileInfo.Name,
+	}
+	if err := s.historyService.AddHistoryEntry(historyEntry); err != nil {
+		log.Printf("Warning: failed to add upload history entry: %v", err)
+	}
+
 	return nil
 }
 
@@ -295,9 +318,9 @@ func (s *MedicalRecordsService) RenameFileOrFolder(id, newName string) error {
 	}
 	defer tx.Rollback(context.Background())
 
-	var oldPath, itemType string
+	var oldPath, itemType, oldName, userID, userType string
 	err = tx.QueryRow(context.Background(),
-		"SELECT path, type FROM folder_file_info WHERE id = $1", id).Scan(&oldPath, &itemType)
+		"SELECT path, type, name, user_id, user_type FROM folder_file_info WHERE id = $1", id).Scan(&oldPath, &itemType, &oldName, &userID, &userType)
 	if err != nil {
 		return fmt.Errorf("could not fetch item details: %v", err)
 	}
@@ -351,6 +374,18 @@ func (s *MedicalRecordsService) RenameFileOrFolder(id, newName string) error {
 
 	if err := tx.Commit(context.Background()); err != nil {
 		return fmt.Errorf("could not commit transaction: %v", err)
+	}
+
+	historyEntry := models.FileFolderHistory{
+		ItemID:          id,
+		ActionType:      models.ActionTypeRename,
+		PerformedByID:   userID,
+		PerformedByType: userType,
+		OldValue:        &oldName,
+		NewValue:        &newName,
+	}
+	if err := s.historyService.AddHistoryEntry(historyEntry); err != nil {
+		log.Printf("Warning: failed to add rename history entry: %v", err)
 	}
 
 	return nil

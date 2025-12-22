@@ -245,5 +245,22 @@
   "navigation": {
     "root": "Mes Documents",
     "sharedRoot": "Racine Partagée"
+  },
+  "history": {
+    "title": "Historique du Fichier",
+    "error": "Échec du chargement de l'historique",
+    "retry": "Réessayer",
+    "noHistory": "Aucun historique disponible pour cet élément",
+    "close": "Fermer",
+    "uploaded": "{{user}} a téléchargé ce fichier",
+    "uploadedByYou": "Vous avez téléchargé ce fichier",
+    "shared": "{{user}} a partagé ce fichier avec {{recipient}}",
+    "sharedByYou": "Vous avez partagé ce fichier avec {{recipient}}",
+    "sharedWithYou": "{{user}} a partagé ce fichier avec vous",
+    "renamed": "{{user}} a renommé de \"{{oldName}}\" à \"{{newName}}\"",
+    "renamedByYou": "Vous avez renommé de \"{{oldName}}\" à \"{{newName}}\"",
+    "deleted": "{{user}} a supprimé ce fichier",
+    "deletedByYou": "Vous avez supprimé ce fichier",
+    "unknown": "Action inconnue"
   }
 }

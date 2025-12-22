@@ -36,6 +36,7 @@ import {
   NavigateNext as NavigateNextIcon,
   Home as HomeIcon,
   Add as AddIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import {
   fetchFolders,
@@ -49,6 +50,7 @@ import {
   shareItems,
   fetchDoctors,
 } from '../services/medicalRecordsService';
+import FileHistoryModal from './FileHistoryModal';
 
 function MyUploads() {
   const { t } = useTranslation('medical');
@@ -63,6 +65,8 @@ function MyUploads() {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
   const fetchAllFolder = useCallback(async (folderId) => {
     if (!userId) {
@@ -479,6 +483,33 @@ function MyUploads() {
               >
                 Download {selectedFiles.size > 1 ? `(${selectedFiles.size})` : ''}
               </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<HistoryIcon />}
+                onClick={() => {
+                  if (selectedFiles.size === 1) {
+                    const itemId = Array.from(selectedFiles)[0];
+                    const item = folders.find(f => f.folder_id === itemId);
+                    setSelectedHistoryItem({ id: itemId, name: item?.name || 'Item' });
+                    setHistoryModalOpen(true);
+                  }
+                }}
+                disabled={selectedFiles.size !== 1}
+                sx={{
+                  borderRadius: '12px',
+                  gap: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: '#6366f1',
+                  color: '#6366f1',
+                  '&:hover': {
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                  }
+                }}
+              >
+                History
+              </Button>
             </>
           )}
         </Box>
@@ -738,6 +769,16 @@ function MyUploads() {
       >
         <AddIcon />
       </Fab>
+
+      <FileHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setSelectedHistoryItem(null);
+        }}
+        itemId={selectedHistoryItem?.id}
+        itemName={selectedHistoryItem?.name}
+      />
     </Container>
   );
 }

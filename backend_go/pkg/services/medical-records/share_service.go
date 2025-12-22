@@ -18,14 +18,16 @@ import (
 )
 
 type ShareService struct {
-	db  *pgxpool.Pool
-	cfg *config.Config
+	db             *pgxpool.Pool
+	cfg            *config.Config
+	historyService *HistoryService
 }
 
 func NewShareService(db *pgxpool.Pool, cfg *config.Config) *ShareService {
 	return &ShareService{
-		db:  db,
-		cfg: cfg,
+		db:             db,
+		cfg:            cfg,
+		historyService: NewHistoryService(db),
 	}
 }
 
@@ -77,6 +79,27 @@ func (s *ShareService) ShareItems(req models.ShareRequest) error {
 		if err != nil {
 			log.Println("Error inserting shared item record", itemID, err)
 			return fmt.Errorf("unable to insert shared item record: %v", err)
+		}
+
+		var sharedWithType string
+		err = s.db.QueryRow(context.Background(),
+			"SELECT CASE WHEN EXISTS(SELECT 1 FROM doctor_info WHERE doctor_id::text = $1) THEN 'doctor' WHEN EXISTS(SELECT 1 FROM patient_info WHERE patient_id::text = $1) THEN 'patient' WHEN EXISTS(SELECT 1 FROM receptionists WHERE receptionist_id::text = $1) THEN 'receptionist' ELSE 'unknown' END",
+			req.SharedWithID).Scan(&sharedWithType)
+		if err != nil {
+			sharedWithType = "unknown"
+		}
+
+		historyEntry := models.FileFolderHistory{
+			ItemID:          itemID,
+			ActionType:      models.ActionTypeShare,
+			PerformedByID:   req.UserID,
+			PerformedByType: req.UserType,
+			SharedWithID:    &req.SharedWithID,
+			SharedWithType:  &sharedWithType,
+			NewValue:        &item.Name,
+		}
+		if err := s.historyService.AddHistoryEntry(historyEntry); err != nil {
+			log.Printf("Warning: failed to add share history entry: %v", err)
 		}
 	}
 
@@ -138,6 +161,21 @@ func (s *ShareService) copyItemRecursively(item models.FileFolder, recipientID s
 	newItemPath := filepath.Join(newParentPath, item.Name)
 	newItemPath = filepath.ToSlash(newItemPath)
 
+	var sharedByType, sharedWithType string
+	err := s.db.QueryRow(context.Background(),
+		"SELECT CASE WHEN EXISTS(SELECT 1 FROM doctor_info WHERE doctor_id::text = $1) THEN 'doctor' WHEN EXISTS(SELECT 1 FROM patient_info WHERE patient_id::text = $1) THEN 'patient' WHEN EXISTS(SELECT 1 FROM receptionists WHERE receptionist_id::text = $1) THEN 'receptionist' ELSE 'unknown' END",
+		sharedByID).Scan(&sharedByType)
+	if err != nil {
+		sharedByType = "unknown"
+	}
+
+	err = s.db.QueryRow(context.Background(),
+		"SELECT CASE WHEN EXISTS(SELECT 1 FROM doctor_info WHERE doctor_id::text = $1) THEN 'doctor' WHEN EXISTS(SELECT 1 FROM patient_info WHERE patient_id::text = $1) THEN 'patient' WHEN EXISTS(SELECT 1 FROM receptionists WHERE receptionist_id::text = $1) THEN 'receptionist' ELSE 'unknown' END",
+		recipientID).Scan(&sharedWithType)
+	if err != nil {
+		sharedWithType = "unknown"
+	}
+
 	if item.Type == "folder" {
 		_, err := s.db.Exec(context.Background(),
 			"INSERT INTO folder_file_info (id, name, created_at, updated_at, type, size, extension, path, user_id, user_type, parent_id, shared_by_id) "+
@@ -145,6 +183,19 @@ func (s *ShareService) copyItemRecursively(item models.FileFolder, recipientID s
 			newItemID, item.Name, time.Now(), time.Now(), item.Size, item.Ext, newItemPath, recipientID, item.UserType, newParentID, sharedByID)
 		if err != nil {
 			return fmt.Errorf("error inserting folder info into database: %v", err)
+		}
+
+		historyEntry := models.FileFolderHistory{
+			ItemID:          newItemID,
+			ActionType:      models.ActionTypeShare,
+			PerformedByID:   sharedByID,
+			PerformedByType: sharedByType,
+			SharedWithID:    &recipientID,
+			SharedWithType:  &sharedWithType,
+			NewValue:        &item.Name,
+		}
+		if err := s.historyService.AddHistoryEntry(historyEntry); err != nil {
+			log.Printf("Warning: failed to add share history entry for copied folder: %v", err)
 		}
 
 		rows, err := s.db.Query(context.Background(),
@@ -179,6 +230,19 @@ func (s *ShareService) copyItemRecursively(item models.FileFolder, recipientID s
 			newItemID, item.Name, time.Now(), time.Now(), item.Size, item.Ext, newItemPath, recipientID, item.UserType, newParentID, sharedByID)
 		if err != nil {
 			return fmt.Errorf("error inserting file info into database: %v", err)
+		}
+
+		historyEntry := models.FileFolderHistory{
+			ItemID:          newItemID,
+			ActionType:      models.ActionTypeShare,
+			PerformedByID:   sharedByID,
+			PerformedByType: sharedByType,
+			SharedWithID:    &recipientID,
+			SharedWithType:  &sharedWithType,
+			NewValue:        &item.Name,
+		}
+		if err := s.historyService.AddHistoryEntry(historyEntry); err != nil {
+			log.Printf("Warning: failed to add share history entry for copied file: %v", err)
 		}
 	}
 	return nil

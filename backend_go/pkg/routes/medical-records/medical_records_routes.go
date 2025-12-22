@@ -23,6 +23,7 @@ func SetupMedicalRecordsRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *c
 	records.POST("/upload-file", handler.UploadFile)
 	records.GET("/download-file/:fileId", handler.DownloadFile)
 	records.POST("/download-multiple-files", handler.DownloadMultipleFiles)
+	records.GET("/items/:itemId/history", handler.GetFileHistory)
 
 	records.GET("/medical-records/by-category", clinicalHandler.GetMedicalRecordsByCategory)
 	records.GET("/medical-records/all-users", clinicalHandler.GetAllUsers)
