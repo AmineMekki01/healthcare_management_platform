@@ -25,11 +25,12 @@ const CalendarIcon = () => (
   </svg>
 );
 
-/**
- * Custom hook for managing settings navigation state and configuration
- * @param {string} userType - The type of user ('doctor', 'patient', etc.)
- * @returns {Object} - Navigation state and utilities
- */
+const HealthIcon = () => (
+  <svg fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
+    <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M12,18H11V17H9V15H11V13H12V15H14V17H12V18M15,11H9V9H15V11Z"/>
+  </svg>
+);
+
 export const useSettingsNavigation = (userType) => {
   const { t } = useTranslation('settings');
   const [activeSection, setActiveSection] = useState('personal');
@@ -39,6 +40,12 @@ export const useSettingsNavigation = (userType) => {
       id: 'personal',
       label: t('navigation.personal'),
       icon: <UserIcon />,
+      available: true,
+    },
+    {
+      id: 'healthProfile',
+      label: t('navigation.healthProfile'),
+      icon: <HealthIcon />,
       available: true,
     },
     {
@@ -65,6 +72,8 @@ export const useSettingsNavigation = (userType) => {
     switch (sectionId) {
       case 'personal':
         return t('navigation.personal');
+      case 'healthProfile':
+        return t('navigation.healthProfile');
       case 'doctors':
         return t('navigation.followedDoctors');
       case 'additionalDoctorsInfo':

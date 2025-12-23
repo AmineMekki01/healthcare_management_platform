@@ -5,6 +5,7 @@
   },
   "navigation": {
     "personal": "المعلومات الشخصية",
+    "healthProfile": "الملف الصحي",
     "followSettings": "إعدادات المتابعة",
     "followedDoctors": "الأطباء المتابعون",
     "availability": "إعدادات التوفر",
