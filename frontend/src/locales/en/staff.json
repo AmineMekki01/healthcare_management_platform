@@ -28,7 +28,11 @@
   "messages": {
     "noPermissions": "No specific permissions set",
     "scheduleNotSet": "Schedule not set",
-    "confirmDismiss": "Are you sure you want to dismiss {{name}}?"
+    "confirmDismiss": "Are you sure you want to dismiss {{name}}?",
+    "dismissReasonPrompt": "Please enter a dismissal reason:",
+    "loadingStaff": "Loading staff...",
+    "noStaffTitle": "No staff members",
+    "noStaffDescription": "When you hire receptionists, they will appear here."
   },
   "page": {
     "title": "Staff Management",
@@ -177,7 +181,37 @@
     },
     "actions": {
       "hire": "Hire",
+      "offerAlreadySent": "Offer Sent",
       "viewProfile": "View Profile"
+    },
+    "labels": {
+      "offerStatus": "Offer Status"
+    },
+    "proposalStatus": {
+      "sent": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "messages": {
+      "offerPrompt": "Write a short message to the receptionist (optional):",
+      "offerSent": "Offer sent successfully. The receptionist can now accept or reject it.",
+      "offerAlreadySent": "You already sent an offer to this receptionist."
+    }
+  },
+  "history": {
+    "title": "Receptionist History",
+    "subtitle": "Employment history of receptionists in your practice",
+    "viewButton": "View History",
+    "empty": "No employment history found.",
+    "labels": {
+      "startedAt": "Started",
+      "endedAt": "Ended",
+      "reason": "Reason"
+    },
+    "status": {
+      "active": "Active",
+      "ended": "Ended"
     }
   },
   "errors": {

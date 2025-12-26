@@ -1,6 +1,8 @@
 package medicalrecords
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -15,12 +17,14 @@ import (
 type ShareHandler struct {
 	shareService *shareService.ShareService
 	config       *config.Config
+	db           *pgxpool.Pool
 }
 
 func NewShareHandler(db *pgxpool.Pool, cfg *config.Config) *ShareHandler {
 	return &ShareHandler{
 		shareService: shareService.NewShareService(db, cfg),
 		config:       cfg,
+		db:           db,
 	}
 }
 
@@ -38,9 +42,55 @@ func (h *ShareHandler) ListDoctors(c *gin.Context) {
 func (h *ShareHandler) ShareItems(c *gin.Context) {
 	var req models.ShareRequest
 
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
 	if err := c.BindJSON(&req); err != nil {
 		log.Printf("Error binding JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	req.UserID = callerUserID.(string)
+	req.UserType = callerUserType
+
+	if req.UserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", req.UserID).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("ShareItems: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
+
+	if len(req.ItemIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "item_ids is required"})
+		return
+	}
+
+	var ownedCount int
+	err := h.db.QueryRow(
+		context.Background(),
+		"SELECT COUNT(1) FROM folder_file_info WHERE id = ANY($1::uuid[]) AND user_id = $2 AND shared_by_id IS NULL",
+		req.ItemIDs,
+		req.UserID,
+	).Scan(&ownedCount)
+	if err != nil {
+		log.Printf("ShareItems: failed to verify item ownership: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify item ownership"})
+		return
+	}
+	if ownedCount != len(req.ItemIDs) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return
 	}
 
@@ -49,7 +99,7 @@ func (h *ShareHandler) ShareItems(c *gin.Context) {
 		return
 	}
 
-	err := h.shareService.ShareItems(req)
+	err = h.shareService.ShareItems(req)
 	if err != nil {
 		log.Printf("Error sharing items: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -60,11 +110,12 @@ func (h *ShareHandler) ShareItems(c *gin.Context) {
 }
 
 func (h *ShareHandler) GetSharedWithMe(c *gin.Context) {
-	userID := c.Query("userId")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId parameter is required"})
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	userID := callerUserID.(string)
 
 	items, err := h.shareService.GetSharedWithMe(userID)
 	if err != nil {
@@ -81,11 +132,12 @@ func (h *ShareHandler) GetSharedWithMe(c *gin.Context) {
 }
 
 func (h *ShareHandler) GetSharedByMe(c *gin.Context) {
-	userID := c.Query("userId")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId parameter is required"})
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	userID := callerUserID.(string)
 
 	items, err := h.shareService.GetSharedByMe(userID)
 	if err != nil {

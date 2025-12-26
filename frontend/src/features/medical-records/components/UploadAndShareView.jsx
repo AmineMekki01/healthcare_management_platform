@@ -81,8 +81,11 @@ const getBodyParts = (t) => ({
 
 
 function UploadAndShareView() {
-  const { t} = useTranslation('medical');
-  const { userId, userType } = useContext(AuthContext);
+  const { t } = useTranslation(['medical', 'common']);
+  const { userId, userType, assignedDoctorId } = useContext(AuthContext);
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const isUnassignedReceptionist = userType === 'receptionist' && !receptionistAssignedDoctorId;
+
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedBodyPart, setSelectedBodyPart] = useState('');
@@ -97,6 +100,11 @@ function UploadAndShareView() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    if (isUnassignedReceptionist) {
+      setUsers([]);
+      return;
+    }
+
     const loadPatients = async () => {
       if (userType === 'doctor' || userType === 'receptionist') {
         try {
@@ -110,7 +118,7 @@ function UploadAndShareView() {
     };
     
     loadPatients();
-  }, [userType, userId]);
+  }, [userType, userId, isUnassignedReceptionist, t]);
 
 
   const handleFileSelect = (event) => {
@@ -198,6 +206,14 @@ function UploadAndShareView() {
   useEffect(() => {
     console.log("selectedUser", selectedUser);
   }, [selectedUser]);
+
+  if (isUnassignedReceptionist) {
+    return (
+      <Container maxWidth="md" sx={{ py: 3 }}>
+        <Alert severity="warning">{t('common:receptionist.errors.noAssignedDoctor')}</Alert>
+      </Container>
+    );
+  }
   
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>

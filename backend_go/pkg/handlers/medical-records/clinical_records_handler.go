@@ -1,6 +1,8 @@
 package medicalrecords
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -15,12 +17,14 @@ import (
 type ClinicalRecordsHandler struct {
 	medicalRecordsService *medicalRecordsService.MedicalRecordsService
 	config                *config.Config
+	db                    *pgxpool.Pool
 }
 
 func NewClinicalRecordsHandler(db *pgxpool.Pool, cfg *config.Config) *ClinicalRecordsHandler {
 	return &ClinicalRecordsHandler{
 		medicalRecordsService: medicalRecordsService.NewMedicalRecordsService(db, cfg),
 		config:                cfg,
+		db:                    db,
 	}
 }
 
@@ -64,6 +68,31 @@ func (h *ClinicalRecordsHandler) GetAllUsers(c *gin.Context) {
 func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) {
 	var fileInfo models.FileFolder
 
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+	if callerUserType != "doctor" && callerUserType != "receptionist" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only doctors and receptionists can upload clinical documents"})
+		return
+	}
+
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("UploadAndShareClinicalDocument: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
+
 	err := c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
 		log.Printf("Error parsing multipart form: %v", err)
@@ -81,8 +110,6 @@ func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) 
 
 	patientID := c.Request.FormValue("patient_id")
 	category := c.Request.FormValue("category")
-	uploadedByUserID := c.Request.FormValue("uploaded_by_user_id")
-	uploadedByRole := c.Request.FormValue("uploaded_by_role")
 	folderName := c.Request.FormValue("folder_name")
 
 	if patientID == "" {
@@ -95,10 +122,8 @@ func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) 
 		return
 	}
 
-	if uploadedByRole != "doctor" && uploadedByRole != "receptionist" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Only doctors and receptionists can upload clinical documents"})
-		return
-	}
+	uploadedByUserID := callerUserID.(string)
+	uploadedByRole := callerUserType
 
 	fileInfo.Name = handler.Filename
 	fileInfo.Type = "file"

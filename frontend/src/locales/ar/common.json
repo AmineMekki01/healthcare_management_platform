@@ -20,6 +20,7 @@
     "mySchedule": "جدولي",
     "medicalReports": "التقارير الطبية",
     "staffManagement": "إدارة الموظفين",
+    "receptionistHistory": "سجل موظفي الاستقبال",
     "contentManagement": "إدارة المحتوى",
     "createPost": "إنشاء مقال",
     "myPosts": "مقالاتي",
@@ -31,7 +32,8 @@
     "patientSearch": "البحث عن المرضى",
     "createPatient": "إنشاء مريض",
     "scheduleAppointment": "جدولة موعد",
-    "talentPool": "مجموعة المواهب"
+    "talentPool": "مجموعة المواهب",
+    "jobOffers": "عروض العمل"
   },
   "buttons": {
     "getStartedToday": "ابدأ اليوم",
@@ -222,6 +224,46 @@
       "lastVisit": "آخر زيارة",
       "status": "الحالة",
       "never": "أبداً"
+    }
+  },
+  "receptionist": {
+    "jobOffers": {
+      "title": "عروض العمل",
+      "subtitle": "راجع عروض الأطباء وقم بالقبول أو الرفض.",
+      "actions": {
+        "accept": "قبول",
+        "reject": "رفض"
+      },
+      "status": {
+        "sent": "قيد الانتظار",
+        "accepted": "تم القبول",
+        "rejected": "تم الرفض",
+        "withdrawn": "تم السحب"
+      },
+      "labels": {
+        "unknownDoctor": "طبيب غير معروف",
+        "noSpecialty": "بدون تخصص",
+        "sentOn": "أُرسل في"
+      },
+      "messages": {
+        "alreadyAssigned": "أنت مُعيَّن بالفعل لدى طبيب.",
+        "assignedTo": "أنت مُعيَّن لدى {{doctor}}.",
+        "lastDismissal": "آخر فصل بتاريخ {{date}}: {{reason}}",
+        "dismissedForOffer": "تم فصلك لهذا العرض بتاريخ {{date}}: {{reason}}",
+        "acceptPrompt": "رسالة اختيارية للطبيب (مثلاً متى نلتقي):",
+        "rejectPrompt": "سبب اختياري للرفض:",
+        "accepted": "تم قبول العرض. أصبحت الآن مُعيَّناً.",
+        "rejected": "تم رفض العرض."
+      },
+      "errors": {
+        "missingReceptionistId": "لم يتم العثور على معرف موظف الاستقبال.",
+        "loadFailed": "فشل تحميل عروض العمل.",
+        "actionFailed": "فشل تنفيذ الإجراء."
+      },
+      "empty": {
+        "title": "لا توجد عروض عمل",
+        "subtitle": "عندما يرسل لك الأطباء عروضًا ستظهر هنا."
+      }
     }
   }
 }

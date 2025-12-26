@@ -36,6 +36,7 @@ import {
   Textsms as MessagesIcon,
   AccountCircle as ProfileIcon,
   ManageAccounts as ManageIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../../features/auth/context/AuthContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
@@ -47,6 +48,7 @@ const BottomNavbar = () => {
     logout, 
     userId, 
     userType, 
+    assignedDoctorId,
     userFullName, 
     userProfilePictureUrl 
   } = useContext(AuthContext);
@@ -81,6 +83,9 @@ const BottomNavbar = () => {
       ? `/doctor-profile/${userId}`
       : userType === 'patient' ? `/patient-profile/${userId}` : `/receptionist-profile/${userId}`;
 
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const isReceptionistAssigned = activeMode === 'receptionist' && !!receptionistAssignedDoctorId;
+
   const getMainNavItems = () => {
     const baseItems = [
       {
@@ -113,11 +118,19 @@ const BottomNavbar = () => {
         icon: <CalendarIcon />,
       });
     } else if (activeMode === 'receptionist') {
-      baseItems.push({
-        label: t('navigation.dashboard'),
-        value: '/receptionist-dashboard',
-        icon: <DashboardIcon />,
-      });
+      baseItems.push(
+        isReceptionistAssigned
+          ? {
+              label: t('navigation.dashboard'),
+              value: '/receptionist-dashboard',
+              icon: <DashboardIcon />,
+            }
+          : {
+              label: t('navigation.jobOffers'),
+              value: '/receptionist/job-offers',
+              icon: <WorkIcon />,
+            }
+      );
     }
 
     return baseItems;
@@ -154,6 +167,11 @@ const BottomNavbar = () => {
           icon: <StaffIcon />,
         },
         {
+          label: t('navigation.receptionistHistory'),
+          href: '/staff-management/history',
+          icon: <ReportsIcon />,
+        },
+        {
           label: t('navigation.createPost'),
           href: '/create-post',
           icon: <CreateIcon />,
@@ -164,6 +182,12 @@ const BottomNavbar = () => {
           icon: <NewsIcon />,
         }
       );
+    } else if (activeMode === 'receptionist') {
+      baseItems.unshift({
+        label: t('navigation.jobOffers'),
+        href: '/receptionist/job-offers',
+        icon: <WorkIcon />,
+      });
     }
 
     baseItems.push(

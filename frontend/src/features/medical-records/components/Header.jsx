@@ -19,10 +19,13 @@ import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 
 function FileUploadHeader() {
-  const { userType } = useContext(AuthContext);
+  const { userType, assignedDoctorId } = useContext(AuthContext);
   const { t } = useTranslation('medical');
   const navigate = useNavigate();
   const location = useLocation();
+
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const canUploadShare = userType === 'doctor' || (userType === 'receptionist' && !!receptionistAssignedDoctorId);
   
   const getCurrentTab = () => {
     const path = location.pathname.split('/');
@@ -52,7 +55,7 @@ function FileUploadHeader() {
       },
     ];
 
-    if (userType === 'doctor' || userType === 'receptionist') {
+    if (canUploadShare) {
       baseTabs.push(
         {
           icon: <ShareIcon sx={{ mb: 1 }} />,

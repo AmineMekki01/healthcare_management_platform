@@ -69,6 +69,14 @@ class StaffService {
     });
   }
 
+  async fetchDoctorStaffEmploymentHistory(doctorId) {
+    return this.handleApiCall(async () => {
+      return await this.axiosInstance.get(`/api/v1/doctor/staff/${doctorId}/history`);
+    }, 'fetch staff employment history').then(data => {
+      return data.history || [];
+    });
+  }
+
   async fetchStaffById(staffId) {
     return this.handleApiCall(async () => {
       return await this.axiosInstance.get(`/receptionist/profile/${staffId}`);
@@ -102,19 +110,23 @@ class StaffService {
     });
   }
 
+  async fetchDoctorHiringProposals() {
+    return this.handleApiCall(async () => {
+      return await this.axiosInstance.get('/api/v1/doctor/hiring-proposals');
+    }, 'fetch doctor hiring proposals').then(data => {
+      return data.proposals || [];
+    });
+  }
+
   async hireReceptionist(receptionistId, doctorId, contractDetails = {}) {
     return this.handleApiCall(async () => {
       const payload = {
         receptionistId: receptionistId,
-        doctor_id: doctorId,
-        contract_type: contractDetails.type || 'full-time',
-        start_date: contractDetails.startDate || new Date().toISOString(),
-        salary: contractDetails.salary,
-        permissions: contractDetails.permissions || [],
-        work_schedule: contractDetails.workSchedule || []
+        message: contractDetails.message || null
       };
+
       const response = await this.axiosInstance.post('/api/v1/doctor/hire-receptionist', payload);
-      return this.transformReceptionistData(response.data.receptionist);
+      return response.data?.proposal || null;
     }, 'hire receptionist');
   }
 
@@ -124,20 +136,6 @@ class StaffService {
       const response = await this.axiosInstance.post(`/api/v1/doctor/dismiss-receptionist/${receptionistId}`, payload);
       return response.data;
     }, 'dismiss receptionist');
-  }
-
-  async activateReceptionist(receptionistId) {
-    return this.handleApiCall(async () => {
-      const response = await this.axiosInstance.put(`/api/v1/receptionist/activate/${receptionistId}`);
-      return this.transformReceptionistData(response.data.receptionist);
-    }, 'activate receptionist');
-  }
-
-  async deactivateReceptionist(receptionistId) {
-    return this.handleApiCall(async () => {
-      const response = await this.axiosInstance.put(`/api/v1/receptionist/deactivate/${receptionistId}`);
-      return this.transformReceptionistData(response.data.receptionist);
-    }, 'deactivate receptionist');
   }
 
   async updateStaffProfile(staffId, profileData) {

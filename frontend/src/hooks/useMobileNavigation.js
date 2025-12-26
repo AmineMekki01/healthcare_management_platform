@@ -62,6 +62,7 @@ export const getMobilePageTitle = (pathname, activeMode) => {
     '/patient-medical-history': 'Medical History',
     '/settings': 'Settings',
     '/receptionist-dashboard': 'Dashboard',
+    '/receptionist/job-offers': 'Job Offers',
     '/staff-management': 'Staff',
     '/MyDocs': 'My Documents',
     '/create-post': 'Create Post',

@@ -47,6 +47,15 @@ const AuthProvider = ({ children, navigate }) => {
                     } else if (resolvedUserType === 'receptionist') {
                         localStorage.setItem('receptionistId', resolvedUserId);
                         setReceptionistId(resolvedUserId);
+
+					const resolvedAssignedDoctorId = me.assignedDoctorId ? String(me.assignedDoctorId) : null;
+					if (resolvedAssignedDoctorId) {
+						localStorage.setItem('assignedDoctorId', resolvedAssignedDoctorId);
+						setAssignedDoctorId(resolvedAssignedDoctorId);
+					} else {
+						localStorage.removeItem('assignedDoctorId');
+						setAssignedDoctorId(null);
+					}
                     } else {
                         localStorage.setItem('patientId', resolvedUserId);
                         setPatientId(resolvedUserId);

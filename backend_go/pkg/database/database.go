@@ -423,6 +423,47 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE INDEX IF NOT EXISTS idx_receptionist_experiences_receptionist_id ON receptionist_experiences(receptionist_id)`,
 
+		`CREATE TABLE IF NOT EXISTS receptionist_hiring_proposals (
+			proposal_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
+			status VARCHAR(20) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'accepted', 'rejected', 'withdrawn')),
+			initial_message TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_hiring_proposals_receptionist_id ON receptionist_hiring_proposals(receptionist_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_hiring_proposals_doctor_id ON receptionist_hiring_proposals(doctor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_hiring_proposals_status ON receptionist_hiring_proposals(status)`,
+
+		`CREATE TABLE IF NOT EXISTS receptionist_hiring_messages (
+			message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			proposal_id UUID NOT NULL REFERENCES receptionist_hiring_proposals(proposal_id) ON DELETE CASCADE,
+			sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('doctor', 'receptionist')),
+			sender_id UUID NOT NULL,
+			message TEXT NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_hiring_messages_proposal_id ON receptionist_hiring_messages(proposal_id)`,
+
+		`CREATE TABLE IF NOT EXISTS receptionist_employments (
+			employment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			ended_at TIMESTAMP WITH TIME ZONE,
+			dismissed_reason TEXT,
+			dismissed_by UUID,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_employments_receptionist_id ON receptionist_employments(receptionist_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_employments_doctor_id ON receptionist_employments(doctor_id)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_receptionist_employment ON receptionist_employments(receptionist_id) WHERE ended_at IS NULL`,
+
 		`CREATE TABLE IF NOT EXISTS receptionist_work_schedule (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,

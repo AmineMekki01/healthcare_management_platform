@@ -20,6 +20,7 @@
     "mySchedule": "Mon horaire",
     "medicalReports": "Rapports médicaux",
     "staffManagement": "Gestion du personnel",
+    "receptionistHistory": "Historique des réceptionnistes",
     "contentManagement": "Gestion de contenu",
     "createPost": "Créer un article",
     "myPosts": "Mes articles",
@@ -31,7 +32,8 @@
     "patientSearch": "Recherche de patients",
     "createPatient": "Créer un patient",
     "scheduleAppointment": "Planifier un rendez-vous",
-    "talentPool": "Réservoir de talents"
+    "talentPool": "Réservoir de talents",
+    "jobOffers": "Offres d'emploi"
   },
   "buttons": {
     "getStartedToday": "Commencer Aujourd'hui",
@@ -222,6 +224,46 @@
       "lastVisit": "Dernière visite",
       "status": "Statut",
       "never": "Jamais"
+    }
+  },
+  "receptionist": {
+    "jobOffers": {
+      "title": "Offres d'emploi",
+      "subtitle": "Consultez les offres des médecins et acceptez ou refusez.",
+      "actions": {
+        "accept": "Accepter",
+        "reject": "Refuser"
+      },
+      "status": {
+        "sent": "En attente",
+        "accepted": "Acceptée",
+        "rejected": "Refusée",
+        "withdrawn": "Retirée"
+      },
+      "labels": {
+        "unknownDoctor": "Médecin inconnu",
+        "noSpecialty": "Aucune spécialité",
+        "sentOn": "Envoyée le"
+      },
+      "messages": {
+        "alreadyAssigned": "Vous êtes déjà assigné(e) à un médecin.",
+        "assignedTo": "Vous êtes assigné(e) à {{doctor}}.",
+        "lastDismissal": "Dernier renvoi le {{date}} : {{reason}}",
+        "dismissedForOffer": "Renvoyé(e) pour cette offre le {{date}} : {{reason}}",
+        "acceptPrompt": "Message optionnel au médecin (ex: quand se rencontrer) :",
+        "rejectPrompt": "Raison optionnelle du refus :",
+        "accepted": "Offre acceptée. Vous êtes maintenant assigné(e).",
+        "rejected": "Offre refusée."
+      },
+      "errors": {
+        "missingReceptionistId": "ID de réceptionniste introuvable.",
+        "loadFailed": "Échec du chargement des offres.",
+        "actionFailed": "Échec de l'action."
+      },
+      "empty": {
+        "title": "Aucune offre",
+        "subtitle": "Lorsque des médecins vous enverront des offres, elles apparaîtront ici."
+      }
     }
   }
 }

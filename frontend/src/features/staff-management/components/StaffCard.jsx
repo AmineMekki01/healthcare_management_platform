@@ -102,8 +102,6 @@ const StaffCard = ({
   onEdit, 
   onViewSchedule, 
   onManagePermissions,
-  onActivate,
-  onDeactivate,
   onDismiss,
   showRole = true,
   showStatus = true,
@@ -137,20 +135,6 @@ const StaffCard = ({
         label: t('actions.managePermissions'),
         variant: 'secondary',
         onClick: onManagePermissions
-      });
-    }
-    
-    if (staff?.isActive && onDeactivate) {
-      defaultActions.push({
-        label: t('actions.deactivate'),
-        variant: 'danger',
-        onClick: onDeactivate
-      });
-    } else if (!staff?.isActive && onActivate) {
-      defaultActions.push({
-        label: t('actions.activate'),
-        variant: 'primary',
-        onClick: onActivate
       });
     }
     
@@ -196,6 +180,13 @@ const StaffCard = ({
       fields.push({
         label: t('labels.verified'),
         value: staff.emailVerified ? t('labels.yes') : t('labels.no')
+      });
+    }
+
+    if (staff?.hiringProposalStatus) {
+      fields.push({
+        label: t('talentPool.labels.offerStatus'),
+        value: t(`talentPool.proposalStatus.${staff.hiringProposalStatus}`, staff.hiringProposalStatus)
       });
     }
 

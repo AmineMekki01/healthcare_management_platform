@@ -10,6 +10,7 @@ const useStaffManagement = () => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [talentPool, setTalentPool] = useState([]);
+  const [hiringProposals, setHiringProposals] = useState([]);
   const [permissions] = useState([]);
   const [workSchedule] = useState([]);
   const [statistics, setStatistics] = useState(null);
@@ -131,20 +132,30 @@ const useStaffManagement = () => {
     }
   }, [handleError, clearError]);
 
+  const fetchHiringProposals = useCallback(async () => {
+    try {
+      setLoading(true);
+      clearError();
+      const proposals = await staffService.fetchDoctorHiringProposals();
+      setHiringProposals(Array.isArray(proposals) ? proposals : []);
+      return proposals;
+    } catch (error) {
+      handleError(error, 'fetch doctor hiring proposals');
+      setHiringProposals([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError, clearError]);
+
   const hireReceptionist = useCallback(async (receptionistId, contractDetails = {}, doctorId = null) => {
     try {
       setLoading(true);
       clearError();
       const currentDoctorId = doctorId || getCurrentDoctorId();
       
-      const hired = await staffService.hireReceptionist(receptionistId, currentDoctorId, contractDetails);
-      
-      if (hired) {
-        setReceptionists(prev => [...prev, hired]);
-        setTalentPool(prev => prev.filter(r => r.id !== receptionistId));
-      }
-      
-      return hired;
+      const proposal = await staffService.hireReceptionist(receptionistId, currentDoctorId, contractDetails);
+      return proposal;
     } catch (error) {
       handleError(error, 'hire receptionist');
       throw error;
@@ -169,56 +180,6 @@ const useStaffManagement = () => {
     } catch (error) {
       handleError(error, 'dismiss receptionist');
       return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [handleError, clearError, selectedStaff]);
-
-  const activateReceptionist = useCallback(async (receptionistId) => {
-    try {
-      setLoading(true);
-      clearError();
-      
-      const activated = await staffService.activateReceptionist(receptionistId);
-      
-      if (activated) {
-        setReceptionists(prev => 
-          prev.map(r => r.id === receptionistId ? activated : r)
-        );
-        if (selectedStaff?.id === receptionistId) {
-          setSelectedStaff(activated);
-        }
-      }
-      
-      return activated;
-    } catch (error) {
-      handleError(error, 'activate receptionist');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [handleError, clearError, selectedStaff]);
-
-  const deactivateReceptionist = useCallback(async (receptionistId) => {
-    try {
-      setLoading(true);
-      clearError();
-      
-      const deactivated = await staffService.deactivateReceptionist(receptionistId);
-      
-      if (deactivated) {
-        setReceptionists(prev => 
-          prev.map(r => r.id === receptionistId ? deactivated : r)
-        );
-        if (selectedStaff?.id === receptionistId) {
-          setSelectedStaff(deactivated);
-        }
-      }
-      
-      return deactivated;
-    } catch (error) {
-      handleError(error, 'deactivate receptionist');
-      return null;
     } finally {
       setLoading(false);
     }
@@ -473,10 +434,11 @@ const useStaffManagement = () => {
   }, [unsavedChanges]);
 
   return {
-    receptionists: filteredStaff,
+    receptionists,
     selectedStaff,
     searchResults,
     talentPool,
+    hiringProposals,
     permissions,
     workSchedule,
     statistics,
@@ -497,13 +459,12 @@ const useStaffManagement = () => {
     getStaffById,
     
     fetchStaff,
+    fetchTalentPool,
+    fetchHiringProposals,
     fetchStaffById,
     searchStaff,
-    fetchTalentPool,
     hireReceptionist,
     dismissReceptionist,
-    activateReceptionist,
-    deactivateReceptionist,
     updateStaffProfile,
     updateStaffPermissions,
     updateWorkSchedule,

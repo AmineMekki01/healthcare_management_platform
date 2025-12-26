@@ -6,6 +6,7 @@ export * from './utils';
 
 export { default as StaffManagementPage } from './pages/StaffManagementPage';
 export { default as ReceptionistTalentPoolPage } from './pages/ReceptionistTalentPoolPage';
+export { default as ReceptionistHistoryPage } from './pages/ReceptionistHistoryPage';
 export { default as StaffList } from './components/StaffList';
 export { default as StaffCard } from './components/StaffCard';
 export { default as SimpleStaffCard } from './components/SimpleStaffCard';

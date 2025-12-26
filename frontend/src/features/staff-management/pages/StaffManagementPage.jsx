@@ -174,8 +174,6 @@ const StaffManagementPage = () => {
     loading,
     error,
     fetchStaff,
-    activateReceptionist,
-    deactivateReceptionist,
     dismissReceptionist,
     clearError
   } = useStaffManagement();
@@ -197,15 +195,13 @@ const StaffManagementPage = () => {
   const handleStaffAction = async (action, staff) => {
     try {
       switch (action) {
-        case 'activate':
-          await activateReceptionist(staff.id);
-          break;
-        case 'deactivate':
-          await deactivateReceptionist(staff.id);
-          break;
         case 'dismiss':
           if (window.confirm(t('messages.confirmDismiss', { name: staff.fullName }))) {
-            await dismissReceptionist(staff.id);
+            const reason = window.prompt(t('messages.dismissReasonPrompt'));
+            if (!reason || !reason.trim()) {
+              return;
+            }
+            await dismissReceptionist(staff.id, reason.trim());
           }
           break;
         default:
@@ -227,6 +223,12 @@ const StaffManagementPage = () => {
               {t('page.subtitle')}
             </PageSubtitle>
           </div>
+
+          <HeaderActions>
+            <ActionButton className="secondary" onClick={() => navigate('/staff-management/history')}>
+              {t('history.viewButton')}
+            </ActionButton>
+          </HeaderActions>
         </HeaderTop>
 
         <HeaderStats>
@@ -291,8 +293,6 @@ const StaffManagementPage = () => {
           <StaffList 
             staff={receptionists}
             onStaffSelect={(staff) => staff?.id && navigate(`/receptionist-profile/${staff.id}`)}
-            onActivate={(staff) => handleStaffAction('activate', staff)}
-            onDeactivate={(staff) => handleStaffAction('deactivate', staff)}
             onDismiss={(staff) => handleStaffAction('dismiss', staff)}
             onBulkAction={(staffIds, action) => console.log('Bulk action:', action, staffIds)}
           />

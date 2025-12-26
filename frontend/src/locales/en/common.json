@@ -20,6 +20,7 @@
     "mySchedule": "My Schedule",
     "medicalReports": "Medical Reports",
     "staffManagement": "Staff Management",
+    "receptionistHistory": "Receptionist History",
     "contentManagement": "Content Management",
     "createPost": "Create Post",
     "myPosts": "My Posts",
@@ -31,7 +32,8 @@
     "patientSearch": "Patient Search",
     "createPatient": "Create Patient",
     "scheduleAppointment": "Schedule Appointment",
-    "talentPool": "Talent Pool"
+    "talentPool": "Talent Pool",
+    "jobOffers": "Job Offers"
   },
   "buttons": {
     "getStartedToday": "Get Started Today",
@@ -249,6 +251,44 @@
     "errors": {
       "noAssignedDoctor": "No assigned doctor found. Please contact administrator.",
       "loadFailed": "Failed to load dashboard data"
+    },
+    "jobOffers": {
+      "title": "Job Offers",
+      "subtitle": "Review offers from doctors and accept or reject.",
+      "actions": {
+        "accept": "Accept",
+        "reject": "Reject"
+      },
+      "status": {
+        "sent": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn"
+      },
+      "labels": {
+        "unknownDoctor": "Unknown Doctor",
+        "noSpecialty": "No specialty",
+        "sentOn": "Sent on"
+      },
+      "messages": {
+        "alreadyAssigned": "You are already assigned to a doctor.",
+        "assignedTo": "You are assigned to {{doctor}}.",
+        "lastDismissal": "Last dismissal on {{date}}: {{reason}}",
+        "dismissedForOffer": "Dismissed for this offer on {{date}}: {{reason}}",
+        "acceptPrompt": "Optional message to the doctor (e.g. when to meet):",
+        "rejectPrompt": "Optional reason for rejecting:",
+        "accepted": "Offer accepted. You are now assigned.",
+        "rejected": "Offer rejected."
+      },
+      "errors": {
+        "missingReceptionistId": "Receptionist ID not found.",
+        "loadFailed": "Failed to load job offers.",
+        "actionFailed": "Failed to perform action."
+      },
+      "empty": {
+        "title": "No job offers",
+        "subtitle": "When doctors send you offers, you will see them here."
+      }
     },
     "noData": {
       "appointments": "No appointment data available",
