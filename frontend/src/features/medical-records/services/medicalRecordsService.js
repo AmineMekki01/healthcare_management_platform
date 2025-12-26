@@ -193,9 +193,6 @@ class MedicalRecordsService {
         params: {
           limit: 100,
           offset: 0
-        },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       const data = response.data;
@@ -260,7 +257,6 @@ class MedicalRecordsService {
       const response = await axios.post('/api/v1/records/medical-records/upload-clinical', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
       return response.data;
@@ -280,10 +276,6 @@ class MedicalRecordsService {
         category: dbCategory,
         uploaded_by_user_id: uploadedByUserId,
         uploaded_by_role: uploadedByRole
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
       return response.data;
     } catch (error) {
@@ -307,11 +299,7 @@ class MedicalRecordsService {
 
       const url = `/api/v1/records/medical-records/by-category?${params}`;
 
-      const response = await axios.get(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axios.get(url);
             
       const records = response.data || [];
       const convertedRecords = records.map(record => ({

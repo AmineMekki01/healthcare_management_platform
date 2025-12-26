@@ -7,14 +7,22 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type User struct {
 	ID string `json:"id"`
 }
 
-var JWTSecret = []byte(os.Getenv("JWT_SECRET"))
-var RefreshSecret = []byte(os.Getenv("REFRESH_SECRET"))
+func getEnvBytes(primaryKey, fallbackKey string) []byte {
+	if v := os.Getenv(primaryKey); v != "" {
+		return []byte(v)
+	}
+	return []byte(os.Getenv(fallbackKey))
+}
+
+var JWTSecret = getEnvBytes("JWT_SECRET", "JWT_SECRET_KEY")
+var RefreshSecret = getEnvBytes("REFRESH_SECRET", "REFRESH_SECRET_KEY")
 
 const (
 	AccessTokenExpiry  = 15 * time.Minute
@@ -54,11 +62,13 @@ func GenerateAccessToken(userId string, userType string) (string, error) {
 
 func GenerateRefreshToken(userId string, userType string) (string, error) {
 	expirationTime := time.Now().Add(RefreshTokenExpiry)
+	jti := uuid.NewString()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId":   userId,
 		"userType": userType,
 		"exp":      expirationTime.Unix(),
+		"jti":      jti,
 	})
 
 	tokenString, err := token.SignedString(RefreshSecret)

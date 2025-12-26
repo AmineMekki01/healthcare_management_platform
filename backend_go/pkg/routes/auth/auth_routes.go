@@ -23,11 +23,14 @@ func SetupPublicAuthRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *confi
 	router.POST("/auth/register/receptionist", authHandler.RegisterReceptionist)
 	router.POST("/auth/login/receptionist", authHandler.LoginReceptionist)
 
+	router.POST("/refresh-token", authHandler.RefreshToken)
+
 	router.GET("/ws", authHandler.ServeWS)
 }
 
 func SetupProtectedAuthRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *config.Config) {
 	authHandler := auth.NewAuthHandler(db, cfg)
 
-	router.POST("/refresh-token", authHandler.RefreshToken)
+	router.GET("/auth/me", authHandler.Me)
+	router.POST("/auth/logout", authHandler.Logout)
 }

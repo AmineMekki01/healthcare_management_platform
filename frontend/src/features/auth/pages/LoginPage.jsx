@@ -109,14 +109,12 @@ const LoginForm = () => {
   const { t } = useTranslation(['auth', 'common', 'validation']);
   const {
     setIsLoggedIn,
-    setDoctorId,
-    setPatientId,
     setUserType,
+    setUserId,
     setUserFullName,
     setUserProfilePhotoUrl,
-    setUserId,
-    setToken,
-    setRefreshToken,
+    setDoctorId,
+    setPatientId,
     setReceptionistId,
     setAssignedDoctorId,
   } = useContext(AuthContext);
@@ -144,9 +142,7 @@ const LoginForm = () => {
       });
       console.log('Login result:', result);
       
-      if (result.accessToken) {
-        localStorage.setItem('token', result.accessToken);
-        localStorage.setItem('refreshToken', result.refreshToken);
+      if (result?.userId) {
         localStorage.setItem('userId', result.userId);
         localStorage.setItem('userType', localUserType);
         localStorage.setItem('userProfilePictureUrl', result.profilePictureUrl || '');
@@ -165,8 +161,6 @@ const LoginForm = () => {
         }
         
         setIsLoggedIn(true);
-        setToken(result.accessToken);
-        setRefreshToken(result.refreshToken);
         setUserType(localUserType);
         setUserFullName(`${result.firstName} ${result.lastName}`);
         setUserProfilePhotoUrl(result.profilePictureUrl || '');

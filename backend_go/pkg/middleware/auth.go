@@ -15,12 +15,27 @@ var jwtSecret = auth.JWTSecret
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		var tokenString string
+		if authHeader != "" {
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+				if tokenString == "" {
+					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+					return
+				}
+			} else {
+				tokenString = authHeader
+			}
+		} else {
+			cookieToken, err := c.Cookie("access_token")
+			if err == nil {
+				tokenString = cookieToken
+			}
+		}
+		if tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
 			return
 		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

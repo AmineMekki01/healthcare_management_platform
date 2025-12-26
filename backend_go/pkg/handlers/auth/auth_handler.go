@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"healthcare_backend/pkg/auth"
 	"healthcare_backend/pkg/config"
@@ -28,6 +29,7 @@ type AuthHandler struct {
 	doctorService       *doctor.DoctorService
 	patientService      *patient.PatientService
 	receptionistService *receptionist.ReceptionistService
+	cfg                 *config.Config
 }
 
 func NewAuthHandler(db *pgxpool.Pool, cfg *config.Config) *AuthHandler {
@@ -36,7 +38,115 @@ func NewAuthHandler(db *pgxpool.Pool, cfg *config.Config) *AuthHandler {
 		doctorService:       doctor.NewDoctorService(db, cfg),
 		patientService:      patient.NewPatientService(db, cfg),
 		receptionistService: receptionist.NewReceptionistService(db, cfg),
+		cfg:                 cfg,
 	}
+}
+
+func (h *AuthHandler) setAuthCookies(c *gin.Context, accessToken, refreshToken string) {
+	isProd := strings.EqualFold(h.cfg.AppEnv, "production")
+	csrfToken := uuid.NewString()
+
+	accessCookie := &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(auth.AccessTokenExpiry),
+	}
+
+	refreshCookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(auth.RefreshTokenExpiry),
+	}
+
+	csrfCookie := &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(auth.RefreshTokenExpiry),
+	}
+
+	http.SetCookie(c.Writer, accessCookie)
+	http.SetCookie(c.Writer, refreshCookie)
+	http.SetCookie(c.Writer, csrfCookie)
+}
+
+func (h *AuthHandler) clearAuthCookies(c *gin.Context) {
+	isProd := strings.EqualFold(h.cfg.AppEnv, "production")
+
+	accessCookie := &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+	}
+
+	refreshCookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+	}
+
+	csrfCookie := &http.Cookie{
+		Name:     "csrf_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   isProd,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+	}
+
+	http.SetCookie(c.Writer, accessCookie)
+	http.SetCookie(c.Writer, refreshCookie)
+	http.SetCookie(c.Writer, csrfCookie)
+}
+
+func (h *AuthHandler) Me(c *gin.Context) {
+	userID, ok := c.Get("userId")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userType, ok := c.Get("userType")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"userId":   userID,
+		"userType": userType,
+	})
+}
+
+func (h *AuthHandler) Logout(c *gin.Context) {
+	if refreshToken, err := c.Cookie("refresh_token"); err == nil && refreshToken != "" {
+		_ = h.authService.RevokeAuthSession(c.Request.Context(), refreshToken)
+	}
+	h.clearAuthCookies(c)
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *AuthHandler) ActivateAccount(c *gin.Context) {
@@ -95,14 +205,24 @@ func (h *AuthHandler) UpdatePassword(c *gin.Context) {
 }
 
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	refreshToken := c.GetHeader("Authorization")
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil || refreshToken == "" {
+		refreshToken = c.GetHeader("Authorization")
+		if refreshToken != "" {
+			if strings.HasPrefix(refreshToken, "Bearer ") {
+				refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
+				if refreshToken == "" {
+					c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+					return
+				}
+			}
+		}
+	}
 	if refreshToken == "" {
 		log.Println("No token provided.")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
 		return
 	}
-
-	refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
 
 	token, err := auth.ValidateRefreshToken(refreshToken)
 	if err != nil || !token.Valid {
@@ -138,6 +258,33 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
 		return
 	}
+
+	newRefreshToken, err := auth.GenerateRefreshToken(userID, userType)
+	if err != nil {
+		log.Println("Failed to generate new refresh token : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new refresh token"})
+		return
+	}
+
+	rotated, err := h.authService.RotateAuthSession(
+		c.Request.Context(),
+		refreshToken,
+		newRefreshToken,
+		c.ClientIP(),
+		c.Request.UserAgent(),
+		time.Now().Add(auth.RefreshTokenExpiry),
+	)
+	if err != nil {
+		log.Println("Failed to rotate auth session : ", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to rotate auth session"})
+		return
+	}
+	if !rotated {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	h.setAuthCookies(c, newAccessToken, newRefreshToken)
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"accessToken": newAccessToken,
@@ -266,6 +413,18 @@ func (h *AuthHandler) LoginDoctor(c *gin.Context) {
 		return
 	}
 
+	_ = h.authService.CreateAuthSession(
+		c.Request.Context(),
+		doctor.DoctorID.String(),
+		"doctor",
+		refreshToken,
+		c.ClientIP(),
+		c.Request.UserAgent(),
+		time.Now().Add(auth.RefreshTokenExpiry),
+	)
+
+	h.setAuthCookies(c, accessToken, refreshToken)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success":           true,
 		"accessToken":       accessToken,
@@ -378,6 +537,18 @@ func (h *AuthHandler) LoginPatient(c *gin.Context) {
 		return
 	}
 
+	_ = h.authService.CreateAuthSession(
+		c.Request.Context(),
+		patient.PatientID.String(),
+		"patient",
+		refreshToken,
+		c.ClientIP(),
+		c.Request.UserAgent(),
+		time.Now().Add(auth.RefreshTokenExpiry),
+	)
+
+	h.setAuthCookies(c, accessToken, refreshToken)
+
 	response := gin.H{
 		"success":           true,
 		"accessToken":       accessToken,
@@ -424,6 +595,18 @@ func (h *AuthHandler) LoginReceptionist(c *gin.Context) {
 		return
 	}
 	log.Println("recep : ", receptionist)
+
+	_ = h.authService.CreateAuthSession(
+		c.Request.Context(),
+		receptionist.ReceptionistID.String(),
+		"receptionist",
+		refreshToken,
+		c.ClientIP(),
+		c.Request.UserAgent(),
+		time.Now().Add(auth.RefreshTokenExpiry),
+	)
+
+	h.setAuthCookies(c, accessToken, refreshToken)
 
 	c.JSON(http.StatusOK, gin.H{
 		"receptionist": receptionist,

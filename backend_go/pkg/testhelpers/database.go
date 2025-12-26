@@ -71,6 +71,20 @@ func (db *TestDatabase) CreateSchema(ctx context.Context) error {
 			expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
 		);
 
+		-- Create auth_sessions table
+		CREATE TABLE IF NOT EXISTS auth_sessions (
+			id SERIAL PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			user_type VARCHAR(50) NOT NULL,
+			token_hash TEXT NOT NULL UNIQUE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			last_used_at TIMESTAMP,
+			expires_at TIMESTAMP NOT NULL,
+			revoked_at TIMESTAMP,
+			ip_address VARCHAR(64),
+			user_agent TEXT
+		);
+
 		-- Create doctor_info table
 		CREATE TABLE IF NOT EXISTS doctor_info (
 			doctor_id SERIAL PRIMARY KEY,
@@ -133,6 +147,7 @@ func (db *TestDatabase) CreateSchema(ctx context.Context) error {
 
 func (db *TestDatabase) CleanupTables(ctx context.Context) error {
 	tables := []string{
+		"auth_sessions",
 		"verification_tokens",
 		"doctor_info",
 		"patient_info",

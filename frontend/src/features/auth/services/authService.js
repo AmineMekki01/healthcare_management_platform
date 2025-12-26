@@ -1,6 +1,11 @@
 import axios from '../../../components/axiosConfig';
 
 class AuthService {
+  async me() {
+    const response = await axios.get('/api/v1/auth/me');
+    return response.data;
+  }
+
   async login(credentials) {
     let url;
     if (credentials.userType === 'doctor') {
@@ -13,21 +18,21 @@ class AuthService {
 
     const response = await axios.post(url, credentials);
 
+    const { accessToken: _accessToken, refreshToken: _refreshToken, ...data } = response.data;
+
     if (credentials.userType === 'receptionist') {
       return {
-        accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
         userId: response.data.receptionist.receptionistId,
         userType: 'receptionist',
         firstName: response.data.receptionist.firstName,
         lastName: response.data.receptionist.lastName,
         profilePictureUrl: response.data.receptionist.profilePictureUrl,
         assignedDoctorId: response.data.receptionist.assignedDoctorId,
-        ...response.data
+        ...data
       };
     }
     
-    return response.data;
+    return data;
   }
 
   async registerDoctor(doctorData) {
@@ -49,11 +54,7 @@ class AuthService {
   }
 
   async registerReceptionist(receptionistData) {
-    const response = await axios.post('/api/v1/auth/register/receptionist', receptionistData, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
+    const response = await axios.post('/api/v1/auth/register/receptionist', receptionistData);
     return response.data;
   }
 
@@ -73,17 +74,7 @@ class AuthService {
   }
 
   async refreshToken() {
-    const storedRefreshToken = localStorage.getItem('refreshToken');
-    if (!storedRefreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const response = await axios.post('/api/v1/refresh-token', {}, {
-      headers: {
-        'Authorization': `Bearer ${storedRefreshToken}`,
-      }
-    });
-    
+    const response = await axios.post('/api/v1/refresh-token', {});
     return response.data;
   }
 
@@ -92,11 +83,9 @@ class AuthService {
     return response.data;
   }
 
-  logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userType');
-    window.location.href = '/login';
+  async logout() {
+    const response = await axios.post('/api/v1/auth/logout', {});
+    return response.data;
   }
 
   getCurrentUser() {
@@ -108,7 +97,7 @@ class AuthService {
   }
 
   isAuthenticated() {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem('userId');
   }
 
   hasRole(requiredRole) {

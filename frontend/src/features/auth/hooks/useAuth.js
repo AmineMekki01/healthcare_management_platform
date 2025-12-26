@@ -17,9 +17,6 @@ export const useAuth = () => {
     try {
       const result = await authService.login(credentials);
       console.log("Login result: ", result);      
-      if (authContext && authContext.login) {
-        authContext.login(result.userId, result.userType);
-      }
       
       if (result.userType === 'doctor') {
         navigate('/feed');
@@ -40,7 +37,6 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    authService.logout();
     if (authContext && authContext.logout) {
       authContext.logout();
     }

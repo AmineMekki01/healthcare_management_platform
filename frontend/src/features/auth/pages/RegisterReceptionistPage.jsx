@@ -285,7 +285,6 @@ const RegisterReceptionistPage = () => {
       const response = await authService.registerReceptionist(registrationData);
 
       if (response.success) {
-        localStorage.setItem('token', response.token);
         localStorage.setItem('userType', 'receptionist');
         localStorage.setItem('receptionistId', response.receptionistId);
         localStorage.setItem('userFullName', `${formData.firstName} ${formData.lastName}`);

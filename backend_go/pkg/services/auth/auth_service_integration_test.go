@@ -28,7 +28,11 @@ func setupIntegrationTest(t *testing.T) (*AuthService, context.Context, func()) 
 		}
 	}
 
+	unlock, err := testDB.AcquireTestLock(ctx)
+	require.NoError(t, err)
+
 	if err := testDB.CleanupTables(ctx); err != nil {
+		unlock()
 		t.Fatalf("Failed to cleanup tables: %v", err)
 	}
 
@@ -46,6 +50,7 @@ func setupIntegrationTest(t *testing.T) (*AuthService, context.Context, func()) 
 		testDB.CleanupTestUser(ctx, "doctor.")
 		testDB.CleanupTestUser(ctx, "patient.")
 		testDB.CleanupTestUser(ctx, "fullflow@")
+		unlock()
 	}
 
 	return service, ctx, cleanup
