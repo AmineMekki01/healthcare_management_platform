@@ -565,6 +565,68 @@ func createTables(conn *pgxpool.Pool) error {
 		`CREATE INDEX IF NOT EXISTS idx_holidays_date ON public_holidays(holiday_date)`,
 		`CREATE INDEX IF NOT EXISTS idx_holidays_country ON public_holidays(country_code)`,
 		`CREATE INDEX IF NOT EXISTS idx_holidays_affecting ON public_holidays(affects_booking)`,
+
+		`CREATE TABLE IF NOT EXISTS user_health_profile (
+			profile_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL,
+			user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('doctor', 'patient', 'receptionist')),
+			blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown')),
+			height_cm DECIMAL(5,2),
+			weight_kg DECIMAL(5,2),
+			allergies TEXT[],
+			chronic_conditions TEXT[],
+			current_medications TEXT[],
+			emergency_contact_name VARCHAR(255),
+			emergency_contact_phone VARCHAR(50),
+			emergency_contact_relationship VARCHAR(100),
+			smoking_status VARCHAR(50) CHECK (smoking_status IN ('never', 'former', 'current', 'unknown')),
+			alcohol_consumption VARCHAR(50) CHECK (alcohol_consumption IN ('none', 'occasional', 'moderate', 'heavy', 'unknown')),
+			exercise_frequency VARCHAR(50) CHECK (exercise_frequency IN ('none', 'rarely', 'weekly', 'daily', 'unknown')),
+			dietary_restrictions TEXT[],
+			family_history TEXT,
+			notes TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			UNIQUE(user_id, user_type)
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS user_vaccinations (
+			vaccination_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL,
+			user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('doctor', 'patient', 'receptionist')),
+			vaccine_name VARCHAR(255) NOT NULL,
+			vaccine_type VARCHAR(100),
+			date_administered DATE,
+			next_dose_date DATE,
+			administered_by VARCHAR(255),
+			location VARCHAR(255),
+			batch_number VARCHAR(100),
+			notes TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_health_profile_user ON user_health_profile(user_id, user_type)`,
+		`CREATE INDEX IF NOT EXISTS idx_vaccinations_user ON user_vaccinations(user_id, user_type)`,
+		`CREATE INDEX IF NOT EXISTS idx_vaccinations_date ON user_vaccinations(date_administered)`,
+		`CREATE INDEX IF NOT EXISTS idx_vaccinations_next_dose ON user_vaccinations(next_dose_date)`,
+
+		`CREATE TABLE IF NOT EXISTS file_folder_history (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			item_id UUID NOT NULL,
+			action_type VARCHAR(50) NOT NULL,
+			performed_by_id UUID NOT NULL,
+			performed_by_type VARCHAR(20) NOT NULL,
+			old_value TEXT,
+			new_value TEXT,
+			shared_with_id UUID,
+			shared_with_type VARCHAR(20),
+			metadata JSONB,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_file_folder_history_item_id ON file_folder_history(item_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_file_folder_history_created_at ON file_folder_history(created_at DESC)`,
 	}
 
 	for _, query := range sqlQueries {

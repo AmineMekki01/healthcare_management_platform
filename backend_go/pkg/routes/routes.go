@@ -20,6 +20,7 @@ import (
 	"healthcare_backend/pkg/routes/patient"
 	"healthcare_backend/pkg/routes/receptionist"
 	"healthcare_backend/pkg/routes/search"
+	"healthcare_backend/pkg/routes/user"
 	"healthcare_backend/pkg/services"
 	"healthcare_backend/pkg/utils"
 
@@ -98,6 +99,8 @@ func SetupRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.Config) {
 		follow.SetupFollowRoutes(protected, db, cfg)
 
 		patient.SetupPatientRoutes(protected, db, cfg)
+
+		user.SetupUserRoutes(protected, db)
 
 		protected.GET("/users/image/:userId/:userType", func(c *gin.Context) {
 			utils.GetUserImageRoute(c, db)

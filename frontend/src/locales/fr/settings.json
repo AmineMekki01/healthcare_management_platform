@@ -5,6 +5,7 @@
   },
   "navigation": {
     "personal": "Informations personnelles",
+    "healthProfile": "Profil de Santé",
     "followSettings": "Paramètres de suivi",
     "followedDoctors": "Médecins que je suis",
     "availability": "Paramètres de disponibilité",
