@@ -17,6 +17,7 @@
   },
   "labels": {
     "phone": "الهاتف",
+    "experience": "الخبرة",
     "joined": "انضم",
     "assigned": "مُعيَّن",
     "verified": "مُتحقق",
@@ -27,7 +28,11 @@
   "messages": {
     "noPermissions": "لم يتم تعيين صلاحيات محددة",
     "scheduleNotSet": "لم يتم تحديد الجدول",
-    "confirmDismiss": "هل أنت متأكد من أنك تريد فصل {{name}}؟"
+    "confirmDismiss": "هل أنت متأكد من أنك تريد فصل {{name}}؟",
+    "dismissReasonPrompt": "يرجى إدخال سبب الفصل:",
+    "loadingStaff": "جاري تحميل الموظفين...",
+    "noStaffTitle": "لا يوجد موظفون",
+    "noStaffDescription": "عندما تقوم بتوظيف موظفي استقبال، سيظهرون هنا."
   },
   "page": {
     "title": "إدارة الموظفين",
@@ -176,7 +181,37 @@
     },
     "actions": {
       "hire": "توظيف",
+      "offerAlreadySent": "تم إرسال العرض",
       "viewProfile": "عرض الملف الشخصي"
+    },
+    "labels": {
+      "offerStatus": "حالة العرض"
+    },
+    "proposalStatus": {
+      "sent": "قيد الانتظار",
+      "accepted": "تم القبول",
+      "rejected": "تم الرفض",
+      "withdrawn": "تم السحب"
+    },
+    "messages": {
+      "offerPrompt": "اكتب رسالة قصيرة لموظف الاستقبال (اختياري):",
+      "offerSent": "تم إرسال العرض بنجاح. يمكن لموظف الاستقبال قبوله أو رفضه الآن.",
+      "offerAlreadySent": "لقد أرسلت عرضًا لهذا الموظف بالفعل."
+    }
+  },
+  "history": {
+    "title": "سجل موظفي الاستقبال",
+    "subtitle": "سجل التوظيف لموظفي الاستقبال في عيادتك",
+    "viewButton": "عرض السجل",
+    "empty": "لا يوجد سجل توظيف.",
+    "labels": {
+      "startedAt": "بداية",
+      "endedAt": "نهاية",
+      "reason": "السبب"
+    },
+    "status": {
+      "active": "نشط",
+      "ended": "منتهٍ"
     }
   },
   "errors": {

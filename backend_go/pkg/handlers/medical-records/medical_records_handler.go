@@ -1,6 +1,8 @@
 package medicalrecords
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,6 +21,7 @@ type MedicalRecordsHandler struct {
 	medicalRecordsService *medicalRecordsService.MedicalRecordsService
 	historyService        *medicalRecordsService.HistoryService
 	config                *config.Config
+	db                    *pgxpool.Pool
 }
 
 func NewMedicalRecordsHandler(db *pgxpool.Pool, cfg *config.Config) *MedicalRecordsHandler {
@@ -26,15 +29,54 @@ func NewMedicalRecordsHandler(db *pgxpool.Pool, cfg *config.Config) *MedicalReco
 		medicalRecordsService: medicalRecordsService.NewMedicalRecordsService(db, cfg),
 		historyService:        medicalRecordsService.NewHistoryService(db),
 		config:                cfg,
+		db:                    db,
 	}
 }
 
 func (h *MedicalRecordsHandler) CreateFolder(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("CreateFolder: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
+
 	var fileFolder models.FileFolder
 	if err := c.ShouldBind(&fileFolder); err != nil {
 		log.Printf("Error parsing form: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
 		return
+	}
+
+	fileFolder.UserID = callerUserID.(string)
+	fileFolder.UserType = callerUserType
+
+	if fileFolder.ParentID != nil && *fileFolder.ParentID != "" {
+		var parentOwnerID string
+		var sharedByID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT user_id, shared_by_id FROM folder_file_info WHERE id = $1", *fileFolder.ParentID).Scan(&parentOwnerID, &sharedByID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parent folder"})
+			return
+		}
+		if parentOwnerID != callerUserID.(string) || sharedByID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
 	}
 
 	if err := h.medicalRecordsService.CreateFolder(&fileFolder); err != nil {
@@ -48,6 +90,27 @@ func (h *MedicalRecordsHandler) CreateFolder(c *gin.Context) {
 
 func (h *MedicalRecordsHandler) UploadFile(c *gin.Context) {
 	var fileInfo models.FileFolder
+
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("UploadFile: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
 
 	err := c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -71,14 +134,25 @@ func (h *MedicalRecordsHandler) UploadFile(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parentFolderId"})
 			return
 		}
+		var parentOwnerID string
+		var sharedByID sql.NullString
+		perr := h.db.QueryRow(context.Background(), "SELECT user_id, shared_by_id FROM folder_file_info WHERE id = $1", parentFolderID).Scan(&parentOwnerID, &sharedByID)
+		if perr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parentFolderId"})
+			return
+		}
+		if parentOwnerID != callerUserID.(string) || sharedByID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
 		fileInfo.ParentID = &parentFolderID
 	}
 
 	fileInfo.Type = c.Request.FormValue("file_type")
 	ext := c.Request.FormValue("file_ext")
 	fileInfo.Ext = &ext
-	fileInfo.UserID = c.Request.FormValue("user_id")
-	fileInfo.UserType = c.Request.FormValue("user_type")
+	fileInfo.UserID = callerUserID.(string)
+	fileInfo.UserType = callerUserType
 	fileInfo.Name = handler.Filename
 
 	folderTypeStr := c.Request.FormValue("folder_type")
@@ -104,15 +178,10 @@ func (h *MedicalRecordsHandler) UploadFile(c *gin.Context) {
 		fileInfo.PatientID = &patientID
 	}
 
-	uploadedByUserID := c.Request.FormValue("uploaded_by_user_id")
-	if uploadedByUserID != "" {
-		fileInfo.UploadedByUserID = &uploadedByUserID
-	}
-
-	uploadedByRole := c.Request.FormValue("uploaded_by_role")
-	if uploadedByRole != "" {
-		fileInfo.UploadedByRole = &uploadedByRole
-	}
+	uploadedByUserID := callerUserID.(string)
+	uploadedByRole := callerUserType
+	fileInfo.UploadedByUserID = &uploadedByUserID
+	fileInfo.UploadedByRole = &uploadedByRole
 
 	if err := h.medicalRecordsService.UploadFile(&fileInfo, file, handler.Size, handler.Header.Get("Content-Type")); err != nil {
 		log.Printf("Error uploading file: %v", err)
@@ -284,12 +353,45 @@ func getContentTypeFromExtension(ext *string) string {
 }
 
 func (h *MedicalRecordsHandler) DeleteFolderAndContents(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("DeleteFolderAndContents: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
+
 	var request struct {
 		FolderID string `json:"folderId"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error parsing JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	var ownerID string
+	var sharedByID sql.NullString
+	err := h.db.QueryRow(context.Background(), "SELECT user_id, shared_by_id FROM folder_file_info WHERE id = $1", request.FolderID).Scan(&ownerID, &sharedByID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid folderId"})
+		return
+	}
+	if ownerID != callerUserID.(string) || sharedByID.Valid {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return
 	}
 
@@ -303,6 +405,27 @@ func (h *MedicalRecordsHandler) DeleteFolderAndContents(c *gin.Context) {
 }
 
 func (h *MedicalRecordsHandler) RenameFileOrFolder(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("RenameFileOrFolder: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+	}
+
 	var request struct {
 		ID   string `json:"id" binding:"required"`
 		Name string `json:"name" binding:"required"`
@@ -310,6 +433,18 @@ func (h *MedicalRecordsHandler) RenameFileOrFolder(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error parsing JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	var ownerID string
+	var sharedByID sql.NullString
+	err := h.db.QueryRow(context.Background(), "SELECT user_id, shared_by_id FROM folder_file_info WHERE id = $1", request.ID).Scan(&ownerID, &sharedByID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item id"})
+		return
+	}
+	if ownerID != callerUserID.(string) || sharedByID.Valid {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return
 	}
 
@@ -340,11 +475,12 @@ func (h *MedicalRecordsHandler) GetBreadcrumbs(c *gin.Context) {
 }
 
 func (h *MedicalRecordsHandler) GetFolders(c *gin.Context) {
-	userID := c.Query("user_id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	userID := callerUserID.(string)
 
 	parentID := c.Query("parent_id")
 	isSharedWithMe := c.Query("shared_with_me") == "true"

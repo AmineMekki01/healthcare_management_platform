@@ -46,6 +46,7 @@ import {
   SmartToy as ChatBotIcon,
   Business as TalentPoolIcon,
   SupervisorAccount as StaffManagementIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import FlagLanguageSelector from './../LanguageSelector/FlagLanguageSelector';
@@ -66,6 +67,7 @@ const MyNavbar = () => {
     logout,
     userId,
     userType,
+    assignedDoctorId,
     userFullName,
     userProfilePictureUrl,
   } = useContext(AuthContext);
@@ -156,6 +158,9 @@ const MyNavbar = () => {
     },
   ];
 
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const isReceptionistAssigned = userType === 'receptionist' && !!receptionistAssignedDoctorId;
+
   const patientNavItems = [
     {
       label: t('common:navigation.myAppointments'),
@@ -178,12 +183,20 @@ const MyNavbar = () => {
         href: '/receptionist-dashboard',
         icon: <DashboardIcon />,
         roles: ['receptionist'],
+        requiresAssignment: true,
+      },
+      {
+        label: t('common:navigation.jobOffers'),
+        href: '/receptionist/job-offers',
+        icon: <WorkIcon />,
+        roles: ['receptionist'],
       },
       {
         label: t('common:navigation.patientManagement'),
         icon: <ManageIcon />,
         hasSubItems: true,
         roles: ['receptionist'],
+        requiresAssignment: true,
         subItems: [
           { label: t('common:navigation.patientSearch'), href: '/receptionist/patients', icon: <DoctorSearchIcon />, roles: ['receptionist'] },
           { label: t('common:navigation.createPatient'), href: '/receptionist/create-patient', icon: <PersonIcon />, roles: ['receptionist'] },
@@ -219,6 +232,7 @@ const MyNavbar = () => {
         subItems: [
           { label: t('common:navigation.talentPool'), href: '/receptionist-talent-pool', icon: <TalentPoolIcon />, roles: ['doctor'] },
           { label: t('common:navigation.staffManagement'), href: '/staff-management', icon: <StaffManagementIcon />, roles: ['doctor'] },
+          { label: t('common:navigation.receptionistHistory'), href: '/staff-management/history', icon: <ReportsIcon />, roles: ['doctor'] },
         ],
       },
       {
@@ -249,9 +263,13 @@ const MyNavbar = () => {
       if (!item.roles || !Array.isArray(item.roles)) {
         return false;
       }
+
+      if (activeMode === 'receptionist' && item.requiresAssignment && !isReceptionistAssigned) {
+        return false;
+      }
       return item.roles.includes(activeMode) || item.roles.includes(userType);
     });
-  }, [activeMode, userType, baseNavItems, patientNavItems, professionalNavItems]);
+  }, [activeMode, userType, baseNavItems, patientNavItems, professionalNavItems, isReceptionistAssigned]);
 
   const navItems = React.useMemo(() => {
     const allItems = getAllNavItems();

@@ -23,8 +23,10 @@ func SetupDoctorOnlyRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *confi
 
 	router.GET("/profile", doctorHandler.GetDoctorProfile)
 	router.GET("/receptionist/talent-pool", doctorHandler.GetTalentPool)
-	router.POST("/receptionist/hire/:receptionistId", doctorHandler.HireReceptionist)
+	router.GET("/doctor/hiring-proposals", doctorHandler.ListHiringProposals)
+	router.POST("/doctor/hire-receptionist", doctorHandler.HireReceptionist)
 	router.GET("/doctor/staff/:doctorId", doctorHandler.GetDoctorStaff)
-	router.POST("/doctor/staff/dismiss/:receptionistId", doctorHandler.DismissReceptionist)
+	router.GET("/doctor/staff/:doctorId/history", doctorHandler.GetDoctorStaffEmploymentHistory)
+	router.POST("/doctor/dismiss-receptionist/:receptionistId", doctorHandler.DismissReceptionist)
 	router.GET("/doctors/:doctorId/patients", doctorHandler.GetDoctorPatients)
 }

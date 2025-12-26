@@ -381,7 +381,30 @@ const StaffSearch = ({
     return actions;
   };
 
-  const sortedResults = [...searchResults].sort((a, b) => {
+  const filteredResults = [...searchResults].filter((staff) => {
+    if (!filters.experience) return true;
+
+    const years = typeof staff?.experienceYears === 'number'
+      ? staff.experienceYears
+      : (typeof staff?.experience === 'number' ? staff.experience : 0);
+
+    const rangeMatch = typeof filters.experience === 'string' ? filters.experience.match(/^(\d+)\s*-\s*(\d+)$/) : null;
+    if (rangeMatch) {
+      const min = Number(rangeMatch[1]);
+      const max = Number(rangeMatch[2]);
+      return years >= min && years <= max;
+    }
+
+    const plusMatch = typeof filters.experience === 'string' ? filters.experience.match(/^(\d+)\+$/) : null;
+    if (plusMatch) {
+      const min = Number(plusMatch[1]);
+      return years >= min;
+    }
+
+    return true;
+  });
+
+  const sortedResults = filteredResults.sort((a, b) => {
     switch (sortBy) {
       case 'name':
         return (a.name || '').localeCompare(b.name || '');

@@ -60,9 +60,26 @@ const useStaffFilters = (initialStaff = []) => {
 
         case 'experience':
           result = result.filter(s => {
-            const exp = staffUtils.calculateExperience(s.createdAt);
-            if (value === 'new') return exp.includes('month') || exp === 'Less than a month';
-            if (value === 'experienced') return exp.includes('year');
+            const years = typeof s.experienceYears === 'number'
+              ? s.experienceYears
+              : (typeof s.experience === 'number' ? s.experience : 0);
+
+            if (value === 'new') return years < 1;
+            if (value === 'experienced') return years >= 1;
+
+            const rangeMatch = typeof value === 'string' ? value.match(/^(\d+)\s*-\s*(\d+)$/) : null;
+            if (rangeMatch) {
+              const min = Number(rangeMatch[1]);
+              const max = Number(rangeMatch[2]);
+              return years >= min && years <= max;
+            }
+
+            const plusMatch = typeof value === 'string' ? value.match(/^(\d+)\+$/) : null;
+            if (plusMatch) {
+              const min = Number(plusMatch[1]);
+              return years >= min;
+            }
+
             return true;
           });
           break;

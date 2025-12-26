@@ -24,6 +24,7 @@ import AccountVerified from './features/auth/pages/AccountVerified';
 import DoctorRoutes from './features/auth/guards/DoctorRoutes';
 import PrivateRoute from './features/auth/guards/PrivateRoute';
 import ReceptionistProtectedRoute from './features/auth/guards/ReceptionistProtectedRoute';
+import ReceptionistAssignedRoute from './features/auth/guards/ReceptionistAssignedRoute';
 
 import HomePage from './pages/HomePage';
 
@@ -63,8 +64,9 @@ import PatientDetailsPage from './features/receptionist/pages/PatientDetailsPage
 import CreatePatientPage from './features/receptionist/pages/CreatePatientPage';
 import CreateAppointmentPage from './features/receptionist/pages/CreateAppointmentPage';
 import ReceptionistDashboard from './features/receptionist/pages/ReceptionistDashboard';
+import JobOffersPage from './features/receptionist/pages/JobOffersPage';
 
-import { ReceptionistTalentPoolPage, StaffManagementPage } from './features/staff-management/pages';
+import { ReceptionistTalentPoolPage, StaffManagementPage, ReceptionistHistoryPage } from './features/staff-management/pages';
 
 
 function App() {
@@ -96,49 +98,57 @@ function App() {
                 <Route
                   path="/patient-search"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <PatientSearchPage />
-                    </ReceptionistProtectedRoute>
+                    </ReceptionistAssignedRoute>
                   }
                 />
                 <Route
                   path="/receptionist-dashboard"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <ReceptionistDashboard />
+                    </ReceptionistAssignedRoute>
+                  }
+                />
+                <Route
+                  path="/receptionist/job-offers"
+                  element={
+                    <ReceptionistProtectedRoute>
+                      <JobOffersPage />
                     </ReceptionistProtectedRoute>
                   }
                 />
                 <Route
                   path="/receptionist/patients"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <PatientSearchPage />
-                    </ReceptionistProtectedRoute>
+                    </ReceptionistAssignedRoute>
                   }
                 />
                 <Route
                   path="/receptionist/patients/:patientId"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <PatientDetailsPage />
-                    </ReceptionistProtectedRoute>
+                    </ReceptionistAssignedRoute>
                   }
                 />
                 <Route
                   path="/receptionist/create-patient"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <CreatePatientPage />
-                    </ReceptionistProtectedRoute>
+                    </ReceptionistAssignedRoute>
                   }
                 />
                 <Route
                   path="/receptionist/create-appointment"
                   element={
-                    <ReceptionistProtectedRoute>
+                    <ReceptionistAssignedRoute>
                       <CreateAppointmentPage />
-                    </ReceptionistProtectedRoute>
+                    </ReceptionistAssignedRoute>
                   }
                 />
 
@@ -314,6 +324,15 @@ function App() {
                   element={
                     <DoctorRoutes>
                       <StaffManagementPage />
+                    </DoctorRoutes>
+                  }
+                />
+
+                <Route
+                  path="/staff-management/history"
+                  element={
+                    <DoctorRoutes>
+                      <ReceptionistHistoryPage />
                     </DoctorRoutes>
                   }
                 />

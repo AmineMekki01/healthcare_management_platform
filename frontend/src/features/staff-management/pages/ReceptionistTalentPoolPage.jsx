@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffCard from '../components/StaffCard';
@@ -218,6 +219,7 @@ const EmptyStateDescription = styled.p`
 
 const ReceptionistTalentPoolPage = () => {
   const { t } = useTranslation('staff');
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     search: '',
     experienceLevel: '',
@@ -227,16 +229,34 @@ const ReceptionistTalentPoolPage = () => {
 
   const {
     talentPool,
+    hiringProposals,
     loading,
     error,
     fetchTalentPool,
+    fetchHiringProposals,
     hireReceptionist,
     clearError
   } = useStaffManagement();
 
+  const [hiringInFlight, setHiringInFlight] = useState(new Set());
+
   useEffect(() => {
     fetchTalentPool();
-  }, [fetchTalentPool]);
+    fetchHiringProposals();
+  }, [fetchTalentPool, fetchHiringProposals]);
+
+  const proposalByReceptionistId = useMemo(() => {
+    const map = new Map();
+    (hiringProposals || []).forEach((p) => {
+      const rid = p?.receptionistId;
+      if (!rid) return;
+      const key = String(rid);
+      if (!map.has(key)) {
+        map.set(key, p);
+      }
+    });
+    return map;
+  }, [hiringProposals]);
 
   const filteredTalentPool = useCallback(() => {
     let filtered = [...talentPool];
@@ -298,13 +318,45 @@ const ReceptionistTalentPoolPage = () => {
   };
 
   const handleHire = async (receptionistId) => {
+    if (!receptionistId) return;
+
+    const existing = proposalByReceptionistId.get(String(receptionistId));
+    const existingStatus = String(existing?.status || '').toLowerCase();
+    if (existingStatus === 'sent') {
+      return;
+    }
+
+    setHiringInFlight(prev => {
+      const next = new Set(prev);
+      next.add(String(receptionistId));
+      return next;
+    });
+
     try {
-      await hireReceptionist(receptionistId);
-      fetchTalentPool();
+      const message = window.prompt(t('talentPool.messages.offerPrompt'));
+      await hireReceptionist(receptionistId, { message: message || '' });
+      window.alert(t('talentPool.messages.offerSent'));
+      await Promise.all([fetchTalentPool(), fetchHiringProposals()]);
     } catch (error) {
-      console.error('Error hiring receptionist:', error);
+      const msg = error?.message || '';
+      if (String(msg).toLowerCase().includes('already sent')) {
+        window.alert(t('talentPool.messages.offerAlreadySent'));
+      } else {
+        console.error('Error hiring receptionist:', error);
+      }
+    } finally {
+      setHiringInFlight(prev => {
+        const next = new Set(prev);
+        next.delete(String(receptionistId));
+        return next;
+      });
     }
   };
+
+  const handleViewProfile = useCallback((receptionistId) => {
+    if (!receptionistId) return;
+    navigate(`/receptionist-profile/${receptionistId}`);
+  }, [navigate]);
 
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
@@ -448,25 +500,38 @@ const ReceptionistTalentPoolPage = () => {
         ) : (
           <GridContainer>
             {filteredData && filteredData.map((receptionist) => (
+              (() => {
+                const existing = proposalByReceptionistId.get(String(receptionist.id));
+                const existingStatus = String(existing?.status || '').toLowerCase();
+                const isSent = existingStatus === 'sent';
+                const isHiring = hiringInFlight.has(String(receptionist.id));
+
+                return (
               <StaffCard
                 key={receptionist.id}
-                staff={receptionist}
-                onClick={(staff) => console.log('View profile:', staff)}
+                staff={{
+                  ...receptionist,
+                  hiringProposalStatus: existingStatus || null,
+                }}
+                onClick={() => handleViewProfile(receptionist.id)}
                 actions={[
                   {
-                    label: t('talentPool.actions.hire'),
+                    label: isSent ? t('talentPool.actions.offerAlreadySent') : t('talentPool.actions.hire'),
                     variant: 'primary',
-                    onClick: () => handleHire(receptionist.id)
+                    onClick: () => handleHire(receptionist.id),
+                    disabled: isSent || isHiring || loading
                   },
                   {
                     label: t('talentPool.actions.viewProfile'),
                     variant: 'secondary',
-                    onClick: (staff) => console.log('View profile:', staff)
+                    onClick: () => handleViewProfile(receptionist.id)
                   }
                 ]}
                 showRole={true}
                 showStatus={true}
               />
+                );
+              })()
             ))}
           </GridContainer>
         )}

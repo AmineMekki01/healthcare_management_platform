@@ -264,17 +264,15 @@ const BulkActionButton = styled.button`
   }
 `;
 
-const StaffList = ({ 
-  staff = [], 
-  loading = false,
+const StaffList = ({
+  staff = [],
   onStaffSelect,
   onStaffEdit,
   onViewSchedule,
   onManagePermissions,
-  onActivate,
-  onDeactivate, 
   onDismiss,
   onBulkAction,
+  loading = false,
   showSearch = true,
   showFilters = true,
   showBulkActions = true,
@@ -291,7 +289,7 @@ const StaffList = ({
   const [sortBy, setSortBy] = useState('name');
   const [view, setView] = useState(compact ? 'compact' : 'grid');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedStaff, setSelectedStaff] = useState(new Set());
+  const [selectedStaffSet, setSelectedStaffSet] = useState(new Set());
   const itemsPerPage = 12;
   console.log('StaffList rendered with staff:', staff);
   const filteredStaff = useMemo(() => {
@@ -371,9 +369,9 @@ const StaffList = ({
 
 
   const handleBulkAction = (action) => {
-    if (onBulkAction && selectedStaff.size > 0) {
-      onBulkAction(Array.from(selectedStaff), action);
-      setSelectedStaff(new Set());
+    if (onBulkAction && selectedStaffSet.size > 0) {
+      onBulkAction(Array.from(selectedStaffSet), action);
+      setSelectedStaffSet(new Set());
     }
   };
 
@@ -475,7 +473,7 @@ const StaffList = ({
         <ListControls>
           <ResultsInfo>
             {loading ? t('list.loading') : t('list.staffMembersFound', { count: filteredStaff.length })}
-            {selectedStaff.size > 0 && ` (${t('list.selected', { count: selectedStaff.size })})`}
+            {selectedStaffSet.size > 0 && ` (${t('list.selected', { count: selectedStaffSet.size })})`}
           </ResultsInfo>
           
           <SortSelect
@@ -490,17 +488,11 @@ const StaffList = ({
           </SortSelect>
         </ListControls>
 
-        {showBulkActions && selectedStaff.size > 0 && (
-          <BulkActions $visible={selectedStaff.size > 0}>
+        {showBulkActions && selectedStaffSet.size > 0 && (
+          <BulkActions $visible={selectedStaffSet.size > 0}>
             <span style={{ fontSize: '14px', color: '#64748b' }}>
-              {t('list.selected', { count: selectedStaff.size })}
+              {t('list.selected', { count: selectedStaffSet.size })}
             </span>
-            <BulkActionButton onClick={() => handleBulkAction('activate')}>
-              {t('list.bulkActions.activate')}
-            </BulkActionButton>
-            <BulkActionButton onClick={() => handleBulkAction('deactivate')}>
-              {t('list.bulkActions.deactivate')}
-            </BulkActionButton>
             <BulkActionButton onClick={() => handleBulkAction('export')}>
               {t('list.bulkActions.export')}
             </BulkActionButton>
@@ -536,16 +528,14 @@ const StaffList = ({
               <StaffCard
                 key={staffMember.id}
                 staff={staffMember}
-                onClick={handleStaffSelect}
+                onClick={() => onStaffSelect && onStaffSelect(staffMember)}
                 onEdit={onStaffEdit}
                 onViewSchedule={onViewSchedule}
                 onManagePermissions={onManagePermissions}
-                onActivate={onActivate}
-                onDeactivate={onDeactivate}
                 onDismiss={onDismiss}
                 showRole={true}
                 showStatus={true}
-                showSpecializations={true}
+                showPermissions={true}
                 showSchedule={true}
               />
             ))}

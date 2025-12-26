@@ -17,6 +17,7 @@
   },
   "labels": {
     "phone": "Téléphone",
+    "experience": "Expérience",
     "joined": "Rejoint",
     "assigned": "Assigné",
     "verified": "Vérifié",
@@ -27,7 +28,11 @@
   "messages": {
     "noPermissions": "Aucune permission spécifique définie",
     "scheduleNotSet": "Horaire non défini",
-    "confirmDismiss": "Êtes-vous sûr de vouloir renvoyer {{name}} ?"
+    "confirmDismiss": "Êtes-vous sûr de vouloir renvoyer {{name}} ?",
+    "dismissReasonPrompt": "Veuillez saisir la raison du renvoi :",
+    "loadingStaff": "Chargement du personnel...",
+    "noStaffTitle": "Aucun membre du personnel",
+    "noStaffDescription": "Lorsque vous embauchez des réceptionnistes, ils apparaîtront ici."
   },
   "page": {
     "title": "Gestion du personnel",
@@ -176,7 +181,37 @@
     },
     "actions": {
       "hire": "Embaucher",
+      "offerAlreadySent": "Offre envoyée",
       "viewProfile": "Voir le profil"
+    },
+    "labels": {
+      "offerStatus": "Statut de l'offre"
+    },
+    "proposalStatus": {
+      "sent": "En attente",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
+      "withdrawn": "Retirée"
+    },
+    "messages": {
+      "offerPrompt": "Écrivez un court message à la réceptionniste (optionnel) :",
+      "offerSent": "Offre envoyée avec succès. La réceptionniste peut maintenant l'accepter ou la refuser.",
+      "offerAlreadySent": "Vous avez déjà envoyé une offre à cette réceptionniste."
+    }
+  },
+  "history": {
+    "title": "Historique des réceptionnistes",
+    "subtitle": "Historique d'emploi des réceptionnistes dans votre cabinet",
+    "viewButton": "Voir l'historique",
+    "empty": "Aucun historique d'emploi trouvé.",
+    "labels": {
+      "startedAt": "Début",
+      "endedAt": "Fin",
+      "reason": "Raison"
+    },
+    "status": {
+      "active": "Actif",
+      "ended": "Terminé"
     }
   },
   "errors": {

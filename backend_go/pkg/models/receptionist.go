@@ -6,28 +6,52 @@ import (
 	"github.com/google/uuid"
 )
 
+type ReceptionistExperience struct {
+	ExperienceID     uuid.UUID  `json:"experienceId"`
+	ReceptionistID   uuid.UUID  `json:"receptionistId"`
+	OrganizationName string     `json:"organizationName"`
+	PositionTitle    string     `json:"positionTitle"`
+	Location         *string    `json:"location"`
+	StartDate        time.Time  `json:"startDate"`
+	EndDate          *time.Time `json:"endDate"`
+	Description      *string    `json:"description"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	UpdatedAt        time.Time  `json:"updatedAt"`
+}
+
 type Receptionist struct {
-	ReceptionistID    uuid.UUID  `json:"receptionistId"`
-	Username          string     `json:"username"`
-	FirstName         string     `json:"firstName"`
-	LastName          string     `json:"lastName"`
-	Sex               string     `json:"sex"`
-	Password          string     `json:"password,omitempty"`
-	Email             string     `json:"email"`
-	PhoneNumber       string     `json:"phoneNumber"`
-	StreetAddress     string     `json:"streetAddress"`
-	CityName          string     `json:"cityName"`
-	StateName         string     `json:"stateName"`
-	ZipCode           string     `json:"zipCode"`
-	CountryName       string     `json:"countryName"`
-	BirthDate         *time.Time `json:"birthDate"`
-	Bio               string     `json:"bio"`
-	ProfilePictureURL string     `json:"profilePictureUrl"`
-	AssignedDoctorID  *uuid.UUID `json:"assignedDoctorId"`
-	IsActive          bool       `json:"isActive"`
-	EmailVerified     bool       `json:"emailVerified"`
-	CreatedAt         time.Time  `json:"createdAt"`
-	UpdatedAt         time.Time  `json:"updatedAt"`
+	ReceptionistID    uuid.UUID                `json:"receptionistId"`
+	Username          string                   `json:"username"`
+	FirstName         string                   `json:"firstName"`
+	LastName          string                   `json:"lastName"`
+	Sex               string                   `json:"sex"`
+	Password          string                   `json:"password,omitempty"`
+	Email             string                   `json:"email"`
+	PhoneNumber       string                   `json:"phoneNumber"`
+	StreetAddress     string                   `json:"streetAddress"`
+	CityName          string                   `json:"cityName"`
+	StateName         string                   `json:"stateName"`
+	ZipCode           string                   `json:"zipCode"`
+	CountryName       string                   `json:"countryName"`
+	BirthDate         *time.Time               `json:"birthDate"`
+	Bio               string                   `json:"bio"`
+	ProfilePictureURL string                   `json:"profilePictureUrl"`
+	AssignedDoctorID  *uuid.UUID               `json:"assignedDoctorId"`
+	IsActive          bool                     `json:"isActive"`
+	EmailVerified     bool                     `json:"emailVerified"`
+	Experiences       []ReceptionistExperience `json:"experiences"`
+	ExperienceYears   float64                  `json:"experienceYears"`
+	CreatedAt         time.Time                `json:"createdAt"`
+	UpdatedAt         time.Time                `json:"updatedAt"`
+}
+
+type ReceptionistExperienceCreateRequest struct {
+	OrganizationName string  `json:"organizationName" binding:"required"`
+	PositionTitle    string  `json:"positionTitle" binding:"required"`
+	Location         *string `json:"location"`
+	StartDate        string  `json:"startDate" binding:"required"`
+	EndDate          *string `json:"endDate"`
+	Description      *string `json:"description"`
 }
 
 type ReceptionistWorkSchedule struct {

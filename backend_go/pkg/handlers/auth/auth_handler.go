@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,6 +31,7 @@ type AuthHandler struct {
 	patientService      *patient.PatientService
 	receptionistService *receptionist.ReceptionistService
 	cfg                 *config.Config
+	db                  *pgxpool.Pool
 }
 
 func NewAuthHandler(db *pgxpool.Pool, cfg *config.Config) *AuthHandler {
@@ -39,6 +41,7 @@ func NewAuthHandler(db *pgxpool.Pool, cfg *config.Config) *AuthHandler {
 		patientService:      patient.NewPatientService(db, cfg),
 		receptionistService: receptionist.NewReceptionistService(db, cfg),
 		cfg:                 cfg,
+		db:                  db,
 	}
 }
 
@@ -123,21 +126,27 @@ func (h *AuthHandler) clearAuthCookies(c *gin.Context) {
 }
 
 func (h *AuthHandler) Me(c *gin.Context) {
-	userID, ok := c.Get("userId")
-	if !ok {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	userType, ok := c.Get("userType")
-	if !ok {
+	userType := c.GetString("userType")
+	if userType == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
+	var assignedDoctorID *uuid.UUID
+	if userType == "receptionist" {
+		_ = h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", userID).Scan(&assignedDoctorID)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"userId":   userID,
-		"userType": userType,
+		"success":          true,
+		"userId":           userID,
+		"userType":         userType,
+		"assignedDoctorId": assignedDoctorID,
 	})
 }
 

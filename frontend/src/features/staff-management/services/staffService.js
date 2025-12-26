@@ -9,7 +9,7 @@ class StaffService {
   async handleApiCall(apiCall, operation = 'API operation') {
     try {
       const response = await apiCall();
-      return response.data;
+      return response?.data ?? response;
     } catch (error) {
       console.error(`Error in ${operation}:`, error);
       const message = error.response?.data?.error || error.message || `Failed to ${operation}`;
@@ -19,6 +19,11 @@ class StaffService {
 
   transformReceptionistData(receptionist) {
     if (!receptionist) return null;
+
+
+    const experienceYears = typeof receptionist.experienceYears === 'number'
+      ? receptionist.experienceYears
+      : (typeof receptionist.experience_years === 'number' ? receptionist.experience_years : 0);
 
     return {
       id: receptionist.receptionistId,
@@ -43,7 +48,9 @@ class StaffService {
       permissions: receptionist.permissions || [],
       workSchedule: receptionist.workSchedule || [],
       joiningDate: receptionist.createdAt,
-      experience: staffUtils.calculateExperience(receptionist.createdAt),
+      experienceYears,
+      experience: experienceYears,
+      experiences: receptionist.experiences || [],
       contactInfo: {
         email: receptionist.email,
         phone: receptionist.phoneNumber,
@@ -59,6 +66,14 @@ class StaffService {
       const staff = data.staff || [];
       console.log('Fetched staff:', staff);
       return staff.map(this.transformReceptionistData.bind(this));
+    });
+  }
+
+  async fetchDoctorStaffEmploymentHistory(doctorId) {
+    return this.handleApiCall(async () => {
+      return await this.axiosInstance.get(`/api/v1/doctor/staff/${doctorId}/history`);
+    }, 'fetch staff employment history').then(data => {
+      return data.history || [];
     });
   }
 
@@ -95,19 +110,23 @@ class StaffService {
     });
   }
 
+  async fetchDoctorHiringProposals() {
+    return this.handleApiCall(async () => {
+      return await this.axiosInstance.get('/api/v1/doctor/hiring-proposals');
+    }, 'fetch doctor hiring proposals').then(data => {
+      return data.proposals || [];
+    });
+  }
+
   async hireReceptionist(receptionistId, doctorId, contractDetails = {}) {
     return this.handleApiCall(async () => {
       const payload = {
         receptionistId: receptionistId,
-        doctor_id: doctorId,
-        contract_type: contractDetails.type || 'full-time',
-        start_date: contractDetails.startDate || new Date().toISOString(),
-        salary: contractDetails.salary,
-        permissions: contractDetails.permissions || [],
-        work_schedule: contractDetails.workSchedule || []
+        message: contractDetails.message || null
       };
+
       const response = await this.axiosInstance.post('/api/v1/doctor/hire-receptionist', payload);
-      return this.transformReceptionistData(response.data.receptionist);
+      return response.data?.proposal || null;
     }, 'hire receptionist');
   }
 
@@ -117,20 +136,6 @@ class StaffService {
       const response = await this.axiosInstance.post(`/api/v1/doctor/dismiss-receptionist/${receptionistId}`, payload);
       return response.data;
     }, 'dismiss receptionist');
-  }
-
-  async activateReceptionist(receptionistId) {
-    return this.handleApiCall(async () => {
-      const response = await this.axiosInstance.put(`/api/v1/receptionist/activate/${receptionistId}`);
-      return this.transformReceptionistData(response.data.receptionist);
-    }, 'activate receptionist');
-  }
-
-  async deactivateReceptionist(receptionistId) {
-    return this.handleApiCall(async () => {
-      const response = await this.axiosInstance.put(`/api/v1/receptionist/deactivate/${receptionistId}`);
-      return this.transformReceptionistData(response.data.receptionist);
-    }, 'deactivate receptionist');
   }
 
   async updateStaffProfile(staffId, profileData) {

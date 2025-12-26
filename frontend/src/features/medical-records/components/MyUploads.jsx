@@ -53,8 +53,10 @@ import {
 import FileHistoryModal from './FileHistoryModal';
 
 function MyUploads() {
-  const { t } = useTranslation('medical');
-  const { userId, userType } = useContext(AuthContext);
+  const { t } = useTranslation(['medical', 'common']);
+  const { userId, userType, assignedDoctorId } = useContext(AuthContext);
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const isUnassignedReceptionist = userType === 'receptionist' && !receptionistAssignedDoctorId;
   const [currentPath, setCurrentPath] = useState([]);
   const [folders, setFolders] = useState([]);
   const navigate = useNavigate();
@@ -139,6 +141,9 @@ function MyUploads() {
   };
 
   const onClickCreateFolder = async () => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     const folderName = prompt('Enter folder name:');
     if (folderName && folderName.trim()) {
       await handleCreateFolder(folderName.trim());
@@ -146,6 +151,9 @@ function MyUploads() {
   };
 
   const handleCreateFolder = async (folderName) => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     try {
       const parent_id = folderId || null;
       await createFolder(folderName, userId, userType, parent_id);
@@ -168,6 +176,9 @@ function MyUploads() {
   };
 
   const deleteFolderAndContents = async () => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     if (!userId || selectedFiles.size === 0) {
       alert('Please select at least one item to delete.');
       return;
@@ -193,6 +204,9 @@ function MyUploads() {
   };
 
   const onClickRenameItem = async () => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     if (!userId || selectedFiles.size !== 1) {
       alert('Please select exactly one item to rename.');
       return;
@@ -221,6 +235,9 @@ function MyUploads() {
   };
 
   const handleFileUpload = async (event) => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     if (!userId) {
       alert('User ID not available.');
       return;
@@ -246,6 +263,9 @@ function MyUploads() {
   };
 
   const handleIconClick = () => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     fileInputRef.current.click();
   };
 
@@ -297,6 +317,9 @@ function MyUploads() {
   };
 
   const shareFolder = async (folderId, doctorId) => {
+    if (isUnassignedReceptionist) {
+      return;
+    }
     if (!userId || !doctorId) {
       alert('Please select a doctor to share with.');
       return;
@@ -317,6 +340,11 @@ function MyUploads() {
   };
 
   useEffect(() => {
+    if (isUnassignedReceptionist) {
+      setDoctors([]);
+      return;
+    }
+
     const fetchDoctorsData = async () => {
       try {
         const doctorsData = await fetchDoctors();
@@ -325,9 +353,8 @@ function MyUploads() {
         console.error('Error fetching doctors:', error);
       }
     };
-
     fetchDoctorsData();
-  }, []);
+  }, [isUnassignedReceptionist]);
 
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
@@ -387,7 +414,7 @@ function MyUploads() {
             variant="contained"
             startIcon={<CloudUploadIcon />}
             onClick={handleIconClick}
-            disabled={loading}
+            disabled={loading || isUnassignedReceptionist}
             sx={{
               borderRadius: '12px',
               gap: 1,
@@ -407,6 +434,7 @@ function MyUploads() {
             variant="outlined"
             startIcon={<CreateNewFolderIcon />}
             onClick={onClickCreateFolder}
+            disabled={isUnassignedReceptionist}
             sx={{
               borderRadius: '12px',
               gap: 1,
@@ -430,7 +458,7 @@ function MyUploads() {
                 variant="outlined"
                 startIcon={<EditIcon />}
                 onClick={onClickRenameItem}
-                disabled={selectedFiles.size !== 1}
+                disabled={selectedFiles.size !== 1 || isUnassignedReceptionist}
                 sx={{
                   borderRadius: '12px',
                   gap: 1,
@@ -450,6 +478,7 @@ function MyUploads() {
                 variant="outlined"
                 startIcon={<DeleteIcon />}
                 onClick={deleteFolderAndContents}
+                disabled={isUnassignedReceptionist}
                 sx={{
                   borderRadius: '12px',
                   gap: 1,
@@ -514,7 +543,7 @@ function MyUploads() {
           )}
         </Box>
         
-        {selectedFiles.size > 0 && (
+        {!isUnassignedReceptionist && selectedFiles.size > 0 && (
           <Box mt={2} display="flex" gap={2} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 200 }}>
               <InputLabel>{t('actions.selectDoctor')}</InputLabel>
@@ -730,6 +759,7 @@ function MyUploads() {
               variant="contained"
               startIcon={<CloudUploadIcon />}
               onClick={handleIconClick}
+              disabled={isUnassignedReceptionist}
               sx={{
                 borderRadius: '12px',
                 gap: 1,
@@ -755,6 +785,7 @@ function MyUploads() {
 
       <Fab
         color="primary"
+        disabled={isUnassignedReceptionist}
         sx={{
           position: 'fixed',
           bottom: 24,

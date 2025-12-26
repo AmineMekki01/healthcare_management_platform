@@ -102,8 +102,6 @@ const StaffCard = ({
   onEdit, 
   onViewSchedule, 
   onManagePermissions,
-  onActivate,
-  onDeactivate,
   onDismiss,
   showRole = true,
   showStatus = true,
@@ -140,20 +138,6 @@ const StaffCard = ({
       });
     }
     
-    if (staff?.isActive && onDeactivate) {
-      defaultActions.push({
-        label: t('actions.deactivate'),
-        variant: 'danger',
-        onClick: onDeactivate
-      });
-    } else if (!staff?.isActive && onActivate) {
-      defaultActions.push({
-        label: t('actions.activate'),
-        variant: 'primary',
-        onClick: onActivate
-      });
-    }
-    
     if (onDismiss) {
       defaultActions.push({
         label: t('actions.dismiss'),
@@ -166,10 +150,18 @@ const StaffCard = ({
   };
 
   const getMetaFields = () => {
+    const experienceYears = typeof staff?.experienceYears === 'number'
+      ? staff.experienceYears
+      : (typeof staff?.experience === 'number' ? staff.experience : 0);
+
     const fields = [
       { 
         label: t('labels.phone'), 
         value: staff?.phoneNumber || staff?.phone_number || 'N/A' 
+      },
+      {
+        label: t('labels.experience'),
+        value: `${experienceYears.toFixed(1)} years`
       },
       { 
         label: t('labels.joined'), 
@@ -188,6 +180,13 @@ const StaffCard = ({
       fields.push({
         label: t('labels.verified'),
         value: staff.emailVerified ? t('labels.yes') : t('labels.no')
+      });
+    }
+
+    if (staff?.hiringProposalStatus) {
+      fields.push({
+        label: t('talentPool.labels.offerStatus'),
+        value: t(`talentPool.proposalStatus.${staff.hiringProposalStatus}`, staff.hiringProposalStatus)
       });
     }
 

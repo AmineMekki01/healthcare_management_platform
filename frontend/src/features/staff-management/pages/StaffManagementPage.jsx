@@ -1,4 +1,5 @@
 import React, { useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffList from '../components/StaffList';
@@ -166,14 +167,13 @@ const EmptyStateDescription = styled.p`
 const StaffManagementPage = () => {
   const { t } = useTranslation('staff');
   const { doctorId } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const {
     receptionists,
     loading,
     error,
     fetchStaff,
-    activateReceptionist,
-    deactivateReceptionist,
     dismissReceptionist,
     clearError
   } = useStaffManagement();
@@ -195,15 +195,13 @@ const StaffManagementPage = () => {
   const handleStaffAction = async (action, staff) => {
     try {
       switch (action) {
-        case 'activate':
-          await activateReceptionist(staff.id);
-          break;
-        case 'deactivate':
-          await deactivateReceptionist(staff.id);
-          break;
         case 'dismiss':
           if (window.confirm(t('messages.confirmDismiss', { name: staff.fullName }))) {
-            await dismissReceptionist(staff.id);
+            const reason = window.prompt(t('messages.dismissReasonPrompt'));
+            if (!reason || !reason.trim()) {
+              return;
+            }
+            await dismissReceptionist(staff.id, reason.trim());
           }
           break;
         default:
@@ -225,13 +223,10 @@ const StaffManagementPage = () => {
               {t('page.subtitle')}
             </PageSubtitle>
           </div>
-          
+
           <HeaderActions>
-            <ActionButton 
-              className="primary"
-              onClick={() => console.log('Add new staff')}
-            >
-              {t('actions.addStaff')}
+            <ActionButton className="secondary" onClick={() => navigate('/staff-management/history')}>
+              {t('history.viewButton')}
             </ActionButton>
           </HeaderActions>
         </HeaderTop>
@@ -297,10 +292,7 @@ const StaffManagementPage = () => {
         ) : (
           <StaffList 
             staff={receptionists}
-            onStaffSelect={(staff) => console.log('View staff details:', staff)}
-            onStaffEdit={(staff) => handleStaffAction('edit', staff)}
-            onActivate={(staff) => handleStaffAction('activate', staff)}
-            onDeactivate={(staff) => handleStaffAction('deactivate', staff)}
+            onStaffSelect={(staff) => staff?.id && navigate(`/receptionist-profile/${staff.id}`)}
             onDismiss={(staff) => handleStaffAction('dismiss', staff)}
             onBulkAction={(staffIds, action) => console.log('Bulk action:', action, staffIds)}
           />
