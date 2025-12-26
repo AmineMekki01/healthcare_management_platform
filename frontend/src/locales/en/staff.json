@@ -17,6 +17,7 @@
   },
   "labels": {
     "phone": "Phone",
+    "experience": "Experience",
     "joined": "Joined",
     "assigned": "Assigned",
     "verified": "Verified",

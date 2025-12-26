@@ -62,13 +62,24 @@ func (h *ReceptionistHandler) LoginReceptionist(c *gin.Context) {
 }
 
 func (h *ReceptionistHandler) GetReceptionistProfile(c *gin.Context) {
-	receptionistID, exists := c.Get("userId")
+	callerUserID, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	callerUserType := c.GetString("userType")
 
-	receptionist, err := h.receptionistService.GetReceptionistProfile(receptionistID.(string))
+	requestedID := c.Param("userID")
+	if requestedID == "" {
+		requestedID = callerUserID.(string)
+	}
+
+	if callerUserType == "receptionist" && requestedID != callerUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	receptionist, err := h.receptionistService.GetReceptionistProfile(requestedID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -99,4 +110,93 @@ func (h *ReceptionistHandler) UpdateReceptionistProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+}
+
+func (h *ReceptionistHandler) ListReceptionistExperiences(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	receptionistID := c.Param("userID")
+	if receptionistID == "" {
+		receptionistID = callerUserID.(string)
+	}
+
+	if callerUserType == "receptionist" && receptionistID != callerUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	experiences, err := h.receptionistService.ListReceptionistExperiences(receptionistID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"experiences": experiences})
+}
+
+func (h *ReceptionistHandler) CreateReceptionistExperience(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	receptionistID := c.Param("userID")
+	if receptionistID == "" {
+		receptionistID = callerUserID.(string)
+	}
+
+	if callerUserType != "receptionist" || receptionistID != callerUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	var req models.ReceptionistExperienceCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+
+	experience, err := h.receptionistService.CreateReceptionistExperience(receptionistID, req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"experience": experience})
+}
+
+func (h *ReceptionistHandler) DeleteReceptionistExperience(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	receptionistID := c.Param("userID")
+	experienceID := c.Param("experienceId")
+
+	if receptionistID == "" || experienceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Receptionist ID and experience ID are required"})
+		return
+	}
+
+	if callerUserType != "receptionist" || receptionistID != callerUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	if err := h.receptionistService.DeleteReceptionistExperience(receptionistID, experienceID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Experience deleted successfully"})
 }

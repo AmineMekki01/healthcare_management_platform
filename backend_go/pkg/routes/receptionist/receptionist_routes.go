@@ -22,6 +22,9 @@ func SetupReceptionistRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.C
 	{
 		protected.GET("/:userID", receptionistHandler.GetReceptionistProfile)
 		protected.PUT("/:userID", receptionistHandler.UpdateReceptionistProfile)
+		protected.GET("/:userID/experiences", receptionistHandler.ListReceptionistExperiences)
+		protected.POST("/:userID/experiences", receptionistHandler.CreateReceptionistExperience)
+		protected.DELETE("/:userID/experiences/:experienceId", receptionistHandler.DeleteReceptionistExperience)
 
 		protected.GET("/patients/search", receptionistPatientHandler.SearchPatients)
 		protected.GET("/patients/:patientId", receptionistPatientHandler.GetPatientDetails)

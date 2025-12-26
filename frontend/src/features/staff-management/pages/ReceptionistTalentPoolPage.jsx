@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffCard from '../components/StaffCard';
@@ -218,6 +219,7 @@ const EmptyStateDescription = styled.p`
 
 const ReceptionistTalentPoolPage = () => {
   const { t } = useTranslation('staff');
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     search: '',
     experienceLevel: '',
@@ -236,6 +238,7 @@ const ReceptionistTalentPoolPage = () => {
 
   useEffect(() => {
     fetchTalentPool();
+    console.log('talentPool', talentPool);
   }, [fetchTalentPool]);
 
   const filteredTalentPool = useCallback(() => {
@@ -305,6 +308,11 @@ const ReceptionistTalentPoolPage = () => {
       console.error('Error hiring receptionist:', error);
     }
   };
+
+  const handleViewProfile = useCallback((receptionistId) => {
+    if (!receptionistId) return;
+    navigate(`/receptionist-profile/${receptionistId}`);
+  }, [navigate]);
 
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
@@ -451,7 +459,7 @@ const ReceptionistTalentPoolPage = () => {
               <StaffCard
                 key={receptionist.id}
                 staff={receptionist}
-                onClick={(staff) => console.log('View profile:', staff)}
+                onClick={() => handleViewProfile(receptionist.id)}
                 actions={[
                   {
                     label: t('talentPool.actions.hire'),
@@ -461,7 +469,7 @@ const ReceptionistTalentPoolPage = () => {
                   {
                     label: t('talentPool.actions.viewProfile'),
                     variant: 'secondary',
-                    onClick: (staff) => console.log('View profile:', staff)
+                    onClick: () => handleViewProfile(receptionist.id)
                   }
                 ]}
                 showRole={true}

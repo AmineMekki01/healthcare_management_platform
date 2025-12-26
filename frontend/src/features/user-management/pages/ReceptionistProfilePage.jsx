@@ -75,6 +75,73 @@ const WorkInfoCard = styled.div`
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 `;
 
+const ExperienceCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+`;
+
+const ExperienceList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ExperienceItem = styled.div`
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+`;
+
+const ExperienceTitleRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+`;
+
+const ExperienceTitle = styled.div`
+  font-weight: 700;
+  color: #1a202c;
+`;
+
+const ExperienceDates = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+`;
+
+const ExperienceSubtitle = styled.div`
+  margin-top: 4px;
+  font-size: 13px;
+  color: #4b5563;
+  font-weight: 600;
+`;
+
+const ExperienceMeta = styled.div`
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+`;
+
+const ExperienceDescription = styled.div`
+  margin-top: 8px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+`;
+
+const EmptyExperience = styled.div`
+  padding: 14px 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 13px;
+`;
+
 const WorkInfoList = styled.div`
   display: flex;
   flex-direction: column;
@@ -193,6 +260,19 @@ const ReceptionistProfilePage = () => {
     return <ErrorMessage>Receptionist not found</ErrorMessage>;
   }
 
+  const experienceYears = typeof receptionist?.experienceYears === 'number'
+    ? receptionist.experienceYears
+    : (typeof receptionist?.experience === 'number' ? receptionist.experience : 0);
+
+  const experiences = Array.isArray(receptionist?.experiences) ? receptionist.experiences : [];
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return 'N/A';
+    return d.toLocaleDateString();
+  };
+
   return (
     <ReceptionistProfileContainer>
       <MainProfile>
@@ -256,8 +336,43 @@ const ReceptionistProfilePage = () => {
                 {receptionist?.createdAt ? new Date(receptionist.createdAt).toLocaleDateString() : 'N/A'}
               </InfoValue>
             </WorkInfoItem>
+            <WorkInfoItem>
+              <InfoLabel>Experience:</InfoLabel>
+              <InfoValue>{experienceYears.toFixed(1)} years</InfoValue>
+            </WorkInfoItem>
           </WorkInfoList>
         </WorkInfoCard>
+
+        <ExperienceCard>
+          <SectionTitle>Work Experience</SectionTitle>
+          <ExperienceList>
+            {experiences.length === 0 ? (
+              <EmptyExperience>No experience entries yet.</EmptyExperience>
+            ) : (
+              experiences.map((exp) => {
+                const start = formatDate(exp?.startDate);
+                const end = exp?.endDate ? formatDate(exp.endDate) : 'Present';
+                const location = exp?.location ? String(exp.location) : '';
+                return (
+                  <ExperienceItem key={exp?.experienceId || `${exp?.organizationName}-${exp?.positionTitle}-${exp?.startDate}`}
+                  >
+                    <ExperienceTitleRow>
+                      <ExperienceTitle>{exp?.organizationName || 'Unknown Organization'}</ExperienceTitle>
+                      <ExperienceDates>{start} - {end}</ExperienceDates>
+                    </ExperienceTitleRow>
+                    <ExperienceSubtitle>{exp?.positionTitle || 'Role'}</ExperienceSubtitle>
+                    {location && (
+                      <ExperienceMeta>{location}</ExperienceMeta>
+                    )}
+                    {exp?.description && (
+                      <ExperienceDescription>{exp.description}</ExperienceDescription>
+                    )}
+                  </ExperienceItem>
+                );
+              })
+            )}
+          </ExperienceList>
+        </ExperienceCard>
       </Sidebar>
     </ReceptionistProfileContainer>
   );

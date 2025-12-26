@@ -408,6 +408,21 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
+		`CREATE TABLE IF NOT EXISTS receptionist_experiences (
+			experience_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
+			organization_name VARCHAR(255) NOT NULL,
+			position_title VARCHAR(255) NOT NULL,
+			location VARCHAR(255),
+			start_date DATE NOT NULL,
+			end_date DATE,
+			description TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_receptionist_experiences_receptionist_id ON receptionist_experiences(receptionist_id)`,
+
 		`CREATE TABLE IF NOT EXISTS receptionist_work_schedule (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,

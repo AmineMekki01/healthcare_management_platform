@@ -31,6 +31,20 @@ func (h *DoctorHandler) GetTalentPool(c *gin.Context) {
 
 func (h *DoctorHandler) HireReceptionist(c *gin.Context) {
 	receptionistID := c.Param("receptionistId")
+	if receptionistID == "" {
+		var req struct {
+			ReceptionistID string `json:"receptionistId"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+			return
+		}
+		receptionistID = req.ReceptionistID
+	}
+	if receptionistID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Receptionist ID is required"})
+		return
+	}
 	doctorID := c.GetString("userId")
 
 	if doctorID == "" {
@@ -45,7 +59,14 @@ func (h *DoctorHandler) HireReceptionist(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Receptionist hired successfully"})
+	receptionist, err := h.doctorService.GetReceptionistByID(receptionistID)
+	if err != nil {
+		log.Printf("Warning: hired receptionist but failed to fetch details: %v", err)
+		c.JSON(http.StatusOK, gin.H{"message": "Receptionist hired successfully"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Receptionist hired successfully", "receptionist": receptionist})
 }
 
 func (h *DoctorHandler) DismissReceptionist(c *gin.Context) {
@@ -59,4 +80,62 @@ func (h *DoctorHandler) DismissReceptionist(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Receptionist dismissed successfully"})
+}
+
+func (h *DoctorHandler) ActivateReceptionist(c *gin.Context) {
+	receptionistID := c.Param("receptionistId")
+	doctorID := c.GetString("userId")
+
+	if receptionistID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Receptionist ID is required"})
+		return
+	}
+	if doctorID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Doctor ID not found in context"})
+		return
+	}
+
+	if err := h.doctorService.SetReceptionistActiveStatus(doctorID, receptionistID, true); err != nil {
+		log.Printf("Error activating receptionist: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error activating receptionist: " + err.Error()})
+		return
+	}
+
+	receptionist, err := h.doctorService.GetReceptionistByID(receptionistID)
+	if err != nil {
+		log.Printf("Error fetching activated receptionist: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching receptionist after activation: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Receptionist activated successfully", "receptionist": receptionist})
+}
+
+func (h *DoctorHandler) DeactivateReceptionist(c *gin.Context) {
+	receptionistID := c.Param("receptionistId")
+	doctorID := c.GetString("userId")
+
+	if receptionistID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Receptionist ID is required"})
+		return
+	}
+	if doctorID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Doctor ID not found in context"})
+		return
+	}
+
+	if err := h.doctorService.SetReceptionistActiveStatus(doctorID, receptionistID, false); err != nil {
+		log.Printf("Error deactivating receptionist: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deactivating receptionist: " + err.Error()})
+		return
+	}
+
+	receptionist, err := h.doctorService.GetReceptionistByID(receptionistID)
+	if err != nil {
+		log.Printf("Error fetching deactivated receptionist: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching receptionist after deactivation: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Receptionist deactivated successfully", "receptionist": receptionist})
 }

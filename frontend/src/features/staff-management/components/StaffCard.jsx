@@ -166,10 +166,18 @@ const StaffCard = ({
   };
 
   const getMetaFields = () => {
+    const experienceYears = typeof staff?.experienceYears === 'number'
+      ? staff.experienceYears
+      : (typeof staff?.experience === 'number' ? staff.experience : 0);
+
     const fields = [
       { 
         label: t('labels.phone'), 
         value: staff?.phoneNumber || staff?.phone_number || 'N/A' 
+      },
+      {
+        label: t('labels.experience'),
+        value: `${experienceYears.toFixed(1)} years`
       },
       { 
         label: t('labels.joined'), 

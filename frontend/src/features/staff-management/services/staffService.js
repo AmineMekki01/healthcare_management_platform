@@ -9,7 +9,7 @@ class StaffService {
   async handleApiCall(apiCall, operation = 'API operation') {
     try {
       const response = await apiCall();
-      return response.data;
+      return response?.data ?? response;
     } catch (error) {
       console.error(`Error in ${operation}:`, error);
       const message = error.response?.data?.error || error.message || `Failed to ${operation}`;
@@ -19,6 +19,11 @@ class StaffService {
 
   transformReceptionistData(receptionist) {
     if (!receptionist) return null;
+
+
+    const experienceYears = typeof receptionist.experienceYears === 'number'
+      ? receptionist.experienceYears
+      : (typeof receptionist.experience_years === 'number' ? receptionist.experience_years : 0);
 
     return {
       id: receptionist.receptionistId,
@@ -43,7 +48,9 @@ class StaffService {
       permissions: receptionist.permissions || [],
       workSchedule: receptionist.workSchedule || [],
       joiningDate: receptionist.createdAt,
-      experience: staffUtils.calculateExperience(receptionist.createdAt),
+      experienceYears,
+      experience: experienceYears,
+      experiences: receptionist.experiences || [],
       contactInfo: {
         email: receptionist.email,
         phone: receptionist.phoneNumber,

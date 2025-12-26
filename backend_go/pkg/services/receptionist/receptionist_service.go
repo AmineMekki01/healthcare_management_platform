@@ -185,6 +185,10 @@ func (s *ReceptionistService) GetReceptionistProfile(receptionistID string) (*mo
 	}
 
 	var receptionist models.Receptionist
+	var streetAddress sql.NullString
+	var zipCode sql.NullString
+	var bio sql.NullString
+	var profilePhotoURL sql.NullString
 	query := `SELECT receptionist_id, username, first_name, last_name, sex, email, phone_number,
 		street_address, city_name, state_name, zip_code, country_name, birth_date, bio,
 		profile_photo_url, assigned_doctor_id, is_active, email_verified, created_at, updated_at
@@ -193,14 +197,11 @@ func (s *ReceptionistService) GetReceptionistProfile(receptionistID string) (*mo
 	err = s.db.QueryRow(context.Background(), query, id).Scan(
 		&receptionist.ReceptionistID, &receptionist.Username, &receptionist.FirstName,
 		&receptionist.LastName, &receptionist.Sex, &receptionist.Email,
-		&receptionist.PhoneNumber, &receptionist.StreetAddress, &receptionist.CityName, &receptionist.StateName,
-		&receptionist.ZipCode, &receptionist.CountryName, &receptionist.BirthDate,
-		&receptionist.Bio, &receptionist.ProfilePictureURL, &receptionist.AssignedDoctorID,
+		&receptionist.PhoneNumber, &streetAddress, &receptionist.CityName, &receptionist.StateName,
+		&zipCode, &receptionist.CountryName, &receptionist.BirthDate,
+		&bio, &profilePhotoURL, &receptionist.AssignedDoctorID,
 		&receptionist.IsActive, &receptionist.EmailVerified, &receptionist.CreatedAt,
 		&receptionist.UpdatedAt)
-
-	receptionist.ProfilePictureURL, err = utils.GeneratePresignedObjectURL(receptionist.ProfilePictureURL)
-
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("receptionist not found")
@@ -208,7 +209,216 @@ func (s *ReceptionistService) GetReceptionistProfile(receptionistID string) (*mo
 		return nil, fmt.Errorf("database error: %v", err)
 	}
 
+	if streetAddress.Valid {
+		receptionist.StreetAddress = streetAddress.String
+	}
+	if zipCode.Valid {
+		receptionist.ZipCode = zipCode.String
+	}
+	if bio.Valid {
+		receptionist.Bio = bio.String
+	}
+	if profilePhotoURL.Valid {
+		receptionist.ProfilePictureURL = profilePhotoURL.String
+		presignedURL, presignErr := utils.GeneratePresignedObjectURL(receptionist.ProfilePictureURL)
+		if presignErr != nil {
+			log.Printf("Warning: failed to generate presigned URL for profile picture: %v", presignErr)
+		} else {
+			receptionist.ProfilePictureURL = presignedURL
+		}
+	}
+
+	experiences, err := s.ListReceptionistExperiences(receptionistID)
+	if err != nil {
+		log.Printf("Warning: failed to load receptionist experiences: %v", err)
+	} else {
+		receptionist.Experiences = experiences
+	}
+
+	years, err := s.getReceptionistExperienceYears(id)
+	if err != nil {
+		log.Printf("Warning: failed to compute receptionist experience years: %v", err)
+	} else {
+		receptionist.ExperienceYears = years
+	}
+
 	return &receptionist, nil
+}
+
+func (s *ReceptionistService) ListReceptionistExperiences(receptionistID string) ([]models.ReceptionistExperience, error) {
+	id, err := uuid.Parse(receptionistID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid receptionist ID")
+	}
+
+	query := `
+	SELECT
+		experience_id,
+		receptionist_id,
+		organization_name,
+		position_title,
+		location,
+		start_date,
+		end_date,
+		description,
+		created_at,
+		updated_at
+	FROM receptionist_experiences
+	WHERE receptionist_id = $1
+	ORDER BY start_date DESC
+	`
+
+	rows, err := s.db.Query(context.Background(), query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var experiences []models.ReceptionistExperience
+	for rows.Next() {
+		var exp models.ReceptionistExperience
+		var location sql.NullString
+		var endDate sql.NullTime
+		var description sql.NullString
+
+		if err := rows.Scan(
+			&exp.ExperienceID,
+			&exp.ReceptionistID,
+			&exp.OrganizationName,
+			&exp.PositionTitle,
+			&location,
+			&exp.StartDate,
+			&endDate,
+			&description,
+			&exp.CreatedAt,
+			&exp.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		if location.Valid {
+			loc := location.String
+			exp.Location = &loc
+		}
+		if endDate.Valid {
+			ed := endDate.Time
+			exp.EndDate = &ed
+		}
+		if description.Valid {
+			desc := description.String
+			exp.Description = &desc
+		}
+		experiences = append(experiences, exp)
+	}
+
+	return experiences, nil
+}
+
+func (s *ReceptionistService) CreateReceptionistExperience(receptionistID string, req models.ReceptionistExperienceCreateRequest) (*models.ReceptionistExperience, error) {
+	receptionistUUID, err := uuid.Parse(receptionistID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid receptionist ID")
+	}
+
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		return nil, fmt.Errorf("invalid startDate format. Use YYYY-MM-DD")
+	}
+
+	var endDate *time.Time
+	if req.EndDate != nil && *req.EndDate != "" {
+		parsedEndDate, err := time.Parse("2006-01-02", *req.EndDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid endDate format. Use YYYY-MM-DD")
+		}
+		endDate = &parsedEndDate
+	}
+
+	query := `
+	INSERT INTO receptionist_experiences
+		(receptionist_id, organization_name, position_title, location, start_date, end_date, description)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	RETURNING experience_id, receptionist_id, organization_name, position_title, location, start_date, end_date, description, created_at, updated_at
+	`
+
+	var exp models.ReceptionistExperience
+	var location sql.NullString
+	var endDateNull sql.NullTime
+	var description sql.NullString
+
+	err = s.db.QueryRow(context.Background(), query,
+		receptionistUUID,
+		req.OrganizationName,
+		req.PositionTitle,
+		req.Location,
+		startDate,
+		endDate,
+		req.Description,
+	).Scan(
+		&exp.ExperienceID,
+		&exp.ReceptionistID,
+		&exp.OrganizationName,
+		&exp.PositionTitle,
+		&location,
+		&exp.StartDate,
+		&endDateNull,
+		&description,
+		&exp.CreatedAt,
+		&exp.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if location.Valid {
+		loc := location.String
+		exp.Location = &loc
+	}
+	if endDateNull.Valid {
+		ed := endDateNull.Time
+		exp.EndDate = &ed
+	}
+	if description.Valid {
+		desc := description.String
+		exp.Description = &desc
+	}
+
+	return &exp, nil
+}
+
+func (s *ReceptionistService) DeleteReceptionistExperience(receptionistID, experienceID string) error {
+	receptionistUUID, err := uuid.Parse(receptionistID)
+	if err != nil {
+		return fmt.Errorf("invalid receptionist ID")
+	}
+	experienceUUID, err := uuid.Parse(experienceID)
+	if err != nil {
+		return fmt.Errorf("invalid experience ID")
+	}
+
+	query := `DELETE FROM receptionist_experiences WHERE experience_id = $1 AND receptionist_id = $2`
+	result, err := s.db.Exec(context.Background(), query, experienceUUID, receptionistUUID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+
+func (s *ReceptionistService) getReceptionistExperienceYears(receptionistID uuid.UUID) (float64, error) {
+	var years float64
+	query := `
+		SELECT COALESCE(SUM((COALESCE(end_date, CURRENT_DATE) - start_date)), 0)::float8 / 365.25
+		FROM receptionist_experiences
+		WHERE receptionist_id = $1
+	`
+
+	err := s.db.QueryRow(context.Background(), query, receptionistID).Scan(&years)
+	if err != nil {
+		return 0, err
+	}
+	return years, nil
 }
 
 func (s *ReceptionistService) UpdateReceptionistProfile(receptionistID string, req models.ReceptionistProfileUpdateRequest) error {

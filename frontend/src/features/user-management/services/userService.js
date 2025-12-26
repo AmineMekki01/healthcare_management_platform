@@ -175,12 +175,35 @@ class UserService {
         birthDate: userData.birthDate || '',
         sex: userData.sex || '',
         age: userData.age || null,
+        experiences: userData.experiences || [],
+        experienceYears: typeof userData.experienceYears === 'number' ? userData.experienceYears : 0,
       };
     } catch (error) {
       console.error(`Error fetching ${userType} profile:`, error);
       const message = error.response?.data?.error || error.message || `Failed to fetch ${userType} profile`;
       throw new Error(message);
     }
+  }
+
+  async listReceptionistExperiences(receptionistId) {
+    return this.handleApiCall(async () => {
+      const response = await this.axiosInstance.get(`/api/v1/receptionist/${receptionistId}/experiences`);
+      return response.data.experiences || [];
+    }, 'list receptionist experiences');
+  }
+
+  async createReceptionistExperience(receptionistId, payload) {
+    return this.handleApiCall(async () => {
+      const response = await this.axiosInstance.post(`/api/v1/receptionist/${receptionistId}/experiences`, payload);
+      return response.data.experience;
+    }, 'create receptionist experience');
+  }
+
+  async deleteReceptionistExperience(receptionistId, experienceId) {
+    return this.handleApiCall(async () => {
+      const response = await this.axiosInstance.delete(`/api/v1/receptionist/${receptionistId}/experiences/${experienceId}`);
+      return response.data;
+    }, 'delete receptionist experience');
   }
   async updateUserProfile(userId, userType, profileData) {
     return this.handleApiCall(async () => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import StaffList from '../components/StaffList';
@@ -166,6 +167,7 @@ const EmptyStateDescription = styled.p`
 const StaffManagementPage = () => {
   const { t } = useTranslation('staff');
   const { doctorId } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const {
     receptionists,
@@ -225,15 +227,6 @@ const StaffManagementPage = () => {
               {t('page.subtitle')}
             </PageSubtitle>
           </div>
-          
-          <HeaderActions>
-            <ActionButton 
-              className="primary"
-              onClick={() => console.log('Add new staff')}
-            >
-              {t('actions.addStaff')}
-            </ActionButton>
-          </HeaderActions>
         </HeaderTop>
 
         <HeaderStats>
@@ -297,8 +290,7 @@ const StaffManagementPage = () => {
         ) : (
           <StaffList 
             staff={receptionists}
-            onStaffSelect={(staff) => console.log('View staff details:', staff)}
-            onStaffEdit={(staff) => handleStaffAction('edit', staff)}
+            onStaffSelect={(staff) => staff?.id && navigate(`/receptionist-profile/${staff.id}`)}
             onActivate={(staff) => handleStaffAction('activate', staff)}
             onDeactivate={(staff) => handleStaffAction('deactivate', staff)}
             onDismiss={(staff) => handleStaffAction('dismiss', staff)}
