@@ -5,6 +5,7 @@
   },
   "navigation": {
     "personal": "Personal Information",
+    "healthProfile": "Health Profile",
     "followSettings": "Follow Settings",
     "followedDoctors": "Doctors I Follow",
     "availability": "Availability Settings",

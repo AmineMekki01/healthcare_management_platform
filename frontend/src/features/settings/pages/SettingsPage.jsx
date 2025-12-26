@@ -7,6 +7,7 @@ import PersonalInfo from '../components/PersonalInfo';
 import DoctorFollowSettings from '../components/DoctorFollowSettings';
 import DoctorAdditionalInfo from '../components/DoctorAdditionalInfo';
 import DoctorAvailabilitySettings from '../components/DoctorAvailabilitySettings';
+import HealthProfile from '../components/HealthProfile';
 import {
   SettingsContainer,
   SettingsHeader,
@@ -31,6 +32,8 @@ const SettingsPage = () => {
     switch (activeSection) {
       case 'personal':
         return <PersonalInfo userId={userId} userType={userType} />;
+      case 'healthProfile':
+        return <HealthProfile />;
       case 'doctors':
         return <DoctorFollowSettings userId={userId} />;
       case 'availability':
