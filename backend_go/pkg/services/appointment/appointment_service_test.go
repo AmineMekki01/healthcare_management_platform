@@ -30,6 +30,11 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to setup test database: %v", err)
 	}
 
+	unlock, err := testDB.AcquireTestLock(ctx)
+	if err != nil {
+		log.Fatalf("Failed to acquire test DB lock: %v", err)
+	}
+
 	err = createMedicalHistoryTable(ctx)
 	if err != nil {
 		log.Printf("Warning: Could not create medical_history table: %v", err)
@@ -39,6 +44,8 @@ func TestMain(m *testing.M) {
 	testService = NewAppointmentService(testDB.Pool, cfg)
 
 	code := m.Run()
+
+	unlock()
 
 	testDB.Pool.Close()
 	os.Exit(code)

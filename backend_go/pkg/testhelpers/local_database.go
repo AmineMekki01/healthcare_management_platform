@@ -13,6 +13,31 @@ type LocalTestDatabase struct {
 	ConnStr string
 }
 
+const localTestDBAdvisoryLockID int64 = 912345678
+
+func (db *LocalTestDatabase) AcquireTestLock(ctx context.Context) (func(), error) {
+	if db == nil || db.Pool == nil {
+		return func() {}, nil
+	}
+
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire db connection for advisory lock: %w", err)
+	}
+
+	if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock($1)", localTestDBAdvisoryLockID); err != nil {
+		conn.Release()
+		return nil, fmt.Errorf("failed to acquire advisory lock: %w", err)
+	}
+
+	unlock := func() {
+		_, _ = conn.Exec(context.Background(), "SELECT pg_advisory_unlock($1)", localTestDBAdvisoryLockID)
+		conn.Release()
+	}
+
+	return unlock, nil
+}
+
 func SetupLocalTestDatabase(ctx context.Context) (*LocalTestDatabase, error) {
 	connStr := "postgres://postgres:Amine-1963@localhost:5432/tbibi_app?sslmode=disable"
 
@@ -26,6 +51,21 @@ func SetupLocalTestDatabase(ctx context.Context) (*LocalTestDatabase, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	_, _ = pool.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
+	_, _ = pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS auth_sessions (
+		id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+		user_id uuid NOT NULL,
+		user_type VARCHAR(50) NOT NULL,
+		token_hash VARCHAR(255) NOT NULL,
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+		last_used_at TIMESTAMP WITH TIME ZONE,
+		expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+		revoked_at TIMESTAMP WITH TIME ZONE,
+		ip_address VARCHAR(64),
+		user_agent TEXT,
+		CONSTRAINT auth_sessions_token_hash_unique UNIQUE (token_hash)
+	)`)
+
 	testDB := &LocalTestDatabase{
 		Pool:    pool,
 		ConnStr: connStr,
@@ -36,7 +76,12 @@ func SetupLocalTestDatabase(ctx context.Context) (*LocalTestDatabase, error) {
 }
 
 func (db *LocalTestDatabase) CleanupTables(ctx context.Context) error {
-	_, err := db.Pool.Exec(ctx, "TRUNCATE TABLE verification_tokens RESTART IDENTITY CASCADE")
+	_, err := db.Pool.Exec(ctx, "TRUNCATE TABLE auth_sessions CASCADE")
+	if err != nil {
+		return fmt.Errorf("failed to truncate auth_sessions: %w", err)
+	}
+
+	_, err = db.Pool.Exec(ctx, "TRUNCATE TABLE verification_tokens RESTART IDENTITY CASCADE")
 	if err != nil {
 		return fmt.Errorf("failed to truncate verification_tokens: %w", err)
 	}

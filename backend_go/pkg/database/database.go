@@ -269,6 +269,20 @@ func createTables(conn *pgxpool.Pool) error {
 			type VARCHAR(255) NOT NULL
 		)`,
 
+		`CREATE TABLE IF NOT EXISTS auth_sessions (
+			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id uuid NOT NULL,
+			user_type VARCHAR(50) NOT NULL,
+			token_hash VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			last_used_at TIMESTAMP WITH TIME ZONE,
+			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			revoked_at TIMESTAMP WITH TIME ZONE,
+			ip_address VARCHAR(64),
+			user_agent TEXT,
+			CONSTRAINT auth_sessions_token_hash_unique UNIQUE (token_hash)
+		)`,
+
 		`CREATE TABLE IF NOT EXISTS followers (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),

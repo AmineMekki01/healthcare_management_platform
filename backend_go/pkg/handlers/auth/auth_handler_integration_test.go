@@ -37,8 +37,10 @@ func setupHandlerIntegrationTest(t *testing.T) (*AuthHandler, context.Context, f
 	}
 
 	ctx := context.Background()
+	unlock, err := testDB.AcquireTestLock(ctx)
+	require.NoError(t, err)
 
-	err := testDB.CleanupTables(ctx)
+	err = testDB.CleanupTables(ctx)
 	require.NoError(t, err)
 
 	cfg := &config.Config{
@@ -58,6 +60,7 @@ func setupHandlerIntegrationTest(t *testing.T) (*AuthHandler, context.Context, f
 
 	cleanup := func() {
 		testDB.CleanupTables(ctx)
+		unlock()
 	}
 
 	return handler, ctx, cleanup
@@ -555,10 +558,21 @@ func TestFullAuthenticationFlow_Integration(t *testing.T) {
 	assert.NotEmpty(t, loginResponse["accessToken"])
 	assert.NotEmpty(t, loginResponse["refreshToken"])
 
+	refreshToken := ""
+	for _, cookie := range loginW.Result().Cookies() {
+		if cookie.Name == "refresh_token" {
+			refreshToken = cookie.Value
+			break
+		}
+	}
+	if refreshToken == "" {
+		refreshToken = fmt.Sprintf("%v", loginResponse["refreshToken"])
+	}
+
 	refreshW := httptest.NewRecorder()
 	refreshC, _ := gin.CreateTestContext(refreshW)
 	refreshC.Request = httptest.NewRequest("POST", "/auth/refresh-token", nil)
-	refreshC.Request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", loginResponse["refreshToken"]))
+	refreshC.Request.AddCookie(&http.Cookie{Name: "refresh_token", Value: refreshToken})
 
 	handler.RefreshToken(refreshC)
 	assert.Equal(t, http.StatusOK, refreshW.Code)
@@ -593,7 +607,16 @@ func TestRefreshToken_Integration_ConcurrentRequests(t *testing.T) {
 
 	var loginResponse map[string]interface{}
 	json.Unmarshal(loginW.Body.Bytes(), &loginResponse)
-	refreshToken := loginResponse["refreshToken"].(string)
+	refreshToken := ""
+	for _, cookie := range loginW.Result().Cookies() {
+		if cookie.Name == "refresh_token" {
+			refreshToken = cookie.Value
+			break
+		}
+	}
+	if refreshToken == "" {
+		refreshToken = loginResponse["refreshToken"].(string)
+	}
 
 	var wg sync.WaitGroup
 	results := make([]int, 5)
@@ -606,7 +629,7 @@ func TestRefreshToken_Integration_ConcurrentRequests(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Request = httptest.NewRequest("POST", "/auth/refresh-token", nil)
-			c.Request.Header.Set("Authorization", "Bearer "+refreshToken)
+			c.Request.AddCookie(&http.Cookie{Name: "refresh_token", Value: refreshToken})
 			handler.RefreshToken(c)
 			results[index] = w.Code
 
@@ -622,10 +645,22 @@ func TestRefreshToken_Integration_ConcurrentRequests(t *testing.T) {
 
 	wg.Wait()
 
+	okCount := 0
+	unauthorizedCount := 0
 	for i, code := range results {
-		assert.Equal(t, http.StatusOK, code, "Request %d should succeed", i)
-		assert.NotEmpty(t, accessTokens[i], "Request %d should return access token", i)
+		if code == http.StatusOK {
+			okCount++
+			assert.NotEmpty(t, accessTokens[i], "Request %d should return access token", i)
+			continue
+		}
+		if code == http.StatusUnauthorized {
+			unauthorizedCount++
+			continue
+		}
+		assert.Failf(t, "unexpected status", "Request %d returned unexpected status %d", i, code)
 	}
+	assert.Equal(t, 1, okCount, "Exactly one refresh should succeed due to refresh token rotation")
+	assert.Equal(t, 4, unauthorizedCount, "All other refreshes should fail because the refresh token was already rotated")
 
 	t.Log("Ô£à Concurrent refresh requests handled successfully")
 }
@@ -1521,13 +1556,22 @@ func TestRefreshToken_Integration_MultipleSequentialRefreshes(t *testing.T) {
 
 	var loginResponse map[string]interface{}
 	json.Unmarshal(loginW.Body.Bytes(), &loginResponse)
-	currentRefreshToken := loginResponse["refreshToken"].(string)
+	currentRefreshToken := ""
+	for _, cookie := range loginW.Result().Cookies() {
+		if cookie.Name == "refresh_token" {
+			currentRefreshToken = cookie.Value
+			break
+		}
+	}
+	if currentRefreshToken == "" {
+		currentRefreshToken = loginResponse["refreshToken"].(string)
+	}
 
 	for i := 0; i < 3; i++ {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest("POST", "/auth/refresh-token", nil)
-		c.Request.Header.Set("Authorization", "Bearer "+currentRefreshToken)
+		c.Request.AddCookie(&http.Cookie{Name: "refresh_token", Value: currentRefreshToken})
 
 		handler.RefreshToken(c)
 
@@ -1536,6 +1580,13 @@ func TestRefreshToken_Integration_MultipleSequentialRefreshes(t *testing.T) {
 		var response map[string]interface{}
 		json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NotEmpty(t, response["accessToken"], "Refresh %d should return access token", i+1)
+
+		for _, cookie := range w.Result().Cookies() {
+			if cookie.Name == "refresh_token" {
+				currentRefreshToken = cookie.Value
+				break
+			}
+		}
 	}
 
 	t.Log("Ô£à Multiple sequential refreshes work correctly")

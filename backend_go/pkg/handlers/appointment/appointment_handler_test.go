@@ -51,8 +51,10 @@ func setupHandlerTest(t *testing.T) (*AppointmentHandler, context.Context, func(
 	}
 
 	ctx := context.Background()
+	unlock, err := testDB.AcquireTestLock(ctx)
+	require.NoError(t, err)
 
-	err := testDB.CleanupTables(ctx)
+	err = testDB.CleanupTables(ctx)
 	require.NoError(t, err)
 
 	cfg := &config.Config{}
@@ -61,6 +63,7 @@ func setupHandlerTest(t *testing.T) (*AppointmentHandler, context.Context, func(
 
 	cleanup := func() {
 		testDB.CleanupTables(ctx)
+		unlock()
 	}
 
 	return handler, ctx, cleanup

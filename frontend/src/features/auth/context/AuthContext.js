@@ -4,7 +4,7 @@ import authService from '../services/authService';
 export const AuthContext = createContext();
 
 const AuthProvider = ({ children, navigate }) => {
-    const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+    const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('userId'));
     const [userType, setUserType] = useState(localStorage.getItem('userType') || 'patient');
     const [doctorId, setDoctorId] = useState(localStorage.getItem('doctorId'));
     const [patientId, setPatientId] = useState(localStorage.getItem('patientId'));
@@ -15,48 +15,82 @@ const AuthProvider = ({ children, navigate }) => {
     const [userFullName, setUserFullName] = useState(null);
     const [userProfilePictureUrl, setUserProfilePhotoUrl] = useState(null);
     const [userId, setUserId] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
-    const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
 
 
-    useEffect(() => {   
-        if (localStorage.getItem('token')) {
+    useEffect(() => {
+        const bootstrap = async () => {
             setUserFullName(localStorage.getItem('userFullName'));
             setUserType(localStorage.getItem('userType'));
             setUserProfilePhotoUrl(localStorage.getItem("userProfilePictureUrl"));
-            setToken(localStorage.getItem('token'));
             setDoctorId(localStorage.getItem('doctorId'));
             setPatientId(localStorage.getItem('patientId'));
             setReceptionistId(localStorage.getItem('receptionistId'));
             setAssignedDoctorId(localStorage.getItem('assignedDoctorId'));
-            setRefreshToken(localStorage.getItem('refreshToken'));
 
-            const userType = localStorage.getItem('userType');
-            if (userType === 'doctor') {
-                const doctorId = localStorage.getItem('doctorId');
-                if (doctorId && doctorId !== 'null' && doctorId !== 'undefined') {
-                    setUserId(doctorId);
-                }
-            } else if (userType === 'receptionist') {
-                const receptionistId = localStorage.getItem('receptionistId');
-                if (receptionistId && receptionistId !== 'null' && receptionistId !== 'undefined') {
-                    setUserId(receptionistId);
-                }
-            } else {
-                const patientId = localStorage.getItem('patientId');
-                if (patientId && patientId !== 'null' && patientId !== 'undefined') {
-                    setUserId(patientId);
-                }
+            const storedUserId = localStorage.getItem('userId');
+            if (storedUserId && storedUserId !== 'null' && storedUserId !== 'undefined') {
+                setUserId(storedUserId);
             }
-            setIsLoggedIn(true);
-        }
+
+            try {
+                const me = await authService.me();
+                if (me?.userId && me?.userType) {
+                    const resolvedUserId = String(me.userId);
+                    const resolvedUserType = String(me.userType);
+
+                    localStorage.setItem('userId', resolvedUserId);
+                    localStorage.setItem('userType', resolvedUserType);
+
+                    if (resolvedUserType === 'doctor') {
+                        localStorage.setItem('doctorId', resolvedUserId);
+                        setDoctorId(resolvedUserId);
+                    } else if (resolvedUserType === 'receptionist') {
+                        localStorage.setItem('receptionistId', resolvedUserId);
+                        setReceptionistId(resolvedUserId);
+                    } else {
+                        localStorage.setItem('patientId', resolvedUserId);
+                        setPatientId(resolvedUserId);
+                    }
+
+                    setUserId(resolvedUserId);
+                    setUserType(resolvedUserType);
+                    setIsLoggedIn(true);
+                    return;
+                }
+            } catch (error) {
+                localStorage.removeItem('doctorId');
+                localStorage.removeItem('patientId');
+                localStorage.removeItem('receptionistId');
+                localStorage.removeItem('assignedDoctorId');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('userFullName');
+                localStorage.removeItem('userProfilePictureUrl');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('activeRoleMode');
+                setDoctorId(null);
+                setPatientId(null);
+                setReceptionistId(null);
+                setAssignedDoctorId(null);
+                setUserType('patient');
+                setUserFullName(null);
+                setUserProfilePhotoUrl(null);
+                setUserId(null);
+                setIsLoggedIn(false);
+            }
+
+            setIsLoggedIn(!!localStorage.getItem('userId'));
+        };
+
+        bootstrap();
     }, []);
 
     const logout = useCallback(() => {
         if (window.inactivityTimeout) clearTimeout(window.inactivityTimeout);
         if (window.logoutTimeout) clearTimeout(window.logoutTimeout);
 
-        localStorage.removeItem('token');
+        authService.logout().catch(() => {
+        });
+
         localStorage.removeItem('doctorId');
         localStorage.removeItem('patientId');
         localStorage.removeItem('receptionistId');
@@ -64,11 +98,9 @@ const AuthProvider = ({ children, navigate }) => {
         localStorage.removeItem('userType');
         localStorage.removeItem('userFullName');
         localStorage.removeItem('userProfilePictureUrl');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRoleMode');
 
-        setToken(null);
         setDoctorId(null);
         setPatientId(null);
         setReceptionistId(null);
@@ -78,7 +110,6 @@ const AuthProvider = ({ children, navigate }) => {
         setUserFullName(null);
         setUserProfilePhotoUrl(null);
         setUserId(null);
-        setRefreshToken(null);
 
         try {
             if (navigate && typeof navigate === 'function') {
@@ -95,9 +126,7 @@ const AuthProvider = ({ children, navigate }) => {
 
     const refreshAccessToken = useCallback(async () => {
         try {
-            const data = await authService.refreshToken();
-            setToken(data.accessToken);
-            localStorage.setItem('token', data.accessToken);
+            await authService.refreshToken();
             return true;
         } catch (error) {
             console.error("Failed to refresh token", error);
@@ -132,7 +161,6 @@ const AuthProvider = ({ children, navigate }) => {
             userFullName,
             userProfilePictureUrl,
             userId,
-            token,
             setIsLoggedIn,
             setUserName,
             setUserAge,
@@ -145,8 +173,6 @@ const AuthProvider = ({ children, navigate }) => {
             setUserFullName,
             setUserProfilePhotoUrl,
             setUserId,
-            setToken,
-            setRefreshToken,
             refreshAccessToken
         }}>
             {children}

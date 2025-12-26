@@ -1,5 +1,10 @@
 import axios from 'axios';
 
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const getBackendURL = () => {
   if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     return `http://${window.location.hostname}:3001`;
@@ -9,17 +14,17 @@ const getBackendURL = () => {
 
 const instance = axios.create({
   baseURL: getBackendURL(),
+  withCredentials: true,
 });
-
-function getToken() {
-  return localStorage.getItem('token');
-}
 
 instance.interceptors.request.use(
   (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    const method = (config.method || 'get').toLowerCase();
+    if (method !== 'get' && method !== 'head' && method !== 'options') {
+      const csrfToken = getCookie('csrf_token');
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
     }
     return config;
   },
@@ -52,40 +57,26 @@ instance.interceptors.response.use(
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            originalRequest.headers['Authorization'] = 'Bearer ' + token;
-            return instance(originalRequest);
-          })
+          .then(() => instance(originalRequest))
           .catch((err) => Promise.reject(err));
       }
 
       isRefreshing = true;
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-
-        const refreshResponse = await axios.post(
-          `${getBackendURL()}/api/v1/refresh-token`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        const newToken = refreshResponse.data.accessToken;
-        localStorage.setItem('token', newToken);
-
-        processQueue(null, newToken);
-
-        originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+        await instance.post('/api/v1/refresh-token', {});
+        processQueue(null, null);
         return instance(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('doctorId');
+        localStorage.removeItem('patientId');
+        localStorage.removeItem('receptionistId');
+        localStorage.removeItem('assignedDoctorId');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('userFullName');
+        localStorage.removeItem('userProfilePictureUrl');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('activeRoleMode');
         window.location.href = '/login';
         return Promise.reject(err);
       } finally {

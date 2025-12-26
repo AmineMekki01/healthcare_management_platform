@@ -111,8 +111,6 @@ const LoginForm = () => {
     setUserFullName,
     setUserProfilePhotoUrl,
     setUserId,
-    setToken,
-    setRefreshToken,
     setReceptionistId,
     setAssignedDoctorId,
   } = useContext(AuthContext);
@@ -147,11 +145,9 @@ const LoginForm = () => {
 
       const data = await authService.login(credentials);
 
-      let accessToken, refreshToken, userData;
+      let userData;
       
       if (localUserType === 'receptionist') {
-        accessToken = data.accessToken;
-        refreshToken = data.refreshToken;
         userData = {
           receptionistId: data.userId,
           firstName: data.firstName,
@@ -160,19 +156,13 @@ const LoginForm = () => {
           assignedDoctorId: data.assignedDoctorId
         };
       } else {
-        accessToken = data.accessToken;
-        refreshToken = data.refreshToken;
         userData = data;
       }
 
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userType', localUserType);
       localStorage.setItem('userProfilePictureUrl', userData.profilePictureUrl || '');
       localStorage.setItem('userFullName', `${userData.firstName} ${userData.lastName}`);
 
-      setToken(accessToken);
-      setRefreshToken(refreshToken);
       setUserType(localUserType);
       setUserProfilePhotoUrl(userData.profilePictureUrl || '');
       setUserFullName(`${userData.firstName} ${userData.lastName}`);
