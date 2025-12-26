@@ -18,7 +18,8 @@ import {
   ListItemIcon,
   Divider,
   IconButton,
-  Chip
+  Chip,
+  Stack
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -27,8 +28,13 @@ import {
   Search as SearchIcon,
   TrendingUp as TrendingUpIcon,
   PersonAdd as PersonAddIcon,
+  WorkOutline as WorkOutlineIcon,
+  MailOutline as MailOutlineIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import receptionistPatientService from '../services/receptionistPatientService';
+import receptionistHiringService from '../services/receptionistHiringService';
+import appointmentService from '../../appointments/services/appointmentService';
 
 const ReceptionistDashboard = () => {
   const navigate = useNavigate();
@@ -39,6 +45,8 @@ const ReceptionistDashboard = () => {
   const [appointmentStats, setAppointmentStats] = useState(null);
   const [patientStats, setPatientStats] = useState(null);
   const [recentPatients, setRecentPatients] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [pendingOffersCount, setPendingOffersCount] = useState(0);
   const [assignedDoctorId, setAssignedDoctorId] = useState(null);
   const [doctorName, setDoctorName] = useState('');
   const [userFullName, setUserFullName] = useState('');
@@ -64,24 +72,36 @@ const ReceptionistDashboard = () => {
     setError('');
 
     try {
-      const recentPatientsResponse = await receptionistPatientService.searchPatients({
-        page: 1,
-        page_size: 5,
-        search_term: ''
-      });
+      const receptionistId = localStorage.getItem('receptionistId') || localStorage.getItem('userId');
+      const effectiveDoctorId = localStorage.getItem('assignedDoctorId') || assignedDoctorId;
 
-      setPatientStats({
-        total: recentPatientsResponse.data.total || 0,
-        thisMonth: 0,
-        thisWeek: 0
-      });
-      
-      setAppointmentStats({
-        today: 0,
-        pending: 0,
-        thisWeek: 0
-      });
-      
+      const [recentPatientsResponse, apptStats, patStats, reservations, proposals] = await Promise.all([
+        receptionistPatientService.searchPatients({
+          page: 1,
+          page_size: 5,
+          search_term: ''
+        }),
+        receptionistPatientService.getAppointmentStats(),
+        receptionistPatientService.getPatientStats(),
+        effectiveDoctorId ? appointmentService.fetchReservations(effectiveDoctorId, 'doctor') : Promise.resolve([]),
+        receptionistId ? receptionistHiringService.listProposals(receptionistId) : Promise.resolve([]),
+      ]);
+
+      setAppointmentStats(apptStats || null);
+      setPatientStats(patStats || null);
+
+      const now = new Date();
+      const upcoming = (Array.isArray(reservations) ? reservations : [])
+        .filter((r) => !r?.isDoctorPatient && !r?.canceled && new Date(r?.appointmentEnd || r?.appointmentStart) > now)
+        .sort((a, b) => new Date(a.appointmentStart) - new Date(b.appointmentStart))
+        .slice(0, 6);
+      setUpcomingAppointments(upcoming);
+
+      const pending = (Array.isArray(proposals) ? proposals : []).filter(
+        (p) => String(p?.status || '').toLowerCase() === 'sent'
+      ).length;
+      setPendingOffersCount(pending);
+
       setRecentPatients(recentPatientsResponse.data.patients || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -101,6 +121,14 @@ const ReceptionistDashboard = () => {
 
   const handleCreateAppointment = () => {
     navigate('/receptionist/create-appointment');
+  };
+
+  const handleViewJobOffers = () => {
+    navigate('/receptionist/job-offers');
+  };
+
+  const handleViewMessages = () => {
+    navigate('/Messages');
   };
 
   const handleViewPatient = (patientId) => {
@@ -137,11 +165,22 @@ const ReceptionistDashboard = () => {
 
       <Card sx={{ mb: 4 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">
             {t('receptionist.quickActions')}
-          </Typography>
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={fetchDashboardData}
+              disabled={loading}
+            >
+              {t('buttons.refresh')}
+            </Button>
+          </Box>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Button
                 fullWidth
                 variant="contained"
@@ -152,7 +191,7 @@ const ReceptionistDashboard = () => {
                 {t('navigation.patientSearch')}
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -163,7 +202,7 @@ const ReceptionistDashboard = () => {
                 {t('receptionist.actions.addNewPatient')}
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -174,15 +213,26 @@ const ReceptionistDashboard = () => {
                 {t('navigation.scheduleAppointment')}
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={6}>
               <Button
                 fullWidth
-                variant="text"
-                startIcon={<TrendingUpIcon />}
-                onClick={() => {/* Navigate to reports */}}
+                variant="outlined"
+                startIcon={<WorkOutlineIcon />}
+                onClick={handleViewJobOffers}
                 sx={{ py: 2 }}
               >
-                {t('receptionist.actions.viewReports')}
+                {t('receptionist.jobOffers.title')}
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={6}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<MailOutlineIcon />}
+                onClick={handleViewMessages}
+                sx={{ py: 2 }}
+              >
+                {t('navigation.messages')}
               </Button>
             </Grid>
           </Grid>
@@ -190,6 +240,94 @@ const ReceptionistDashboard = () => {
       </Card>
 
       <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                  <EventIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  {t('receptionist.dashboard.upcomingAppointments')}
+                </Typography>
+                <Button variant="outlined" size="small" onClick={handleCreateAppointment}>
+                  {t('navigation.scheduleAppointment')}
+                </Button>
+              </Box>
+
+              {upcomingAppointments.length === 0 ? (
+                <Typography color="text.secondary">{t('receptionist.dashboard.noUpcomingAppointments')}</Typography>
+              ) : (
+                <List dense>
+                  {upcomingAppointments.map((a, idx) => {
+                    const start = a?.appointmentStart ? new Date(a.appointmentStart) : null;
+                    const end = a?.appointmentEnd ? new Date(a.appointmentEnd) : null;
+                    const primary = `${a?.patientFirstName || ''} ${a?.patientLastName || ''}`.trim() || t('patient.fields.never');
+                    const secondary = start
+                      ? `${start.toLocaleDateString()} • ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${end ? ` - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}`
+                      : '';
+
+                    return (
+                      <React.Fragment key={a?.appointmentId || idx}>
+                        <ListItem
+                          secondaryAction={
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              {!!a?.specialty && <Chip size="small" label={a.specialty} variant="outlined" />}
+                              <Chip
+                                size="small"
+                                color="success"
+                                label={t('status.active')}
+                              />
+                            </Stack>
+                          }
+                        >
+                          <ListItemIcon>
+                            <PeopleIcon />
+                          </ListItemIcon>
+                          <ListItemText primary={primary} secondary={secondary} />
+                        </ListItem>
+                        {idx < upcomingAppointments.length - 1 && <Divider />}
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                <TrendingUpIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                {t('receptionist.dashboard.insights')}
+              </Typography>
+
+              <Stack spacing={2}>
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    {t('receptionist.jobOffers.status.sent')}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    {pendingOffersCount}
+                  </Typography>
+                  <Button size="small" sx={{ mt: 1 }} onClick={handleViewJobOffers}>
+                    {t('receptionist.dashboard.viewJobOffers')}
+                  </Button>
+                </Paper>
+
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    {t('receptionist.dashboard.assignedDoctor')}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {doctorName}
+                  </Typography>
+                </Paper>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
@@ -200,27 +338,39 @@ const ReceptionistDashboard = () => {
               
               {appointmentStats ? (
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.light', color: 'white' }}>
-                      <Typography variant="h4">{appointmentStats.todayAppointments}</Typography>
+                      <Typography variant="h4">{appointmentStats.todayAppointments ?? 0}</Typography>
                       <Typography variant="body2">{t('common.today')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'white' }}>
-                      <Typography variant="h4">{appointmentStats.upcomingAppointments}</Typography>
+                      <Typography variant="h4">{appointmentStats.upcomingAppointments ?? 0}</Typography>
                       <Typography variant="body2">{t('receptionist.stats.upcoming')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.light', color: 'white' }}>
-                      <Typography variant="h4">{appointmentStats.completedAppointments}</Typography>
+                      <Typography variant="h4">{appointmentStats.completedAppointments ?? 0}</Typography>
                       <Typography variant="body2">{t('status.completed')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
+                    <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'error.light', color: 'white' }}>
+                      <Typography variant="h4">{appointmentStats.canceledAppointments ?? 0}</Typography>
+                      <Typography variant="body2">{t('status.cancelled')}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', color: 'white' }}>
-                      <Typography variant="h4">{appointmentStats.totalAppointments}</Typography>
+                      <Typography variant="h4">{appointmentStats.noShowAppointments ?? 0}</Typography>
+                      <Typography variant="body2">{t('receptionist.dashboard.noShows')}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', color: 'white' }}>
+                      <Typography variant="h4">{appointmentStats.totalAppointments ?? 0}</Typography>
                       <Typography variant="body2">{t('common.total')}</Typography>
                     </Paper>
                   </Grid>
@@ -242,27 +392,39 @@ const ReceptionistDashboard = () => {
               
               {patientStats ? (
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'secondary.light', color: 'white' }}>
-                      <Typography variant="h4">{patientStats.newPatientsToday}</Typography>
+                      <Typography variant="h4">{patientStats.newPatientsToday ?? 0}</Typography>
                       <Typography variant="body2">{t('receptionist.stats.newToday')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.main', color: 'white' }}>
-                      <Typography variant="h4">{patientStats.activePatients}</Typography>
+                      <Typography variant="h4">{patientStats.activePatients ?? 0}</Typography>
                       <Typography variant="body2">{t('status.active')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.main', color: 'white' }}>
-                      <Typography variant="h4">{patientStats.newPatientsWeek}</Typography>
+                      <Typography variant="h4">{patientStats.newPatientsWeek ?? 0}</Typography>
                       <Typography variant="body2">{t('receptionist.stats.thisWeek')}</Typography>
                     </Paper>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={6} md={4}>
+                    <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.light', color: 'white' }}>
+                      <Typography variant="h4">{patientStats.newPatientsMonth ?? 0}</Typography>
+                      <Typography variant="body2">{t('receptionist.dashboard.thisMonth')}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', color: 'white' }}>
+                      <Typography variant="h4">{patientStats.inactivePatients ?? 0}</Typography>
+                      <Typography variant="body2">{t('status.inactive')}</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
-                      <Typography variant="h4">{patientStats.totalPatients}</Typography>
+                      <Typography variant="h4">{patientStats.totalPatients ?? 0}</Typography>
                       <Typography variant="body2">{t('common.total')}</Typography>
                     </Paper>
                   </Grid>

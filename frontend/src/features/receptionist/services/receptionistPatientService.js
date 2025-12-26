@@ -6,7 +6,7 @@ class ReceptionistPatientService {
     
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (assignedDoctorId) {
-      queryParams.append('doctorId', assignedDoctorId);
+      queryParams.append('doctor_id', assignedDoctorId);
     }
     
     if (params.search_term) queryParams.append('search_query', params.search_term);
@@ -24,7 +24,7 @@ class ReceptionistPatientService {
     return {
       data: {
         patients: response.data.patients || [],
-        total: response.data.totalCount || 0,
+        total: response.data.total_count ?? response.data.totalCount ?? response.data.total ?? 0,
         page: params.page || 1,
         page_size: params.page_size || 20
       }
@@ -33,7 +33,7 @@ class ReceptionistPatientService {
 
   async getPatientDetails(patientId) {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
-    const queryParams = assignedDoctorId ? `?doctorId=${assignedDoctorId}` : '';
+    const queryParams = assignedDoctorId ? `?doctor_id=${assignedDoctorId}` : '';
     const response = await axios.get(`/api/v1/receptionist/patients/${patientId}${queryParams}`);
     return response.data;
   }
@@ -85,8 +85,8 @@ class ReceptionistPatientService {
     if (!assignedDoctorId) {
       throw new Error('No assigned doctor found');
     }
-    const response = await axios.get(`/api/v1/receptionist/stats/appointments?doctorId=${assignedDoctorId}`);
-    return response.data;
+    const response = await axios.get(`/api/v1/receptionist/stats/appointments?doctor_id=${assignedDoctorId}`);
+    return response.data?.stats ?? response.data;
   }
 
   async getPatientStats() {
@@ -94,8 +94,8 @@ class ReceptionistPatientService {
     if (!assignedDoctorId) {
       throw new Error('No assigned doctor found');
     }
-    const response = await axios.get(`/api/v1/receptionist/stats/patients?doctorId=${assignedDoctorId}`);
-    return response.data;
+    const response = await axios.get(`/api/v1/receptionist/stats/patients?doctor_id=${assignedDoctorId}`);
+    return response.data?.stats ?? response.data;
   }
 
   async getAssignedDoctor() {

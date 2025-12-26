@@ -227,6 +227,15 @@
     }
   },
   "receptionist": {
+    "dashboard": {
+      "upcomingAppointments": "المواعيد القادمة",
+      "noUpcomingAppointments": "لا توجد مواعيد قادمة",
+      "insights": "ملخص",
+      "viewJobOffers": "عرض عروض العمل",
+      "assignedDoctor": "الطبيب المعيَّن",
+      "noShows": "عدم الحضور",
+      "thisMonth": "هذا الشهر"
+    },
     "jobOffers": {
       "title": "عروض العمل",
       "subtitle": "راجع عروض الأطباء وقم بالقبول أو الرفض.",

@@ -227,6 +227,15 @@
     }
   },
   "receptionist": {
+    "dashboard": {
+      "upcomingAppointments": "Rendez-vous à venir",
+      "noUpcomingAppointments": "Aucun rendez-vous à venir",
+      "insights": "Aperçu",
+      "viewJobOffers": "Voir les offres",
+      "assignedDoctor": "Médecin assigné",
+      "noShows": "Absences",
+      "thisMonth": "Ce mois-ci"
+    },
     "jobOffers": {
       "title": "Offres d'emploi",
       "subtitle": "Consultez les offres des médecins et acceptez ou refusez.",

@@ -241,6 +241,15 @@
       "addNewPatient": "Add New Patient",
       "viewReports": "View Reports"
     },
+    "dashboard": {
+      "upcomingAppointments": "Upcoming Appointments",
+      "noUpcomingAppointments": "No upcoming appointments",
+      "insights": "Insights",
+      "viewJobOffers": "View Job Offers",
+      "assignedDoctor": "Assigned Doctor",
+      "noShows": "No-shows",
+      "thisMonth": "This Month"
+    },
     "stats": {
       "appointments": "Appointment Statistics",
       "patients": "Patient Statistics",

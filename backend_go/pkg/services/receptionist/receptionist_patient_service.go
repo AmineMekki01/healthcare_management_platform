@@ -725,19 +725,41 @@ func (s *ReceptionistPatientService) GetAppointmentStats(receptionistID, doctorI
 		}
 	}
 
+	var hasNoShowColumn bool
+	err := s.db.QueryRow(
+		ctx,
+		`SELECT EXISTS(
+			SELECT 1
+			FROM information_schema.columns
+			WHERE table_name = 'appointments' AND column_name = 'no_show'
+		)`,
+	).Scan(&hasNoShowColumn)
+	if err != nil {
+		log.Printf("GetAppointmentStats: failed to detect appointments.no_show column: %v", err)
+		hasNoShowColumn = false
+	}
+
 	query := `
 		SELECT 
 			COUNT(*) as total_appointments,
 			COUNT(CASE WHEN DATE(appointment_start) = CURRENT_DATE THEN 1 END) as today_appointments,
 			COUNT(CASE WHEN appointment_start > NOW() AND NOT canceled THEN 1 END) as upcoming_appointments,
 			COUNT(CASE WHEN appointment_end < NOW() AND NOT canceled THEN 1 END) as completed_appointments,
-			COUNT(CASE WHEN canceled THEN 1 END) as canceled_appointments,
+			COUNT(CASE WHEN canceled THEN 1 END) as canceled_appointments,`
+	if hasNoShowColumn {
+		query += `
 			COUNT(CASE WHEN appointment_end < NOW() AND NOT canceled AND no_show THEN 1 END) as no_show_appointments
 		FROM appointments 
 		WHERE doctor_id = $1`
+	} else {
+		query += `
+			0 as no_show_appointments
+		FROM appointments 
+		WHERE doctor_id = $1`
+	}
 
 	var stats models.AppointmentStats
-	err := s.db.QueryRow(ctx, query, doctorID).Scan(
+	err = s.db.QueryRow(ctx, query, doctorID).Scan(
 		&stats.TotalAppointments,
 		&stats.TodayAppointments,
 		&stats.UpcomingAppointments,
@@ -769,15 +791,29 @@ func (s *ReceptionistPatientService) GetPatientStats(receptionistID, doctorID st
 	}
 
 	query := `
-		SELECT 
-			COUNT(DISTINCT p.patient_id) as total_patients,
-			COUNT(DISTINCT CASE WHEN DATE(p.created_at) = CURRENT_DATE THEN p.patient_id END) as new_patients_today,
-			COUNT(DISTINCT CASE WHEN p.created_at >= CURRENT_DATE - INTERVAL '7 days' THEN p.patient_id END) as new_patients_week,
-			COUNT(DISTINCT CASE WHEN p.created_at >= CURRENT_DATE - INTERVAL '30 days' THEN p.patient_id END) as new_patients_month,
-			COUNT(DISTINCT CASE WHEN a.appointment_start > NOW() - INTERVAL '30 days' THEN p.patient_id END) as active_patients,
-			COUNT(DISTINCT CASE WHEN a.appointment_start <= NOW() - INTERVAL '30 days' OR a.appointment_start IS NULL THEN p.patient_id END) as inactive_patients
-		FROM patient_info p
-		LEFT JOIN appointments a ON p.patient_id = a.patient_id AND a.doctor_id = $1`
+		WITH doctor_patients AS (
+			SELECT DISTINCT p.patient_id, p.created_at
+			FROM patient_info p
+			JOIN appointments a ON a.patient_id = p.patient_id
+			WHERE a.doctor_id = $1 AND COALESCE(a.is_doctor_patient, false) = false
+		),
+		appt AS (
+			SELECT
+				patient_id,
+				MAX(CASE WHEN NOT canceled THEN appointment_start ELSE NULL END) AS last_appointment_start
+			FROM appointments
+			WHERE doctor_id = $1 AND COALESCE(is_doctor_patient, false) = false
+			GROUP BY patient_id
+		)
+		SELECT
+			COUNT(*) as total_patients,
+			COUNT(CASE WHEN DATE(dp.created_at) = CURRENT_DATE THEN 1 END) as new_patients_today,
+			COUNT(CASE WHEN dp.created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 END) as new_patients_week,
+			COUNT(CASE WHEN dp.created_at >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as new_patients_month,
+			COUNT(CASE WHEN ap.last_appointment_start > NOW() - INTERVAL '30 days' THEN 1 END) as active_patients,
+			COUNT(CASE WHEN ap.last_appointment_start <= NOW() - INTERVAL '30 days' OR ap.last_appointment_start IS NULL THEN 1 END) as inactive_patients
+		FROM doctor_patients dp
+		LEFT JOIN appt ap ON ap.patient_id = dp.patient_id`
 
 	var stats models.PatientStats
 	err := s.db.QueryRow(ctx, query, doctorID).Scan(
