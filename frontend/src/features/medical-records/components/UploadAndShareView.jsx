@@ -189,9 +189,12 @@ function UploadAndShareView() {
 
   const generateFolderName = () => {
     if (!selectedCategory) return '';
-    
-    const currentUser = users.find(u => u.id === userId);
-    const doctorName = currentUser?.name?.replace(/\s+/g, '') || 'Doctor';
+
+    const rawSharerName =
+      userType === 'receptionist'
+        ? (localStorage.getItem('assignedDoctorName') || localStorage.getItem('userFullName') || '')
+        : (localStorage.getItem('userFullName') || '');
+    const doctorName = rawSharerName ? rawSharerName.replace(/\s+/g, '') : 'Doctor';
     const categoryLabel = getMedicalCategories(t)[selectedCategory]?.label || '';
     const bodyPartLabel = selectedBodyPart ? getBodyParts(t)[selectedBodyPart] : '';
     

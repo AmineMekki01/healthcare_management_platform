@@ -57,6 +57,7 @@ function MyUploads() {
   const { userId, userType, assignedDoctorId } = useContext(AuthContext);
   const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
   const isUnassignedReceptionist = userType === 'receptionist' && !receptionistAssignedDoctorId;
+  const canShareToDoctor = userType === 'patient' || userType === 'receptionist';
   const [currentPath, setCurrentPath] = useState([]);
   const [folders, setFolders] = useState([]);
   const navigate = useNavigate();
@@ -340,7 +341,7 @@ function MyUploads() {
   };
 
   useEffect(() => {
-    if (isUnassignedReceptionist) {
+    if (!canShareToDoctor || isUnassignedReceptionist) {
       setDoctors([]);
       return;
     }
@@ -354,7 +355,7 @@ function MyUploads() {
       }
     };
     fetchDoctorsData();
-  }, [isUnassignedReceptionist]);
+  }, [canShareToDoctor, isUnassignedReceptionist]);
 
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
@@ -543,7 +544,7 @@ function MyUploads() {
           )}
         </Box>
         
-        {!isUnassignedReceptionist && selectedFiles.size > 0 && (
+        {canShareToDoctor && !isUnassignedReceptionist && selectedFiles.size > 0 && (
           <Box mt={2} display="flex" gap={2} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 200 }}>
               <InputLabel>{t('actions.selectDoctor')}</InputLabel>
