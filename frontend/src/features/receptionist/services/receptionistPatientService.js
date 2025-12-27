@@ -131,6 +131,7 @@ class ReceptionistPatientService {
     const params = new URLSearchParams({
       userId: assignedDoctorId,
       userType: 'doctor',
+      viewAs: 'doctor',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
 

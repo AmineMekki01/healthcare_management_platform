@@ -324,7 +324,7 @@ func (s *AppointmentService) GetAppointmentStatistics(userID string, userType st
 		asDoctorCount = 0
 	} else if userType == "doctor" {
 		err := s.db.QueryRow(context.Background(),
-			`SELECT COUNT(*) FROM appointments WHERE doctor_id = $1 AND NOT is_doctor_patient AND NOT canceled`,
+			`SELECT COUNT(*) FROM appointments WHERE doctor_id = $1 AND NOT canceled`,
 			userID).Scan(&asDoctorCount)
 		if err != nil {
 			log.Printf("Error fetching doctor appointment statistics: %v", err)
@@ -332,7 +332,7 @@ func (s *AppointmentService) GetAppointmentStatistics(userID string, userType st
 		}
 
 		err = s.db.QueryRow(context.Background(),
-			`SELECT COUNT(*) FROM appointments WHERE patient_id = $1 AND is_doctor_patient AND NOT canceled`,
+			`SELECT COUNT(*) FROM appointments WHERE patient_id = $1 AND NOT canceled`,
 			userID).Scan(&asPatientCount)
 		if err != nil {
 			log.Printf("Error fetching doctor-as-patient appointment statistics: %v", err)
@@ -349,6 +349,10 @@ func (s *AppointmentService) GetAppointmentStatistics(userID string, userType st
 }
 
 func (s *AppointmentService) GetReservations(userID, userType, timezone string) ([]models.Reservation, error) {
+	return s.GetReservationsWithViewAs(userID, userType, timezone, "")
+}
+
+func (s *AppointmentService) GetReservationsWithViewAs(userID, userType, timezone, viewAs string) ([]models.Reservation, error) {
 	if userID == "" || userType == "" {
 		log.Println("Bad Request: userID and userType are required")
 		return nil, fmt.Errorf("userID and userType are required")
@@ -359,17 +363,27 @@ func (s *AppointmentService) GetReservations(userID, userType, timezone string) 
 	if userType == "patient" {
 		reservations = s.getPatientReservations(userID, timezone)
 	} else if userType == "receptionist" {
-		reservations = s.getReceptionistReservations(userID, timezone)
+		if viewAs == "patient" {
+			reservations = s.getReceptionistReservationsAsPatient(userID, timezone)
+		} else {
+			reservations = s.getReceptionistReservationsAsReceptionist(userID, timezone)
+		}
 	} else if userType == "doctor" {
-		doctorReservations := s.getDoctorReservationsAsDoctor(userID, timezone)
-		patientReservations := s.getDoctorReservationsAsPatient(userID, timezone)
-		reservations = append(doctorReservations, patientReservations...)
+		if viewAs == "patient" {
+			reservations = s.getDoctorReservationsAsPatient(userID, timezone)
+		} else if viewAs == "doctor" {
+			reservations = s.getDoctorReservationsAsDoctor(userID, timezone)
+		} else {
+			doctorReservations := s.getDoctorReservationsAsDoctor(userID, timezone)
+			patientReservations := s.getDoctorReservationsAsPatient(userID, timezone)
+			reservations = append(doctorReservations, patientReservations...)
+		}
 	}
 
 	return reservations, nil
 }
 
-func (s *AppointmentService) getReceptionistReservations(userID, timezone string) []models.Reservation {
+func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezone string) []models.Reservation {
 	query := `
 		SELECT 
 			appointments.appointment_id,
@@ -380,7 +394,7 @@ func (s *AppointmentService) getReceptionistReservations(userID, timezone string
 			doctor_info.specialty,
 			receptionists.first_name AS patient_first_name,
 			receptionists.last_name AS patient_last_name,
-			receptionists.age,
+			NULL::int AS age,
 			receptionists.receptionist_id AS patient_id,
 			doctor_info.doctor_id,
 			appointments.is_doctor_patient,
@@ -395,7 +409,7 @@ func (s *AppointmentService) getReceptionistReservations(userID, timezone string
 		JOIN
 			receptionists ON appointments.patient_id = receptionists.receptionist_id
 		WHERE
-			appointments.receptionist_id = $1;
+			appointments.patient_id = $1;
 	`
 
 	rows, err := s.db.Query(context.Background(), query, userID)
@@ -425,6 +439,106 @@ func (s *AppointmentService) getReceptionistReservations(userID, timezone string
 			&r.CanceledBy,
 			&r.CancellationReason,
 			&r.CancellationTimestamp,
+		)
+		if err != nil {
+			log.Println("Row Scan Error:", err)
+			continue
+		}
+
+		if timezone != "UTC" {
+			location, err := time.LoadLocation(timezone)
+			if err == nil {
+				r.AppointmentStart = r.AppointmentStart.In(location)
+				r.AppointmentEnd = r.AppointmentEnd.In(location)
+			}
+		}
+
+		reservations = append(reservations, r)
+	}
+	return reservations
+}
+
+func (s *AppointmentService) getReceptionistReservationsAsReceptionist(receptionistID, timezone string) []models.Reservation {
+	var assignedDoctorID string
+	err := s.db.QueryRow(context.Background(),
+		"SELECT COALESCE(assigned_doctor_id::text, '') FROM receptionists WHERE receptionist_id = $1",
+		receptionistID,
+	).Scan(&assignedDoctorID)
+	if err != nil {
+		log.Println("Query Error:", err)
+		return []models.Reservation{}
+	}
+	if assignedDoctorID == "" {
+		return []models.Reservation{}
+	}
+
+	query := `
+		SELECT 
+			appointments.appointment_id,
+			appointments.appointment_start,
+			appointments.appointment_end,
+			doctor_info.first_name AS doctor_first_name,
+			doctor_info.last_name AS doctor_last_name,
+			doctor_info.specialty,
+			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
+			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
+			CASE 
+				WHEN patient_info.age IS NOT NULL THEN patient_info.age
+				WHEN doctor_patient.age IS NOT NULL THEN doctor_patient.age
+				ELSE NULL
+			END AS age,
+			appointments.patient_id,
+			doctor_info.doctor_id,
+			appointments.is_doctor_patient,
+			appointments.canceled,
+			appointments.canceled_by,
+			appointments.cancellation_reason,
+			appointments.cancellation_timestamp,
+			CASE WHEN medical_reports.report_id IS NOT NULL THEN true ELSE false END AS report_exists
+		FROM 
+			appointments
+		JOIN
+			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
+		LEFT JOIN
+			patient_info ON appointments.patient_id = patient_info.patient_id
+		LEFT JOIN
+			receptionists ON appointments.patient_id = receptionists.receptionist_id
+		LEFT JOIN
+			doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
+		LEFT JOIN
+			medical_reports ON appointments.appointment_id = medical_reports.appointment_id
+		WHERE
+			appointments.doctor_id = $1;
+	`
+
+	rows, err := s.db.Query(context.Background(), query, assignedDoctorID)
+	if err != nil {
+		log.Println("Query Error:", err)
+		return []models.Reservation{}
+	}
+	defer rows.Close()
+
+	var reservations []models.Reservation
+	for rows.Next() {
+		var r models.Reservation
+		err := rows.Scan(
+			&r.AppointmentID,
+			&r.AppointmentStart,
+			&r.AppointmentEnd,
+			&r.DoctorFirstName,
+			&r.DoctorLastName,
+			&r.Specialty,
+			&r.PatientFirstName,
+			&r.PatientLastName,
+			&r.Age,
+			&r.PatientID,
+			&r.DoctorID,
+			&r.IsDoctorPatient,
+			&r.Canceled,
+			&r.CanceledBy,
+			&r.CancellationReason,
+			&r.CancellationTimestamp,
+			&r.ReportExists,
 		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
@@ -528,10 +642,14 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 			doctor_info.first_name AS doctor_first_name,
 			doctor_info.last_name AS doctor_last_name,
 			doctor_info.specialty,
-			patient_info.first_name AS patient_first_name,
-			patient_info.last_name AS patient_last_name,
-			patient_info.age,
-			patient_info.patient_id,
+			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
+			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
+			CASE 
+				WHEN patient_info.age IS NOT NULL THEN patient_info.age
+				WHEN doctor_patient.age IS NOT NULL THEN doctor_patient.age
+				ELSE NULL
+			END AS age,
+			appointments.patient_id,
 			doctor_info.doctor_id,
 			appointments.is_doctor_patient,
 			appointments.canceled,
@@ -543,12 +661,16 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 			appointments
 		JOIN
 			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
-		JOIN
+		LEFT JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
+		LEFT JOIN
+			receptionists ON appointments.patient_id = receptionists.receptionist_id
+		LEFT JOIN
+			doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
 		LEFT JOIN
 			medical_reports ON appointments.appointment_id = medical_reports.appointment_id
 		WHERE
-			appointments.doctor_id = $1 AND appointments.is_doctor_patient = false;
+			appointments.doctor_id = $1;
 	`
 
 	rows, err := s.db.Query(context.Background(), query, userID)
@@ -599,19 +721,6 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 }
 
 func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone string) []models.Reservation {
-	checkQuery := `
-		SELECT EXISTS (
-			SELECT 1 
-			FROM appointments
-			WHERE appointments.patient_id = $1 AND appointments.is_doctor_patient = true
-		)
-	`
-	var exist bool
-	err := s.db.QueryRow(context.Background(), checkQuery, userID).Scan(&exist)
-	if err != nil || !exist {
-		return []models.Reservation{}
-	}
-
 	query := `
 		SELECT 
 			appointments.appointment_id,
@@ -635,7 +744,7 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 		JOIN doctor_info AS treating_doctor ON appointments.doctor_id = treating_doctor.doctor_id
 		JOIN doctor_info AS patient_doctor ON appointments.patient_id = patient_doctor.doctor_id
 		WHERE 
-			appointments.patient_id = $1 AND appointments.is_doctor_patient = true;
+			appointments.patient_id = $1;
 	`
 
 	rows, err := s.db.Query(context.Background(), query, userID)
@@ -1254,8 +1363,6 @@ func (s *AppointmentService) getDoctorReservationsAsDoctorCount(userID, appointm
 		query = `
 			SELECT COUNT(*)
 			FROM appointments
-			JOIN doctor_info ON appointments.doctor_id = doctor_info.doctor_id
-			JOIN patient_info ON appointments.patient_id = patient_info.patient_id
 			WHERE appointments.doctor_id = $1 AND appointments.canceled = true;`
 		err := s.db.QueryRow(context.Background(), query, userID).Scan(&count)
 		if err != nil {
@@ -1266,8 +1373,6 @@ func (s *AppointmentService) getDoctorReservationsAsDoctorCount(userID, appointm
 		query = `
 			SELECT COUNT(*)
 			FROM appointments
-			JOIN doctor_info ON appointments.doctor_id = doctor_info.doctor_id
-			JOIN patient_info ON appointments.patient_id = patient_info.patient_id
 			WHERE appointments.doctor_id = $1 AND appointments.canceled = false
 			AND appointments.appointment_end < $2;`
 		err := s.db.QueryRow(context.Background(), query, userID, currentTime).Scan(&count)
@@ -1281,22 +1386,6 @@ func (s *AppointmentService) getDoctorReservationsAsDoctorCount(userID, appointm
 }
 
 func (s *AppointmentService) getDoctorReservationsAsPatientCount(userID, appointmentType string) int {
-	checkQuery := `
-		SELECT EXISTS (
-			SELECT 1 FROM appointments
-			WHERE appointments.patient_id = $1 AND appointments.is_doctor_patient = true
-		)`
-	var exists bool
-	err := s.db.QueryRow(context.Background(), checkQuery, userID).Scan(&exists)
-	if err != nil {
-		log.Printf("Error checking doctor patient appointments: %v", err)
-		return 0
-	}
-
-	if !exists {
-		return 0
-	}
-
 	var query string
 	var count int
 
@@ -1305,11 +1394,8 @@ func (s *AppointmentService) getDoctorReservationsAsPatientCount(userID, appoint
 		query = `
 			SELECT COUNT(*)
 			FROM appointments
-			JOIN doctor_info ON appointments.doctor_id = doctor_info.doctor_id
-			LEFT JOIN doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
-			WHERE appointments.patient_id = $1 AND appointments.canceled = true
-			AND appointments.is_doctor_patient = true;`
-		err = s.db.QueryRow(context.Background(), query, userID).Scan(&count)
+			WHERE appointments.patient_id = $1 AND appointments.canceled = true;`
+		err := s.db.QueryRow(context.Background(), query, userID).Scan(&count)
 		if err != nil {
 			log.Printf("Error fetching canceled appointments for doctor as patient: %v", err)
 			return 0
@@ -1318,11 +1404,9 @@ func (s *AppointmentService) getDoctorReservationsAsPatientCount(userID, appoint
 		query = `
 			SELECT COUNT(*)
 			FROM appointments
-			JOIN doctor_info ON appointments.doctor_id = doctor_info.doctor_id
-			LEFT JOIN doctor_info AS doctor_patient ON appointments.patient_id = doctor_patient.doctor_id
 			WHERE appointments.patient_id = $1 AND appointments.canceled = false
-			AND appointments.appointment_end < $2 AND appointments.is_doctor_patient = true;`
-		err = s.db.QueryRow(context.Background(), query, userID, currentTime).Scan(&count)
+			AND appointments.appointment_end < $2;`
+		err := s.db.QueryRow(context.Background(), query, userID, currentTime).Scan(&count)
 		if err != nil {
 			log.Printf("Error fetching completed appointments for doctor as patient: %v", err)
 			return 0

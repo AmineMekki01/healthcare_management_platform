@@ -35,7 +35,7 @@ const AppointmentDashboard = () => {
     loading,
     error,
     refreshAppointments
-  } = useAppointments(userId, userType);
+  } = useAppointments(userId, userType, activeMode);
 
   const {
     filterText,

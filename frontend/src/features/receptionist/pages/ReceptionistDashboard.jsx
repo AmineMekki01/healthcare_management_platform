@@ -83,7 +83,7 @@ const ReceptionistDashboard = () => {
         }),
         receptionistPatientService.getAppointmentStats(),
         receptionistPatientService.getPatientStats(),
-        effectiveDoctorId ? appointmentService.fetchReservations(effectiveDoctorId, 'doctor') : Promise.resolve([]),
+        effectiveDoctorId ? appointmentService.fetchReservations(effectiveDoctorId, 'doctor', 'doctor') : Promise.resolve([]),
         receptionistId ? receptionistHiringService.listProposals(receptionistId) : Promise.resolve([]),
       ]);
 
@@ -92,7 +92,7 @@ const ReceptionistDashboard = () => {
 
       const now = new Date();
       const upcoming = (Array.isArray(reservations) ? reservations : [])
-        .filter((r) => !r?.isDoctorPatient && !r?.canceled && new Date(r?.appointmentEnd || r?.appointmentStart) > now)
+        .filter((r) => !r?.canceled && new Date(r?.appointmentEnd || r?.appointmentStart) > now)
         .sort((a, b) => new Date(a.appointmentStart) - new Date(b.appointmentStart))
         .slice(0, 6);
       setUpcomingAppointments(upcoming);

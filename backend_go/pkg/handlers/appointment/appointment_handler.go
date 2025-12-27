@@ -164,6 +164,9 @@ func (h *AppointmentHandler) convertWeeklyScheduleToAvailabilities(weeklySchedul
 		dayStart := time.Date(d.Year(), d.Month(), d.Day(), startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
 		dayEnd := time.Date(d.Year(), d.Month(), d.Day(), endTime.Hour(), endTime.Minute(), 0, 0, time.UTC)
 
+		if scheduleEntry.SlotDuration <= 0 {
+			scheduleEntry.SlotDuration = 30
+		}
 		slotDuration := time.Duration(scheduleEntry.SlotDuration) * time.Minute
 		for slotStart := dayStart; slotStart.Before(dayEnd); slotStart = slotStart.Add(slotDuration) {
 			slotEnd := slotStart.Add(slotDuration)
@@ -338,6 +341,7 @@ func (h *AppointmentHandler) GetReservations(c *gin.Context) {
 	userID := c.DefaultQuery("userId", "")
 	userType := c.DefaultQuery("userType", "")
 	timezone := c.DefaultQuery("timezone", "UTC")
+	viewAs := c.DefaultQuery("viewAs", "")
 
 	if userID == "" {
 		log.Println("Bad Request: userId required")
@@ -350,7 +354,7 @@ func (h *AppointmentHandler) GetReservations(c *gin.Context) {
 		return
 	}
 
-	reservations, err := h.appointmentService.GetReservations(userID, userType, timezone)
+	reservations, err := h.appointmentService.GetReservationsWithViewAs(userID, userType, timezone, viewAs)
 	if err != nil {
 		log.Println("Error fetching reservations:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
