@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import appointmentService from '../services/appointmentService';
 
-export const useAppointments = (userId, userType) => {
+export const useAppointments = (userId, userType, activeMode) => {
   const [doctorReservations, setDoctorReservations] = useState({
     active: [],
     passed: [],
@@ -33,25 +33,24 @@ export const useAppointments = (userId, userType) => {
     }
     
     if (userType === 'doctor') {
-      const activeDoctorAppts = data.filter(r => 
-        !r.isDoctorPatient && !r.canceled && new Date(r.appointmentEnd) > now
-      );
-      const passedDoctorAppts = data.filter(r => 
-        !r.isDoctorPatient && !r.canceled && new Date(r.appointmentEnd) <= now
-      );
-      const canceledDoctorAppts = data.filter(r => 
-        !r.isDoctorPatient && r.canceled
-      );
+      const asDoctor = data.filter(r => r.doctorId === userId);
+      const asPatient = data.filter(r => r.patientId === userId);
 
-      const activePatientAppts = data.filter(r => 
-        r.isDoctorPatient && !r.canceled && new Date(r.appointmentEnd) > now
+      const activeDoctorAppts = asDoctor.filter(r => 
+        !r.canceled && new Date(r.appointmentEnd) > now
       );
-      const passedPatientAppts = data.filter(r => 
-        r.isDoctorPatient && !r.canceled && new Date(r.appointmentEnd) <= now
+      const passedDoctorAppts = asDoctor.filter(r => 
+        !r.canceled && new Date(r.appointmentEnd) <= now
       );
-      const canceledPatientAppts = data.filter(r => 
-        r.isDoctorPatient && r.canceled
+      const canceledDoctorAppts = asDoctor.filter(r => r.canceled);
+
+      const activePatientAppts = asPatient.filter(r => 
+        !r.canceled && new Date(r.appointmentEnd) > now
       );
+      const passedPatientAppts = asPatient.filter(r => 
+        !r.canceled && new Date(r.appointmentEnd) <= now
+      );
+      const canceledPatientAppts = asPatient.filter(r => r.canceled);
 
       setDoctorReservations({
         active: activeDoctorAppts,
@@ -64,25 +63,39 @@ export const useAppointments = (userId, userType) => {
         canceled: canceledPatientAppts
       });
     } else if (userType === 'receptionist') {
-      const activePatientAppts = data.filter(r => 
+      const activeAppts = data.filter(r => 
         !r.canceled && new Date(r.appointmentEnd) > now
       );
-      const passedPatientAppts = data.filter(r => 
+      const passedAppts = data.filter(r => 
         !r.canceled && new Date(r.appointmentEnd) <= now
       );
-      const canceledPatientAppts = data.filter(r => r.canceled);
+      const canceledAppts = data.filter(r => r.canceled);
 
-      setPatientReservations({
-        active: activePatientAppts,
-        passed: passedPatientAppts,
-        canceled: canceledPatientAppts
-      });
-      
-      setDoctorReservations({
-        active: [],
-        passed: [],
-        canceled: []
-      });
+      if (activeMode === 'patient') {
+        setPatientReservations({
+          active: activeAppts,
+          passed: passedAppts,
+          canceled: canceledAppts
+        });
+        
+        setDoctorReservations({
+          active: [],
+          passed: [],
+          canceled: []
+        });
+      } else {
+        setDoctorReservations({
+          active: activeAppts,
+          passed: passedAppts,
+          canceled: canceledAppts
+        });
+
+        setPatientReservations({
+          active: [],
+          passed: [],
+          canceled: []
+        });
+      }
     } else {
       const activePatientAppts = data.filter(r => 
         !r.canceled && new Date(r.appointmentEnd) > now
@@ -98,7 +111,7 @@ export const useAppointments = (userId, userType) => {
         canceled: canceledPatientAppts
       });
     }
-  }, [userType]);
+  }, [userType, userId, activeMode]);
 
   const fetchAppointments = useCallback(async () => {
     if (!userId) return;
@@ -107,7 +120,13 @@ export const useAppointments = (userId, userType) => {
     setError(null);
 
     try {
-      const data = await appointmentService.fetchReservations(userId, userType);
+      let viewAs;
+      if (userType === 'receptionist') {
+        viewAs = activeMode === 'patient' ? 'patient' : 'receptionist';
+      } else if (userType === 'doctor') {
+        viewAs = activeMode === 'patient' ? 'patient' : '';
+      }
+      const data = await appointmentService.fetchReservations(userId, userType, viewAs);
       console.log('Raw appointment data received:', data);
       processReservations(data);
     } catch (err) {
@@ -116,7 +135,7 @@ export const useAppointments = (userId, userType) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, userType, processReservations]);
+  }, [userId, userType, activeMode, processReservations]);
 
   const refreshAppointments = useCallback(() => {
     fetchAppointments();
@@ -128,7 +147,7 @@ export const useAppointments = (userId, userType) => {
 
 
   const statistics = useMemo(() => {
-    if (userType === 'doctor') {
+    if (userType === 'doctor' || userType === 'receptionist') {
       const totalDoctorAppts = 
         (doctorReservations.active?.length || 0) + 
         (doctorReservations.passed?.length || 0) + 

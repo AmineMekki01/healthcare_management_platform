@@ -2,7 +2,7 @@ import axios from '../../../components/axiosConfig';
 
 class AppointmentService {
 
-  async fetchReservations(userId, userType) {
+  async fetchReservations(userId, userType, viewAs) {
     if (!userId) {
       throw new Error('User ID is required');
     }
@@ -13,6 +13,10 @@ class AppointmentService {
       userId: userId,
       userType: userType,
     };
+
+    if (viewAs) {
+      params.viewAs = viewAs;
+    }
 
     try {
       const response = await axios.get('/api/v1/reservations', { params });

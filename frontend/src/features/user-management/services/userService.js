@@ -395,6 +395,7 @@ class UserService {
         appointmentTitle: appointmentData.reasonForVisit || 'Medical Consultation',
         doctorId: appointmentData.doctorId,
         patientId: appointmentData.patientId,
+        isDoctorPatient: appointmentData.isDoctorPatient || false,
         availabilityId: appointmentData.availabilityId,
         ...transformedData
       };
