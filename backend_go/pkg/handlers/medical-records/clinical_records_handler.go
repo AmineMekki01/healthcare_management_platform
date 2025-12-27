@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strconv"
 
 	"healthcare_backend/pkg/config"
 	"healthcare_backend/pkg/models"
@@ -55,9 +56,50 @@ func (h *ClinicalRecordsHandler) GetMedicalRecordsByCategory(c *gin.Context) {
 }
 
 func (h *ClinicalRecordsHandler) GetAllUsers(c *gin.Context) {
-	users, err := h.medicalRecordsService.GetAllUsers()
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	limit := 100
+	offset := 0
+	if v := c.Query("limit"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil {
+			limit = parsed
+		}
+	}
+	if v := c.Query("offset"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil {
+			offset = parsed
+		}
+	}
+
+	if callerUserType != "doctor" && callerUserType != "receptionist" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	effectiveDoctorID := callerUserID.(string)
+	if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", effectiveDoctorID).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("GetAllUsers: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+		effectiveDoctorID = assignedDoctorID.String
+	}
+
+	users, err := h.medicalRecordsService.GetEligiblePatientsForDoctor(effectiveDoctorID, limit, offset)
 	if err != nil {
-		log.Printf("Error getting all users: %v", err)
+		log.Printf("GetAllUsers: error getting eligible patients: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -79,6 +121,7 @@ func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) 
 		return
 	}
 
+	effectiveDoctorID := callerUserID.(string)
 	if callerUserType == "receptionist" {
 		var assignedDoctorID sql.NullString
 		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
@@ -91,6 +134,7 @@ func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) 
 			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
 			return
 		}
+		effectiveDoctorID = assignedDoctorID.String
 	}
 
 	err := c.Request.ParseMultipartForm(10 << 20)
@@ -119,6 +163,27 @@ func (h *ClinicalRecordsHandler) UploadAndShareClinicalDocument(c *gin.Context) 
 
 	if category == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Category is required for clinical documents"})
+		return
+	}
+
+	var hasRelationship bool
+	err = h.db.QueryRow(
+		context.Background(),
+		`SELECT EXISTS(
+			SELECT 1
+			FROM appointments
+			WHERE doctor_id = $1 AND patient_id = $2 AND COALESCE(is_doctor_patient, false) = false
+		)`,
+		effectiveDoctorID,
+		patientID,
+	).Scan(&hasRelationship)
+	if err != nil {
+		log.Printf("UploadAndShareClinicalDocument: failed to validate doctor-patient relationship: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate doctor-patient relationship"})
+		return
+	}
+	if !hasRelationship {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return
 	}
 

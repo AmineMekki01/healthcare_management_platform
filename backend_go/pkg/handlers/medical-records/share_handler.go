@@ -29,7 +29,46 @@ func NewShareHandler(db *pgxpool.Pool, cfg *config.Config) *ShareHandler {
 }
 
 func (h *ShareHandler) ListDoctors(c *gin.Context) {
-	doctors, err := h.shareService.ListDoctors()
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	var (
+		doctors []models.Doctor
+		err     error
+	)
+	if callerUserType == "patient" {
+		doctors, err = h.shareService.ListDoctorsForPatient(callerUserID.(string))
+	} else if callerUserType == "receptionist" {
+		var assignedDoctorID sql.NullString
+		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", callerUserID.(string)).Scan(&assignedDoctorID)
+		if err != nil {
+			log.Printf("ListDoctors: failed to verify receptionist assignment: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify receptionist assignment"})
+			return
+		}
+		if !assignedDoctorID.Valid {
+			c.JSON(http.StatusOK, []models.Doctor{})
+			return
+		}
+
+		doctor, derr := h.shareService.GetDoctorByID(assignedDoctorID.String)
+		if derr != nil {
+			log.Printf("ListDoctors: failed to load assigned doctor: %v", derr)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve doctors list"})
+			return
+		}
+		if doctor == nil {
+			c.JSON(http.StatusOK, []models.Doctor{})
+			return
+		}
+		doctors = []models.Doctor{*doctor}
+	} else {
+		doctors, err = h.shareService.ListDoctors()
+	}
 	if err != nil {
 		log.Printf("Error retrieving doctors list: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve doctors list"})
@@ -58,6 +97,76 @@ func (h *ShareHandler) ShareItems(c *gin.Context) {
 	req.UserID = callerUserID.(string)
 	req.UserType = callerUserType
 
+	if req.UserType == "patient" {
+		if req.SharedWithID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "shared_with_id is required"})
+			return
+		}
+
+		var canShare bool
+		err := h.db.QueryRow(
+			context.Background(),
+			`SELECT EXISTS(
+				SELECT 1
+				FROM appointments a
+				JOIN doctor_info d ON d.doctor_id = a.doctor_id
+				WHERE a.patient_id = $1::uuid
+					AND a.doctor_id = $2::uuid
+					AND COALESCE(a.is_doctor_patient, false) = false
+			)`,
+			req.UserID,
+			req.SharedWithID,
+		).Scan(&canShare)
+		if err != nil {
+			log.Printf("ShareItems: failed to validate patient-doctor relationship: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipient"})
+			return
+		}
+		if !canShare {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	}
+
+	if req.UserType == "doctor" {
+		var isPatientRecipient bool
+		err := h.db.QueryRow(
+			context.Background(),
+			"SELECT EXISTS(SELECT 1 FROM patient_info WHERE patient_id::text = $1)",
+			req.SharedWithID,
+		).Scan(&isPatientRecipient)
+		if err != nil {
+			log.Printf("ShareItems: failed to detect recipient type: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipient"})
+			return
+		}
+		if isPatientRecipient {
+			var canShare bool
+			err := h.db.QueryRow(
+				context.Background(),
+				`SELECT EXISTS(
+					SELECT 1
+					FROM appointments
+					WHERE doctor_id = $1 AND patient_id = $2 AND COALESCE(is_doctor_patient, false) = false
+				)`,
+				req.UserID,
+				req.SharedWithID,
+			).Scan(&canShare)
+			if err != nil {
+				log.Printf("ShareItems: failed to validate doctor-patient relationship: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipient"})
+				return
+			}
+			if !canShare {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	}
+
 	if req.UserType == "receptionist" {
 		var assignedDoctorID sql.NullString
 		err := h.db.QueryRow(context.Background(), "SELECT assigned_doctor_id FROM receptionists WHERE receptionist_id = $1", req.UserID).Scan(&assignedDoctorID)
@@ -68,6 +177,12 @@ func (h *ShareHandler) ShareItems(c *gin.Context) {
 		}
 		if !assignedDoctorID.Valid {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Receptionist has no assigned doctor"})
+			return
+		}
+
+		// Receptionists can only share to their assigned doctor.
+		if req.SharedWithID != assignedDoctorID.String {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 			return
 		}
 	}

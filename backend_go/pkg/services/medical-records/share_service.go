@@ -51,6 +51,50 @@ func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 	return doctors, nil
 }
 
+func (s *ShareService) ListDoctorsForPatient(patientID string) ([]models.Doctor, error) {
+	rows, err := s.db.Query(
+		context.Background(),
+		`SELECT DISTINCT d.doctor_id, d.first_name, d.last_name, d.specialty
+		FROM doctor_info d
+		JOIN appointments a ON a.doctor_id = d.doctor_id
+		WHERE a.patient_id = $1 AND COALESCE(a.is_doctor_patient, false) = false
+		ORDER BY d.first_name, d.last_name`,
+		patientID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve doctors list: %v", err)
+	}
+	defer rows.Close()
+
+	var doctors []models.Doctor
+	for rows.Next() {
+		var doctor models.Doctor
+		if err := rows.Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.Specialty); err != nil {
+			continue
+		}
+		doctors = append(doctors, doctor)
+	}
+
+	return doctors, nil
+}
+
+func (s *ShareService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
+	var doctor models.Doctor
+	err := s.db.QueryRow(
+		context.Background(),
+		"SELECT doctor_id, first_name, last_name, specialty FROM doctor_info WHERE doctor_id = $1",
+		doctorID,
+	).Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.Specialty)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("could not retrieve doctor: %v", err)
+	}
+
+	return &doctor, nil
+}
+
 func (s *ShareService) ShareItems(req models.ShareRequest) error {
 	for _, itemID := range req.ItemIDs {
 		var item models.FileFolder
@@ -111,6 +155,8 @@ func (s *ShareService) copyFileOrFolder(item models.FileFolder, req models.Share
 	var query string
 	if req.UserType == "patient" {
 		query = "SELECT CONCAT(first_name, ' ', last_name) as sharer_name FROM patient_info WHERE patient_id = $1"
+	} else if req.UserType == "receptionist" {
+		query = "SELECT CONCAT(first_name, ' ', last_name) as sharer_name FROM receptionists WHERE receptionist_id = $1"
 	} else {
 		query = "SELECT CONCAT(first_name, ' ', last_name) as sharer_name FROM doctor_info WHERE doctor_id = $1"
 	}

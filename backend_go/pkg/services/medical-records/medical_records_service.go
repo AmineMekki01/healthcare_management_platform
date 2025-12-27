@@ -624,6 +624,9 @@ func (s *MedicalRecordsService) GetAllUsers() ([]models.User, error) {
 	`
 
 	receptionistRows, err := conn.Query(context.Background(), receptionistQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching receptionists: %v", err)
+	}
 
 	defer receptionistRows.Close()
 
@@ -641,6 +644,58 @@ func (s *MedicalRecordsService) GetAllUsers() ([]models.User, error) {
 
 	if err = receptionistRows.Err(); err != nil {
 		log.Printf("Error processing receptionist rows: %v", err)
+	}
+
+	return users, nil
+}
+
+func (s *MedicalRecordsService) GetEligiblePatientsForDoctor(doctorID string, limit, offset int) ([]models.User, error) {
+	conn, err := s.db.Acquire(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("could not acquire database connection: %v", err)
+	}
+	defer conn.Release()
+
+	if limit <= 0 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	query := `
+		SELECT DISTINCT
+			p.patient_id as id,
+			p.first_name,
+			p.last_name,
+			p.email,
+			'patient' as role
+		FROM patient_info p
+		JOIN appointments a ON a.patient_id = p.patient_id
+		WHERE a.doctor_id = $1 AND COALESCE(a.is_doctor_patient, false) = false
+		ORDER BY p.first_name, p.last_name
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := conn.Query(context.Background(), query, doctorID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching eligible patients: %v", err)
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		var firstName, lastName string
+		if err := rows.Scan(&user.ID, &firstName, &lastName, &user.Email, &user.Role); err != nil {
+			return nil, fmt.Errorf("error scanning eligible patient row: %v", err)
+		}
+		user.Name = fmt.Sprintf("%s %s", firstName, lastName)
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error processing eligible patient rows: %v", err)
 	}
 
 	return users, nil
