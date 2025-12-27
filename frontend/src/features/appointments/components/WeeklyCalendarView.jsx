@@ -36,11 +36,13 @@ import PersonalEventModal from './PersonalEventModal';
 import EventDetailsModal from './EventDetailsModal';
 import appointmentService from '../services/appointmentService';
 import calendarEventService from '../services/calendarEventService';
+import receptionistPatientService from '../../receptionist/services/receptionistPatientService';
 
 const WeeklyCalendarView = ({ 
   appointments, 
   userType,
   userId,
+  assignedDoctorId,
   activeMode,
   onAppointmentUpdate 
 }) => {
@@ -64,6 +66,11 @@ const WeeklyCalendarView = ({
   });
 
   const isRTL = i18n.language === 'ar';
+
+  const isDoctorProviderMode = userType === 'doctor' && activeMode === 'doctor';
+  const isReceptionistProviderMode = userType === 'receptionist' && activeMode === 'receptionist';
+  const isProviderMode = isDoctorProviderMode || isReceptionistProviderMode;
+  const effectiveDoctorId = isDoctorProviderMode ? userId : (isReceptionistProviderMode ? assignedDoctorId : null);
 
   function getStartOfWeek(date) {
     const d = new Date(date);
@@ -175,11 +182,33 @@ const WeeklyCalendarView = ({
 
   useEffect(() => {
     const fetchPatients = async () => {
-      if (activeMode === 'doctor' && userId) {
+      if (!isProviderMode || !effectiveDoctorId) {
+        setPatients([]);
+        return;
+      }
+
+      if (isDoctorProviderMode) {
         setLoadingPatients(true);
         try {
-          const patientList = await appointmentService.fetchDoctorPatients(userId);
+          const patientList = await appointmentService.fetchDoctorPatients(effectiveDoctorId);
           setPatients(patientList);
+        } catch (error) {
+          console.error('Error fetching patients:', error);
+          setPatients([]);
+        } finally {
+          setLoadingPatients(false);
+        }
+      }
+
+      if (isReceptionistProviderMode) {
+        setLoadingPatients(true);
+        try {
+          const response = await receptionistPatientService.searchPatients({
+            page: 1,
+            page_size: 200,
+            search_term: ''
+          });
+          setPatients(response?.data?.patients || []);
         } catch (error) {
           console.error('Error fetching patients:', error);
           setPatients([]);
@@ -190,7 +219,7 @@ const WeeklyCalendarView = ({
     };
 
     fetchPatients();
-  }, [activeMode, userId]);
+  }, [isProviderMode, isDoctorProviderMode, isReceptionistProviderMode, effectiveDoctorId]);
 
   useEffect(() => {
     const fetchCalendarEvents = async () => {
@@ -320,7 +349,7 @@ const WeeklyCalendarView = ({
   };
 
   const handleSlotClick = (day, timeSlot) => {
-    if (activeMode !== 'doctor') return;
+    if (!isProviderMode || !effectiveDoctorId) return;
     
     const [hours, minutes] = timeSlot.split(':');
     const slotDate = new Date(day);
@@ -336,7 +365,7 @@ const WeeklyCalendarView = ({
   const handleSlotRightClick = (day, timeSlot, event) => {
     event.preventDefault();
     
-    if (activeMode !== 'doctor') return;
+    if (!isDoctorProviderMode) return;
     
     const [hours, minutes] = timeSlot.split(':');
     const slotDate = new Date(day);
@@ -472,24 +501,24 @@ const WeeklyCalendarView = ({
                     <div
                       key={`${dayIndex}-${timeIndex}`}
                       onClick={() => handleSlotClick(day, time)}
-                      onContextMenu={(e) => handleSlotRightClick(day, time, e)}
+                      onContextMenu={isDoctorProviderMode ? (e) => handleSlotRightClick(day, time, e) : undefined}
                       style={{
                         height: '60px',
                         borderBottom: '1px solid #e2e8f0',
                         borderRight: dayIndex < 6 ? '1px solid #e2e8f0' : 'none',
                         boxSizing: 'border-box',
-                        cursor: activeMode === 'doctor' ? 'pointer' : 'default',
+                        cursor: isProviderMode ? 'pointer' : 'default',
                         transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        if (activeMode === 'doctor') {
+                        if (isProviderMode) {
                           e.currentTarget.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
                       }}
-                      title={activeMode === 'doctor' ? 'Left-click: Schedule appointment | Right-click: Add personal event' : ''}
+                      title={isDoctorProviderMode ? 'Left-click: Schedule appointment | Right-click: Add personal event' : (isReceptionistProviderMode ? 'Click: Schedule appointment' : '')}
                     />
                   ))}
                   
@@ -624,14 +653,15 @@ const WeeklyCalendarView = ({
           onClose={() => setShowQuickSchedule(false)}
           selectedDate={selectedSlot.date}
           selectedTime={selectedSlot.time}
-          doctorId={userType === 'doctor' ? userId : null}
+          doctorId={effectiveDoctorId}
+          creatorType={activeMode}
           patients={patients}
           loading={loadingPatients}
           onSuccess={handleQuickScheduleSuccess}
         />
       )}
 
-      {selectedSlot.date && (
+      {selectedSlot.date && isDoctorProviderMode && (
         <PersonalEventModal
           isOpen={showPersonalEvent}
           onClose={() => setShowPersonalEvent(false)}

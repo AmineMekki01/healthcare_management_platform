@@ -17,7 +17,7 @@ import { Title, Container } from '../styles/appointmentStyles';
 
 const AppointmentDashboard = () => {
   const { t } = useTranslation(['appointments', 'common']);
-  const { userType, userId } = useContext(AuthContext);
+  const { userType, userId, assignedDoctorId } = useContext(AuthContext);
   const { activeMode, switchToMode, canSwitchModes } = useRoleMode();
   const location = useLocation();
   const [view, setView] = useState('grid');
@@ -126,6 +126,7 @@ const AppointmentDashboard = () => {
           appointments={allAppointments}
           userType={userType}
           userId={userId}
+          assignedDoctorId={assignedDoctorId}
           activeMode={activeMode}
           onAppointmentUpdate={refreshAppointments}
         />

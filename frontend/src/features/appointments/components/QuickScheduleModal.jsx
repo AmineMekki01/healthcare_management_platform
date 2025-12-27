@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { Close, Person, AccessTime, Event } from '@mui/icons-material';
 import appointmentService from '../services/appointmentService';
+import receptionistPatientService from '../../receptionist/services/receptionistPatientService';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -186,6 +187,7 @@ const QuickScheduleModal = ({
   selectedDate, 
   selectedTime, 
   doctorId,
+  creatorType,
   patients = [],
   loading: loadingPatients = false,
   onSuccess 
@@ -202,14 +204,14 @@ const QuickScheduleModal = ({
   const [endTime, setEndTime] = useState('');
 
   useEffect(() => {
-    if (selectedTime && formData.duration) {
+    if (selectedDate && selectedTime && formData.duration) {
       const [hours, minutes] = selectedTime.split(':');
-      const start = new Date();
+      const start = new Date(selectedDate);
       start.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       const end = new Date(start.getTime() + formData.duration * 60000);
       setEndTime(end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
-  }, [selectedTime, formData.duration]);
+  }, [selectedDate, selectedTime, formData.duration]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -236,21 +238,42 @@ const QuickScheduleModal = ({
       const appointmentDate = new Date(selectedDate);
       appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      const appointmentData = {
-        patientId: formData.patientId,
-        doctorId: doctorId,
-        appointmentStart: appointmentDate.toISOString(),
-        duration: formData.duration,
-        appointmentType: formData.appointmentType,
-        notes: formData.notes,
-        isDoctorPatient: false
-      };
+      const isReceptionistCreator = creatorType === 'receptionist';
+      const isDoctorCreator = creatorType === 'doctor';
 
-      await appointmentService.createAppointment(appointmentData);
+      if (isDoctorCreator && !doctorId) {
+        setError(t('quickSchedule.createError'));
+        return;
+      }
+
+      if (isReceptionistCreator) {
+        const appointmentEndDate = new Date(appointmentDate.getTime() + formData.duration * 60000);
+        await receptionistPatientService.createAppointment({
+          patientId: formData.patientId,
+          doctorId: doctorId || localStorage.getItem('assignedDoctorId'),
+          appointmentStart: appointmentDate.toISOString(),
+          appointmentEnd: appointmentEndDate.toISOString(),
+          appointmentType: formData.appointmentType,
+          notes: formData.notes,
+          title: formData.appointmentType || 'consultation'
+        });
+      } else {
+        const appointmentData = {
+          patientId: formData.patientId,
+          doctorId: doctorId,
+          appointmentStart: appointmentDate.toISOString(),
+          duration: formData.duration,
+          appointmentType: formData.appointmentType,
+          notes: formData.notes,
+          isDoctorPatient: false
+        };
+
+        await appointmentService.createAppointment(appointmentData);
+      }
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || t('quickSchedule.createError'));
+      setError(err.response?.data?.error || err.response?.data?.message || t('quickSchedule.createError'));
     } finally {
       setLoading(false);
     }
