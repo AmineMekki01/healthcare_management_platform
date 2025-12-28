@@ -8,11 +8,13 @@ import (
 )
 
 type Config struct {
-	DatabaseHost     string
-	DatabasePort     string
-	DatabaseUser     string
-	DatabasePassword string
-	DatabaseName     string
+	DatabaseHost        string
+	DatabasePort        string
+	DatabaseUser        string
+	DatabasePassword    string
+	DatabaseName        string
+	DatabaseSSLMode     string
+	DatabaseAutoMigrate bool
 
 	ServerPort string
 
@@ -37,11 +39,13 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DatabaseHost:     getEnv("DATABASE_HOST", ""),
-		DatabasePort:     getEnv("DATABASE_PORT", ""),
-		DatabaseUser:     getEnv("DATABASE_USER", ""),
-		DatabasePassword: getEnv("DATABASE_PASSWORD", ""),
-		DatabaseName:     getEnv("DATABASE_NAME", ""),
+		DatabaseHost:        getEnv("DATABASE_HOST", ""),
+		DatabasePort:        getEnv("DATABASE_PORT", ""),
+		DatabaseUser:        getEnv("DATABASE_USER", ""),
+		DatabasePassword:    getEnv("DATABASE_PASSWORD", ""),
+		DatabaseName:        getEnv("DATABASE_NAME", ""),
+		DatabaseSSLMode:     getEnv("DATABASE_SSLMODE", ""),
+		DatabaseAutoMigrate: getEnvBool("DATABASE_AUTO_MIGRATE", false),
 
 		ServerPort: getEnv("SERVER_PORT", ""),
 
@@ -64,6 +68,20 @@ func Load() *Config {
 func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if value := os.Getenv(key); value != "" {
+		switch value {
+		case "1", "true", "TRUE", "True", "yes", "YES", "Yes", "y", "Y":
+			return true
+		case "0", "false", "FALSE", "False", "no", "NO", "No", "n", "N":
+			return false
+		default:
+			return fallback
+		}
 	}
 	return fallback
 }
