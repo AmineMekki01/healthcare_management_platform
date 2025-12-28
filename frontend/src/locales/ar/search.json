@@ -16,8 +16,12 @@
   },
   "results": {
     "title": "نتائج البحث",
-    "doctorsFound_one": "تم العثور على {{count}} طبيب",
-    "doctorsFound_other": "تم العثور على {{count}} أطباء",
+    "doctorsFound_zero": "لم يتم العثور على أي طبيب",
+    "doctorsFound_one": "تم العثور على طبيب واحد",
+    "doctorsFound_two": "تم العثور على طبيبين",
+    "doctorsFound_few": "تم العثور على {{count}} أطباء",
+    "doctorsFound_many": "تم العثور على {{count}} طبيبًا",
+    "doctorsFound_other": "تم العثور على {{count}} طبيب",
     "noDoctorsTitle": "لم يتم العثور على أطباء",
     "noDoctorsMessage": "حاول تعديل معايير البحث أو الموقع"
   },
@@ -44,5 +48,25 @@
       "title": "الصحة النفسية",
       "description": "القلق، الاكتئاب، إدارة التوتر"
     }
+  },
+  "doctorCard": {
+    "verified": "موثوق",
+    "bookAppointment": "حجز موعد",
+    "locationNotSpecified": "الموقع غير محدد",
+    "yearsExperience_zero": "بدون خبرة",
+    "yearsExperience_one": "سنة خبرة واحدة",
+    "yearsExperience_two": "سنتان من الخبرة",
+    "yearsExperience_few": "{{count}} سنوات خبرة",
+    "yearsExperience_many": "{{count}} سنة خبرة",
+    "yearsExperience_other": "{{count}} سنة خبرة",
+    "newPractitioner": "طبيب جديد في الممارسة",
+    "reviewsCount_zero": "لا توجد تقييمات",
+    "reviewsCount_one": "تقييم واحد",
+    "reviewsCount_two": "تقييمان",
+    "reviewsCount_few": "{{count}} تقييمات",
+    "reviewsCount_many": "{{count}} تقييمًا",
+    "reviewsCount_other": "{{count}} تقييم",
+    "noReviews": "لا توجد تقييمات بعد",
+    "unknownDoctor": "طبيب غير معروف"
   }
 }

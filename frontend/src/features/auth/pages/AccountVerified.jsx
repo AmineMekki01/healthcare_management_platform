@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './../styles/LoginRegisterFormStyles';
 import authService from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 const CenteredDiv = styled.div`
     display: flex;
@@ -37,6 +38,7 @@ const Title = styled.h1`
 `;
 
 function AccountVerified() {
+    const { t } = useTranslation(['auth', 'common']);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
     useEffect(() => {
@@ -47,7 +49,7 @@ function AccountVerified() {
                     setMessage(data.message);
                 })
                 .catch((error) => {
-                    setMessage(error.response?.data?.message || 'Account verification failed');
+                    setMessage(error.response?.data?.message || t('auth:accountVerification.failed'));
                 });
         }
     }, []); 
@@ -60,7 +62,7 @@ function AccountVerified() {
         <Container>
             <CenteredDiv className="centered">
                 <Title>{message}</Title>
-                <Button onClick={handleLogin}>Login</Button>
+                <Button onClick={handleLogin}>{t('auth:accountVerification.loginButton')}</Button>
             </CenteredDiv>
         </Container>
 

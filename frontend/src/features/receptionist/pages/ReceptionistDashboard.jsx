@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Container,
@@ -14,8 +15,6 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
-  ListItemIcon,
   Divider,
   IconButton,
   Chip,
@@ -34,11 +33,13 @@ import {
 } from '@mui/icons-material';
 import receptionistPatientService from '../services/receptionistPatientService';
 import receptionistHiringService from '../services/receptionistHiringService';
+import receptionistStatusService from '../services/receptionistStatusService';
 import appointmentService from '../../appointments/services/appointmentService';
 
 const ReceptionistDashboard = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation(['common', 'medical']);
+  const theme = useTheme();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,21 +52,103 @@ const ReceptionistDashboard = () => {
   const [doctorName, setDoctorName] = useState('');
   const [userFullName, setUserFullName] = useState('');
 
-  useEffect(() => {
-    const doctorId = localStorage.getItem('assignedDoctorId');
-    const doctorNameFromStorage = localStorage.getItem('assignedDoctorName');
-    const fullName = localStorage.getItem('userFullName');
-    
-    if (doctorId) {
-      setAssignedDoctorId(doctorId);
-      setDoctorName(doctorNameFromStorage || 'Unknown Doctor');
-      setUserFullName(fullName || 'Receptionist');
-      fetchDashboardData();
-    } else {
-      setError(t('receptionist.errors.noAssignedDoctor'));
-      setLoading(false);
-    }
+  const locale = i18n?.language || undefined;
+  const isRtl = theme?.direction === 'rtl';
+  const dateFormatter = React.useMemo(() => {
+    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  }, [locale]);
+
+  const timeFormatter = React.useMemo(() => {
+    return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false });
+  }, [locale]);
+
+  const sanitizeDoctorName = React.useCallback((value) => {
+    const v = String(value || '').trim();
+    if (!v) return '';
+    return v.replace(/^dr\.?\s+/i, '').trim();
   }, []);
+
+  const toCamelCaseKey = React.useCallback((value) => {
+    const v = String(value || '').trim();
+    if (!v) return '';
+    const parts = v
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .split(' ')
+      .filter(Boolean);
+    if (parts.length === 0) return '';
+    return parts
+      .map((p, idx) => {
+        const lower = p.toLowerCase();
+        if (idx === 0) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join('');
+  }, []);
+
+  const translateSpecialty = React.useCallback((specialty) => {
+    const raw = String(specialty || '').trim();
+    if (!raw) return '';
+    const key = toCamelCaseKey(raw);
+    if (!key) return raw;
+    return t(`specialties.${key}`, { ns: 'medical', defaultValue: raw });
+  }, [t, toCamelCaseKey]);
+
+  useEffect(() => {
+    const fullName = localStorage.getItem('userFullName');
+    setUserFullName(fullName || '');
+
+    const receptionistId = localStorage.getItem('receptionistId') || localStorage.getItem('userId');
+
+    const loadAssignmentAndDashboard = async () => {
+      try {
+        if (!receptionistId) {
+          setError(t('receptionist.errors.loadFailed'));
+          setLoading(false);
+          return;
+        }
+
+        const status = await receptionistStatusService.getAssignmentStatus(receptionistId);
+        const assigned = status?.assignedDoctor;
+
+        if (assigned?.doctorId) {
+          const doctorId = String(assigned.doctorId);
+          localStorage.setItem('assignedDoctorId', doctorId);
+          setAssignedDoctorId(doctorId);
+
+          const name = `${assigned.firstName || ''} ${assigned.lastName || ''}`.trim();
+          if (name) {
+            localStorage.setItem('assignedDoctorName', name);
+            setDoctorName(sanitizeDoctorName(name) || '');
+          } else {
+            localStorage.removeItem('assignedDoctorName');
+            setDoctorName('');
+          }
+
+          await fetchDashboardData();
+          return;
+        }
+
+        localStorage.removeItem('assignedDoctorId');
+        localStorage.removeItem('assignedDoctorName');
+        setAssignedDoctorId(null);
+        setDoctorName('');
+        setError(t('receptionist.errors.noAssignedDoctor'));
+        setLoading(false);
+      } catch (e) {
+        console.error('Error fetching receptionist assignment status:', e);
+        setError(e?.response?.data?.error || e?.message || t('receptionist.errors.loadFailed'));
+        setLoading(false);
+      }
+    };
+
+    loadAssignmentAndDashboard();
+  }, [sanitizeDoctorName, t]);
+
+  const resolvedDoctorName = doctorName
+    ? t('labels.doctor', { ns: 'medical', name: doctorName, defaultValue: `Dr. ${doctorName}` })
+    : t('receptionist.jobOffers.labels.unknownDoctor');
+  const resolvedUserFullName = userFullName || t('userTypes.receptionist');
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -74,7 +157,6 @@ const ReceptionistDashboard = () => {
     try {
       const receptionistId = localStorage.getItem('receptionistId') || localStorage.getItem('userId');
       const effectiveDoctorId = localStorage.getItem('assignedDoctorId') || assignedDoctorId;
-
       const [recentPatientsResponse, apptStats, patStats, reservations, proposals] = await Promise.all([
         receptionistPatientService.searchPatients({
           page: 1,
@@ -153,7 +235,7 @@ const ReceptionistDashboard = () => {
           {t('navigation.receptionistDashboard')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          {t('receptionist.welcome', { name: userFullName, doctor: doctorName })}
+          {t('receptionist.welcome', { name: resolvedUserFullName, doctor: resolvedDoctorName })}
         </Typography>
       </Box>
 
@@ -244,10 +326,10 @@ const ReceptionistDashboard = () => {
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
-                  <EventIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  {t('receptionist.dashboard.upcomingAppointments')}
-                </Typography>
+                <Stack direction="row" spacing={isRtl ? 2 : 1} alignItems="center" sx={{ direction: isRtl ? 'rtl' : 'ltr' }}>
+                  <EventIcon sx={{ flexShrink: 0 }} />
+                  <Typography variant="h6">{t('receptionist.dashboard.upcomingAppointments')}</Typography>
+                </Stack>
                 <Button variant="outlined" size="small" onClick={handleCreateAppointment}>
                   {t('navigation.scheduleAppointment')}
                 </Button>
@@ -262,27 +344,37 @@ const ReceptionistDashboard = () => {
                     const end = a?.appointmentEnd ? new Date(a.appointmentEnd) : null;
                     const primary = `${a?.patientFirstName || ''} ${a?.patientLastName || ''}`.trim() || t('patient.fields.never');
                     const secondary = start
-                      ? `${start.toLocaleDateString()} • ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${end ? ` - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}`
+                      ? `${dateFormatter.format(start)} • ${timeFormatter.format(start)}${end ? ` - ${timeFormatter.format(end)}` : ''}`
                       : '';
 
                     return (
                       <React.Fragment key={a?.appointmentId || idx}>
-                        <ListItem
-                          secondaryAction={
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              {!!a?.specialty && <Chip size="small" label={a.specialty} variant="outlined" />}
-                              <Chip
-                                size="small"
-                                color="success"
-                                label={t('status.active')}
-                              />
-                            </Stack>
-                          }
-                        >
-                          <ListItemIcon>
-                            <PeopleIcon />
-                          </ListItemIcon>
-                          <ListItemText primary={primary} secondary={secondary} />
+                        <ListItem disableGutters>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: isRtl ? 2 : 1, width: '100%' }}>
+                            <PeopleIcon sx={{ color: 'text.secondary', flexShrink: 0 }} />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                                {primary}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                {secondary}
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                marginInlineStart: 'auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                flexWrap: 'wrap',
+                                justifyContent: 'flex-end',
+                              }}
+                            >
+                              {!!a?.specialty && <Chip size="small" label={translateSpecialty(a.specialty)} variant="outlined" />}
+                              <Chip size="small" color="success" label={t('status.active')} />
+                            </Box>
+                          </Box>
                         </ListItem>
                         {idx < upcomingAppointments.length - 1 && <Divider />}
                       </React.Fragment>
@@ -297,10 +389,10 @@ const ReceptionistDashboard = () => {
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <TrendingUpIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                {t('receptionist.dashboard.insights')}
-              </Typography>
+              <Stack direction="row" spacing={isRtl ? 2 : 1} alignItems="center" sx={{ mb: 2, direction: isRtl ? 'rtl' : 'ltr' }}>
+                <TrendingUpIcon sx={{ flexShrink: 0 }} />
+                <Typography variant="h6">{t('receptionist.dashboard.insights')}</Typography>
+              </Stack>
 
               <Stack spacing={2}>
                 <Paper sx={{ p: 2 }}>
@@ -320,7 +412,7 @@ const ReceptionistDashboard = () => {
                     {t('receptionist.dashboard.assignedDoctor')}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {doctorName}
+                    {resolvedDoctorName}
                   </Typography>
                 </Paper>
               </Stack>
@@ -331,10 +423,10 @@ const ReceptionistDashboard = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <EventIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                {t('receptionist.stats.appointments')}
-              </Typography>
+              <Stack direction="row" spacing={isRtl ? 2 : 1} alignItems="center" sx={{ mb: 2, direction: isRtl ? 'rtl' : 'ltr' }}>
+                <EventIcon sx={{ flexShrink: 0 }} />
+                <Typography variant="h6">{t('receptionist.stats.appointments')}</Typography>
+              </Stack>
               
               {appointmentStats ? (
                 <Grid container spacing={2}>
@@ -385,10 +477,10 @@ const ReceptionistDashboard = () => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <PeopleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                {t('receptionist.stats.patients')}
-              </Typography>
+              <Stack direction="row" spacing={isRtl ? 2 : 1} alignItems="center" sx={{ mb: 2, direction: isRtl ? 'rtl' : 'ltr' }}>
+                <PeopleIcon sx={{ flexShrink: 0 }} />
+                <Typography variant="h6">{t('receptionist.stats.patients')}</Typography>
+              </Stack>
               
               {patientStats ? (
                 <Grid container spacing={2}>
@@ -440,10 +532,10 @@ const ReceptionistDashboard = () => {
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
-                  <PeopleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  {t('receptionist.recentPatients')}
-                </Typography>
+                <Stack direction="row" spacing={isRtl ? 2 : 1} alignItems="center" sx={{ direction: isRtl ? 'rtl' : 'ltr' }}>
+                  <PeopleIcon sx={{ flexShrink: 0 }} />
+                  <Typography variant="h6">{t('receptionist.recentPatients')}</Typography>
+                </Stack>
                 <Button
                   variant="outlined"
                   size="small"
@@ -459,42 +551,46 @@ const ReceptionistDashboard = () => {
                   {recentPatients.map((patient, index) => (
                     <React.Fragment key={patient.patientId}>
                       <ListItem
-                        secondaryAction={
-                          <Box>
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => handleViewPatient(patient.patientId)}
+                        disableGutters
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                          <PeopleIcon sx={{ color: 'text.secondary', flexShrink: 0 }} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                              {patient.firstName} {patient.lastName}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {patient.email} • {patient.phoneNumber}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              {t('patient.fields.lastVisit')}: {patient.lastAppointmentDate ? dateFormatter.format(new Date(patient.lastAppointmentDate)) : t('patient.fields.never')} •
+                              {t('receptionist.totalAppointments')}: {patient.totalAppointments}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              marginInlineStart: 'auto',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              flexWrap: 'wrap',
+                              justifyContent: 'flex-end',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Chip
                               label={patient.hasActiveAppointments ? t('status.active') : t('status.inactive')}
                               color={patient.hasActiveAppointments ? 'success' : 'default'}
                               size="small"
-                              sx={{ mr: 1 }}
                             />
-                            <IconButton
-                              onClick={() => handleViewPatient(patient.patientId)}
-                              size="small"
-                            >
+                            <IconButton onClick={() => handleViewPatient(patient.patientId)} size="small">
                               <SearchIcon />
                             </IconButton>
                           </Box>
-                        }
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => handleViewPatient(patient.patientId)}
-                      >
-                        <ListItemIcon>
-                          <PeopleIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={`${patient.firstName} ${patient.lastName}`}
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
-                                {patient.email} • {patient.phoneNumber}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {t('patient.fields.lastVisit')}: {patient.lastAppointmentDate ? new Date(patient.lastAppointmentDate).toLocaleDateString() : t('patient.fields.never')} •
-                                {t('receptionist.totalAppointments')}: {patient.totalAppointments}
-                              </Typography>
-                            </Box>
-                          }
-                        />
+                        </Box>
                       </ListItem>
                       {index < recentPatients.length - 1 && <Divider />}
                     </React.Fragment>

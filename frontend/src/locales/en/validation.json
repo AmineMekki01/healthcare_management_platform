@@ -13,6 +13,7 @@
     "lowercase": "Password must contain at least one lowercase letter",
     "number": "Password must contain at least one number",
     "specialChar": "Password must contain at least one special character",
+    "pattern": "Password must be 8-24 characters with uppercase, lowercase, number, and special character",
     "noMatch": "Passwords do not match",
     "weak": "Password is too weak",
     "medium": "Password strength: Medium",
@@ -23,6 +24,7 @@
     "minLength": "Username must be at least {{min}} characters long",
     "maxLength": "Username must not exceed {{max}} characters",
     "alphanumeric": "Username can only contain letters, numbers, and underscores",
+    "pattern": "Username must be 4-24 characters long and start with a letter",
     "alreadyExists": "This username is already taken",
     "available": "Username is available"
   },

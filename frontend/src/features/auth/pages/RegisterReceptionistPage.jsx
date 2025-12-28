@@ -115,7 +115,7 @@ const PHONE_REGEX = /^[0-9]{10}$/;
 
 const RegisterReceptionistPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation(['auth', 'common', 'validation']);
 
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -240,7 +240,7 @@ const RegisterReceptionistPage = () => {
         handleSubmit();
       }
     } else {
-      setError('Please fill in all required fields correctly for this step.');
+      setError(t('auth:doctorRegistration.correctValidationErrors'));
     }
   };
 
@@ -255,7 +255,7 @@ const RegisterReceptionistPage = () => {
       setError('');
 
       if (!validation.email || !validation.password || !validation.confirmPassword || !validation.phone) {
-        setError('Please fill in all required fields correctly.');
+        setError(t('auth:doctorRegistration.correctValidationErrors'));
         setLoading(false);
         return;
       }
@@ -303,7 +303,7 @@ const RegisterReceptionistPage = () => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      setError(error.response?.data?.message || t('auth:errors.registrationFailed'));
     } finally {
       setLoading(false);
     }
@@ -315,42 +315,42 @@ const RegisterReceptionistPage = () => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-              Personal Information
+              {t('auth:receptionistRegistration.personalInfo.title')}
             </Typography>
             
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="First Name"
+                  label={t('auth:receptionistRegistration.personalInfo.firstName')}
                   value={formData.firstName}
                   onChange={handleInputChange('firstName')}
                   onFocus={handleFocus('firstName')}
                   onBlur={handleBlur('firstName')}
                   required
                   error={!!(focus.firstName === false && !formData.firstName)}
-                  helperText={focus.firstName === false && !formData.firstName ? 'First name is required' : ''}
+                  helperText={focus.firstName === false && !formData.firstName ? t('validation:name.firstName') : ''}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Last Name"
+                  label={t('auth:receptionistRegistration.personalInfo.lastName')}
                   value={formData.lastName}
                   onChange={handleInputChange('lastName')}
                   onFocus={handleFocus('lastName')}
                   onBlur={handleBlur('lastName')}
                   required
                   error={!!(focus.lastName === false && !formData.lastName)}
-                  helperText={focus.lastName === false && !formData.lastName ? 'Last name is required' : ''}
+                  helperText={focus.lastName === false && !formData.lastName ? t('validation:name.lastName') : ''}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Email Address"
+                  label={t('auth:receptionistRegistration.personalInfo.email')}
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange('email')}
@@ -360,9 +360,9 @@ const RegisterReceptionistPage = () => {
                   error={!!(focus.email === false && (!formData.email || !validation.email))}
                   helperText={
                     focus.email === false && !formData.email 
-                      ? 'Email is required' 
+                      ? t('validation:email.required') 
                       : focus.email === false && formData.email && !validation.email 
-                      ? 'Please enter a valid email address' 
+                      ? t('validation:email.invalid') 
                       : ''
                   }
                   InputProps={{
@@ -378,7 +378,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Phone Number"
+                  label={t('auth:receptionistRegistration.personalInfo.phone')}
                   value={formData.phoneNumber}
                   onChange={handleInputChange('phoneNumber')}
                   onFocus={handleFocus('phoneNumber')}
@@ -387,9 +387,9 @@ const RegisterReceptionistPage = () => {
                   error={!!(focus.phoneNumber === false && (!formData.phoneNumber || !validation.phone))}
                   helperText={
                     focus.phoneNumber === false && !formData.phoneNumber 
-                      ? 'Phone number is required' 
+                      ? t('validation:phone.required') 
                       : focus.phoneNumber === false && formData.phoneNumber && !validation.phone 
-                      ? 'Please enter a valid 10-digit phone number' 
+                      ? t('validation:phone.invalid') 
                       : ''
                   }
                   InputProps={{
@@ -405,7 +405,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Password"
+                  label={t('auth:receptionistRegistration.personalInfo.password')}
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleInputChange('password')}
@@ -415,9 +415,9 @@ const RegisterReceptionistPage = () => {
                   error={!!(focus.password === false && (!formData.password || !validation.password))}
                   helperText={
                     focus.password === false && !formData.password 
-                      ? 'Password is required' 
+                      ? t('validation:password.required') 
                       : focus.password === false && formData.password && !validation.password 
-                      ? 'Password must be 8-24 characters with uppercase, lowercase, number, and special character' 
+                      ? t('validation:password.pattern') 
                       : ''
                   }
                   InputProps={{
@@ -438,7 +438,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Confirm Password"
+                  label={t('auth:receptionistRegistration.personalInfo.confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={handleInputChange('confirmPassword')}
@@ -448,9 +448,9 @@ const RegisterReceptionistPage = () => {
                   error={!!(focus.confirmPassword === false && (!formData.confirmPassword || !validation.confirmPassword))}
                   helperText={
                     focus.confirmPassword === false && !formData.confirmPassword 
-                      ? 'Please confirm your password' 
+                      ? t('validation:required') 
                       : focus.confirmPassword === false && formData.confirmPassword && !validation.confirmPassword 
-                      ? 'Passwords do not match' 
+                      ? t('validation:password.noMatch') 
                       : ''
                   }
                   InputProps={{
@@ -470,14 +470,14 @@ const RegisterReceptionistPage = () => {
               
               <Grid item xs={12} sm={6}>
                 <FormControl component="fieldset">
-                  <FormLabel component="legend" sx={{ color: '#333', fontWeight: 'bold' }}>Gender</FormLabel>
+                  <FormLabel component="legend" sx={{ color: '#333', fontWeight: 'bold' }}>{t('auth:receptionistRegistration.personalInfo.gender')}</FormLabel>
                   <RadioGroup
                     row
                     value={formData.sex}
                     onChange={handleInputChange('sex')}
                   >
-                    <FormControlLabel value="Male" control={<Radio />} label="Male" />
-                    <FormControlLabel value="Female" control={<Radio />} label="Female" />
+                    <FormControlLabel value="Male" control={<Radio />} label={t('auth:receptionistRegistration.personalInfo.male')} />
+                    <FormControlLabel value="Female" control={<Radio />} label={t('auth:receptionistRegistration.personalInfo.female')} />
                   </RadioGroup>
                 </FormControl>
               </Grid>
@@ -485,7 +485,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Date of Birth"
+                  label={t('auth:receptionistRegistration.personalInfo.dateOfBirth')}
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange('dateOfBirth')}
@@ -496,7 +496,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12}>
                 <StyledTextField
                   fullWidth
-                  label="Address"
+                  label={t('auth:receptionistRegistration.personalInfo.address')}
                   value={formData.address}
                   onChange={handleInputChange('address')}
                   multiline
@@ -507,7 +507,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="City"
+                  label={t('auth:receptionistRegistration.personalInfo.city')}
                   value={formData.city}
                   onChange={handleInputChange('city')}
                 />
@@ -516,7 +516,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="State"
+                  label={t('auth:receptionistRegistration.personalInfo.state')}
                   value={formData.state}
                   onChange={handleInputChange('state')}
                 />
@@ -525,7 +525,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="ZIP Code"
+                  label={t('auth:receptionistRegistration.personalInfo.zipCode')}
                   value={formData.zipCode}
                   onChange={handleInputChange('zipCode')}
                 />
@@ -534,7 +534,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12}>
                 <StyledTextField
                   fullWidth
-                  label="Country"
+                  label={t('auth:receptionistRegistration.personalInfo.country')}
                   value={formData.country}
                   onChange={handleInputChange('country')}
                 />
@@ -547,31 +547,31 @@ const RegisterReceptionistPage = () => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-              Work Details
+              {t('auth:receptionistRegistration.workDetails.title')}
             </Typography>
             
             <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-              <AlertTitle>Doctor Assignment</AlertTitle>
-              After registration, you'll be able to work once a doctor assigns you to their practice.
+              <AlertTitle>{t('auth:receptionistRegistration.workDetails.assignmentAlert.title')}</AlertTitle>
+              {t('auth:receptionistRegistration.workDetails.assignmentAlert.message')}
             </Alert>
             
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Employee ID"
+                  label={t('auth:receptionistRegistration.workDetails.employeeId')}
                   value={formData.employeeId}
                   onChange={handleInputChange('employeeId')}
                   required
                   error={!!(focus.employeeId === false && !formData.employeeId)}
-                  helperText={focus.employeeId === false && !formData.employeeId ? 'Employee ID is required' : ''}
+                  helperText={focus.employeeId === false && !formData.employeeId ? t('validation:required') : ''}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Department"
+                  label={t('auth:receptionistRegistration.workDetails.department')}
                   value={formData.department}
                   onChange={handleInputChange('department')}
                 />
@@ -580,27 +580,27 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
-                  label="Start Date"
+                  label={t('auth:receptionistRegistration.workDetails.startDate')}
                   type="date"
                   value={formData.startDate}
                   onChange={handleInputChange('startDate')}
                   required
                   error={!!(focus.startDate === false && !formData.startDate)}
-                  helperText={focus.startDate === false && !formData.startDate ? 'Start date is required' : ''}
+                  helperText={focus.startDate === false && !formData.startDate ? t('validation:required') : ''}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
             </Grid>
             
             <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 'bold', color: '#333' }}>
-              Emergency Contact
+              {t('auth:receptionistRegistration.workDetails.emergencyContact.title')}
             </Typography>
             
             <Grid container spacing={3}>
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="Contact Name"
+                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.name')}
                   value={formData.emergencyContact.name}
                   onChange={handleInputChange('emergencyContact.name')}
                 />
@@ -609,7 +609,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="Relationship"
+                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.relationship')}
                   value={formData.emergencyContact.relationship}
                   onChange={handleInputChange('emergencyContact.relationship')}
                 />
@@ -618,7 +618,7 @@ const RegisterReceptionistPage = () => {
               <Grid item xs={12} sm={4}>
                 <StyledTextField
                   fullWidth
-                  label="Phone Number"
+                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.phone')}
                   value={formData.emergencyContact.phone}
                   onChange={handleInputChange('emergencyContact.phone')}
                 />
@@ -631,12 +631,12 @@ const RegisterReceptionistPage = () => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-              Review Your Information
+              {t('auth:receptionistRegistration.review.title')}
             </Typography>
             
             <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-              <AlertTitle>Next Steps</AlertTitle>
-              After registration, you'll receive access once a doctor assigns you to their practice and grants appropriate permissions.
+              <AlertTitle>{t('auth:receptionistRegistration.review.nextStepsAlert.title')}</AlertTitle>
+              {t('auth:receptionistRegistration.review.nextStepsAlert.message')}
             </Alert>
 
             <Grid container spacing={3}>
@@ -644,22 +644,22 @@ const RegisterReceptionistPage = () => {
                 <Card sx={{ height: '100%', borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 'bold' }}>
-                      Personal Information
+                      {t('auth:receptionistRegistration.review.personalInfoCard')}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Name:</strong> {formData.firstName} {formData.lastName}
+                      <strong>{t('auth:receptionistRegistration.review.name')}:</strong> {formData.firstName} {formData.lastName}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Email:</strong> {formData.email}
+                      <strong>{t('auth:receptionistRegistration.review.email')}:</strong> {formData.email}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Phone:</strong> {formData.phoneNumber}
+                      <strong>{t('auth:receptionistRegistration.review.phone')}:</strong> {formData.phoneNumber}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Gender:</strong> {formData.sex || 'Not specified'}
+                      <strong>{t('auth:receptionistRegistration.review.gender')}:</strong> {formData.sex || t('auth:receptionistRegistration.review.notSpecified')}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Date of Birth:</strong> {formData.dateOfBirth || 'Not specified'}
+                      <strong>{t('auth:receptionistRegistration.review.dateOfBirth')}:</strong> {formData.dateOfBirth || t('auth:receptionistRegistration.review.notSpecified')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -669,16 +669,16 @@ const RegisterReceptionistPage = () => {
                 <Card sx={{ height: '100%', borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 'bold' }}>
-                      Work Information
+                      {t('auth:receptionistRegistration.review.workInfoCard')}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Employee ID:</strong> {formData.employeeId}
+                      <strong>{t('auth:receptionistRegistration.review.employeeId')}:</strong> {formData.employeeId}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Department:</strong> {formData.department || 'Not specified'}
+                      <strong>{t('auth:receptionistRegistration.review.department')}:</strong> {formData.department || t('auth:receptionistRegistration.review.notSpecified')}
                     </Typography>
                     <Typography variant="body2">
-                      <strong>Start Date:</strong> {formData.startDate}
+                      <strong>{t('auth:receptionistRegistration.review.startDate')}:</strong> {formData.startDate}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -689,16 +689,16 @@ const RegisterReceptionistPage = () => {
                   <Card sx={{ borderRadius: 2 }}>
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 'bold' }}>
-                        Emergency Contact
+                        {t('auth:receptionistRegistration.review.emergencyContactCard')}
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Name:</strong> {formData.emergencyContact.name || 'Not specified'}
+                        <strong>{t('auth:receptionistRegistration.review.contactName')}:</strong> {formData.emergencyContact.name || t('auth:receptionistRegistration.review.notSpecified')}
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Relationship:</strong> {formData.emergencyContact.relationship || 'Not specified'}
+                        <strong>{t('auth:receptionistRegistration.review.relationship')}:</strong> {formData.emergencyContact.relationship || t('auth:receptionistRegistration.review.notSpecified')}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Phone:</strong> {formData.emergencyContact.phone || 'Not specified'}
+                        <strong>{t('auth:receptionistRegistration.review.contactPhone')}:</strong> {formData.emergencyContact.phone || t('auth:receptionistRegistration.review.notSpecified')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -719,10 +719,10 @@ const RegisterReceptionistPage = () => {
         <SuccessCard>
           <CheckCircle sx={{ fontSize: 64, mb: 2 }} />
           <Typography variant="h4" gutterBottom>
-            Welcome to the Talent Pool! 🌟
+            {t('auth:receptionistRegistration.success.title')}
           </Typography>
           <Typography variant="body1" sx={{ mb: 4 }}>
-            Your receptionist profile has been created successfully! You're now part of our talent pool where doctors can discover and hire qualified receptionists like you.
+            {t('auth:receptionistRegistration.success.message')}
           </Typography>
           <ModernButton
             variant="contained"
@@ -731,7 +731,7 @@ const RegisterReceptionistPage = () => {
             sx={{ bgcolor: 'white', color: '#4caf50' }}
             endIcon={<ArrowForward />}
           >
-            Sign In Now
+            {t('auth:receptionistRegistration.success.signInButton')}
           </ModernButton>
         </SuccessCard>
       </RegisterContainer>
@@ -774,7 +774,7 @@ const RegisterReceptionistPage = () => {
               startIcon={<ArrowBack />}
               sx={{ mr: 1 }}
             >
-              Back
+              {t('common:buttons.back')}
             </Button>
             <Box sx={{ flex: '1 1 auto' }} />
             {activeStep === steps.length - 1 ? (
@@ -785,7 +785,7 @@ const RegisterReceptionistPage = () => {
                 disabled={loading || !validateStep(activeStep)}
                 endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
               >
-                {loading ? 'Registering...' : 'Complete Registration'}
+                {loading ? t('auth:receptionistRegistration.buttons.registering') : t('auth:receptionistRegistration.buttons.completeRegistration')}
               </ModernButton>
             ) : (
               <ModernButton
@@ -794,7 +794,7 @@ const RegisterReceptionistPage = () => {
                 disabled={!validateStep(activeStep)}
                 endIcon={<ArrowForward />}
               >
-                Next
+                {t('common:buttons.next')}
               </ModernButton>
             )}
           </Box>
@@ -804,7 +804,7 @@ const RegisterReceptionistPage = () => {
 
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Already have an account?{' '}
+            {t('auth:receptionistRegistration.alreadyHaveAccount')}{' '}
             <Button
               component={Link}
               to="/login"
@@ -818,7 +818,7 @@ const RegisterReceptionistPage = () => {
                 '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
               }}
             >
-              Sign In
+              {t('auth:receptionistRegistration.signIn')}
             </Button>
           </Typography>
         </Box>

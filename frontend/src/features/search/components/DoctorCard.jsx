@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, RatingContainer, NumberOfRaters, BadgeContainer, VerifiedBadge, ExperienceBadge, SpecialtyTag, LocationInfo, ContactButton, BookButton } from '../styles/DoctorCardStyles';
 import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle,FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle, FaHeart, FaRegHeart } from 'react-icons/fa';
 
 const DoctorCard = ({
   doctorId,
@@ -16,6 +17,7 @@ const DoctorCard = ({
   username,
   doctor
 }) => {
+  const { t } = useTranslation(['search', 'medical']);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -24,30 +26,35 @@ const DoctorCard = ({
     userId: doctorId,
     firstName: firstName,
     lastName: lastName,
-    firstName,
-    lastName,
     specialty: specialty,
-    specialty,
     experience: experience,
-    experience,
-    ratingScore: doctorRating,
-    rating: doctorRating,
-    doctorRating,
+    doctorRating: doctorRating,
     location: location,
-    location,
     profilePictureUrl: profilePictureUrl,
-    profilePictureUrl,
     ratingCount: ratingCount,
-    ratingCount,
     username: username,
-    username
   };
+
+  const doctorName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+  const doctorLabel = doctorName
+    ? t('labels.doctor', { ns: 'medical', name: doctorName, defaultValue: `Dr. ${doctorName}` })
+    : t('doctorCard.unknownDoctor', { defaultValue: 'Unknown Doctor' });
+
+  const experienceYears = Number(data.experience || 0);
+  const hasExperience = experienceYears > 0;
+  const experienceText = hasExperience
+    ? t('doctorCard.yearsExperience', { count: experienceYears })
+    : t('doctorCard.newPractitioner');
+
+  const reviewsText = data.ratingCount > 0
+    ? t('doctorCard.reviewsCount', { count: data.ratingCount })
+    : t('doctorCard.noReviews');
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Dr. ${data.firstName || data.firstName} ${data.lastName || data.lastName}`,
-        text: `Check out Dr. ${data.firstName || data.firstName} ${data.lastName || data.lastName}, ${data.specialty || data.specialty} specialist`,
+        title: doctorLabel,
+        text: `Check out ${doctorLabel}, ${data.specialty || data.specialty} specialist`,
         url: window.location.href
       });
     } else {
@@ -65,7 +72,7 @@ const DoctorCard = ({
   };
 
   const formatLocation = (location) => {
-    if (!location) return 'location not specified';
+    if (!location) return t('doctorCard.locationNotSpecified');
     return location.length > 30 ? location.substring(0, 30) + '...' : location;
   };
 
@@ -140,10 +147,10 @@ const DoctorCard = ({
       <TopSection specialtyColors={specialtyColors}>
         <BadgeContainer>
           <VerifiedBadge>
-            <FaCheckCircle /> Verified
+            <FaCheckCircle /> {t('doctorCard.verified')}
           </VerifiedBadge>
           <ExperienceBadge>
-            {data.experience || data.experience || 0}+ Years
+            {experienceText}
           </ExperienceBadge>
         </BadgeContainer>
         
@@ -154,7 +161,7 @@ const DoctorCard = ({
         />
         
         <NameSpecialtyContainer>
-          <DoctorName>Dr. {`${data.firstName || data.firstName} ${data.lastName || data.lastName}`}</DoctorName>
+          <DoctorName>{doctorLabel}</DoctorName>
           <SpecialtyTag specialtyColors={specialtyColors}>{data.specialty || data.specialty}</SpecialtyTag>
         </NameSpecialtyContainer>
       </TopSection>
@@ -163,7 +170,7 @@ const DoctorCard = ({
         <div>
           <DoctorInfo specialtyColors={specialtyColors}>
             <FaCalendarAlt />
-            <span>{data.experience || data.experience || 0} years of experience</span>
+            <span>{experienceText}</span>
           </DoctorInfo>
           
           <LocationInfo>
@@ -177,7 +184,7 @@ const DoctorCard = ({
             <FaStar style={{ color: '#f6ad55' }} />
             <DoctorRating>{data.ratingScore || data.rating || data.doctorRating ? Number(data.ratingScore || data.rating || data.doctorRating).toFixed(1) : 'N/A'}</DoctorRating>
           </DoctorInfo>
-          <NumberOfRaters>({data.ratingCount || data.ratingCount || 0} reviews)</NumberOfRaters>
+          <NumberOfRaters>({reviewsText})</NumberOfRaters>
         </RatingContainer>
       </InfoContainer>
       
@@ -188,7 +195,7 @@ const DoctorCard = ({
         
         <BookButton specialtyColors={specialtyColors}>
           <Link to={`/doctor-profile/${doctorId_final}`}>
-            Book Appointment
+            {t('doctorCard.bookAppointment')}
           </Link>
         </BookButton>
         

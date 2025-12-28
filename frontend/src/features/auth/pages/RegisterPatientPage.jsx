@@ -135,7 +135,7 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[0-9]{10}$/;
 
 const RegisterPatientPage = () => {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation(['auth', 'common', 'validation']);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -182,7 +182,11 @@ const RegisterPatientPage = () => {
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
 
-  const steps = ['Account Details', 'Personal Information', 'Address & Bio'];
+  const steps = [
+    t('auth:patientRegistration.steps.accountDetails'),
+    t('auth:patientRegistration.steps.personalInformation'),
+    t('auth:patientRegistration.steps.addressAndBio')
+  ];
 
   useEffect(() => {
     setValidation(prev => ({
@@ -266,12 +270,12 @@ const RegisterPatientPage = () => {
     
     if (activeStep === 0) {
       if (!validation.username || !validation.email || !validation.password || !validation.confirmPassword) {
-        setError('Please fill in all required fields correctly.');
+        setError(t('auth:patientRegistration.correctValidationErrors'));
         return;
       }
     } else if (activeStep === 1) {
       if (!formData.firstName || !formData.lastName || !formData.phone || !validation.phone) {
-        setError('Please fill in all required fields correctly.');
+        setError(t('auth:patientRegistration.correctValidationErrors'));
         return;
       }
     }
@@ -314,15 +318,7 @@ const RegisterPatientPage = () => {
       return;
     }
     
-    if (activeStep !== 2) {
-      return;
-    }
-    
     if (activeStep !== steps.length - 1) {
-      return;
-    }
-    
-    if (steps[activeStep] !== 'Address & Bio') {
       return;
     }
     
@@ -334,17 +330,7 @@ const RegisterPatientPage = () => {
 
     if (!validation.username || !validation.email || !validation.password || !validation.confirmPassword || 
         !formData.firstName || !formData.lastName || !formData.phone || !validation.phone) {
-      const missingFields = [];
-      if (!validation.username) missingFields.push('username');
-      if (!validation.email) missingFields.push('email');
-      if (!validation.password) missingFields.push('password');
-      if (!validation.confirmPassword) missingFields.push('confirm password');
-      if (!formData.firstName) missingFields.push('first name');
-      if (!formData.lastName) missingFields.push('last name');
-      if (!formData.phone) missingFields.push('phone number');
-      if (!validation.phone) missingFields.push('valid phone number');
-      
-      setError(`Please fill in all required fields correctly. Missing: ${missingFields.join(', ')}`);
+      setError(t('auth:patientRegistration.correctValidationErrors'));
       setLoading(false);
       return;
     }
@@ -372,7 +358,7 @@ const RegisterPatientPage = () => {
       if (response.success === 'true' || response.success === true) {
         setSuccess(true);
       } else {
-        setError(response.message || 'Registration failed. Please try again.');
+        setError(response.message || t('auth:patientRegistration.registrationFailed'));
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -383,11 +369,11 @@ const RegisterPatientPage = () => {
       } else if (error.response?.data?.error) {
         setError(error.response.data.error);
       } else if (error.response?.status === 400) {
-        setError('Invalid data provided. Please check all fields and try again.');
+        setError(t('auth:patientRegistration.invalidDataProvided'));
       } else if (error.response?.status === 409) {
-        setError('An account with this email or username already exists.');
+        setError(t('auth:patientRegistration.accountAlreadyExists'));
       } else {
-        setError('An error occurred during registration. Please try again.');
+        setError(t('auth:errors.generic'));
       }
     } finally {
       setLoading(false);
@@ -402,7 +388,7 @@ const RegisterPatientPage = () => {
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Profile Picture (Optional)
+                {t('auth:patientRegistration.profilePicture')}
               </Typography>
               <FileUploadBox onClick={() => document.getElementById('file-upload').click()}>
                 <input
@@ -425,13 +411,13 @@ const RegisterPatientPage = () => {
                         marginBottom: 8
                       }} 
                     />
-                    <Typography variant="body2">Click to change photo</Typography>
+                    <Typography variant="body2">{t('auth:doctorRegistration.clickToChange')}</Typography>
                   </Box>
                 ) : (
                   <Box>
                     <PhotoCameraIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      Click to upload profile picture
+                      {t('auth:doctorRegistration.clickToUpload')}
                     </Typography>
                   </Box>
                 )}
@@ -441,14 +427,14 @@ const RegisterPatientPage = () => {
             {/* Gender */}
             <Grid item xs={12}>
               <FormControl component="fieldset">
-                <FormLabel component="legend">Gender</FormLabel>
+                <FormLabel component="legend">{t('auth:doctorRegistration.gender')}</FormLabel>
                 <RadioGroup
                   row
                   value={formData.sex}
                   onChange={handleInputChange('sex')}
                 >
-                  <FormControlLabel value="Male" control={<Radio />} label="Male" />
-                  <FormControlLabel value="Female" control={<Radio />} label="Female" />
+                  <FormControlLabel value="Male" control={<Radio />} label={t('auth:doctorRegistration.male')} />
+                  <FormControlLabel value="Female" control={<Radio />} label={t('auth:doctorRegistration.female')} />
                 </RadioGroup>
               </FormControl>
             </Grid>
@@ -457,7 +443,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12}>
               <StyledTextField
                 fullWidth
-                label="Username"
+                label={t('auth:doctorRegistration.username')}
                 value={formData.username}
                 onChange={handleInputChange('username')}
                 onKeyDown={handleInputKeyDown}
@@ -466,7 +452,7 @@ const RegisterPatientPage = () => {
                 error={!!(focus.username && formData.username && !validation.username)}
                 helperText={
                   focus.username && formData.username && !validation.username
-                    ? 'Username must be 4-24 characters long and start with a letter'
+                    ? t('validation:username.pattern')
                     : ''
                 }
                 InputProps={{
@@ -490,7 +476,7 @@ const RegisterPatientPage = () => {
               <StyledTextField
                 fullWidth
                 type="email"
-                label="Email Address"
+                label={t('auth:login.emailLabel')}
                 value={formData.email}
                 onChange={handleInputChange('email')}
                 onKeyDown={handleInputKeyDown}
@@ -499,7 +485,7 @@ const RegisterPatientPage = () => {
                 error={!!(focus.email && formData.email && !validation.email)}
                 helperText={
                   focus.email && formData.email && !validation.email
-                    ? 'Please enter a valid email address'
+                    ? t('validation:email.invalid')
                     : ''
                 }
                 InputProps={{
@@ -523,7 +509,7 @@ const RegisterPatientPage = () => {
               <StyledTextField
                 fullWidth
                 type={showPassword ? 'text' : 'password'}
-                label="Password"
+                label={t('auth:login.passwordLabel')}
                 value={formData.password}
                 onChange={handleInputChange('password')}
                 onKeyDown={handleInputKeyDown}
@@ -532,7 +518,7 @@ const RegisterPatientPage = () => {
                 error={!!(focus.password && formData.password && !validation.password)}
                 helperText={
                   focus.password && formData.password && !validation.password
-                    ? 'Password must be 8-24 characters with uppercase, lowercase, number, and special character'
+                    ? t('validation:password.pattern')
                     : ''
                 }
                 InputProps={{
@@ -561,7 +547,7 @@ const RegisterPatientPage = () => {
               <StyledTextField
                 fullWidth
                 type={showConfirmPassword ? 'text' : 'password'}
-                label="Confirm Password"
+                label={t('auth:login.confirmPasswordLabel')}
                 value={formData.confirmPassword}
                 onChange={handleInputChange('confirmPassword')}
                 onKeyDown={handleInputKeyDown}
@@ -570,7 +556,7 @@ const RegisterPatientPage = () => {
                 error={!!(focus.confirmPassword && formData.confirmPassword && !validation.confirmPassword)}
                 helperText={
                   focus.confirmPassword && formData.confirmPassword && !validation.confirmPassword
-                    ? 'Passwords must match'
+                    ? t('validation:password.noMatch')
                     : ''
                 }
                 InputProps={{
@@ -603,14 +589,14 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="First Name"
+                label={t('auth:doctorRegistration.firstName')}
                 value={formData.firstName}
                 onChange={handleInputChange('firstName')}
                 onKeyDown={handleInputKeyDown}
                 onFocus={handleFocus('firstName')}
                 onBlur={handleBlur('firstName')}
                 error={!!(focus.firstName === false && !formData.firstName)}
-                helperText={focus.firstName === false && !formData.firstName ? 'First name is required' : ''}
+                helperText={focus.firstName === false && !formData.firstName ? t('validation:name.firstName') : ''}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -626,14 +612,14 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="Last Name"
+                label={t('auth:doctorRegistration.lastName')}
                 value={formData.lastName}
                 onChange={handleInputChange('lastName')}
                 onKeyDown={handleInputKeyDown}
                 onFocus={handleFocus('lastName')}
                 onBlur={handleBlur('lastName')}
                 error={!!(focus.lastName === false && !formData.lastName)}
-                helperText={focus.lastName === false && !formData.lastName ? 'Last name is required' : ''}
+                helperText={focus.lastName === false && !formData.lastName ? t('validation:name.lastName') : ''}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -650,7 +636,7 @@ const RegisterPatientPage = () => {
               <StyledTextField
                 fullWidth
                 type="date"
-                label="Birth Date"
+                label={t('auth:doctorRegistration.birthDate')}
                 value={formData.birthdate}
                 onChange={handleInputChange('birthdate')}
                 onKeyDown={handleInputKeyDown}
@@ -665,7 +651,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="Phone Number"
+                label={t('auth:doctorRegistration.phoneNumber')}
                 value={formData.phone}
                 onChange={handleInputChange('phone')}
                 onKeyDown={handleInputKeyDown}
@@ -674,7 +660,7 @@ const RegisterPatientPage = () => {
                 error={!!(focus.phone && formData.phone && !validation.phone)}
                 helperText={
                   focus.phone && formData.phone && !validation.phone
-                    ? 'Please enter a valid 10-digit phone number'
+                    ? t('validation:phone.invalid')
                     : ''
                 }
                 InputProps={{
@@ -702,7 +688,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12}>
               <StyledTextField
                 fullWidth
-                label="Street Address"
+                label={t('auth:patientRegistration.streetAddress')}
                 value={formData.address}
                 onChange={handleInputChange('address')}
                 InputProps={{
@@ -719,7 +705,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="City"
+                label={t('auth:doctorRegistration.city')}
                 value={formData.city}
                 onChange={handleInputChange('city')}
               />
@@ -729,7 +715,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="State"
+                label={t('auth:doctorRegistration.state')}
                 value={formData.state}
                 onChange={handleInputChange('state')}
               />
@@ -739,7 +725,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="ZIP Code"
+                label={t('auth:doctorRegistration.zipCode')}
                 value={formData.zipCode}
                 onChange={handleInputChange('zipCode')}
               />
@@ -749,7 +735,7 @@ const RegisterPatientPage = () => {
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
-                label="Country"
+                label={t('auth:doctorRegistration.country')}
                 value={formData.country}
                 onChange={handleInputChange('country')}
               />
@@ -761,10 +747,10 @@ const RegisterPatientPage = () => {
                 fullWidth
                 multiline
                 rows={4}
-                label="Tell us about yourself"
+                label={t('auth:patientRegistration.bioLabel')}
                 value={formData.bio}
                 onChange={handleInputChange('bio')}
-                placeholder="Optional: Share a brief bio about yourself..."
+                placeholder={t('auth:patientRegistration.bioPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -781,10 +767,10 @@ const RegisterPatientPage = () => {
             <SuccessCard>
                 <CheckCircle sx={{ fontSize: 64, mb: 2 }} />
                 <Typography variant="h4" gutterBottom>
-                Registration Successful! 🎉
+                {t('auth:patientRegistration.registrationSuccessful')}
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 4 }}>
-                Your patient account has been created successfully. You can now sign in and start using our platform.
+                {t('auth:patientRegistration.successMessage')}
                 </Typography>
                 <ModernButton
                 variant="contained"
@@ -793,7 +779,7 @@ const RegisterPatientPage = () => {
                 sx={{ bgcolor: 'white', color: '#4caf50' }}
                 endIcon={<ArrowForward />}
                 >
-                Sign In Now
+                {t('auth:patientRegistration.signInNow')}
                 </ModernButton>
             </SuccessCard>
       </RegisterContainer>
@@ -805,10 +791,10 @@ const RegisterPatientPage = () => {
         <RegisterPaper elevation={10}>
             <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#333' }}>
-                Create Patient Account 🏥
+                {t('auth:patientRegistration.title')}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-                Join our healthcare platform to book appointments and manage your health records
+                {t('auth:patientRegistration.subtitle')}
             </Typography>
             </Box>
 
@@ -837,7 +823,7 @@ const RegisterPatientPage = () => {
                   sx={{ mr: 1 }}
                   type="button"
                 >
-                  Back
+                  {t('common:buttons.back')}
                 </Button>
                 <Box sx={{ flex: '1 1 auto' }} />
                 {activeStep === steps.length - 1 ? (
@@ -848,7 +834,7 @@ const RegisterPatientPage = () => {
                     endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
                     type="button"
                   >
-                    {loading ? 'Registering...' : 'Complete Registration'}
+                    {loading ? t('auth:patientRegistration.registering') : t('auth:patientRegistration.completeRegistration')}
                   </ModernButton>
                 ) : (
                   <ModernButton
@@ -858,7 +844,7 @@ const RegisterPatientPage = () => {
                     endIcon={<ArrowForward />}
                     type="button"
                   >
-                    Next
+                    {t('common:buttons.next')}
                   </ModernButton>
                 )}
               </Box>
@@ -867,7 +853,7 @@ const RegisterPatientPage = () => {
 
             <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-                Already have an account?{' '}
+                {t('auth:register.alreadyHaveAccount')}{' '}
                 <Button
                 component={Link}
                 to="/login"
@@ -881,7 +867,7 @@ const RegisterPatientPage = () => {
                     '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
                 }}
                 >
-                Sign In
+                {t('common:buttons.signIn')}
                 </Button>
             </Typography>
             </Box>

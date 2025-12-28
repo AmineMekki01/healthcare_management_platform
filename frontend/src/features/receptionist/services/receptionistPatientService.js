@@ -101,7 +101,7 @@ class ReceptionistPatientService {
   async getAssignedDoctor() {
     return {
       doctorId: localStorage.getItem('assignedDoctorId'),
-      doctorName: localStorage.getItem('assignedDoctorName') || 'Assigned Doctor'
+      doctorName: localStorage.getItem('assignedDoctorName') || ''
     };
   }
 
