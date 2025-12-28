@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"healthcare_backend/pkg/config"
 
@@ -11,8 +12,17 @@ import (
 )
 
 func Initialize(cfg *config.Config) (*pgxpool.Pool, error) {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s database=%s",
-		cfg.DatabaseHost, cfg.DatabasePort, cfg.DatabaseUser, cfg.DatabasePassword, cfg.DatabaseName)
+	sslMode := cfg.DatabaseSSLMode
+	if sslMode == "" {
+		if cfg.AppEnv == "production" {
+			sslMode = "require"
+		} else {
+			sslMode = "disable"
+		}
+	}
+
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s connect_timeout=5",
+		cfg.DatabaseHost, cfg.DatabasePort, cfg.DatabaseUser, cfg.DatabasePassword, cfg.DatabaseName, sslMode)
 
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
@@ -24,13 +34,28 @@ func Initialize(cfg *config.Config) (*pgxpool.Pool, error) {
 	}
 	config.ConnConfig.RuntimeParams["TimeZone"] = "Africa/Casablanca"
 
+	config.MaxConns = 10
+	config.MinConns = 2
+	config.MaxConnLifetime = 30 * time.Minute
+	config.MaxConnIdleTime = 5 * time.Minute
+
 	conn, err := pgxpool.ConnectConfig(context.Background(), config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	if err := createTables(conn); err != nil {
-		return nil, fmt.Errorf("failed to create tables: %v", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := conn.Ping(ctx); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to ping database: %v", err)
+	}
+
+	if cfg.DatabaseAutoMigrate {
+		if err := createTables(conn); err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("failed to create tables: %v", err)
+		}
 	}
 
 	log.Println("Database initialized successfully")
@@ -41,9 +66,11 @@ func createTables(conn *pgxpool.Pool) error {
 	sqlQueries := []string{
 		`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
 
+		`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`,
+
 		`CREATE TABLE IF NOT EXISTS doctor_info (
 			doctor_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			username VARCHAR(50) NOT NULL,
+			username VARCHAR(50) UNIQUE NOT NULL,
 			first_name VARCHAR(50) NOT NULL,	
 			last_name VARCHAR(50) NOT NULL,
 			age INTEGER NOT NULL,
@@ -57,7 +84,7 @@ func createTables(conn *pgxpool.Pool) error {
 			medical_license VARCHAR(50) NOT NULL,
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
 			bio TEXT,
-			email VARCHAR(255) NOT NULL,
+			email VARCHAR(255) UNIQUE NOT NULL,
 			phone_number VARCHAR(255) NOT NULL,
 			street_address VARCHAR(255) NOT NULL,
 			city_name VARCHAR(255) NOT NULL,
@@ -69,13 +96,15 @@ func createTables(conn *pgxpool.Pool) error {
 			birth_date DATE NOT NULL,
 			location VARCHAR(255) NOT NULL,
 			profile_photo_url VARCHAR(255) NOT NULL,
+			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			deleted_at TIMESTAMP WITH TIME ZONE,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS doctor_hospitals (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			hospital_name TEXT NOT NULL,
 			position TEXT,
 			start_date DATE,
@@ -87,7 +116,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_organizations (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			organization_name TEXT NOT NULL,
 			role TEXT,
 			start_date DATE,
@@ -99,7 +128,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_awards (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			award_name TEXT NOT NULL,
 			date_awarded DATE,
 			issuing_organization TEXT,
@@ -110,7 +139,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_certifications (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			certification_name TEXT NOT NULL,
 			issued_by TEXT,
 			issue_date DATE,
@@ -122,7 +151,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_languages (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id UUID REFERENCES doctor_info(doctor_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			language_name TEXT NOT NULL,
 			proficiency_level TEXT,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -131,7 +160,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS patient_info (
 			patient_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			username VARCHAR(50) NOT NULL,
+			username VARCHAR(50) UNIQUE NOT NULL,
 			first_name VARCHAR(50) NOT NULL,	
 			last_name VARCHAR(50) NOT NULL,
 			age INTEGER NOT NULL,
@@ -139,8 +168,8 @@ func createTables(conn *pgxpool.Pool) error {
 			hashed_password VARCHAR(255) NOT NULL,
 			salt VARCHAR(50) NOT NULL,
 			is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-			bio TEXT NOT NULL,
-			email VARCHAR(255) NOT NULL,
+			bio TEXT,
+			email VARCHAR(255) UNIQUE NOT NULL,
 			phone_number VARCHAR(50) NOT NULL,
 			street_address VARCHAR(255) NOT NULL,
 			city_name VARCHAR(255) NOT NULL,
@@ -150,13 +179,15 @@ func createTables(conn *pgxpool.Pool) error {
 			birth_date DATE NOT NULL,
 			location VARCHAR(255) NOT NULL,
 			profile_photo_url VARCHAR(255) NOT NULL,
+			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			deleted_at TIMESTAMP WITH TIME ZONE,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS availabilities (
 			availability_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id uuid REFERENCES doctor_info(doctor_id),
+			doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
 			weekday VARCHAR(10),
 			availability_start TIMESTAMP WITH TIME ZONE NOT NULL,
 			availability_end TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -165,26 +196,52 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_exception (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id uuid REFERENCES doctor_info(doctor_id),
+			doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
 			date DATE,
 			start_time TIMESTAMP WITH TIME ZONE NOT NULL,
 			end_time TIMESTAMP WITH TIME ZONE NOT NULL,
 			type VARCHAR(10)
 		)`,
 
+		`CREATE TABLE IF NOT EXISTS receptionists (
+			receptionist_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			username VARCHAR(50) UNIQUE NOT NULL,
+			first_name VARCHAR(100) NOT NULL,
+			last_name VARCHAR(100) NOT NULL,
+			sex VARCHAR(50) NOT NULL,
+			hashed_password VARCHAR(255) NOT NULL,
+			salt TEXT NOT NULL,
+			email VARCHAR(255) UNIQUE NOT NULL,
+			phone_number VARCHAR(20) NOT NULL,
+			street_address TEXT,
+			city_name VARCHAR(100) NOT NULL,
+			state_name VARCHAR(100) NOT NULL,
+			zip_code VARCHAR(20),
+			country_name VARCHAR(100) NOT NULL,
+			birth_date DATE,
+			bio TEXT,
+			profile_photo_url TEXT,
+			assigned_doctor_id UUID REFERENCES doctor_info(doctor_id),
+			is_active BOOLEAN NOT NULL DEFAULT true,
+			deleted_at TIMESTAMP WITH TIME ZONE,
+			email_verified BOOLEAN DEFAULT false,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		)`,
+
 		`CREATE TABLE IF NOT EXISTS appointments (
 			appointment_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			appointment_start TIMESTAMP NOT NULL,
-			appointment_end TIMESTAMP NOT NULL,
+			appointment_start TIMESTAMP WITH TIME ZONE NOT NULL,
+			appointment_end TIMESTAMP WITH TIME ZONE NOT NULL,
 			title VARCHAR(50) NOT NULL,
-			doctor_id uuid REFERENCES doctor_info(doctor_id),
-			patient_id uuid,
+			doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
+			patient_id uuid REFERENCES patient_info(patient_id),
 			is_doctor_patient BOOLEAN NOT NULL DEFAULT FALSE,
 			canceled BOOLEAN DEFAULT FALSE,
 			canceled_by VARCHAR(255),
 			cancellation_reason TEXT,
 			cancellation_timestamp TIMESTAMP WITH TIME ZONE,
-			receptionist_id uuid,
+			receptionist_id uuid REFERENCES receptionists(receptionist_id),
 			appointment_type VARCHAR(50) NOT NULL DEFAULT 'consultation',
 			notes TEXT,
 			status VARCHAR(50) NOT NULL DEFAULT 'scheduled',
@@ -199,9 +256,12 @@ func createTables(conn *pgxpool.Pool) error {
 					)
 				)
 			),
-    		CONSTRAINT check_appointment_times CHECK ((appointment_end > appointment_start))
+			CONSTRAINT check_appointment_times CHECK ((appointment_end > appointment_start))
+		)`,
 
-		);`,
+		`CREATE INDEX IF NOT EXISTS idx_appointments_doctor_id ON appointments(doctor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_appointments_patient_id ON appointments(patient_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_appointments_receptionist_id ON appointments(receptionist_id)`,
 
 		`CREATE TABLE IF NOT EXISTS folder_file_info (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -220,14 +280,15 @@ func createTables(conn *pgxpool.Pool) error {
 			study_date TIMESTAMP WITH TIME ZONE,
 			doctor_name VARCHAR(255),
 			owner_user_id uuid,
-			patient_id uuid,
+			patient_id uuid REFERENCES patient_info(patient_id),
 			uploaded_by_user_id uuid,
 			uploaded_by_role VARCHAR(50),
 			included_in_rag BOOLEAN DEFAULT FALSE,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-
 		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_folder_file_info_patient_id ON folder_file_info(patient_id)`,
 
 		`CREATE TABLE IF NOT EXISTS shared_items (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -245,22 +306,26 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS participants (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			chat_id uuid NOT NULL,
+			chat_id uuid NOT NULL REFERENCES chats(id),
 			user_id uuid NOT NULL,
 			joined_at TIMESTAMP NOT NULL,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);`,
 
+		`CREATE INDEX IF NOT EXISTS idx_participants_chat_id ON participants(chat_id)`,
+
 		`CREATE TABLE IF NOT EXISTS messages (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			chat_id uuid NOT NULL,
+			chat_id uuid NOT NULL REFERENCES chats(id),
 			sender_id uuid NOT NULL,
 			content TEXT,
 			key TEXT,
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		);`,
+
+		`CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id)`,
 
 		`CREATE TABLE IF NOT EXISTS verification_tokens (
 			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -305,7 +370,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS comments (
 			comment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			post_id UUID NOT NULL REFERENCES blog_posts(post_id) ON DELETE CASCADE,
+			post_id UUID NOT NULL REFERENCES blog_posts(post_id),
 			user_id UUID NOT NULL,
 			user_type VARCHAR(50) NOT NULL CHECK (user_type IN ('patient', 'doctor')),
 			content TEXT NOT NULL,
@@ -315,7 +380,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS likes (
 			like_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			post_id UUID NOT NULL REFERENCES blog_posts(post_id) ON DELETE CASCADE,
+			post_id UUID NOT NULL REFERENCES blog_posts(post_id),
 			user_id UUID NOT NULL,
 			user_type VARCHAR(50) NOT NULL CHECK (user_type IN ('patient', 'doctor')),
 			liked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -337,7 +402,7 @@ func createTables(conn *pgxpool.Pool) error {
 			report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			appointment_id UUID REFERENCES appointments(appointment_id),
 			doctor_id UUID REFERENCES doctor_info(doctor_id),
-			patient_id UUID,
+			patient_id UUID REFERENCES patient_info(patient_id),
 			patient_first_name VARCHAR(100), 
 			patient_last_name VARCHAR(100), 
 			doctor_first_name VARCHAR(100), 
@@ -355,16 +420,20 @@ func createTables(conn *pgxpool.Pool) error {
 			);
 		`,
 
+		`CREATE INDEX IF NOT EXISTS idx_medical_reports_appointment_id ON medical_reports(appointment_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_medical_reports_doctor_id ON medical_reports(doctor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_medical_reports_patient_id ON medical_reports(patient_id)`,
+
 		`CREATE TABLE IF NOT EXISTS public.medications(
 			medication_id uuid NOT NULL DEFAULT gen_random_uuid(),
-			patient_id uuid NOT NULL,
+			patient_id uuid NOT NULL REFERENCES patient_info(patient_id),
 			medication_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
 			dosage character varying(100) COLLATE pg_catalog."default" NOT NULL,
 			frequency character varying(100) COLLATE pg_catalog."default" NOT NULL,
 			duration character varying(100) COLLATE pg_catalog."default" NOT NULL,
 			instructions text COLLATE pg_catalog."default",
 			prescribing_doctor_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
-			prescribing_doctor_id uuid NOT NULL,
+			prescribing_doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
 			report_id uuid,
 			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
 			updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -372,7 +441,7 @@ func createTables(conn *pgxpool.Pool) error {
 			CONSTRAINT medications_report_id_fkey FOREIGN KEY (report_id)
 				REFERENCES public.medical_reports (report_id) MATCH SIMPLE
 				ON UPDATE NO ACTION
-				ON DELETE CASCADE
+				ON DELETE NO ACTION
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS medical_referrals (
@@ -383,34 +452,9 @@ func createTables(conn *pgxpool.Pool) error {
 			);
 		`,
 
-		`CREATE TABLE IF NOT EXISTS receptionists (
-			receptionist_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			username VARCHAR(50) UNIQUE NOT NULL,
-			first_name VARCHAR(100) NOT NULL,
-			last_name VARCHAR(100) NOT NULL,
-			sex VARCHAR(50) NOT NULL,
-			hashed_password VARCHAR(255) NOT NULL,
-			salt TEXT NOT NULL,
-			email VARCHAR(255) UNIQUE NOT NULL,
-			phone_number VARCHAR(20) NOT NULL,
-			street_address TEXT,
-			city_name VARCHAR(100) NOT NULL,
-			state_name VARCHAR(100) NOT NULL,
-			zip_code VARCHAR(20),
-			country_name VARCHAR(100) NOT NULL,
-			birth_date DATE,
-			bio TEXT,
-			profile_photo_url TEXT,
-			assigned_doctor_id UUID REFERENCES doctor_info(doctor_id) ON DELETE SET NULL,
-			is_active BOOLEAN DEFAULT true,
-			email_verified BOOLEAN DEFAULT false,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-		)`,
-
 		`CREATE TABLE IF NOT EXISTS receptionist_experiences (
 			experience_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id),
 			organization_name VARCHAR(255) NOT NULL,
 			position_title VARCHAR(255) NOT NULL,
 			location VARCHAR(255),
@@ -425,8 +469,8 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS receptionist_hiring_proposals (
 			proposal_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id),
 			status VARCHAR(20) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'accepted', 'rejected', 'withdrawn')),
 			initial_message TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -439,7 +483,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS receptionist_hiring_messages (
 			message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			proposal_id UUID NOT NULL REFERENCES receptionist_hiring_proposals(proposal_id) ON DELETE CASCADE,
+			proposal_id UUID NOT NULL REFERENCES receptionist_hiring_proposals(proposal_id),
 			sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('doctor', 'receptionist')),
 			sender_id UUID NOT NULL,
 			message TEXT NOT NULL,
@@ -450,8 +494,8 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS receptionist_employments (
 			employment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
-			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id),
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			ended_at TIMESTAMP WITH TIME ZONE,
 			dismissed_reason TEXT,
@@ -466,7 +510,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS diagnosis_history (
 			id SERIAL PRIMARY KEY,
-			appointment_id UUID NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+			appointment_id UUID NOT NULL REFERENCES appointments(appointment_id),
 			diagnosis_name VARCHAR(255) NOT NULL,
 			diagnosis_details TEXT,
 			diagnosis_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -479,7 +523,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS doctor_calendar_events (
 			event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id),
 			title VARCHAR(255) NOT NULL,
 			description TEXT,
 			event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('personal', 'blocked', 'recurring_block')),
@@ -488,7 +532,7 @@ func createTables(conn *pgxpool.Pool) error {
 			all_day BOOLEAN DEFAULT FALSE,
 			blocks_appointments BOOLEAN DEFAULT FALSE,
 			recurring_pattern JSONB,
-			parent_event_id UUID REFERENCES doctor_calendar_events(event_id) ON DELETE CASCADE,
+			parent_event_id UUID REFERENCES doctor_calendar_events(event_id),
 			color VARCHAR(7) DEFAULT '#FFB84D',
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -569,7 +613,7 @@ func createTables(conn *pgxpool.Pool) error {
 
 		`CREATE TABLE IF NOT EXISTS file_folder_history (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			item_id UUID NOT NULL,
+			item_id UUID NOT NULL REFERENCES folder_file_info(id),
 			action_type VARCHAR(50) NOT NULL,
 			performed_by_id UUID NOT NULL,
 			performed_by_type VARCHAR(20) NOT NULL,
@@ -585,11 +629,24 @@ func createTables(conn *pgxpool.Pool) error {
 		`CREATE INDEX IF NOT EXISTS idx_file_folder_history_created_at ON file_folder_history(created_at DESC)`,
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin schema transaction: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
 	for _, query := range sqlQueries {
-		_, err := conn.Exec(context.Background(), query)
+		_, err := tx.Exec(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to execute query: %v", err)
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit schema transaction: %v", err)
 	}
 
 	return nil
