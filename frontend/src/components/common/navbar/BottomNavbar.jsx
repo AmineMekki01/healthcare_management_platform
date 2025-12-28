@@ -1,48 +1,36 @@
 import React, { useContext } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   BottomNavigation,
   BottomNavigationAction,
   Paper,
   useMediaQuery,
-  Menu,
   MenuItem,
   Box,
   Avatar,
   Typography,
   ListItemIcon,
   ListItemText,
+  SwipeableDrawer,
+  Divider,
+  Button,
+  Stack,
   Slide,
   useScrollTrigger,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
-  Home as HomeIcon,
-  Description as DescriptionIcon,
-  Feed as FeedIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
   MoreVert as MoreVertIcon,
   Badge as BadgeIcon,
   PersonOutline as PersonOutlineIcon,
-  Dashboard as DashboardIcon,
-  Assignment as ReportsIcon,
-  Groups as StaffIcon,
-  Create as CreateIcon,
-  Newspaper as NewsIcon,
-  PersonSearch as DoctorSearchIcon,
-  CalendarMonth as CalendarIcon,
-  Textsms as MessagesIcon,
-  AccountCircle as ProfileIcon,
-  ManageAccounts as ManageIcon,
-  Work as WorkIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../../features/auth/context/AuthContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
+import { buildNavConfig } from './navConfig';
 
 const BottomNavbar = () => {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { 
     isLoggedIn, 
     logout, 
@@ -54,164 +42,69 @@ const BottomNavbar = () => {
   } = useContext(AuthContext);
   const { activeMode, canSwitchModes, handleModeToggle } = useRoleMode();
   const location = useLocation();
-  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isRTL = i18n.language === 'ar';
   
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const open = Boolean(anchorEl);
+  const [moreOpen, setMoreOpen] = React.useState(false);
 
   const trigger = useScrollTrigger({
     target: window,
     threshold: 100,
   });
 
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuClick = () => {
+    setMoreOpen(true);
   };
 
   const handleMenuClose = () => {
-    setAnchorEl(null);
+    setMoreOpen(false);
   };
+
+  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
+  const isReceptionistAssigned = userType === 'receptionist' && activeMode === 'receptionist' && !!receptionistAssignedDoctorId;
+
+  const tNav = React.useCallback((key) => t(`navigation.${key}`), [t]);
+
+  const nextMode = activeMode === userType ? 'patient' : userType;
+  const nextModeLabel = t(`userTypes.${nextMode}`);
+
+  const handleLanguageChange = React.useCallback(async (languageCode) => {
+    try {
+      await i18n.changeLanguage(languageCode);
+
+      const direction = languageCode === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.dir = direction;
+      document.documentElement.lang = languageCode;
+      localStorage.setItem('i18nextLng', languageCode);
+
+      handleMenuClose();
+    } catch (error) {
+      console.error('Failed to change language:', error);
+    }
+  }, [i18n, handleMenuClose]);
+
+  const { bottomTabs: mainNavItems, bottomMenuItems: menuItems } = React.useMemo(() => {
+    if (!isLoggedIn || !userId || !userType) {
+      return {
+        bottomTabs: [],
+        bottomMenuItems: [],
+      };
+    }
+
+    return buildNavConfig({
+      tNav,
+      userId,
+      userType,
+      activeMode,
+      isReceptionistAssigned,
+      logout,
+    });
+  }, [tNav, isLoggedIn, userId, userType, activeMode, isReceptionistAssigned, logout]);
 
   if (!isMobile || !isLoggedIn) {
     return null;
   }
-
-  const profileHref =
-    userType === 'doctor'
-      ? `/doctor-profile/${userId}`
-      : userType === 'patient' ? `/patient-profile/${userId}` : `/receptionist-profile/${userId}`;
-
-  const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
-  const isReceptionistAssigned = activeMode === 'receptionist' && !!receptionistAssignedDoctorId;
-
-  const getMainNavItems = () => {
-    const baseItems = [
-      {
-        label: t('navigation.home'),
-        value: '/',
-        icon: <HomeIcon />,
-      },
-      {
-        label: t('navigation.findDoctors'),
-        value: '/SearchBar',
-        icon: <DoctorSearchIcon />,
-      },
-      {
-        label: t('navigation.healthFeed'),
-        value: '/feed',
-        icon: <FeedIcon />,
-      },
-    ];
-
-    if (activeMode === 'patient') {
-      baseItems.push({
-        label: t('navigation.appointments'),
-        value: '/appointments',
-        icon: <CalendarIcon />,
-      });
-    } else if (activeMode === 'doctor') {
-      baseItems.push({
-        label: t('navigation.schedule'),
-        value: '/appointments',
-        icon: <CalendarIcon />,
-      });
-    } else if (activeMode === 'receptionist') {
-      baseItems.push(
-        isReceptionistAssigned
-          ? {
-              label: t('navigation.dashboard'),
-              value: '/receptionist-dashboard',
-              icon: <DashboardIcon />,
-            }
-          : {
-              label: t('navigation.jobOffers'),
-              value: '/receptionist/job-offers',
-              icon: <WorkIcon />,
-            }
-      );
-    }
-
-    return baseItems;
-  };
-
-  const mainNavItems = getMainNavItems();
-
-  const getMenuItems = () => {
-    const baseItems = [
-      {
-        label: t('navigation.profile'),
-        href: profileHref,
-        icon: <ProfileIcon />,
-      },{
-        label: t('navigation.messages'),
-        value: '/Messages',
-        icon: <MessagesIcon />,
-      },
-    ];
-          
-
-    if (activeMode === 'patient') {
-      
-    } else if (activeMode === 'doctor') {
-      baseItems.unshift(
-        {
-          label: t('navigation.medicalReports'),
-          href: `/medical-report/${userId}`,
-          icon: <ReportsIcon />,
-        },
-        {
-          label: t('navigation.staffManagement'),
-          href: '/staff-management',
-          icon: <StaffIcon />,
-        },
-        {
-          label: t('navigation.receptionistHistory'),
-          href: '/staff-management/history',
-          icon: <ReportsIcon />,
-        },
-        {
-          label: t('navigation.createPost'),
-          href: '/create-post',
-          icon: <CreateIcon />,
-        },
-        {
-          label: t('navigation.myArticles'),
-          href: '/doctor-posts',
-          icon: <NewsIcon />,
-        }
-      );
-    } else if (activeMode === 'receptionist') {
-      baseItems.unshift({
-        label: t('navigation.jobOffers'),
-        href: '/receptionist/job-offers',
-        icon: <WorkIcon />,
-      });
-    }
-
-    baseItems.push(
-        {
-            label: t('navigation.myDocuments'),
-            href: '/records',
-            icon: <DescriptionIcon />,
-        },
-        {
-            label: t('navigation.settings'),
-            href: `/settings/${userId}`,
-            icon: <SettingsIcon />,
-        },
-        {
-            label: t('navigation.logout'),
-            action: logout,
-            icon: <LogoutIcon />,
-        }
-    );
-
-    return baseItems;
-  };
-
-  const menuItems = getMenuItems();
 
   const currentValue = mainNavItems.find(item => 
     location.pathname === item.value
@@ -250,6 +143,7 @@ const BottomNavbar = () => {
           <BottomNavigation
             value={currentValue}
             sx={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
               height: 70,
               backgroundColor: 'transparent',
               '& .MuiBottomNavigationAction-root': {
@@ -320,35 +214,38 @@ const BottomNavbar = () => {
       </Slide>
 
       {/* Overflow Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
+      <SwipeableDrawer
+        anchor="bottom"
+        open={moreOpen}
         onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
+        onOpen={() => setMoreOpen(true)}
         PaperProps={{
           sx: {
-            borderRadius: '12px',
-            minWidth: 200,
+            borderRadius: '16px 16px 0 0',
             background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            border: '1px solid rgba(0, 0, 0, 0.08)',
-            mb: 1,
+            boxShadow: '0 -8px 40px rgba(0, 0, 0, 0.12)',
+            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+            maxHeight: '85vh',
           },
         }}
       >
+        <Box sx={{ pt: 1, pb: 0.5, display: 'flex', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 5,
+              borderRadius: 999,
+              backgroundColor: 'rgba(0,0,0,0.18)',
+            }}
+          />
+        </Box>
+
         {/* User Info Header */}
         <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar 
               src={userProfilePictureUrl} 
-              alt="User"
+              alt={t('navigation.profile')}
               sx={{ 
                 width: 40, 
                 height: 40,
@@ -366,14 +263,48 @@ const BottomNavbar = () => {
                 variant="caption" 
                 sx={{ 
                   color: '#6b7280',
-                  textTransform: 'capitalize',
+                  textTransform: 'none',
                 }}
               >
-                {activeMode}
+                {t(`userTypes.${activeMode || userType}`)}
               </Typography>
             </Box>
           </Box>
         </Box>
+
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600, display: 'block', mb: 1 }}>
+            {t('navigation.language')}
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+            <Button
+              variant={i18n.language === 'ar' ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => handleLanguageChange('ar')}
+              sx={{ borderRadius: 999, textTransform: 'none' }}
+            >
+              🇲🇦 العربية
+            </Button>
+            <Button
+              variant={i18n.language === 'fr' ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => handleLanguageChange('fr')}
+              sx={{ borderRadius: 999, textTransform: 'none' }}
+            >
+              🇫🇷 Français
+            </Button>
+            <Button
+              variant={i18n.language === 'en' ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => handleLanguageChange('en')}
+              sx={{ borderRadius: 999, textTransform: 'none' }}
+            >
+              🇺🇸 English
+            </Button>
+          </Stack>
+        </Box>
+
+        <Divider />
 
         {/* Role Switch Section - only show if user can switch modes */}
         {canSwitchModes && (
@@ -403,10 +334,10 @@ const BottomNavbar = () => {
                     minWidth: '36px !important',
                   }}
                 >
-                  {activeMode === 'doctor' ? <PersonOutlineIcon /> : <BadgeIcon />}
+                  {activeMode === userType ? <BadgeIcon /> : <PersonOutlineIcon />}
                 </ListItemIcon>
                 <ListItemText 
-                  primary={t('navigation.switchTo', { mode: activeMode === 'doctor' ? t('userTypes.patient') : t('userTypes.doctor') })}
+                  primary={t('navigation.switchTo', { mode: nextModeLabel })}
                   sx={{
                     '& .MuiListItemText-primary': {
                       fontSize: '0.875rem',
@@ -464,7 +395,9 @@ const BottomNavbar = () => {
             />
           </MenuItem>
         ))}
-      </Menu>
+
+        <Box sx={{ height: 16 }} />
+      </SwipeableDrawer>
 
       {/* Spacer to prevent content from being hidden behind bottom nav */}
       <Box sx={{ height: 70 }} />

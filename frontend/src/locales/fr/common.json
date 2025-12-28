@@ -28,6 +28,7 @@
     "settings": "Paramètres",
     "logout": "Déconnexion",
     "more": "Plus",
+    "language": "Langue",
     "switchTo": "Passer à la vue {{mode}}",
     "patientSearch": "Recherche de patients",
     "createPatient": "Créer un patient",
@@ -227,6 +228,14 @@
     }
   },
   "receptionist": {
+    "welcome": "Bon retour, {{name}} ! Gestion des patients de {{doctor}}",
+    "quickActions": "Actions rapides",
+    "recentPatients": "Patients récents",
+    "totalAppointments": "Total des rendez-vous",
+    "actions": {
+      "addNewPatient": "Ajouter un nouveau patient",
+      "viewReports": "Voir les rapports"
+    },
     "dashboard": {
       "upcomingAppointments": "Rendez-vous à venir",
       "noUpcomingAppointments": "Aucun rendez-vous à venir",
