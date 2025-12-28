@@ -28,6 +28,7 @@
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج",
     "more": "المزيد",
+    "language": "اللغة",
     "switchTo": "التبديل إلى عرض {{mode}}",
     "patientSearch": "البحث عن المرضى",
     "createPatient": "إنشاء مريض",
@@ -227,6 +228,14 @@
     }
   },
   "receptionist": {
+    "welcome": "مرحبًا بعودتك، {{name}}! تدبير المرضى لدى {{doctor}}",
+    "quickActions": "إجراءات سريعة",
+    "recentPatients": "آخر المرضى",
+    "totalAppointments": "إجمالي المواعيد",
+    "actions": {
+      "addNewPatient": "إضافة مريض جديد",
+      "viewReports": "عرض التقارير"
+    },
     "dashboard": {
       "upcomingAppointments": "المواعيد القادمة",
       "noUpcomingAppointments": "لا توجد مواعيد قادمة",

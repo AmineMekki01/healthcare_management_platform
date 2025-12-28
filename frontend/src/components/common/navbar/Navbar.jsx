@@ -17,9 +17,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
-  Home as HomeIcon,
   Person as PersonIcon,
-  Feed as FeedIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Menu as MenuIcon,
@@ -31,27 +29,12 @@ import {
   ToggleOff as ToggleOffIcon,
   Badge as BadgeIcon,
   PersonOutline as PersonOutlineIcon,
-  LocalHospital as HospitalIcon,
-  MedicalServices as MedicalIcon,
-  Dashboard as DashboardIcon,
-  Assignment as ReportsIcon,
-  Groups as StaffIcon,
-  Create as CreateIcon,
-  Newspaper as NewsIcon,
-  PersonSearch as DoctorSearchIcon,
-  CalendarMonth as CalendarIcon,
-  Textsms as MessagesIcon,
-  ManageAccounts as ManageIcon,
-  FolderShared as DocumentsIcon,
-  SmartToy as ChatBotIcon,
-  Business as TalentPoolIcon,
-  SupervisorAccount as StaffManagementIcon,
-  Work as WorkIcon,
 } from '@mui/icons-material';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import FlagLanguageSelector from './../LanguageSelector/FlagLanguageSelector';
 import { useSidebar } from '../../../contexts/SidebarContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
+import { buildNavConfig, getProfileHrefForMode } from './navConfig';
 import logo from '../../../assets/images/logo_doc_app_white.png';
 
 function capitalizeWords(str) {
@@ -76,10 +59,10 @@ const MyNavbar = () => {
   const { activeMode, canSwitchModes, handleModeToggle } = useRoleMode();
   const location = useLocation();
 
-  const profileHref =
-    userType === 'doctor'
-      ? `/doctor-profile/${userId}`
-      : userType === 'patient' ? `/patient-profile/${userId}` : `/receptionist-profile/${userId}`;
+  const profileHref = getProfileHrefForMode(activeMode || userType, userId);
+
+  const nextMode = activeMode === userType ? 'patient' : userType;
+  const nextModeLabel = t(`common:userTypes.${nextMode}`);
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -103,7 +86,7 @@ const MyNavbar = () => {
 
   React.useEffect(() => {
     setExpandedMenus({});
-  }, [userId, userType, activeMode]);
+  }, [userId, userType, activeMode, i18n.language]);
 
   const handleMobileToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -125,158 +108,25 @@ const MyNavbar = () => {
     return false;
   }, [activeMode, userType]);
 
-  const baseNavItems = [
-    {
-      label: t('common:navigation.home'),
-      href: '/',
-      icon: <HomeIcon />,
-      roles: ['doctor', 'patient', 'receptionist'],
-    },
-    {
-      label: t('common:navigation.findDoctors'),
-      href: '/SearchBar',
-      icon: <DoctorSearchIcon />,
-      roles: ['doctor', 'patient', 'receptionist'],
-    },
-    {
-      label: t('common:navigation.myDocuments'),
-      href: '/records',
-      icon: <DocumentsIcon />,
-      roles: ['patient', 'doctor', 'receptionist']
-    },
-    {
-      label: t('common:navigation.messages'),
-      href: '/Messages',
-      icon: <MessagesIcon />,
-      roles: ['doctor', 'patient', 'receptionist'],
-    },
-    {
-      label: t('common:navigation.healthFeed'),
-      href: '/feed',
-      icon: <FeedIcon />,
-      roles: ['patient', 'receptionist'],
-    },
-  ];
-
   const receptionistAssignedDoctorId = assignedDoctorId || localStorage.getItem('assignedDoctorId');
-  const isReceptionistAssigned = userType === 'receptionist' && !!receptionistAssignedDoctorId;
+  const isReceptionistAssigned = userType === 'receptionist' && activeMode === 'receptionist' && !!receptionistAssignedDoctorId;
 
-  const patientNavItems = [
-    {
-      label: t('common:navigation.myAppointments'),
-      href: '/appointments',
-      icon: <CalendarIcon />,
-      roles: ['patient'],
-    },{ 
-      label: t('common:navigation.myDocuments'),
-      href: '/records',
-      icon: <DocumentsIcon />,
-      roles: ['patient']
-    },
-  ];
+  const tNav = React.useCallback((key) => t(`common:navigation.${key}`), [t]);
 
-  // Professional role-specific navigation items
-  const professionalNavItems = {
-    receptionist: [
-      {
-        label: t('common:navigation.receptionistDashboard'),
-        href: '/receptionist-dashboard',
-        icon: <DashboardIcon />,
-        roles: ['receptionist'],
-        requiresAssignment: true,
-      },
-      {
-        label: t('common:navigation.jobOffers'),
-        href: '/receptionist/job-offers',
-        icon: <WorkIcon />,
-        roles: ['receptionist'],
-      },
-      {
-        label: t('common:navigation.patientManagement'),
-        icon: <ManageIcon />,
-        hasSubItems: true,
-        roles: ['receptionist'],
-        requiresAssignment: true,
-        subItems: [
-          { label: t('common:navigation.patientSearch'), href: '/receptionist/patients', icon: <DoctorSearchIcon />, roles: ['receptionist'] },
-          { label: t('common:navigation.createPatient'), href: '/receptionist/create-patient', icon: <PersonIcon />, roles: ['receptionist'] },
-          { label: t('common:navigation.scheduleAppointment'), href: '/receptionist/create-appointment', icon: <CalendarIcon />, roles: ['receptionist'] },
-        ],
-      },
-    ],
-    doctor: [
-      {
-        label: t('common:navigation.medicalTools'),
-        icon: <MedicalIcon />,
-        hasSubItems: true,
-        roles: ['doctor'],
-        subItems: [
-          { label: t('common:navigation.aiAssistant'), href: '/ChatBot', icon: <ChatBotIcon />, roles: ['doctor'] },
-        ],
-      },
-      {
-        label: t('common:navigation.practiceManagement'),
-        icon: <HospitalIcon />,
-        hasSubItems: true,
-        roles: ['doctor'],
-        subItems: [
-          { label: t('common:navigation.mySchedule'), href: '/appointments', icon: <CalendarIcon />, roles: ['doctor'] },
-          { label: t('common:navigation.medicalReports'), href: `/medical-report/${userId}`, icon: <ReportsIcon />, roles: ['doctor'] },
-        ],
-      },
-      {
-        label: t('common:navigation.staffManagement'),
-        icon: <StaffIcon />,
-        hasSubItems: true,
-        roles: ['doctor'],
-        subItems: [
-          { label: t('common:navigation.talentPool'), href: '/receptionist-talent-pool', icon: <TalentPoolIcon />, roles: ['doctor'] },
-          { label: t('common:navigation.staffManagement'), href: '/staff-management', icon: <StaffManagementIcon />, roles: ['doctor'] },
-          { label: t('common:navigation.receptionistHistory'), href: '/staff-management/history', icon: <ReportsIcon />, roles: ['doctor'] },
-        ],
-      },
-      {
-        label: t('common:navigation.contentManagement'),
-        icon: <CreateIcon />,
-        hasSubItems: true,
-        roles: ['doctor'],
-        subItems: [
-          { label: t('common:navigation.createPost'), href: '/create-post', icon: <CreateIcon />, roles: ['doctor'] },
-          { label: t('common:navigation.myPosts'), href: '/doctor-posts', icon: <NewsIcon />, roles: ['doctor'] },
-          { label: t('common:navigation.healthFeed'), href: '/feed', icon: <FeedIcon />, roles: ['doctor'] },
-        ],
-      },
-    ],
-  };
-
-  const getAllNavItems = React.useCallback(() => {
-    let allItems = [...baseNavItems];
-
-    if (activeMode === 'patient') {
-      allItems = [...allItems, ...patientNavItems];
-    } else if (activeMode === 'doctor' || activeMode === 'receptionist') {
-      const professionalItems = professionalNavItems[activeMode] || [];
-      allItems = [...allItems, ...professionalItems];
-    }
-    
-    return allItems.filter(item => {
-      if (!item.roles || !Array.isArray(item.roles)) {
-        return false;
-      }
-
-      if (activeMode === 'receptionist' && item.requiresAssignment && !isReceptionistAssigned) {
-        return false;
-      }
-      return item.roles.includes(activeMode) || item.roles.includes(userType);
+  const { drawerItems } = React.useMemo(() => {
+    return buildNavConfig({
+      tNav,
+      userId,
+      userType,
+      activeMode,
+      isReceptionistAssigned,
+      logout,
     });
-  }, [activeMode, userType, baseNavItems, patientNavItems, professionalNavItems, isReceptionistAssigned]);
+  }, [tNav, userId, userType, activeMode, isReceptionistAssigned, logout]);
 
   const navItems = React.useMemo(() => {
-    const allItems = getAllNavItems();
-    const filteredItems = allItems.filter(item => hasAccess(item.roles));
-    
-    return filteredItems;
-  }, [getAllNavItems, hasAccess]); 
+    return drawerItems.filter((item) => hasAccess(item.roles));
+  }, [drawerItems, hasAccess]);
 
   const drawerWidth = sidebarOpen ? 280 : 72;
 
@@ -367,7 +217,7 @@ const MyNavbar = () => {
           <Link to="/" style={{ textDecoration: 'none' }}>
             <img 
               src={logo} 
-              alt="Logo" 
+              alt={t('common:navigation.platformName')} 
               style={{ 
                 height: '40px',
                 filter: 'brightness(0) invert(1)',
@@ -412,7 +262,7 @@ const MyNavbar = () => {
         >
           <Avatar 
             src={userProfilePictureUrl} 
-            alt="User"
+            alt={t('common:navigation.profile')}
             sx={{ 
               width: 48, 
               height: 48,
@@ -440,7 +290,7 @@ const MyNavbar = () => {
                   textTransform: 'capitalize',
                 }}
               >
-                {userType}
+                {t(`common:userTypes.${userType}`)}
               </Typography>
             </Box>
           )}
@@ -468,7 +318,7 @@ const MyNavbar = () => {
                 opacity: 0.8,
               }} />
               <Typography variant="caption" sx={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                {t('common:navigation.switchTo', { mode: capitalizeWords(t(`common:userTypes.${activeMode}`)) })}
+                {t('common:navigation.switchTo', { mode: nextModeLabel })}
               </Typography>
             </Box>
             <Box sx={{ 
@@ -512,7 +362,7 @@ const MyNavbar = () => {
         {/* Compact Mode Toggle for Collapsed Sidebar */}
         {canSwitchModes && !sidebarOpen && (
           <Tooltip 
-            title={`Switch to ${activeMode === userType ? 'Patient' : capitalizeWords(userType)} Mode`}
+            title={t('common:navigation.switchTo', { mode: nextModeLabel })}
             placement="right"
             arrow
           >

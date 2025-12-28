@@ -8,7 +8,15 @@ export const isRTL = (language) => {
   return RTL_LANGUAGES.includes(language);
 };
 
-export const createRTLTheme = (baseTheme, language) => {
+export const createRTLTheme = (baseThemeOrLanguage, languageArg) => {
+  const language = typeof baseThemeOrLanguage === 'string' && languageArg == null
+    ? baseThemeOrLanguage
+    : languageArg;
+
+  const baseTheme = typeof baseThemeOrLanguage === 'string' && languageArg == null
+    ? createTheme()
+    : (baseThemeOrLanguage || createTheme());
+
   const direction = isRTL(language) ? 'rtl' : 'ltr';
   
   return createTheme({

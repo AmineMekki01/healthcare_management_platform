@@ -58,7 +58,7 @@ const PublicNavbar = () => {
           <Link to="/" style={{ textDecoration: 'none' }}>
             <img
               src={logo}
-              alt="Healthcare Platform"
+              alt={t('navigation.platformName')}
               style={{
                 height: '40px',
                 filter: 'brightness(0) invert(1)',

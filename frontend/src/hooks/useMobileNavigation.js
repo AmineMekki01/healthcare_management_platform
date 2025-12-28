@@ -52,35 +52,45 @@ export const shouldShowBackButton = (pathname) => {
   return !noBackButtonRoutes.includes(pathname);
 };
 
-export const getMobilePageTitle = (pathname, activeMode) => {
-  const titleMap = {
-    '/': 'Home',
-    '/SearchBar': 'Find Doctors',
-    '/Messages': 'Messages',
-    '/appointments': 'Appointments',
-    '/feed': 'Health Feed',
-    '/patient-medical-history': 'Medical History',
-    '/settings': 'Settings',
-    '/receptionist-dashboard': 'Dashboard',
-    '/receptionist/job-offers': 'Job Offers',
-    '/staff-management': 'Staff',
-    '/MyDocs': 'My Documents',
-    '/create-post': 'Create Post',
-    '/doctor-posts': 'My Posts',
-    '/ChatBot': 'AI Assistant',
+export const getMobilePageTitle = (pathname, activeMode, t) => {
+  const titleKeyMap = {
+    '/': 'home',
+    '/SearchBar': 'findDoctors',
+    '/Messages': 'messages',
+    '/appointments': 'appointments',
+    '/feed': 'healthFeed',
+    '/settings': 'settings',
+    '/receptionist-dashboard': 'receptionistDashboard',
+    '/receptionist/job-offers': 'jobOffers',
+    '/receptionist/patients': 'patientSearch',
+    '/receptionist/create-patient': 'createPatient',
+    '/receptionist/create-appointment': 'scheduleAppointment',
+    '/staff-management': 'staffManagement',
+    '/records': 'myDocuments',
+    '/MyDocs': 'myDocuments',
+    '/create-post': 'createPost',
+    '/doctor-posts': 'myPosts',
+    '/ChatBot': 'aiAssistant',
   };
 
-  if (pathname.includes('/doctor-profile/')) return 'Doctor Profile';
-  if (pathname.includes('/patient-profile/')) return 'Patient Profile';
-  if (pathname.includes('/receptionist-profile/')) return 'Profile';
-  if (pathname.includes('/medical-report/')) return 'Medical Reports';
-  if (pathname.includes('/settings/')) return 'Settings';
+  if (typeof t === 'function') {
+    if (pathname.includes('/doctor-profile/')) return t('navigation.profile');
+    if (pathname.includes('/patient-profile/')) return t('navigation.profile');
+    if (pathname.includes('/receptionist-profile/')) return t('navigation.profile');
+    if (pathname.includes('/medical-report/')) return t('navigation.medicalReports');
+    if (pathname.includes('/settings/')) return t('navigation.settings');
 
-  if (!titleMap[pathname]) {
-    if (activeMode === 'doctor') return 'Doctor Portal';
-    if (activeMode === 'patient') return 'Patient Portal';
-    if (activeMode === 'receptionist') return 'Receptionist Portal';
+    const titleKey = titleKeyMap[pathname];
+    if (titleKey) {
+      return t(`navigation.${titleKey}`);
+    }
+
+    if (activeMode === 'doctor' || activeMode === 'patient' || activeMode === 'receptionist') {
+      return t(`userTypes.${activeMode}`);
+    }
+
+    return t('navigation.platformName');
   }
 
-  return titleMap[pathname] || 'Healthcare Platform';
+  return titleKeyMap[pathname] || 'Healthcare Platform';
 };

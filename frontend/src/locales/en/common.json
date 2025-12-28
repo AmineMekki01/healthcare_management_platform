@@ -28,6 +28,7 @@
     "settings": "Settings",
     "logout": "Logout",
     "more": "More",
+    "language": "Language",
     "switchTo": "Switch to {{mode}} View",
     "patientSearch": "Patient Search",
     "createPatient": "Create Patient",
@@ -233,7 +234,7 @@
     }
   },
   "receptionist": {
-    "welcome": "Welcome back, {{name}}! Managing patients for Dr. {{doctor}}",
+    "welcome": "Welcome back, {{name}}! Managing patients for {{doctor}}",
     "quickActions": "Quick Actions",
     "recentPatients": "Recent Patients",
     "totalAppointments": "Total appointments",

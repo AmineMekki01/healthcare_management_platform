@@ -11,6 +11,7 @@ import {
   useScrollTrigger,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowBack as ArrowBackIcon,
   Notifications as NotificationsIcon,
@@ -21,6 +22,7 @@ import { useRoleMode } from '../../../contexts/RoleModeContext';
 import { getMobilePageTitle, shouldShowBackButton } from '../../../hooks/useMobileNavigation';
 
 const MobileHeader = ({ title, showBackButton, actions = [] }) => {
+  const { t } = useTranslation('common');
   const { userProfilePictureUrl, userId } = useContext(AuthContext);
   const { activeMode } = useRoleMode();
   const theme = useTheme();
@@ -40,7 +42,7 @@ const MobileHeader = ({ title, showBackButton, actions = [] }) => {
     return null;
   }
 
-  const pageTitle = title || getMobilePageTitle(location.pathname, activeMode);
+  const pageTitle = title || getMobilePageTitle(location.pathname, activeMode, t);
 
   const handleBackClick = () => {
     if (window.history.length > 1) {
@@ -157,6 +159,7 @@ const MobileHeader = ({ title, showBackButton, actions = [] }) => {
                 transition: 'border-color 0.2s ease-in-out',
               }}
               onClick={handleProfileClick}
+              alt={t('navigation.profile')}
             />
           </Box>
         </Toolbar>
