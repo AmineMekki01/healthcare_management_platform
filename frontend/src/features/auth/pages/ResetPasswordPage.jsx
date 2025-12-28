@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ContainerLogin, FormWrapper, Title, Input, Button, ContentWrapper } from './../styles/LoginRegisterFormStyles';
 import authService from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 const ResetPasswordForm = () => {
+    const { t } = useTranslation(['auth', 'common']);
     const [searchParams] = useSearchParams();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -12,8 +14,12 @@ const ResetPasswordForm = () => {
 
     const handleNewPassword = async (e) => {
         e.preventDefault();
+        if (!token) {
+            setMessage(t('auth:resetPassword.missingToken'));
+            return;
+        }
         if (password !== confirmPassword) {
-            setMessage("Passwords don't match!");
+            setMessage(t('auth:resetPassword.passwordsDontMatch'));
             return;
         }
         try {
@@ -21,32 +27,32 @@ const ResetPasswordForm = () => {
             setMessage(data.message);
         } catch (error) {
             console.error('Failed to update password:', error);
-            setMessage(error.response?.data?.message || 'Failed to update password. Please try again.');
+            setMessage(error.response?.data?.message || t('auth:resetPassword.updateFailed'));
         }
     };
 
     return (
         <ContainerLogin>
             <FormWrapper>
-                <Title>Reset Your Password</Title>
+                <Title>{t('auth:resetPassword.title')}</Title>
                 {message && <p>{message}</p>}
                 <form onSubmit={handleNewPassword}>
                     <Input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="New Password"
+                        placeholder={t('auth:resetPassword.newPasswordPlaceholder')}
                         required
                     />
                     <Input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirm New Password"
+                        placeholder={t('auth:resetPassword.confirmPasswordPlaceholder')}
                         required
                     />
                     <ContentWrapper>
-                        <Button type="submit" href="/login">Change Password</Button>
+                        <Button type="submit" href="/login">{t('auth:resetPassword.changePassword')}</Button>
                     </ContentWrapper>
                 </form>
             </FormWrapper>

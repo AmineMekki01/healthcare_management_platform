@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ContainerLogin, FormWrapper, Title, RadioButtonContainer, RadioButton, Input, Button, ContentWrapper } from './../styles/LoginRegisterFormStyles';
 import authService from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 const ForgotPasswordForm = () => {
+    const { t } = useTranslation(['auth', 'common']);
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [localUserType, setLocalUserType] = useState('patient'); 
@@ -11,16 +13,16 @@ const ForgotPasswordForm = () => {
         e.preventDefault();
         try {
             const data = await authService.requestPasswordReset(email, localUserType);
-            setMessage(data.message);
+            setMessage(data.message || t('auth:passwordReset.requestSuccess'));
         } catch (error) {
-            setMessage(error.response?.data?.message || 'Failed to send reset request. Please try again.');
+            setMessage(error.response?.data?.message || t('auth:passwordReset.requestFailed'));
         }
     };
 
     return (
         <ContainerLogin>
             <FormWrapper>
-                <Title>Reset Your Password</Title>
+                <Title>{t('auth:passwordReset.title')}</Title>
                 {message && <p>{message}</p>}
                 <form onSubmit={handleResetRequest}>
                     <RadioButtonContainer>
@@ -33,7 +35,7 @@ const ForgotPasswordForm = () => {
                                 onChange={() => setLocalUserType('doctor')}
                             />
                             <span></span>
-                            I am a Doctor
+                            {t('auth:passwordReset.userTypeDoctor')}
                         </RadioButton>
                         <RadioButton>
                             <input
@@ -44,7 +46,7 @@ const ForgotPasswordForm = () => {
                                 onChange={() => setLocalUserType('patient')}
                             />
                             <span></span>
-                            I am a Patient
+                            {t('auth:passwordReset.userTypePatient')}
                         </RadioButton>
                     </RadioButtonContainer>
                     <ContentWrapper>
@@ -52,10 +54,10 @@ const ForgotPasswordForm = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
+                            placeholder={t('auth:passwordReset.emailPlaceholder')}
                             required
                         />
-                        <Button type="submit" >Send Reset Link</Button>
+                        <Button type="submit" >{t('auth:passwordReset.sendResetLink')}</Button>
                     </ContentWrapper>
                 </form>
             </FormWrapper>

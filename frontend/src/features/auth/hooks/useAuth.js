@@ -1,10 +1,12 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
 import authService from '../services/authService';
 
 export const useAuth = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['auth']);
   const authContext = useContext(AuthContext);
   
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export const useAuth = () => {
       
       return result;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = error.response?.data?.message || t('auth:errors.loginFailed');
       setError(errorMessage);
       throw error;
     } finally {
@@ -60,12 +62,12 @@ export const useAuth = () => {
           result = await authService.registerReceptionist(userData);
           break;
         default:
-          throw new Error('Invalid user type');
+          throw new Error(t('auth:errors.invalidUserType'));
       }
       
       return result;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      const errorMessage = error.response?.data?.message || t('auth:errors.registrationFailed');
       setError(errorMessage);
       throw error;
     } finally {
@@ -81,7 +83,7 @@ export const useAuth = () => {
       const result = await authService.forgotPassword(email);
       return result;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to send reset email';
+      const errorMessage = error.response?.data?.message || t('auth:passwordReset.requestFailed');
       setError(errorMessage);
       throw error;
     } finally {
@@ -98,7 +100,7 @@ export const useAuth = () => {
       navigate('/login');
       return result;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Password reset failed';
+      const errorMessage = error.response?.data?.message || t('auth:resetPassword.updateFailed');
       setError(errorMessage);
       throw error;
     } finally {

@@ -54,5 +54,17 @@
     "psychiatry": "Psychiatrie",
     "internalMedicine": "Médecine Interne",
     "surgery": "Chirurgie"
+  },
+  "doctorCard": {
+    "verified": "Vérifié",
+    "bookAppointment": "Prendre rendez-vous",
+    "locationNotSpecified": "Localisation non spécifiée",
+    "yearsExperience_one": "{{count}} an d'expérience",
+    "yearsExperience_other": "{{count}} ans d'expérience",
+    "newPractitioner": "Nouveau praticien",
+    "reviewsCount_one": "{{count}} avis",
+    "reviewsCount_other": "{{count}} avis",
+    "noReviews": "Aucun avis pour le moment",
+    "unknownDoctor": "Médecin inconnu"
   }
 }

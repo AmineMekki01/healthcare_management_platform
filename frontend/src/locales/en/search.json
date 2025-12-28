@@ -54,5 +54,17 @@
       "title": "Mental Health",
       "description": "Anxiety, depression, stress management"
     }
+  },
+  "doctorCard": {
+    "verified": "Verified",
+    "bookAppointment": "Book Appointment",
+    "locationNotSpecified": "Location not specified",
+    "yearsExperience_one": "{{count}} year of experience",
+    "yearsExperience_other": "{{count}} years of experience",
+    "newPractitioner": "New practitioner",
+    "reviewsCount_one": "{{count}} review",
+    "reviewsCount_other": "{{count}} reviews",
+    "noReviews": "No reviews yet",
+    "unknownDoctor": "Unknown Doctor"
   }
 }

@@ -19,7 +19,7 @@ import receptionistStatusService from '../services/receptionistStatusService';
 import { AuthContext } from '../../auth/context/AuthContext';
 
 const JobOffersPage = () => {
-  const { t, i18n } = useTranslation('common');
+  const { t, i18n } = useTranslation(['common', 'medical']);
   const navigate = useNavigate();
 
   const { setAssignedDoctorId } = useContext(AuthContext) || {};
@@ -95,7 +95,6 @@ const JobOffersPage = () => {
       localStorage.setItem('assignedDoctorId', proposal.doctorId);
       const name = proposal?.doctor ? `Dr ${proposal.doctor.firstName} ${proposal.doctor.lastName}` : '';
       if (name) localStorage.setItem('assignedDoctorName', name);
-
       if (setAssignedDoctorId) {
         setAssignedDoctorId(proposal.doctorId);
       }
@@ -142,6 +141,32 @@ const JobOffersPage = () => {
     if (Number.isNaN(d.getTime())) return '';
 
     return d.toLocaleDateString(i18n?.language || undefined);
+  };
+
+  const toCamelCaseKey = (value) => {
+    const v = String(value || '').trim();
+    if (!v) return '';
+    const parts = v
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .split(' ')
+      .filter(Boolean);
+    if (parts.length === 0) return '';
+    return parts
+      .map((p, idx) => {
+        const lower = p.toLowerCase();
+        if (idx === 0) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join('');
+  };
+
+  const translateSpecialty = (specialty) => {
+    const raw = String(specialty || '').trim();
+    if (!raw) return '';
+    const key = toCamelCaseKey(raw);
+    if (!key) return raw;
+    return t(`specialties.${key}`, { ns: 'medical', defaultValue: raw });
   };
 
   return (
@@ -230,7 +255,7 @@ const JobOffersPage = () => {
                           {doctorName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {p?.doctor?.specialty ? p.doctor.specialty : t('receptionist.jobOffers.labels.noSpecialty')}
+                          {p?.doctor?.specialty ? translateSpecialty(p.doctor.specialty) : t('receptionist.jobOffers.labels.noSpecialty')}
                         </Typography>
                         {location && (
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

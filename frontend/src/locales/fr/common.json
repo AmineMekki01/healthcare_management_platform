@@ -108,7 +108,9 @@
     "type": "Type",
     "category": "Catégorie",
     "priority": "Priorité",
-    "status": "Statut"
+    "status": "Statut",
+    "today": "Aujourd'hui",
+    "total": "Total"
   },
   "userTypes": {
     "patient": "Patient",
@@ -182,7 +184,8 @@
     "viewDetails": "Voir les détails",
     "editPatient": "Modifier le patient",
     "viewProfile": "Voir le profil",
-    "bookAppointment": "Prendre rendez-vous"
+    "bookAppointment": "Prendre rendez-vous",
+    "viewAll": "Voir tout"
   },
   "patient": {
     "yearsOld": "{{age}} ans",
@@ -244,6 +247,13 @@
       "assignedDoctor": "Médecin assigné",
       "noShows": "Absences",
       "thisMonth": "Ce mois-ci"
+    },
+    "stats": {
+      "appointments": "Statistiques des rendez-vous",
+      "patients": "Statistiques des patients",
+      "upcoming": "À venir",
+      "newToday": "Nouveaux aujourd'hui",
+      "thisWeek": "Cette semaine"
     },
     "jobOffers": {
       "title": "Offres d'emploi",

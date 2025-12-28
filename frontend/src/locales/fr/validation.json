@@ -13,6 +13,7 @@
     "lowercase": "Le mot de passe doit contenir au moins une lettre minuscule",
     "number": "Le mot de passe doit contenir au moins un chiffre",
     "specialChar": "Le mot de passe doit contenir au moins un caractère spécial",
+    "pattern": "Le mot de passe doit contenir 8 à 24 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial",
     "noMatch": "Les mots de passe ne correspondent pas",
     "weak": "Le mot de passe est trop faible",
     "medium": "Force du mot de passe : Moyen",
@@ -23,6 +24,7 @@
     "minLength": "Le nom d'utilisateur doit contenir au moins {{min}} caractères",
     "maxLength": "Le nom d'utilisateur ne doit pas dépasser {{max}} caractères",
     "alphanumeric": "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores",
+    "pattern": "Le nom d'utilisateur doit contenir 4 à 24 caractères et commencer par une lettre",
     "alreadyExists": "Ce nom d'utilisateur est déjà pris",
     "available": "Le nom d'utilisateur est disponible"
   },

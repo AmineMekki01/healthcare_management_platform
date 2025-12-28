@@ -108,7 +108,9 @@
     "type": "النوع",
     "category": "الفئة",
     "priority": "الأولوية",
-    "status": "الحالة"
+    "status": "الحالة",
+    "today": "اليوم",
+    "total": "الإجمالي"
   },
   "userTypes": {
     "patient": "مريض",
@@ -182,7 +184,8 @@
     "viewDetails": "عرض التفاصيل",
     "editPatient": "تعديل المريض",
     "viewProfile": "عرض الملف الشخصي",
-    "bookAppointment": "حجز موعد"
+    "bookAppointment": "حجز موعد",
+    "viewAll": "عرض الكل"
   },
   "patient": {
     "yearsOld": "{{age}} سنة",
@@ -244,6 +247,13 @@
       "assignedDoctor": "الطبيب المعيَّن",
       "noShows": "عدم الحضور",
       "thisMonth": "هذا الشهر"
+    },
+    "stats": {
+      "appointments": "إحصائيات المواعيد",
+      "patients": "إحصائيات المرضى",
+      "upcoming": "القادمة",
+      "newToday": "جدد اليوم",
+      "thisWeek": "هذا الأسبوع"
     },
     "jobOffers": {
       "title": "عروض العمل",
