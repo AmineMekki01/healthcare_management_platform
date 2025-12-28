@@ -255,6 +255,103 @@
       "newToday": "Nouveaux aujourd'hui",
       "thisWeek": "Cette semaine"
     },
+    "errors": {
+      "noAssignedDoctor": "Aucun médecin assigné. Veuillez contacter l'administrateur.",
+      "loadFailed": "Échec du chargement des données du tableau de bord"
+    },
+    "noData": {
+      "appointments": "Aucune donnée de rendez-vous disponible",
+      "patients": "Aucune donnée de patients disponible"
+    },
+    "noPatients": {
+      "description": "Commencez par ajouter un nouveau patient ou rechercher des patients existants"
+    },
+    "createPatient": {
+      "title": "Créer un nouveau patient",
+      "subtitle": "Ajouter un nouveau patient au système",
+      "steps": {
+        "personalInfo": "Informations personnelles",
+        "contactDetails": "Coordonnées",
+        "addressInformation": "Informations d'adresse"
+      },
+      "fields": {
+        "username": "Nom d'utilisateur",
+        "email": "Email",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "password": "Mot de passe",
+        "birthDate": "Date de naissance",
+        "ageHelper": "Calculé à partir de la date de naissance",
+        "bio": "Bio",
+        "bioPlaceholder": "Informations bio optionnelles...",
+        "phoneNumber": "Numéro de téléphone",
+        "profilePictureUrl": "URL de la photo de profil",
+        "profilePictureUrlPlaceholder": "URL de photo de profil optionnelle",
+        "streetAddress": "Adresse",
+        "city": "Ville",
+        "state": "État/Province",
+        "zipCode": "Code postal",
+        "country": "Pays",
+        "location": "Description du lieu",
+        "locationPlaceholder": "Description de lieu optionnelle"
+      },
+      "errors": {
+        "fillRequiredFields": "Veuillez remplir tous les champs obligatoires",
+        "createFailed": "Échec de la création du patient"
+      },
+      "success": {
+        "created": "Patient créé avec succès !"
+      },
+      "actions": {
+        "creating": "Création...",
+        "create": "Créer le patient"
+      }
+    },
+    "createAppointment": {
+      "title": "Créer un nouveau rendez-vous",
+      "subtitle": "Planifier un nouveau rendez-vous pour un patient",
+      "fields": {
+        "selectPatient": "Sélectionner un patient",
+        "appointmentDate": "Date du rendez-vous"
+      },
+      "calendar": {
+        "title": "Sélectionner la date et l'heure du rendez-vous",
+        "selectedTime": "Heure sélectionnée",
+        "at": "à",
+        "duration": "Durée",
+        "minutes": "minutes",
+        "existingAppointmentsToday": "Rendez-vous existants aujourd'hui ({{count}})",
+        "booked": "Réservé",
+        "noSlots": "Aucun créneau disponible pour cette date.",
+        "selectDifferentDate": "Veuillez sélectionner une autre date."
+      },
+      "dialog": {
+        "conflictTitle": "Conflit de créneau",
+        "conflictMessage": "Ce créneau est en conflit avec des rendez-vous existants :",
+        "selectDifferent": "Veuillez sélectionner un autre créneau."
+      },
+      "validation": {
+        "selectPatient": "Veuillez sélectionner un patient",
+        "selectStartTime": "Veuillez sélectionner l'heure de début",
+        "selectEndTime": "Veuillez sélectionner l'heure de fin",
+        "endAfterStart": "L'heure de fin doit être après l'heure de début",
+        "selectType": "Veuillez sélectionner le type de rendez-vous",
+        "notInPast": "Le rendez-vous ne peut pas être planifié dans le passé"
+      },
+      "errors": {
+        "loadPatients": "Échec du chargement des patients : {{error}}",
+        "loadAvailability": "Échec du chargement des disponibilités : {{error}}",
+        "conflictWithExisting": "Le créneau choisi est en conflit avec un rendez-vous existant. Veuillez sélectionner une autre heure.",
+        "createFailed": "Échec de la création du rendez-vous"
+      },
+      "success": {
+        "created": "Rendez-vous créé avec succès !"
+      },
+      "actions": {
+        "creating": "Création...",
+        "create": "Créer le rendez-vous"
+      }
+    },
     "jobOffers": {
       "title": "Offres d'emploi",
       "subtitle": "Consultez les offres des médecins et acceptez ou refusez.",
@@ -291,6 +388,66 @@
       "empty": {
         "title": "Aucune offre",
         "subtitle": "Lorsque des médecins vous enverront des offres, elles apparaîtront ici."
+      }
+    },
+    "patientSearch": {
+      "subtitle": "Recherchez et gérez les patients ayant des rendez-vous",
+      "placeholder": "Rechercher par nom du patient ou email...",
+      "filters": {
+        "all": "Tous les patients"
+      },
+      "showing": "Affichage de {{from}}-{{to}} sur {{total}} patients",
+      "empty": {
+        "tryAdjusting": "Essayez d'ajuster vos critères de recherche",
+        "noPatientsForDoctor": "Aucun patient n'a de rendez-vous avec le médecin assigné"
+      },
+      "errors": {
+        "searchFailed": "Échec de la recherche des patients"
+      }
+    },
+    "patientDetails": {
+      "title": "Détails du patient",
+      "notFound": "Patient introuvable",
+      "about": "À propos",
+      "appointmentsHistory": "Historique des rendez-vous",
+      "defaultAppointmentType": "Consultation générale",
+      "labels": {
+        "dateTime": "Date et heure",
+        "canceledBy": "Annulé par",
+        "cancellationReason": "Raison"
+      },
+      "noAppointments": {
+        "title": "Aucun rendez-vous trouvé",
+        "subtitle": "Ce patient n'a aucun rendez-vous avec le médecin assigné."
+      },
+      "medicalReport": {
+        "title": "Rapport médical",
+        "examinationReport": "Compte-rendu d'examen",
+        "primaryDiagnosis": "Diagnostic principal",
+        "diagnosisDetails": "Détails du diagnostic",
+        "referralRequired": "Orientation requise",
+        "created": "Créé"
+      },
+      "medicalHistory": {
+        "title": "Antécédents médicaux et diagnostic",
+        "severity": "Sévérité",
+        "severityDefault": "Normal",
+        "followUp": "Suivi",
+        "medicationsPrescribed": "{{count}} médicament(s) prescrit(s)"
+      },
+      "diagnosisHistoryLegacy": "Historique des diagnostics (ancien)",
+      "prescribedMedications": "Médicaments prescrits",
+      "prescribedMedicinesLegacy": "Médicaments prescrits (ancien)",
+      "medications": {
+        "frequency": "Fréquence",
+        "duration": "Durée",
+        "instructions": "Instructions",
+        "times": "{{count}} fois",
+        "from": "À partir de",
+        "ended": "Terminé"
+      },
+      "errors": {
+        "fetchFailed": "Échec du chargement des détails du patient"
       }
     }
   }

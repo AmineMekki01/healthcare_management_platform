@@ -229,7 +229,9 @@
       "consultation": "استشارة",
       "followup": "متابعة",
       "checkup": "فحص",
-      "emergency": "طوارئ"
+      "emergency": "طوارئ",
+      "procedure": "إجراء طبي",
+      "diagnostic": "فحص تشخيصي"
     },
     "notes": "ملاحظات (اختياري)",
     "notesPlaceholder": "أضف ملاحظات مهمة...",

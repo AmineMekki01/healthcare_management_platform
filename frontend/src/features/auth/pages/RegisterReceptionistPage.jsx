@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -20,7 +20,6 @@ import {
   FormLabel,
   CircularProgress,
   Divider,
-  useTheme,
   InputAdornment,
   IconButton
 } from '@mui/material';
@@ -31,12 +30,12 @@ import {
   ArrowForward,
   Visibility,
   VisibilityOff,
+  PhotoCamera,
   Email,
   Phone,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import authService from '../services/authService';
 
 const RegisterContainer = styled(Box)(({ theme }) => ({
@@ -64,6 +63,19 @@ const RegisterPaper = styled(Paper)(({ theme }) => ({
     right: 0,
     height: '4px',
     background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+  },
+}));
+
+const FileUploadBox = styled(Box)(({ theme }) => ({
+  border: `2px dashed ${theme.palette.grey[300]}`,
+  borderRadius: theme.spacing(1),
+  padding: theme.spacing(3),
+  textAlign: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.3s ease-in-out',
+  '&:hover': {
+    borderColor: '#667eea',
+    backgroundColor: theme.palette.action.hover,
   },
 }));
 
@@ -114,7 +126,6 @@ const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*?[0-9])(?=.*[!@#$%]).{8,24}$/;
 const PHONE_REGEX = /^[0-9]{10}$/;
 
 const RegisterReceptionistPage = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation(['auth', 'common', 'validation']);
 
   const [activeStep, setActiveStep] = useState(0);
@@ -131,19 +142,12 @@ const RegisterReceptionistPage = () => {
     password: '',
     confirmPassword: '',
     dateOfBirth: '',
+    bio: '',
     address: '',
     city: '',
     state: '',
     zipCode: '',
     country: '',
-    employeeId: '',
-    department: '',
-    startDate: '',
-    emergencyContact: {
-      name: '',
-      relationship: '',
-      phone: ''
-    }
   });
 
   const [validation, setValidation] = useState({
@@ -158,11 +162,14 @@ const RegisterReceptionistPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { setIsLoggedIn, setUserType, setUserId, setReceptionistId, setUserFullName } = useContext(AuthContext);
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+
+  const [experiences, setExperiences] = useState([]);
 
   const steps = [
     t('receptionistRegistration.steps.personalInfo'),
-    t('receptionistRegistration.steps.workDetails'),
+    t('receptionistRegistration.steps.experience'),
     t('receptionistRegistration.steps.review')
   ];
 
@@ -219,12 +226,51 @@ const RegisterReceptionistPage = () => {
     setFocus(prev => ({ ...prev, [field]: false }));
   };
 
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFilePreview(e.target.result);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const handleAddExperience = () => {
+    setExperiences(prev => ([
+      ...prev,
+      {
+        organizationName: '',
+        positionTitle: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        description: '',
+      }
+    ]));
+  };
+
+  const handleRemoveExperience = (index) => {
+    setExperiences(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleExperienceChange = (index, field) => (event) => {
+    const value = event.target.value;
+    setExperiences(prev => prev.map((exp, i) => (i === index ? { ...exp, [field]: value } : exp)));
+  };
+
   const validateStep = (step) => {
     switch (step) {
       case 0:
-        return formData.firstName && formData.lastName && formData.email && formData.phoneNumber && formData.password && formData.confirmPassword && validation.email && validation.password && validation.confirmPassword;
+        return formData.firstName && formData.lastName && formData.email && formData.phoneNumber && formData.password && formData.confirmPassword && formData.sex && formData.city && formData.state && formData.country && validation.email && validation.password && validation.confirmPassword && validation.phone;
       case 1:
-        return formData.employeeId && formData.startDate;
+        return experiences.every((exp) => {
+          const isEmpty = !exp.organizationName && !exp.positionTitle && !exp.location && !exp.startDate && !exp.endDate && !exp.description;
+          if (isEmpty) return true;
+          return !!(exp.organizationName && exp.positionTitle && exp.startDate);
+        });
       case 2:
         return true;
       default:
@@ -240,7 +286,7 @@ const RegisterReceptionistPage = () => {
         handleSubmit();
       }
     } else {
-      setError(t('auth:doctorRegistration.correctValidationErrors'));
+      setError(t('auth:receptionistRegistration.correctValidationErrors'));
     }
   };
 
@@ -254,52 +300,55 @@ const RegisterReceptionistPage = () => {
       setLoading(true);
       setError('');
 
-      if (!validation.email || !validation.password || !validation.confirmPassword || !validation.phone) {
-        setError(t('auth:doctorRegistration.correctValidationErrors'));
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phoneNumber || !formData.sex || !formData.city || !formData.state || !formData.country || !formData.password || !formData.confirmPassword) {
+        setError(t('auth:receptionistRegistration.fillRequiredFields'));
         setLoading(false);
         return;
       }
 
-      const registrationData = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        sex: formData.sex,
-        phone_number: formData.phoneNumber,
-        password: formData.password,
-        birth_date: formData.dateOfBirth,
-        street_address: formData.address,
-        city_name: formData.city,
-        state_name: formData.state,
-        zip_code: formData.zipCode,
-        country_name: formData.country,
-        bio: formData.bio || '',
-        username: formData.email.split('@')[0],
-        employee_id: formData.employeeId,
-        department: formData.department,
-        start_date: formData.startDate,
-        emergency_contact: formData.emergencyContact,
-        userType: 'receptionist'
-      };
+      if (!validation.email || !validation.password || !validation.confirmPassword || !validation.phone) {
+        setError(t('auth:receptionistRegistration.correctValidationErrors'));
+        setLoading(false);
+        return;
+      }
 
-      const response = await authService.registerReceptionist(registrationData);
+      const submitData = new FormData();
+      if (file) submitData.append('file', file);
 
-      if (response.success) {
-        localStorage.setItem('userType', 'receptionist');
-        localStorage.setItem('receptionistId', response.receptionistId);
-        localStorage.setItem('userFullName', `${formData.firstName} ${formData.lastName}`);
-        localStorage.setItem('userProfilePictureUrl', response.profilePhotoUrl || '');
+      submitData.append('Username', formData.email.split('@')[0]);
+      submitData.append('Password', formData.password);
+      submitData.append('Email', formData.email);
+      submitData.append('PhoneNumber', formData.phoneNumber);
+      submitData.append('FirstName', formData.firstName);
+      submitData.append('LastName', formData.lastName);
+      submitData.append('BirthDate', formData.dateOfBirth);
+      submitData.append('StreetAddress', formData.address);
+      submitData.append('CityName', formData.city);
+      submitData.append('StateName', formData.state);
+      submitData.append('ZipCode', formData.zipCode);
+      submitData.append('CountryName', formData.country);
+      submitData.append('Sex', formData.sex);
+      submitData.append('Bio', formData.bio || '');
 
-        setIsLoggedIn(true);
-        setUserType('receptionist');
-        setUserId(response.receptionistId);
-        setReceptionistId(response.receptionistId);
-        setUserFullName(`${formData.firstName} ${formData.lastName}`);
+      const cleanedExperiences = experiences
+        .map((exp) => ({
+          organizationName: exp.organizationName,
+          positionTitle: exp.positionTitle,
+          location: exp.location ? exp.location : null,
+          startDate: exp.startDate,
+          endDate: exp.endDate ? exp.endDate : null,
+          description: exp.description ? exp.description : null,
+        }))
+        .filter((exp) => exp.organizationName || exp.positionTitle || exp.location || exp.startDate || exp.endDate || exp.description);
 
+      if (cleanedExperiences.length > 0) {
+        submitData.append('Experiences', JSON.stringify(cleanedExperiences));
+      }
+
+      const response = await authService.registerReceptionist(submitData);
+
+      if (response.success === true || response.success === 'true') {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/receptionist-dashboard');
-        }, 2000);
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -319,6 +368,46 @@ const RegisterReceptionistPage = () => {
             </Typography>
             
             <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  {t('auth:receptionistRegistration.profilePicture')}
+                </Typography>
+                <FileUploadBox onClick={() => document.getElementById('receptionist-file-upload').click()}>
+                  <input
+                    id="receptionist-file-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                  {filePreview ? (
+                    <Box>
+                      <img
+                        src={filePreview}
+                        alt="Preview"
+                        style={{
+                          width: 100,
+                          height: 100,
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          marginBottom: 10
+                        }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {t('auth:receptionistRegistration.clickToChange')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <PhotoCamera sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {t('auth:receptionistRegistration.clickToUpload')}
+                      </Typography>
+                    </Box>
+                  )}
+                </FileUploadBox>
+              </Grid>
+
               <Grid item xs={12} sm={6}>
                 <StyledTextField
                   fullWidth
@@ -510,6 +599,7 @@ const RegisterReceptionistPage = () => {
                   label={t('auth:receptionistRegistration.personalInfo.city')}
                   value={formData.city}
                   onChange={handleInputChange('city')}
+                  required
                 />
               </Grid>
               
@@ -519,6 +609,7 @@ const RegisterReceptionistPage = () => {
                   label={t('auth:receptionistRegistration.personalInfo.state')}
                   value={formData.state}
                   onChange={handleInputChange('state')}
+                  required
                 />
               </Grid>
               
@@ -537,6 +628,19 @@ const RegisterReceptionistPage = () => {
                   label={t('auth:receptionistRegistration.personalInfo.country')}
                   value={formData.country}
                   onChange={handleInputChange('country')}
+                  required
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <StyledTextField
+                  fullWidth
+                  label={t('auth:receptionistRegistration.personalInfo.bioLabel')}
+                  placeholder={t('auth:receptionistRegistration.personalInfo.bioPlaceholder')}
+                  value={formData.bio}
+                  onChange={handleInputChange('bio')}
+                  multiline
+                  rows={3}
                 />
               </Grid>
             </Grid>
@@ -547,82 +651,94 @@ const RegisterReceptionistPage = () => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-              {t('auth:receptionistRegistration.workDetails.title')}
+              {t('auth:receptionistRegistration.experience.title')}
             </Typography>
-            
+
             <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-              <AlertTitle>{t('auth:receptionistRegistration.workDetails.assignmentAlert.title')}</AlertTitle>
-              {t('auth:receptionistRegistration.workDetails.assignmentAlert.message')}
+              <AlertTitle>{t('auth:receptionistRegistration.experience.optionalTitle')}</AlertTitle>
+              {t('auth:receptionistRegistration.experience.optionalMessage')}
             </Alert>
-            
+
+            <Box sx={{ mb: 2 }}>
+              <Button variant="outlined" onClick={handleAddExperience}>
+                {t('auth:receptionistRegistration.experience.add')}
+              </Button>
+            </Box>
+
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.employeeId')}
-                  value={formData.employeeId}
-                  onChange={handleInputChange('employeeId')}
-                  required
-                  error={!!(focus.employeeId === false && !formData.employeeId)}
-                  helperText={focus.employeeId === false && !formData.employeeId ? t('validation:required') : ''}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.department')}
-                  value={formData.department}
-                  onChange={handleInputChange('department')}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.startDate')}
-                  type="date"
-                  value={formData.startDate}
-                  onChange={handleInputChange('startDate')}
-                  required
-                  error={!!(focus.startDate === false && !formData.startDate)}
-                  helperText={focus.startDate === false && !formData.startDate ? t('validation:required') : ''}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </Grid>
-            
-            <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 'bold', color: '#333' }}>
-              {t('auth:receptionistRegistration.workDetails.emergencyContact.title')}
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.name')}
-                  value={formData.emergencyContact.name}
-                  onChange={handleInputChange('emergencyContact.name')}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={4}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.relationship')}
-                  value={formData.emergencyContact.relationship}
-                  onChange={handleInputChange('emergencyContact.relationship')}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={4}>
-                <StyledTextField
-                  fullWidth
-                  label={t('auth:receptionistRegistration.workDetails.emergencyContact.phone')}
-                  value={formData.emergencyContact.phone}
-                  onChange={handleInputChange('emergencyContact.phone')}
-                />
-              </Grid>
+              {experiences.map((exp, index) => (
+                <Grid item xs={12} key={`experience-${index}`}>
+                  <Card sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                          {t('auth:receptionistRegistration.experience.entryTitle', { index: index + 1 })}
+                        </Typography>
+                        <Button color="error" onClick={() => handleRemoveExperience(index)}>
+                          {t('auth:receptionistRegistration.experience.remove')}
+                        </Button>
+                      </Box>
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.organizationName')}
+                            value={exp.organizationName}
+                            onChange={handleExperienceChange(index, 'organizationName')}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.positionTitle')}
+                            value={exp.positionTitle}
+                            onChange={handleExperienceChange(index, 'positionTitle')}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.location')}
+                            value={exp.location}
+                            onChange={handleExperienceChange(index, 'location')}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.startDate')}
+                            type="date"
+                            value={exp.startDate}
+                            onChange={handleExperienceChange(index, 'startDate')}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.endDate')}
+                            type="date"
+                            value={exp.endDate}
+                            onChange={handleExperienceChange(index, 'endDate')}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StyledTextField
+                            fullWidth
+                            label={t('auth:receptionistRegistration.experience.description')}
+                            value={exp.description}
+                            onChange={handleExperienceChange(index, 'description')}
+                            multiline
+                            rows={3}
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
           </Box>
         );
@@ -669,41 +785,27 @@ const RegisterReceptionistPage = () => {
                 <Card sx={{ height: '100%', borderRadius: 2 }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 'bold' }}>
-                      {t('auth:receptionistRegistration.review.workInfoCard')}
+                      {t('auth:receptionistRegistration.review.experienceCard')}
                     </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>{t('auth:receptionistRegistration.review.employeeId')}:</strong> {formData.employeeId}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>{t('auth:receptionistRegistration.review.department')}:</strong> {formData.department || t('auth:receptionistRegistration.review.notSpecified')}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>{t('auth:receptionistRegistration.review.startDate')}:</strong> {formData.startDate}
-                    </Typography>
+                    {experiences.length === 0 ? (
+                      <Typography variant="body2">
+                        {t('auth:receptionistRegistration.review.noExperience')}
+                      </Typography>
+                    ) : (
+                      experiences.map((exp, idx) => (
+                        <Box key={`review-exp-${idx}`} sx={{ mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                            {exp.organizationName || t('auth:receptionistRegistration.review.notSpecified')}
+                          </Typography>
+                          <Typography variant="body2">
+                            {exp.positionTitle || t('auth:receptionistRegistration.review.notSpecified')}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
-              
-              {(formData.emergencyContact.name || formData.emergencyContact.phone) && (
-                <Grid item xs={12}>
-                  <Card sx={{ borderRadius: 2 }}>
-                    <CardContent>
-                      <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 'bold' }}>
-                        {t('auth:receptionistRegistration.review.emergencyContactCard')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>{t('auth:receptionistRegistration.review.contactName')}:</strong> {formData.emergencyContact.name || t('auth:receptionistRegistration.review.notSpecified')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>{t('auth:receptionistRegistration.review.relationship')}:</strong> {formData.emergencyContact.relationship || t('auth:receptionistRegistration.review.notSpecified')}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>{t('auth:receptionistRegistration.review.contactPhone')}:</strong> {formData.emergencyContact.phone || t('auth:receptionistRegistration.review.notSpecified')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
             </Grid>
           </Box>
         );

@@ -546,14 +546,12 @@ func (s *ReceptionistPatientService) CreateAppointment(receptionistID string, re
 
 	insertQuery := `
 		INSERT INTO appointments 
-		(appointment_id, patient_id, doctor_id, appointment_start, appointment_end, 
-		 appointment_type, title, notes, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+		(appointment_id, patient_id, doctor_id, receptionist_id, appointment_start, appointment_end, appointment_type, title, notes, created_by_type, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 
 	now := time.Now()
 	_, err = tx.Exec(ctx, insertQuery,
-		appointmentID, req.PatientID, req.DoctorID, appointmentStart, appointmentEnd,
-		req.AppointmentType, req.Title, req.Notes, receptionistID, now, now)
+		appointmentID, req.PatientID, req.DoctorID, receptionistID, appointmentStart, appointmentEnd, req.AppointmentType, req.Title, req.Notes, "receptionist", now, now)
 
 	if err != nil {
 		log.Printf("CreateAppointment: failed to insert appointment: %v", err)
@@ -575,6 +573,9 @@ func (s *ReceptionistPatientService) CreateAppointment(receptionistID string, re
 
 	appointment := &models.PatientAppointmentDetail{
 		AppointmentID:    appointmentID,
+		DoctorID:         req.DoctorID,
+		ReceptionistID:   receptionistID,
+		PatientID:        req.PatientID,
 		AppointmentStart: appointmentStart,
 		AppointmentEnd:   appointmentEnd,
 		AppointmentType:  req.AppointmentType,
@@ -582,9 +583,11 @@ func (s *ReceptionistPatientService) CreateAppointment(receptionistID string, re
 		DoctorFirstName:  doctorFirstName,
 		DoctorLastName:   doctorLastName,
 		DoctorSpecialty:  doctorSpecialty,
+		CreatedByType:    "receptionist",
 		Canceled:         false,
 		CreatedAt:        now,
 		HasMedicalReport: false,
+		Notes:            stringPointer(req.Notes),
 	}
 
 	return appointment, nil

@@ -229,7 +229,9 @@
       "consultation": "Consultation",
       "followup": "Suivi",
       "checkup": "Examen",
-      "emergency": "Urgence"
+      "emergency": "Urgence",
+      "procedure": "Procédure médicale",
+      "diagnostic": "Test diagnostique"
     },
     "notes": "Notes (Optionnel)",
     "notesPlaceholder": "Ajouter des notes pertinentes...",

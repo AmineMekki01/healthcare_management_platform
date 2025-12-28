@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -44,6 +45,8 @@ import receptionistPatientService from '../services/receptionistPatientService';
 const CreateAppointmentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, i18n } = useTranslation(['common', 'appointments']);
+  const locale = i18n?.language || undefined;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,12 +74,12 @@ const CreateAppointmentPage = () => {
   });
   
   const appointmentTypes = [
-    { value: 'consultation', label: 'General Consultation' },
-    { value: 'follow-up', label: 'Follow-up' },
-    { value: 'checkup', label: 'Regular Checkup' },
-    { value: 'emergency', label: 'Emergency' },
-    { value: 'procedure', label: 'Medical Procedure' },
-    { value: 'diagnostic', label: 'Diagnostic Test' }
+    { value: 'consultation', label: t('appointments:quickSchedule.types.consultation') },
+    { value: 'follow-up', label: t('appointments:quickSchedule.types.followup') },
+    { value: 'checkup', label: t('appointments:quickSchedule.types.checkup') },
+    { value: 'emergency', label: t('appointments:quickSchedule.types.emergency') },
+    { value: 'procedure', label: t('appointments:quickSchedule.types.procedure') },
+    { value: 'diagnostic', label: t('appointments:quickSchedule.types.diagnostic') }
   ];
 
   const [selectedPatient, setSelectedPatient] = useState(preSelectedPatient || null);
@@ -86,13 +89,13 @@ const CreateAppointmentPage = () => {
     if (doctorId) {
       setAssignedDoctorId(doctorId);
     } else {
-      setError('No assigned doctor found. Please contact administrator.');
+      setError(t('receptionist.errors.noAssignedDoctor'));
     }
 
     if (preSelectedPatient) {
       setShowCalendar(true);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (assignedDoctorId && !preSelectedPatient) {
@@ -122,7 +125,7 @@ const CreateAppointmentPage = () => {
       setPatients(response.data.patients || []);
     } catch (error) {
       console.error('Error fetching patients:', error);
-      setError('Failed to load patients: ' + (error.response?.data?.error || error.message));
+      setError(t('receptionist.createAppointment.errors.loadPatients', { error: error.response?.data?.error || error.message }));
     } finally {
       setLoadingPatients(false);
     }
@@ -138,7 +141,7 @@ const CreateAppointmentPage = () => {
       setAvailability(availabilityData || []);
     } catch (error) {
       console.error('Error fetching availability:', error);
-      setError('Failed to load availability: ' + (error.response?.data?.error || error.message));
+      setError(t('receptionist.createAppointment.errors.loadAvailability', { error: error.response?.data?.error || error.message }));
     } finally {
       setLoadingAvailability(false);
     }
@@ -235,13 +238,13 @@ const CreateAppointmentPage = () => {
   };
 
   const validateForm = () => {
-    if (!formData.patientId) return 'Please select a patient';
-    if (!formData.appointmentStart) return 'Please select appointment start time';
-    if (!formData.appointmentEnd) return 'Please select appointment end time';
-    if (formData.appointmentStart >= formData.appointmentEnd) return 'End time must be after start time';
-    if (!formData.appointmentType) return 'Please select appointment type';
+    if (!formData.patientId) return t('receptionist.createAppointment.validation.selectPatient');
+    if (!formData.appointmentStart) return t('receptionist.createAppointment.validation.selectStartTime');
+    if (!formData.appointmentEnd) return t('receptionist.createAppointment.validation.selectEndTime');
+    if (formData.appointmentStart >= formData.appointmentEnd) return t('receptionist.createAppointment.validation.endAfterStart');
+    if (!formData.appointmentType) return t('receptionist.createAppointment.validation.selectType');
     
-    if (formData.appointmentStart < new Date()) return 'Appointment cannot be scheduled in the past';
+    if (formData.appointmentStart < new Date()) return t('receptionist.createAppointment.validation.notInPast');
     
     return null;
   };
@@ -266,7 +269,7 @@ const CreateAppointmentPage = () => {
       );
       
       if (conflicts && conflicts.length > 0) {
-        setError('Appointment time conflicts with existing appointment. Please select a different time.');
+        setError(t('receptionist.createAppointment.errors.conflictWithExisting'));
         setLoading(false);
         return;
       }
@@ -287,7 +290,7 @@ const CreateAppointmentPage = () => {
       
       try {
         const response = await receptionistPatientService.createAppointment(submitData);
-        setSuccess('Appointment created successfully!');
+        setSuccess(t('receptionist.createAppointment.success.created'));
         
         setTimeout(() => {
           navigate(`/receptionist/patients/${formData.patientId}`);
@@ -299,14 +302,14 @@ const CreateAppointmentPage = () => {
       
     } catch (error) {
       console.error('Error creating appointment:', error);
-      setError(error.response?.data?.error || 'Failed to create appointment');
+      setError(error.response?.data?.error || t('receptionist.createAppointment.errors.createFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(dateString).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   };
 
   const isSlotAvailable = (slot) => {
@@ -327,11 +330,11 @@ const CreateAppointmentPage = () => {
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h4" component="h1">
-              Create New Appointment
+              {t('receptionist.createAppointment.title')}
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary">
-            Schedule a new appointment for a patient
+            {t('receptionist.createAppointment.subtitle')}
           </Typography>
         </Box>
 
@@ -353,7 +356,7 @@ const CreateAppointmentPage = () => {
               <Box display="flex" alignItems="center" mb={3}>
                 <EventIcon sx={{ mr: 2, color: 'primary.main' }} />
                 <Typography variant="h6">
-                  Appointment Details
+                  {t('appointments:card.appointmentDetails')}
                 </Typography>
               </Box>
 
@@ -388,7 +391,8 @@ const CreateAppointmentPage = () => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Patient *"
+                          label={`${t('receptionist.createAppointment.fields.selectPatient')} *`}
+                          placeholder={t('appointments:quickSchedule.selectPatientPlaceholder')}
                           required
                           InputProps={{
                             ...params.InputProps,
@@ -408,7 +412,7 @@ const CreateAppointmentPage = () => {
                               {option.firstName} {option.lastName}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {option.email} • Age: {option.age} • {option.sex}
+                              {option.email} • {t('patient.fields.age')}: {option.age} • {t('patient.fields.gender')}: {option.sex}
                             </Typography>
                           </Box>
                         </Box>
@@ -419,10 +423,10 @@ const CreateAppointmentPage = () => {
 
                 <Grid item xs={12} sm={6}>
                   <FormControl required fullWidth>
-                    <InputLabel>Appointment Type</InputLabel>
+                    <InputLabel>{t('appointments:quickSchedule.type')}</InputLabel>
                     <Select
                       value={formData.appointmentType}
-                      label="Appointment Type"
+                      label={t('appointments:quickSchedule.type')}
                       onChange={handleInputChange('appointmentType')}
                     >
                       {appointmentTypes.map((type) => (
@@ -437,12 +441,12 @@ const CreateAppointmentPage = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Notes"
+                    label={t('appointments:quickSchedule.notes')}
                     multiline
                     rows={3}
                     value={formData.notes}
                     onChange={handleInputChange('notes')}
-                    placeholder="Additional notes or special instructions for the appointment..."
+                    placeholder={t('appointments:quickSchedule.notesPlaceholder')}
                   />
                 </Grid>
               </Grid>
@@ -455,14 +459,14 @@ const CreateAppointmentPage = () => {
                 <Box display="flex" alignItems="center" mb={3}>
                   <CalendarIcon sx={{ mr: 2, color: 'primary.main' }} />
                   <Typography variant="h6">
-                    Select Appointment Date & Time
+                    {t('receptionist.createAppointment.calendar.title')}
                   </Typography>
                 </Box>
 
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={4}>
                     <DatePicker
-                      label="Appointment Date"
+                      label={t('receptionist.createAppointment.fields.appointmentDate')}
                       value={selectedDate}
                       onChange={handleDateChange}
                       minDate={new Date()}
@@ -478,7 +482,7 @@ const CreateAppointmentPage = () => {
 
                   <Grid item xs={12} sm={8}>
                     <Typography variant="subtitle1" gutterBottom>
-                      Available Time Slots
+                      {t('appointments:booking.availableSlots')}
                     </Typography>
                     
                     {loadingAvailability ? (
@@ -532,7 +536,7 @@ const CreateAppointmentPage = () => {
                                     </Typography>
                                     {!isAvailable && (
                                       <Typography variant="caption" sx={{ color: 'error.main', mt: 0.5 }}>
-                                        Booked
+                                        {t('receptionist.createAppointment.calendar.booked')}
                                       </Typography>
                                     )}
                                   </Box>
@@ -545,9 +549,9 @@ const CreateAppointmentPage = () => {
                     ) : (
                       <Paper sx={{ p: 3, bgcolor: 'grey.50' }}>
                         <Typography variant="body2" color="text.secondary" align="center">
-                          No available time slots for this date.
+                          {t('receptionist.createAppointment.calendar.noSlots')}
                           <br />
-                          Please select a different date.
+                          {t('receptionist.createAppointment.calendar.selectDifferentDate')}
                         </Typography>
                       </Paper>
                     )}
@@ -561,13 +565,13 @@ const CreateAppointmentPage = () => {
                         <TimeIcon sx={{ mr: 2 }} />
                         <Box>
                           <Typography variant="h6">
-                            Selected Time
+                            {t('receptionist.createAppointment.calendar.selectedTime')}
                           </Typography>
                           <Typography variant="body1">
-                            {selectedDate.toLocaleDateString()} at {formatTime(formData.appointmentStart)} - {formatTime(formData.appointmentEnd)}
+                            {selectedDate.toLocaleDateString(locale)} {t('receptionist.createAppointment.calendar.at')} {formatTime(formData.appointmentStart)} - {formatTime(formData.appointmentEnd)}
                           </Typography>
                           <Typography variant="body2">
-                            Duration: {Math.round((formData.appointmentEnd - formData.appointmentStart) / (1000 * 60))} minutes
+                            {t('receptionist.createAppointment.calendar.duration')}: {Math.round((formData.appointmentEnd - formData.appointmentStart) / (1000 * 60))} {t('receptionist.createAppointment.calendar.minutes')}
                           </Typography>
                         </Box>
                       </Box>
@@ -578,7 +582,9 @@ const CreateAppointmentPage = () => {
                 {existingAppointments.length > 0 && (
                   <Box mt={3}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Existing Appointments Today ({existingAppointments.filter(apt => !apt.Canceled && !apt.canceled).length})
+                      {t('receptionist.createAppointment.calendar.existingAppointmentsToday', {
+                        count: existingAppointments.filter(apt => !apt.Canceled && !apt.canceled).length,
+                      })}
                     </Typography>
                     <List dense sx={{ maxHeight: 150, overflow: 'auto', bgcolor: 'grey.50', borderRadius: 1 }}>
                       {existingAppointments
@@ -589,7 +595,7 @@ const CreateAppointmentPage = () => {
                           <ListItem>
                             <ListItemText
                               primary={`${formatTime(apt.reservationStart || apt.appointmentStart)} - ${formatTime(apt.reservationEnd || apt.appointmentEnd)}`}
-                              secondary={`${apt.patientFirstName || apt.patientFirstName} ${apt.patientLastName || apt.patientLastName} • ${apt.appointmentType || apt.appointmentType || 'Appointment'}`}
+                              secondary={`${apt.patientFirstName || apt.patientFirstName} ${apt.patientLastName || apt.patientLastName} • ${apt.appointmentType || apt.appointmentType || t('appointments:calendar.eventTypes.appointment')}`}
                             />
                           </ListItem>
                           {index < existingAppointments.filter(apt => !apt.Canceled && !apt.canceled).length - 1 && <Divider />}
@@ -610,7 +616,7 @@ const CreateAppointmentPage = () => {
               disabled={loading || !formData.patientId || !formData.appointmentStart || !selectedTimeSlot}
               startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
             >
-              {loading ? 'Creating...' : 'Create Appointment'}
+              {loading ? t('receptionist.createAppointment.actions.creating') : t('receptionist.createAppointment.actions.create')}
             </Button>
           </Box>
         </form>
@@ -624,12 +630,12 @@ const CreateAppointmentPage = () => {
           <DialogTitle>
             <Box display="flex" alignItems="center">
               <WarningIcon sx={{ mr: 1, color: 'warning.main' }} />
-              Time Slot Conflict
+              {t('receptionist.createAppointment.dialog.conflictTitle')}
             </Box>
           </DialogTitle>
           <DialogContent>
             <Typography variant="body1" gutterBottom>
-              This time slot conflicts with existing appointments:
+              {t('receptionist.createAppointment.dialog.conflictMessage')}
             </Typography>
             <List>
               {conflictDialog.conflicts.map((conflict, index) => (
@@ -642,12 +648,12 @@ const CreateAppointmentPage = () => {
               ))}
             </List>
             <Typography variant="body2" color="text.secondary">
-              Please select a different time slot.
+              {t('receptionist.createAppointment.dialog.selectDifferent')}
             </Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setConflictDialog({ open: false, conflicts: [] })} color="primary">
-              OK
+              {t('common.ok')}
             </Button>
           </DialogActions>
         </Dialog>

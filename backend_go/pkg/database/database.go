@@ -464,50 +464,6 @@ func createTables(conn *pgxpool.Pool) error {
 		`CREATE INDEX IF NOT EXISTS idx_receptionist_employments_doctor_id ON receptionist_employments(doctor_id)`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_receptionist_employment ON receptionist_employments(receptionist_id) WHERE ended_at IS NULL`,
 
-		`CREATE TABLE IF NOT EXISTS receptionist_work_schedule (
-			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
-			day_of_week INTEGER NOT NULL CHECK (day_of_week >= 1 AND day_of_week <= 7),
-			start_time TIME NOT NULL,
-			end_time TIME NOT NULL,
-			is_active BOOLEAN DEFAULT true,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE(receptionist_id, day_of_week)
-		)`,
-
-		`CREATE TABLE IF NOT EXISTS receptionist_permissions (
-			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
-			permission_type VARCHAR(50) NOT NULL,
-			permission_level VARCHAR(20) NOT NULL CHECK (permission_level IN ('read', 'write', 'admin')),
-			granted_by UUID,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-		)`,
-
-		`CREATE TABLE IF NOT EXISTS document_verifications (
-			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			patient_id UUID NOT NULL REFERENCES patient_info(patient_id) ON DELETE CASCADE,
-			receptionist_id UUID REFERENCES receptionists(receptionist_id) ON DELETE SET NULL,
-			document_type VARCHAR(100) NOT NULL,
-			document_url TEXT NOT NULL,
-			status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-			notes TEXT,
-			verified_at TIMESTAMP WITH TIME ZONE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-		)`,
-
-		`CREATE TABLE IF NOT EXISTS receptionist_activities (
-			id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-			receptionist_id UUID NOT NULL REFERENCES receptionists(receptionist_id) ON DELETE CASCADE,
-			activity_type VARCHAR(50) NOT NULL,
-			description TEXT NOT NULL,
-			related_id TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-		)`,
-
 		`CREATE TABLE IF NOT EXISTS diagnosis_history (
 			id SERIAL PRIMARY KEY,
 			appointment_id UUID NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,

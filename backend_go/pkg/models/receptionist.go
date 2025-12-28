@@ -54,79 +54,25 @@ type ReceptionistExperienceCreateRequest struct {
 	Description      *string `json:"description"`
 }
 
-type ReceptionistWorkSchedule struct {
-	ID             int       `json:"id"`
-	ReceptionistID uuid.UUID `json:"receptionistId"`
-	DayOfWeek      int       `json:"dayOfWeek"`
-	StartTime      string    `json:"startTime"`
-	EndTime        string    `json:"endTime"`
-	IsActive       bool      `json:"isActive"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-}
-
-type ReceptionistPermission struct {
-	ID              int       `json:"id"`
-	ReceptionistID  uuid.UUID `json:"receptionistId"`
-	PermissionType  string    `json:"permissionType"`
-	PermissionLevel string    `json:"permissionLevel"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-}
-
-type ReceptionistActivity struct {
-	ID             int       `json:"id"`
-	ReceptionistID uuid.UUID `json:"receptionistId"`
-	ActivityType   string    `json:"activityType"`
-	Description    string    `json:"description"`
-	RelatedID      *string   `json:"relatedId"`
-	CreatedAt      time.Time `json:"createdAt"`
-}
-
-type DocumentVerification struct {
-	ID             int        `json:"id"`
-	PatientID      uuid.UUID  `json:"patientId"`
-	ReceptionistID uuid.UUID  `json:"receptionistId"`
-	DocumentType   string     `json:"documentType"`
-	DocumentURL    string     `json:"documentUrl"`
-	Status         string     `json:"status"`
-	Notes          string     `json:"notes"`
-	VerifiedAt     *time.Time `json:"verifiedAt"`
-	CreatedAt      time.Time  `json:"createdAt"`
-	UpdatedAt      time.Time  `json:"updatedAt"`
-
-	PatientName string `json:"patientName,omitempty"`
-}
-
 type ReceptionistRegisterRequest struct {
-	Username          string                `json:"username" binding:"required"`
-	FirstName         string                `json:"firstName" binding:"required"`
-	LastName          string                `json:"lastName" binding:"required"`
-	Sex               string                `json:"sex" binding:"required"`
-	Email             string                `json:"email" binding:"required,email"`
-	Password          string                `json:"password" binding:"required,min=6"`
-	PhoneNumber       string                `json:"phoneNumber" binding:"required"`
-	ProfilePictureURL string                `json:"profilePhotoUrl"`
-	StreetAddress     string                `json:"streetAddress"`
-	CityName          string                `json:"cityName" binding:"required"`
-	StateName         string                `json:"stateName" binding:"required"`
-	ZipCode           string                `json:"zipCode"`
-	CountryName       string                `json:"countryName" binding:"required"`
-	BirthDate         string                `json:"birthDate"`
-	Bio               string                `json:"bio"`
-	AssignedDoctorID  string                `json:"assignedDoctorId"`
-	Permissions       []PermissionRequest   `json:"permissions"`
-	WorkSchedule      []WorkScheduleRequest `json:"workSchedule"`
-}
-type PermissionRequest struct {
-	PermissionType  string `json:"permissionType" binding:"required"`
-	PermissionLevel string `json:"permissionLevel" binding:"required"`
-}
-
-type WorkScheduleRequest struct {
-	DayOfWeek int    `json:"dayOfWeek" binding:"required,min=1,max=7"`
-	StartTime string `json:"startTime" binding:"required"`
-	EndTime   string `json:"endTime" binding:"required"`
+	ReceptionistID    string                                `json:"receptionistId"`
+	Username          string                                `json:"username" binding:"required"`
+	FirstName         string                                `json:"firstName" binding:"required"`
+	LastName          string                                `json:"lastName" binding:"required"`
+	Sex               string                                `json:"sex" binding:"required"`
+	Email             string                                `json:"email" binding:"required,email"`
+	Password          string                                `json:"password" binding:"required,min=6"`
+	PhoneNumber       string                                `json:"phoneNumber" binding:"required"`
+	ProfilePictureURL string                                `json:"profilePhotoUrl"`
+	StreetAddress     string                                `json:"streetAddress"`
+	CityName          string                                `json:"cityName" binding:"required"`
+	StateName         string                                `json:"stateName" binding:"required"`
+	ZipCode           string                                `json:"zipCode"`
+	CountryName       string                                `json:"countryName" binding:"required"`
+	BirthDate         string                                `json:"birthDate"`
+	Bio               string                                `json:"bio"`
+	AssignedDoctorID  string                                `json:"assignedDoctorId"`
+	Experiences       []ReceptionistExperienceCreateRequest `json:"experiences"`
 }
 
 type ReceptionistLoginRequest struct {
@@ -144,40 +90,6 @@ type ReceptionistProfileUpdateRequest struct {
 	ZipCode       string `json:"zipCode"`
 	CountryName   string `json:"countryName"`
 	Bio           string `json:"bio"`
-}
-
-type ReceptionistDashboardStats struct {
-	TotalAppointments     int `json:"totalAppointments"`
-	ConfirmedAppointments int `json:"confirmedAppointments"`
-	PendingVerifications  int `json:"pendingVerifications"`
-	NewPatients           int `json:"newPatients"`
-}
-
-type AppointmentTrend struct {
-	Date         string `json:"date"`
-	Appointments int    `json:"appointments"`
-}
-
-type DocumentVerificationRequest struct {
-	Status string `json:"status" binding:"required,oneof=approved rejected"`
-	Notes  string `json:"notes"`
-}
-
-type AppointmentBookingRequest struct {
-	PatientID        string `json:"patientId" binding:"required"`
-	DoctorID         string `json:"doctorId" binding:"required"`
-	AppointmentStart string `json:"appointmentStart" binding:"required"`
-	AppointmentEnd   string `json:"appointmentEnd" binding:"required"`
-	AppointmentType  string `json:"appointmentType" binding:"required"`
-	Notes            string `json:"notes"`
-}
-
-type AppointmentUpdateRequest struct {
-	AppointmentStart string `json:"appointmentStart"`
-	AppointmentEnd   string `json:"appointmentEnd"`
-	AppointmentType  string `json:"appointmentType"`
-	Status           string `json:"status"`
-	Notes            string `json:"notes"`
 }
 
 type AppointmentHistoryFilters struct {

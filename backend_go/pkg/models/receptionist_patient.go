@@ -55,24 +55,28 @@ type PatientDetailedInfo struct {
 }
 
 type PatientAppointmentDetail struct {
-	AppointmentID         uuid.UUID  `json:"appointmentId"`
-	AppointmentStart      time.Time  `json:"appointmentStart"`
-	AppointmentEnd        time.Time  `json:"appointmentEnd"`
-	AppointmentType       string     `json:"appointmentType"`
-	Status                string     `json:"status"`
-	DoctorFirstName       string     `json:"doctorFirstName"`
-	DoctorLastName        string     `json:"doctorLastName"`
-	DoctorSpecialty       string     `json:"doctorSpecialty"`
-	Canceled              bool       `json:"canceled"`
-	CanceledBy            *string    `json:"canceledBy"`
-	CancellationReason    *string    `json:"cancellationReason"`
-	CancellationTimestamp *time.Time `json:"cancellationTimestamp"`
-	CreatedAt             time.Time  `json:"createdAt"`
-
-	HasMedicalReport    bool                 `json:"hasMedicalReport"`
-	MedicalReport       *MedicalReport       `json:"medicalReport,omitempty"`
-	DiagnosisHistory    []DiagnosisHistory   `json:"diagnosisHistory,omitempty"`
-	PrescribedMedicines []PrescribedMedicine `json:"prescribedMedicines,omitempty"`
+	AppointmentID         uuid.UUID            `json:"appointmentId"`
+	DoctorID              string               `json:"doctorId"`
+	ReceptionistID        string               `json:"receptionistId"`
+	PatientID             string               `json:"patientId"`
+	AppointmentStart      time.Time            `json:"appointmentStart"`
+	AppointmentEnd        time.Time            `json:"appointmentEnd"`
+	AppointmentType       string               `json:"appointmentType"`
+	Status                string               `json:"status"`
+	DoctorFirstName       string               `json:"doctorFirstName"`
+	DoctorLastName        string               `json:"doctorLastName"`
+	DoctorSpecialty       string               `json:"doctorSpecialty"`
+	Canceled              bool                 `json:"canceled"`
+	CanceledBy            *string              `json:"canceledBy"`
+	CancellationReason    *string              `json:"cancellationReason"`
+	CancellationTimestamp *time.Time           `json:"cancellationTimestamp"`
+	CreatedByType         string               `json:"createdByType"`
+	CreatedAt             time.Time            `json:"createdAt"`
+	Notes                 *string              `json:"notes"`
+	HasMedicalReport      bool                 `json:"hasMedicalReport"`
+	MedicalReport         *MedicalReport       `json:"medicalReport,omitempty"`
+	DiagnosisHistory      []DiagnosisHistory   `json:"diagnosisHistory,omitempty"`
+	PrescribedMedicines   []PrescribedMedicine `json:"prescribedMedicines,omitempty"`
 }
 
 type DiagnosisHistory struct {
