@@ -255,6 +255,103 @@
       "newToday": "جدد اليوم",
       "thisWeek": "هذا الأسبوع"
     },
+    "errors": {
+      "noAssignedDoctor": "لم يتم العثور على طبيب مُعيَّن. يرجى الاتصال بالمسؤول.",
+      "loadFailed": "فشل تحميل بيانات لوحة التحكم"
+    },
+    "noData": {
+      "appointments": "لا توجد بيانات مواعيد متاحة",
+      "patients": "لا توجد بيانات مرضى متاحة"
+    },
+    "noPatients": {
+      "description": "ابدأ بإضافة مريض جديد أو البحث عن المرضى الحاليين"
+    },
+    "createPatient": {
+      "title": "إنشاء مريض جديد",
+      "subtitle": "إضافة مريض جديد إلى النظام",
+      "steps": {
+        "personalInfo": "المعلومات الشخصية",
+        "contactDetails": "معلومات الاتصال",
+        "addressInformation": "معلومات العنوان"
+      },
+      "fields": {
+        "username": "اسم المستخدم",
+        "email": "البريد الإلكتروني",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "password": "كلمة المرور",
+        "birthDate": "تاريخ الميلاد",
+        "ageHelper": "يتم حسابه من تاريخ الميلاد",
+        "bio": "نبذة",
+        "bioPlaceholder": "معلومات نبذة اختيارية...",
+        "phoneNumber": "رقم الهاتف",
+        "profilePictureUrl": "رابط صورة الملف الشخصي",
+        "profilePictureUrlPlaceholder": "رابط صورة الملف الشخصي (اختياري)",
+        "streetAddress": "عنوان الشارع",
+        "city": "المدينة",
+        "state": "الولاية/المحافظة",
+        "zipCode": "الرمز البريدي",
+        "country": "البلد",
+        "location": "وصف الموقع",
+        "locationPlaceholder": "وصف موقع اختياري"
+      },
+      "errors": {
+        "fillRequiredFields": "يرجى ملء جميع الحقول المطلوبة",
+        "createFailed": "فشل إنشاء المريض"
+      },
+      "success": {
+        "created": "تم إنشاء المريض بنجاح!"
+      },
+      "actions": {
+        "creating": "جاري الإنشاء...",
+        "create": "إنشاء مريض"
+      }
+    },
+    "createAppointment": {
+      "title": "إنشاء موعد جديد",
+      "subtitle": "جدولة موعد جديد لمريض",
+      "fields": {
+        "selectPatient": "اختيار المريض",
+        "appointmentDate": "تاريخ الموعد"
+      },
+      "calendar": {
+        "title": "اختر تاريخ ووقت الموعد",
+        "selectedTime": "الوقت المحدد",
+        "at": "عند",
+        "duration": "المدة",
+        "minutes": "دقيقة",
+        "existingAppointmentsToday": "المواعيد الحالية اليوم ({{count}})",
+        "booked": "محجوز",
+        "noSlots": "لا توجد أوقات متاحة لهذا التاريخ.",
+        "selectDifferentDate": "يرجى اختيار تاريخ مختلف."
+      },
+      "dialog": {
+        "conflictTitle": "تعارض في الوقت",
+        "conflictMessage": "هذا الوقت يتعارض مع مواعيد موجودة:",
+        "selectDifferent": "يرجى اختيار وقت مختلف."
+      },
+      "validation": {
+        "selectPatient": "يرجى اختيار مريض",
+        "selectStartTime": "يرجى اختيار وقت بداية الموعد",
+        "selectEndTime": "يرجى اختيار وقت نهاية الموعد",
+        "endAfterStart": "يجب أن يكون وقت النهاية بعد وقت البداية",
+        "selectType": "يرجى اختيار نوع الموعد",
+        "notInPast": "لا يمكن جدولة الموعد في الماضي"
+      },
+      "errors": {
+        "loadPatients": "فشل تحميل المرضى: {{error}}",
+        "loadAvailability": "فشل تحميل التوفر: {{error}}",
+        "conflictWithExisting": "وقت الموعد يتعارض مع موعد موجود. يرجى اختيار وقت مختلف.",
+        "createFailed": "فشل إنشاء الموعد"
+      },
+      "success": {
+        "created": "تم إنشاء الموعد بنجاح!"
+      },
+      "actions": {
+        "creating": "جاري الإنشاء...",
+        "create": "إنشاء موعد"
+      }
+    },
     "jobOffers": {
       "title": "عروض العمل",
       "subtitle": "راجع عروض الأطباء وقم بالقبول أو الرفض.",
@@ -291,6 +388,66 @@
       "empty": {
         "title": "لا توجد عروض عمل",
         "subtitle": "عندما يرسل لك الأطباء عروضًا ستظهر هنا."
+      }
+    },
+    "patientSearch": {
+      "subtitle": "ابحث عن المرضى الذين لديهم مواعيد وقم بإدارتهم",
+      "placeholder": "ابحث باسم المريض أو البريد الإلكتروني...",
+      "filters": {
+        "all": "جميع المرضى"
+      },
+      "showing": "عرض {{from}}-{{to}} من أصل {{total}} مريض",
+      "empty": {
+        "tryAdjusting": "جرّب تعديل معايير البحث",
+        "noPatientsForDoctor": "لا يوجد مرضى لديهم مواعيد مع الطبيب المعيَّن"
+      },
+      "errors": {
+        "searchFailed": "فشل البحث عن المرضى"
+      }
+    },
+    "patientDetails": {
+      "title": "تفاصيل المريض",
+      "notFound": "لم يتم العثور على المريض",
+      "about": "نبذة",
+      "appointmentsHistory": "سجل المواعيد",
+      "defaultAppointmentType": "استشارة عامة",
+      "labels": {
+        "dateTime": "التاريخ والوقت",
+        "canceledBy": "أُلغي بواسطة",
+        "cancellationReason": "السبب"
+      },
+      "noAppointments": {
+        "title": "لم يتم العثور على مواعيد",
+        "subtitle": "ليس لدى هذا المريض أي مواعيد مع الطبيب المعيَّن."
+      },
+      "medicalReport": {
+        "title": "التقرير الطبي",
+        "examinationReport": "تقرير الفحص",
+        "primaryDiagnosis": "التشخيص الرئيسي",
+        "diagnosisDetails": "تفاصيل التشخيص",
+        "referralRequired": "إحالة مطلوبة",
+        "created": "تاريخ الإنشاء"
+      },
+      "medicalHistory": {
+        "title": "السجل الطبي والتشخيص",
+        "severity": "الشدة",
+        "severityDefault": "طبيعي",
+        "followUp": "متابعة",
+        "medicationsPrescribed": "تم وصف {{count}} دواء/أدوية"
+      },
+      "diagnosisHistoryLegacy": "سجل التشخيص (قديم)",
+      "prescribedMedications": "الأدوية الموصوفة",
+      "prescribedMedicinesLegacy": "الأدوية الموصوفة (قديم)",
+      "medications": {
+        "frequency": "التكرار",
+        "duration": "المدة",
+        "instructions": "التعليمات",
+        "times": "{{count}} مرات",
+        "from": "من",
+        "ended": "انتهى"
+      },
+      "errors": {
+        "fetchFailed": "فشل تحميل تفاصيل المريض"
       }
     }
   }

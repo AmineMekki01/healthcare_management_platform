@@ -83,7 +83,7 @@ class ReceptionistPatientService {
   async getAppointmentStats() {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (!assignedDoctorId) {
-      throw new Error('No assigned doctor found');
+      throw new Error('RECEPTIONIST_NO_ASSIGNED_DOCTOR');
     }
     const response = await axios.get(`/api/v1/receptionist/stats/appointments?doctor_id=${assignedDoctorId}`);
     return response.data?.stats ?? response.data;
@@ -92,7 +92,7 @@ class ReceptionistPatientService {
   async getPatientStats() {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (!assignedDoctorId) {
-      throw new Error('No assigned doctor found');
+      throw new Error('RECEPTIONIST_NO_ASSIGNED_DOCTOR');
     }
     const response = await axios.get(`/api/v1/receptionist/stats/patients?doctor_id=${assignedDoctorId}`);
     return response.data?.stats ?? response.data;
@@ -108,7 +108,7 @@ class ReceptionistPatientService {
   async getDoctorAvailability(day) {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (!assignedDoctorId) {
-      throw new Error('No assigned doctor found');
+      throw new Error('RECEPTIONIST_NO_ASSIGNED_DOCTOR');
     }
 
     const currentTime = new Date().toISOString();
@@ -125,7 +125,7 @@ class ReceptionistPatientService {
   async getDoctorAppointments(startDate, endDate) {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (!assignedDoctorId) {
-      throw new Error('No assigned doctor found');
+      throw new Error('RECEPTIONIST_NO_ASSIGNED_DOCTOR');
     }
 
     const params = new URLSearchParams({
@@ -150,7 +150,7 @@ class ReceptionistPatientService {
   async checkAppointmentConflict(startTime, endTime) {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
     if (!assignedDoctorId) {
-      throw new Error('No assigned doctor found');
+      throw new Error('RECEPTIONIST_NO_ASSIGNED_DOCTOR');
     }
 
     const params = new URLSearchParams({

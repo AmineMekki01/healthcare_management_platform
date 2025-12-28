@@ -54,7 +54,13 @@ class AuthService {
   }
 
   async registerReceptionist(receptionistData) {
-    const response = await axios.post('/api/v1/auth/register/receptionist', receptionistData);
+    const isFormData = typeof FormData !== 'undefined' && receptionistData instanceof FormData;
+
+    const response = await axios.post('/api/v1/auth/register/receptionist', receptionistData, isFormData ? {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    } : undefined);
     return response.data;
   }
 

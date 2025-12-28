@@ -229,7 +229,9 @@
       "consultation": "Consultation",
       "followup": "Follow-up",
       "checkup": "Check-up",
-      "emergency": "Emergency"
+      "emergency": "Emergency",
+      "procedure": "Medical Procedure",
+      "diagnostic": "Diagnostic Test"
     },
     "notes": "Notes (Optional)",
     "notesPlaceholder": "Add any relevant notes...",

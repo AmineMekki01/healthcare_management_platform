@@ -85,6 +85,11 @@ func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegist
 	defer tx.Rollback(context.Background())
 
 	receptionistID := uuid.New()
+	if req.ReceptionistID != "" {
+		if parsedID, err := uuid.Parse(req.ReceptionistID); err == nil {
+			receptionistID = parsedID
+		}
+	}
 
 	query := `INSERT INTO receptionists 
 		(receptionist_id, username, first_name, last_name, sex, hashed_password, salt, email, phone_number, street_address, city_name, state_name, zip_code, country_name, birth_date, bio, profile_photo_url, assigned_doctor_id, is_active, email_verified, created_at, updated_at)
@@ -98,6 +103,49 @@ func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegist
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating receptionist account: %v", err)
+	}
+
+	for _, expReq := range req.Experiences {
+		isEmpty := expReq.OrganizationName == "" && expReq.PositionTitle == "" && expReq.StartDate == "" &&
+			(expReq.Location == nil || *expReq.Location == "") && (expReq.EndDate == nil || *expReq.EndDate == "") &&
+			(expReq.Description == nil || *expReq.Description == "")
+		if isEmpty {
+			continue
+		}
+		if expReq.OrganizationName == "" || expReq.PositionTitle == "" || expReq.StartDate == "" {
+			return nil, fmt.Errorf("invalid experience entry")
+		}
+
+		startDate, err := time.Parse("2006-01-02", expReq.StartDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid startDate format. Use YYYY-MM-DD")
+		}
+
+		var endDate *time.Time
+		if expReq.EndDate != nil && *expReq.EndDate != "" {
+			parsedEndDate, err := time.Parse("2006-01-02", *expReq.EndDate)
+			if err != nil {
+				return nil, fmt.Errorf("invalid endDate format. Use YYYY-MM-DD")
+			}
+			endDate = &parsedEndDate
+		}
+
+		insertExpQuery := `INSERT INTO receptionist_experiences
+			(receptionist_id, organization_name, position_title, location, start_date, end_date, description)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`
+
+		_, err = tx.Exec(context.Background(), insertExpQuery,
+			receptionistID,
+			expReq.OrganizationName,
+			expReq.PositionTitle,
+			expReq.Location,
+			startDate,
+			endDate,
+			expReq.Description,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error creating receptionist experience: %v", err)
+		}
 	}
 
 	if err = tx.Commit(context.Background()); err != nil {

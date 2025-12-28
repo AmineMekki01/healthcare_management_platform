@@ -262,6 +262,152 @@
       "noAssignedDoctor": "No assigned doctor found. Please contact administrator.",
       "loadFailed": "Failed to load dashboard data"
     },
+    "createPatient": {
+      "title": "Create New Patient",
+      "subtitle": "Add a new patient to the system",
+      "steps": {
+        "personalInfo": "Personal Information",
+        "contactDetails": "Contact Details",
+        "addressInformation": "Address Information"
+      },
+      "fields": {
+        "username": "Username",
+        "email": "Email",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "password": "Password",
+        "birthDate": "Birth Date",
+        "ageHelper": "Calculated from birth date",
+        "bio": "Bio",
+        "bioPlaceholder": "Optional bio information...",
+        "phoneNumber": "Phone Number",
+        "profilePictureUrl": "Profile Picture URL",
+        "profilePictureUrlPlaceholder": "Optional profile picture URL",
+        "streetAddress": "Street Address",
+        "city": "City",
+        "state": "State/Province",
+        "zipCode": "ZIP/Postal Code",
+        "country": "Country",
+        "location": "Location Description",
+        "locationPlaceholder": "Optional location description"
+      },
+      "errors": {
+        "fillRequiredFields": "Please fill in all required fields",
+        "createFailed": "Failed to create patient"
+      },
+      "success": {
+        "created": "Patient created successfully!"
+      },
+      "actions": {
+        "creating": "Creating...",
+        "create": "Create Patient"
+      }
+    },
+    "createAppointment": {
+      "title": "Create New Appointment",
+      "subtitle": "Schedule a new appointment for a patient",
+      "fields": {
+        "selectPatient": "Select Patient",
+        "appointmentDate": "Appointment Date"
+      },
+      "calendar": {
+        "title": "Select Appointment Date & Time",
+        "selectedTime": "Selected Time",
+        "at": "at",
+        "duration": "Duration",
+        "minutes": "minutes",
+        "existingAppointmentsToday": "Existing Appointments Today ({{count}})",
+        "booked": "Booked",
+        "noSlots": "No available time slots for this date.",
+        "selectDifferentDate": "Please select a different date."
+      },
+      "dialog": {
+        "conflictTitle": "Time Slot Conflict",
+        "conflictMessage": "This time slot conflicts with existing appointments:",
+        "selectDifferent": "Please select a different time slot."
+      },
+      "validation": {
+        "selectPatient": "Please select a patient",
+        "selectStartTime": "Please select appointment start time",
+        "selectEndTime": "Please select appointment end time",
+        "endAfterStart": "End time must be after start time",
+        "selectType": "Please select appointment type",
+        "notInPast": "Appointment cannot be scheduled in the past"
+      },
+      "errors": {
+        "loadPatients": "Failed to load patients: {{error}}",
+        "loadAvailability": "Failed to load availability: {{error}}",
+        "conflictWithExisting": "Appointment time conflicts with existing appointment. Please select a different time.",
+        "createFailed": "Failed to create appointment"
+      },
+      "success": {
+        "created": "Appointment created successfully!"
+      },
+      "actions": {
+        "creating": "Creating...",
+        "create": "Create Appointment"
+      }
+    },
+    "patientSearch": {
+      "subtitle": "Search and manage patients with appointments",
+      "placeholder": "Search by patient name or email...",
+      "filters": {
+        "all": "All Patients"
+      },
+      "showing": "Showing {{from}}-{{to}} of {{total}} patients",
+      "empty": {
+        "tryAdjusting": "Try adjusting your search criteria",
+        "noPatientsForDoctor": "No patients have appointments with the assigned doctor"
+      },
+      "errors": {
+        "searchFailed": "Failed to search patients"
+      }
+    },
+    "patientDetails": {
+      "title": "Patient Details",
+      "notFound": "Patient not found",
+      "about": "About",
+      "appointmentsHistory": "Appointments History",
+      "defaultAppointmentType": "General Consultation",
+      "labels": {
+        "dateTime": "Date & Time",
+        "canceledBy": "Canceled by",
+        "cancellationReason": "Reason"
+      },
+      "noAppointments": {
+        "title": "No appointments found",
+        "subtitle": "This patient has no appointments with the assigned doctor."
+      },
+      "medicalReport": {
+        "title": "Medical Report",
+        "examinationReport": "Examination Report",
+        "primaryDiagnosis": "Primary Diagnosis",
+        "diagnosisDetails": "Diagnosis Details",
+        "referralRequired": "Referral Required",
+        "created": "Created"
+      },
+      "medicalHistory": {
+        "title": "Medical History & Diagnosis",
+        "severity": "Severity",
+        "severityDefault": "Normal",
+        "followUp": "Follow-up",
+        "medicationsPrescribed": "{{count}} medication(s) prescribed"
+      },
+      "diagnosisHistoryLegacy": "Diagnosis History (Legacy)",
+      "prescribedMedications": "Prescribed Medications",
+      "prescribedMedicinesLegacy": "Prescribed Medicines (Legacy)",
+      "medications": {
+        "frequency": "Frequency",
+        "duration": "Duration",
+        "instructions": "Instructions",
+        "times": "{{count}} times",
+        "from": "From",
+        "ended": "Ended"
+      },
+      "errors": {
+        "fetchFailed": "Failed to fetch patient details"
+      }
+    },
     "jobOffers": {
       "title": "Job Offers",
       "subtitle": "Review offers from doctors and accept or reject.",

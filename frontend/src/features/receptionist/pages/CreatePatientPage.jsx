@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -33,6 +34,7 @@ import receptionistPatientService from '../services/receptionistPatientService';
 
 const CreatePatientPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['common', 'validation']);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,7 +61,11 @@ const CreatePatientPage = () => {
     profilePictureUrl: ''
   });
 
-  const steps = ['Personal Information', 'Contact Details', 'Address Information'];
+  const steps = [
+    t('receptionist.createPatient.steps.personalInfo'),
+    t('receptionist.createPatient.steps.contactDetails'),
+    t('receptionist.createPatient.steps.addressInformation')
+  ];
 
   const handleBack = () => {
     navigate('/receptionist/patients');
@@ -114,7 +120,7 @@ const CreatePatientPage = () => {
       setActiveStep((prev) => prev + 1);
       setError('');
     } else {
-      setError('Please fill in all required fields');
+      setError(t('receptionist.createPatient.errors.fillRequiredFields'));
     }
   };
 
@@ -127,7 +133,7 @@ const CreatePatientPage = () => {
     e.preventDefault();
     
     if (!validateStep(2)) {
-      setError('Please fill in all required fields');
+      setError(t('receptionist.createPatient.errors.fillRequiredFields'));
       return;
     }
 
@@ -144,7 +150,7 @@ const CreatePatientPage = () => {
 
       const response = await receptionistPatientService.createPatient(submitData);
       
-      setSuccess('Patient created successfully!');
+      setSuccess(t('receptionist.createPatient.success.created'));
       
       setTimeout(() => {
         navigate(`/receptionist/patients/${response.patient.patientId}`);
@@ -152,7 +158,7 @@ const CreatePatientPage = () => {
       
     } catch (error) {
       console.error('Error creating patient:', error);
-      setError(error.response?.data?.error || 'Failed to create patient');
+      setError(error.response?.data?.error || t('receptionist.createPatient.errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -167,7 +173,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Username"
+                label={t('receptionist.createPatient.fields.username')}
                 value={formData.username}
                 onChange={handleInputChange('username')}
               />
@@ -176,7 +182,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Email"
+                label={t('receptionist.createPatient.fields.email')}
                 type="email"
                 value={formData.email}
                 onChange={handleInputChange('email')}
@@ -186,7 +192,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="First Name"
+                label={t('receptionist.createPatient.fields.firstName')}
                 value={formData.firstName}
                 onChange={handleInputChange('firstName')}
               />
@@ -195,7 +201,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Last Name"
+                label={t('receptionist.createPatient.fields.lastName')}
                 value={formData.lastName}
                 onChange={handleInputChange('lastName')}
               />
@@ -204,31 +210,31 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Password"
+                label={t('receptionist.createPatient.fields.password')}
                 type="password"
                 value={formData.password}
                 onChange={handleInputChange('password')}
-                helperText="Minimum 6 characters"
+                helperText={t('validation:password.minLength', { min: 6 })}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl required fullWidth>
-                <InputLabel>Gender</InputLabel>
+                <InputLabel>{t('patient.fields.gender')}</InputLabel>
                 <Select
                   value={formData.sex}
-                  label="Gender"
+                  label={t('patient.fields.gender')}
                   onChange={handleInputChange('sex')}
                 >
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
+                  <MenuItem value="Male">{t('patient.gender.male')}</MenuItem>
+                  <MenuItem value="Female">{t('patient.gender.female')}</MenuItem>
+                  <MenuItem value="Other">{t('patient.gender.other')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="Birth Date *"
+                  label={t('receptionist.createPatient.fields.birthDate')}
                   value={formData.birthDate}
                   onChange={handleDateChange}
                   renderInput={(params) => <TextField {...params} fullWidth required />}
@@ -239,23 +245,23 @@ const CreatePatientPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Age"
+                label={t('patient.fields.age')}
                 type="number"
                 value={formData.age}
                 onChange={handleInputChange('age')}
                 disabled
-                helperText="Calculated from birth date"
+                helperText={t('receptionist.createPatient.fields.ageHelper')}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Bio"
+                label={t('receptionist.createPatient.fields.bio')}
                 multiline
                 rows={3}
                 value={formData.bio}
                 onChange={handleInputChange('bio')}
-                placeholder="Optional bio information..."
+                placeholder={t('receptionist.createPatient.fields.bioPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -267,7 +273,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Phone Number"
+                label={t('receptionist.createPatient.fields.phoneNumber')}
                 value={formData.phoneNumber}
                 onChange={handleInputChange('phoneNumber')}
               />
@@ -275,10 +281,10 @@ const CreatePatientPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Profile Picture URL"
+                label={t('receptionist.createPatient.fields.profilePictureUrl')}
                 value={formData.profilePictureUrl}
                 onChange={handleInputChange('profilePictureUrl')}
-                placeholder="Optional profile picture URL"
+                placeholder={t('receptionist.createPatient.fields.profilePictureUrlPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -289,7 +295,7 @@ const CreatePatientPage = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Street Address"
+                label={t('receptionist.createPatient.fields.streetAddress')}
                 value={formData.streetAddress}
                 onChange={handleInputChange('streetAddress')}
               />
@@ -298,7 +304,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="City"
+                label={t('receptionist.createPatient.fields.city')}
                 value={formData.cityName}
                 onChange={handleInputChange('cityName')}
               />
@@ -307,7 +313,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="State/Province"
+                label={t('receptionist.createPatient.fields.state')}
                 value={formData.stateName}
                 onChange={handleInputChange('stateName')}
               />
@@ -315,7 +321,7 @@ const CreatePatientPage = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="ZIP/Postal Code"
+                label={t('receptionist.createPatient.fields.zipCode')}
                 value={formData.zipCode}
                 onChange={handleInputChange('zipCode')}
               />
@@ -324,7 +330,7 @@ const CreatePatientPage = () => {
               <TextField
                 required
                 fullWidth
-                label="Country"
+                label={t('receptionist.createPatient.fields.country')}
                 value={formData.countryName}
                 onChange={handleInputChange('countryName')}
               />
@@ -332,10 +338,10 @@ const CreatePatientPage = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Location Description"
+                label={t('receptionist.createPatient.fields.location')}
                 value={formData.location}
                 onChange={handleInputChange('location')}
-                placeholder="Optional location description"
+                placeholder={t('receptionist.createPatient.fields.locationPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -353,11 +359,11 @@ const CreatePatientPage = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4" component="h1">
-            Create New Patient
+            {t('receptionist.createPatient.title')}
           </Typography>
         </Box>
         <Typography variant="body1" color="text.secondary">
-          Add a new patient to the system
+          {t('receptionist.createPatient.subtitle')}
         </Typography>
       </Box>
 
@@ -399,7 +405,7 @@ const CreatePatientPage = () => {
                   onClick={handlePrevious}
                   disabled={activeStep === 0}
                 >
-                  Previous
+                  {t('buttons.back')}
                 </Button>
                 
                 <Box>
@@ -409,7 +415,7 @@ const CreatePatientPage = () => {
                       onClick={handleNext}
                       disabled={!validateStep(activeStep)}
                     >
-                      Next
+                      {t('buttons.next')}
                     </Button>
                   ) : (
                     <Button
@@ -418,7 +424,7 @@ const CreatePatientPage = () => {
                       disabled={loading || !validateStep(activeStep)}
                       startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
                     >
-                      {loading ? 'Creating...' : 'Create Patient'}
+                      {loading ? t('receptionist.createPatient.actions.creating') : t('receptionist.createPatient.actions.create')}
                     </Button>
                   )}
                 </Box>

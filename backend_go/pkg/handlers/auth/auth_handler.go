@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -573,9 +574,99 @@ func (h *AuthHandler) LoginPatient(c *gin.Context) {
 
 func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 	var req models.ReceptionistRegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
-		return
+
+	if strings.HasPrefix(c.ContentType(), "multipart/form-data") {
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
+			return
+		}
+
+		receptionistID := uuid.New()
+		req.ReceptionistID = receptionistID.String()
+
+		req.Username = c.PostForm("Username")
+		if req.Username == "" {
+			req.Username = c.PostForm("username")
+		}
+		req.Password = c.PostForm("Password")
+		if req.Password == "" {
+			req.Password = c.PostForm("password")
+		}
+		req.Email = c.PostForm("Email")
+		if req.Email == "" {
+			req.Email = c.PostForm("email")
+		}
+		req.PhoneNumber = c.PostForm("PhoneNumber")
+		if req.PhoneNumber == "" {
+			req.PhoneNumber = c.PostForm("phoneNumber")
+		}
+		req.FirstName = c.PostForm("FirstName")
+		if req.FirstName == "" {
+			req.FirstName = c.PostForm("firstName")
+		}
+		req.LastName = c.PostForm("LastName")
+		if req.LastName == "" {
+			req.LastName = c.PostForm("lastName")
+		}
+		req.BirthDate = c.PostForm("BirthDate")
+		if req.BirthDate == "" {
+			req.BirthDate = c.PostForm("birthDate")
+		}
+		req.StreetAddress = c.PostForm("StreetAddress")
+		if req.StreetAddress == "" {
+			req.StreetAddress = c.PostForm("streetAddress")
+		}
+		req.CityName = c.PostForm("CityName")
+		if req.CityName == "" {
+			req.CityName = c.PostForm("cityName")
+		}
+		req.StateName = c.PostForm("StateName")
+		if req.StateName == "" {
+			req.StateName = c.PostForm("stateName")
+		}
+		req.ZipCode = c.PostForm("ZipCode")
+		if req.ZipCode == "" {
+			req.ZipCode = c.PostForm("zipCode")
+		}
+		req.CountryName = c.PostForm("CountryName")
+		if req.CountryName == "" {
+			req.CountryName = c.PostForm("countryName")
+		}
+		req.Sex = c.PostForm("Sex")
+		if req.Sex == "" {
+			req.Sex = c.PostForm("sex")
+		}
+		req.Bio = c.PostForm("Bio")
+		if req.Bio == "" {
+			req.Bio = c.PostForm("bio")
+		}
+
+		experiencesRaw := c.PostForm("Experiences")
+		if experiencesRaw == "" {
+			experiencesRaw = c.PostForm("experiences")
+		}
+		if experiencesRaw != "" {
+			if err := json.Unmarshal([]byte(experiencesRaw), &req.Experiences); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid experiences data"})
+				return
+			}
+		}
+
+		file, handler, err := c.Request.FormFile("file")
+		if err == nil {
+			defer file.Close()
+			req.ProfilePictureURL = fmt.Sprintf("images/profile_photos/%s.jpg", receptionistID.String())
+			err = utils.UploadToS3(file, handler, req.ProfilePictureURL)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload profile photo"})
+				return
+			}
+		}
+	} else {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+			return
+		}
 	}
 
 	receptionist, err := h.receptionistService.RegisterReceptionist(req)
@@ -585,7 +676,9 @@ func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"receptionist": receptionist,
+		"success":        true,
+		"receptionistId": receptionist.ReceptionistID,
+		"receptionist":   receptionist,
 	})
 }
 

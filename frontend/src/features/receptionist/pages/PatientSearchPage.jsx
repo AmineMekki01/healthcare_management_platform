@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -35,6 +36,7 @@ import receptionistPatientService from '../services/receptionistPatientService';
 
 const PatientSearchPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['common']);
   
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -51,9 +53,9 @@ const PatientSearchPage = () => {
     if (doctorId) {
       setAssignedDoctorId(doctorId);
     } else {
-      setError('No assigned doctor found. Please contact administrator.');
+      setError(t('receptionist.errors.noAssignedDoctor'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (assignedDoctorId) {
@@ -63,7 +65,7 @@ const PatientSearchPage = () => {
 
   const searchPatients = async () => {
     if (!assignedDoctorId) {
-      setError('No assigned doctor found');
+      setError(t('receptionist.errors.noAssignedDoctor'));
       return;
     }
 
@@ -83,7 +85,7 @@ const PatientSearchPage = () => {
       setTotalCount(response.data.total || 0);
     } catch (error) {
       console.error('Error searching patients:', error);
-      setError(error.response?.data?.error || 'Failed to search patients');
+      setError(error.response?.data?.error || t('receptionist.patientSearch.errors.searchFailed'));
     } finally {
       setLoading(false);
     }
@@ -108,11 +110,11 @@ const PatientSearchPage = () => {
   };
 
   const getStatusLabel = (hasActiveAppointments) => {
-    return hasActiveAppointments ? 'Active' : 'Inactive';
+    return hasActiveAppointments ? t('status.active') : t('status.inactive');
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Never';
+    if (!dateString) return t('patient.fields.never');
     return new Date(dateString).toLocaleDateString();
   };
 
@@ -122,10 +124,10 @@ const PatientSearchPage = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Patient Search
+          {t('navigation.patientSearch')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Search and manage patients with appointments
+          {t('receptionist.patientSearch.subtitle')}
         </Typography>
       </Box>
 
@@ -137,7 +139,7 @@ const PatientSearchPage = () => {
                 <TextField
                   fullWidth
                   variant="outlined"
-                  placeholder="Search by patient name or email..."
+                  placeholder={t('receptionist.patientSearch.placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -151,15 +153,15 @@ const PatientSearchPage = () => {
               </Grid>
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>{t('common.status')}</InputLabel>
                   <Select
                     value={statusFilter}
-                    label="Status"
+                    label={t('common.status')}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <MenuItem value="all">All Patients</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="all">{t('receptionist.patientSearch.filters.all')}</MenuItem>
+                    <MenuItem value="active">{t('status.active')}</MenuItem>
+                    <MenuItem value="inactive">{t('status.inactive')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -171,7 +173,7 @@ const PatientSearchPage = () => {
                   sx={{ height: '56px' }}
                   disabled={loading}
                 >
-                  {loading ? <CircularProgress size={24} /> : 'Search'}
+                  {loading ? <CircularProgress size={24} /> : t('buttons.search')}
                 </Button>
               </Grid>
             </Grid>
@@ -188,7 +190,11 @@ const PatientSearchPage = () => {
       {!loading && patients.length > 0 && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Showing {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, totalCount)} of {totalCount} patients
+            {t('receptionist.patientSearch.showing', {
+              from: (currentPage - 1) * limit + 1,
+              to: Math.min(currentPage * limit, totalCount),
+              total: totalCount,
+            })}
           </Typography>
         </Box>
       )}
@@ -232,7 +238,7 @@ const PatientSearchPage = () => {
                           size="small"
                         />
                       </Box>
-                      <Tooltip title="View Details">
+                      <Tooltip title={t('actions.viewDetails')}>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -261,7 +267,7 @@ const PatientSearchPage = () => {
                       <Box display="flex" alignItems="center">
                         <CalendarIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          Last visit: {formatDate(patient.lastAppointmentDate)}
+                          {t('patient.fields.lastVisit')}: {formatDate(patient.lastAppointmentDate)}
                         </Typography>
                       </Box>
                     </Box>
@@ -269,15 +275,15 @@ const PatientSearchPage = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Box>
                         <Typography variant="caption" color="text.secondary" display="block">
-                          Age: {patient.age} • {patient.sex}
+                          {t('patient.fields.age')}: {patient.age} • {t('patient.fields.gender')}: {patient.sex}
                         </Typography>
                       </Box>
                       <Box textAlign="right">
                         <Typography variant="caption" color="text.secondary" display="block">
-                          Total: {patient.totalAppointments}
+                          {t('common.total')}: {patient.totalAppointments}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="block">
-                          Completed: {patient.completedAppointments}
+                          {t('status.completed')}: {patient.completedAppointments}
                         </Typography>
                       </Box>
                     </Box>
@@ -304,12 +310,12 @@ const PatientSearchPage = () => {
             <Box textAlign="center" py={4}>
               <PersonIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No patients found
+                {t('patient.noResults.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {searchQuery 
-                  ? 'Try adjusting your search criteria' 
-                  : 'No patients have appointments with the assigned doctor'
+                  ? t('receptionist.patientSearch.empty.tryAdjusting')
+                  : t('receptionist.patientSearch.empty.noPatientsForDoctor')
                 }
               </Typography>
             </Box>

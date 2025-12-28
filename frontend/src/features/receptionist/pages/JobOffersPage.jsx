@@ -93,7 +93,7 @@ const JobOffersPage = () => {
       await receptionistHiringService.respondToProposal(receptionistId, proposal.proposalId, 'accept', msg || null);
 
       localStorage.setItem('assignedDoctorId', proposal.doctorId);
-      const name = proposal?.doctor ? `Dr ${proposal.doctor.firstName} ${proposal.doctor.lastName}` : '';
+      const name = proposal?.doctor ? `${proposal.doctor.firstName} ${proposal.doctor.lastName}`.trim() : '';
       if (name) localStorage.setItem('assignedDoctorName', name);
       if (setAssignedDoctorId) {
         setAssignedDoctorId(proposal.doctorId);
@@ -143,6 +143,13 @@ const JobOffersPage = () => {
     return d.toLocaleDateString(i18n?.language || undefined);
   };
 
+  const formatDateTime = useCallback((raw) => {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString(i18n?.language || undefined);
+  }, [i18n?.language]);
+
   const toCamelCaseKey = (value) => {
     const v = String(value || '').trim();
     if (!v) return '';
@@ -190,7 +197,11 @@ const JobOffersPage = () => {
         {assignmentStatus?.assignedDoctor?.firstName && assignmentStatus?.assignedDoctor?.lastName && (
           <Alert severity="info" sx={{ mb: 2 }}>
             {t('receptionist.jobOffers.messages.assignedTo', {
-              doctor: `Dr ${assignmentStatus.assignedDoctor.firstName} ${assignmentStatus.assignedDoctor.lastName}`,
+              doctor: t('labels.doctor', {
+                ns: 'medical',
+                name: `${assignmentStatus.assignedDoctor.firstName} ${assignmentStatus.assignedDoctor.lastName}`.trim(),
+                defaultValue: `Dr. ${assignmentStatus.assignedDoctor.firstName} ${assignmentStatus.assignedDoctor.lastName}`,
+              }),
             })}
           </Alert>
         )}
@@ -198,7 +209,7 @@ const JobOffersPage = () => {
         {!effectiveAssignedDoctorId && assignmentStatus?.lastDismissal?.dismissedAt && assignmentStatus?.lastDismissal?.reason && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             {t('receptionist.jobOffers.messages.lastDismissal', {
-              date: new Date(assignmentStatus.lastDismissal.dismissedAt).toLocaleString(),
+              date: formatDateTime(assignmentStatus.lastDismissal.dismissedAt),
               reason: assignmentStatus.lastDismissal.reason,
             })}
           </Alert>
@@ -228,8 +239,9 @@ const JobOffersPage = () => {
         ) : (
           <Stack spacing={2}>
             {proposals.map((p) => {
-              const doctorName = p?.doctor
-                ? `Dr ${p.doctor.firstName} ${p.doctor.lastName}`
+              const doctorFullName = p?.doctor ? `${p.doctor.firstName} ${p.doctor.lastName}`.trim() : '';
+              const doctorName = doctorFullName
+                ? t('labels.doctor', { ns: 'medical', name: doctorFullName, defaultValue: `Dr. ${doctorFullName}` })
                 : t('receptionist.jobOffers.labels.unknownDoctor');
 
               const location = p?.doctor
@@ -279,7 +291,7 @@ const JobOffersPage = () => {
                         <Divider sx={{ my: 2 }} />
                         <Alert severity="warning">
                           {t('receptionist.jobOffers.messages.dismissedForOffer', {
-                            date: new Date(assignmentStatus.lastDismissal.dismissedAt).toLocaleString(),
+                            date: formatDateTime(assignmentStatus.lastDismissal.dismissedAt),
                             reason: assignmentStatus.lastDismissal.reason,
                           })}
                         </Alert>
