@@ -77,6 +77,9 @@
     "active": "نشط",
     "inactive": "غير نشط"
   },
+  "charts": {
+    "noDataAvailable": "لا توجد بيانات متاحة لهذا المخطط"
+  },
   "common": {
     "yes": "نعم",
     "no": "لا",
@@ -135,6 +138,7 @@
   "homepage": {
     "hero": {
       "title": "صحتك، أولويتنا",
+      "imageAlt": "مختص في الرعاية الصحية",
       "subtitle": "اكتشف إدارة الرعاية الصحية الحديثة مع منصتنا الشاملة المصممة للمرضى والأطباء ومتخصصي الرعاية الصحية."
     },
     "services": {
@@ -168,6 +172,25 @@
       "expertDoctors": "أطباء خبراء",
       "medicalSpecialties": "تخصصات طبية",
       "emergencySupport": "دعم الطوارئ"
+    },
+    "community": {
+      "totals": {
+        "patients": "المرضى",
+        "doctors": "الأطباء",
+        "receptionists": "موظفو الاستقبال",
+        "specialties": "التخصصات"
+      },
+      "receptionists": {
+        "assigned": "مُعيَّنون",
+        "unassigned": "غير مُعيَّنين"
+      },
+      "charts": {
+        "patientsByAge": "المرضى حسب العمر",
+        "doctorsBySpecialty": "الأطباء حسب التخصص",
+        "receptionistsByAssignment": "موظفو الاستقبال حسب التعيين"
+      },
+      "unknown": "غير معروف",
+      "other": "أخرى"
     },
     "sections": {
       "whyChoose": "لماذا تختار منصتنا؟",

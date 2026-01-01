@@ -13,6 +13,7 @@ import (
 	"healthcare_backend/pkg/routes/auth"
 	"healthcare_backend/pkg/routes/calendar"
 	"healthcare_backend/pkg/routes/chat"
+	"healthcare_backend/pkg/routes/community"
 	"healthcare_backend/pkg/routes/doctor"
 	"healthcare_backend/pkg/routes/feed"
 	"healthcare_backend/pkg/routes/follow"
@@ -53,6 +54,8 @@ func SetupRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.Config) {
 	doctor.SetupPublicDoctorRoutes(api, db, cfg)
 
 	search.SetupPublicSearchRoutes(api, db, cfg)
+
+	community.SetupCommunityRoutes(api, db, cfg)
 
 	router.GET("/ws", func(c *gin.Context) {
 		userID := c.Query("userId")

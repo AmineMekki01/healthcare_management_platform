@@ -34,6 +34,16 @@ instance.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue = [];
 
+const hasLocalSession = () => {
+  return Boolean(
+    localStorage.getItem('userId') ||
+    localStorage.getItem('doctorId') ||
+    localStorage.getItem('patientId') ||
+    localStorage.getItem('receptionistId') ||
+    localStorage.getItem('userType')
+  );
+};
+
 const processQueue = (error, token = null) => {
   failedQueue.forEach(prom => {
     if (error) {
@@ -50,7 +60,15 @@ instance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest?.url?.includes('/api/v1/refresh-token')) {
+      return Promise.reject(error);
+    }
+
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      if (!hasLocalSession()) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       if (isRefreshing) {
