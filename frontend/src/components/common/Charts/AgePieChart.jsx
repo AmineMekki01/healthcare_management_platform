@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Pie } from 'react-chartjs-2';
 import { Typography, Box, Alert } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -13,6 +14,7 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 const AgePieChart = ({ data, title, textColor = '#333' }) => {
+    const { t } = useTranslation('common');
     if (!data || !data.labels || !data.values || data.labels.length === 0 || data.values.length === 0) {
         return (
             <Box sx={{ 
@@ -27,11 +29,20 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
                     {title}
                 </Typography>
                 <Alert severity="info" sx={{ width: '100%' }}>
-                    No data available for this chart
+                    {t('charts.noDataAvailable')}
                 </Alert>
             </Box>
         );
     }
+
+    const palette = ['#667eea', '#764ba2', '#99B898', '#F18277', '#EB485E', '#4ECDC4', '#F9C74F'];
+    const total = data.values.reduce((a, b) => a + b, 0);
+
+    const legendItems = data.labels.map((label, index) => ({
+        label,
+        value: data.values[index],
+        color: palette[index % palette.length],
+    }));
 
     const SimpleFallback = () => (
         <Box sx={{ 
@@ -61,12 +72,14 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
                             <Box sx={{ 
                                 width: 16, 
                                 height: 16, 
-                                bgcolor: ['#667eea', '#764ba2', '#99B898', '#F18277', '#EB485E'][index] || '#ccc',
+                                bgcolor: palette[index % palette.length] || '#ccc',
                                 borderRadius: '50%'
                             }} />
                             <Typography variant="body2">{label}</Typography>
                         </Box>
-                        <Typography variant="body2" fontWeight="bold">{data.values[index]}%</Typography>
+                        <Typography variant="body2" fontWeight="bold">
+                            {data.values[index]}{total > 0 ? ` (${((data.values[index] / total) * 100).toFixed(1)}%)` : ''}
+                        </Typography>
                     </Box>
                 ))}
             </Box>
@@ -79,13 +92,7 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
             datasets: [
                 {
                     data: data.values,
-                    backgroundColor: [
-                        '#667eea',
-                        '#764ba2', 
-                        '#99B898',
-                        '#F18277',
-                        '#EB485E',
-                    ],
+                    backgroundColor: data.labels.map((_, index) => palette[index % palette.length]),
                     borderWidth: 2,
                     borderColor: '#fff',
                     hoverBorderWidth: 3,
@@ -106,18 +113,7 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
                     display: false,
                 },
                 legend: {
-                    position: 'bottom',
-                    align: 'center',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        font: {
-                            size: 12,
-                            family: 'Roboto, sans-serif',
-                        },
-                        color: textColor,
-                    },
+                    display: false,
                 },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -161,13 +157,58 @@ const AgePieChart = ({ data, title, textColor = '#333' }) => {
                 </Typography>
                 <Box sx={{ 
                     width: '100%', 
-                    height: 300,
+                    height: 260,
                     position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                 }}>
                     <Pie data={chartData} options={chartOptions} />
+                </Box>
+
+                <Box sx={{ width: '100%', mt: 2, px: 1, maxHeight: 140, overflowY: 'auto' }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5 }}>
+                        {legendItems.map((item, index) => (
+                            <Box
+                                key={`${item.label}-${index}`}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    flex: '1 1 45%',
+                                    minWidth: 140,
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 10,
+                                        height: 10,
+                                        bgcolor: item.color,
+                                        borderRadius: '50%',
+                                        flex: '0 0 auto',
+                                        border: '1px solid rgba(255,255,255,0.7)'
+                                    }}
+                                />
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        color: textColor,
+                                        whiteSpace: 'normal',
+                                        wordBreak: 'break-word',
+                                        lineHeight: 1.2,
+                                    }}
+                                >
+                                    {item.label}
+                                </Typography>
+                                <Typography
+                                    variant="caption"
+                                    sx={{ color: textColor, opacity: 0.9, ml: 'auto' }}
+                                >
+                                    {item.value}{total > 0 ? ` (${((item.value / total) * 100).toFixed(1)}%)` : ''}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
                 </Box>
             </Box>
         );

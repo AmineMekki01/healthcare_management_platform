@@ -77,6 +77,9 @@
     "active": "Actif",
     "inactive": "Inactif"
   },
+  "charts": {
+    "noDataAvailable": "Aucune donnée disponible pour ce graphique"
+  },
   "common": {
     "yes": "Oui",
     "no": "Non",
@@ -135,6 +138,7 @@
   "homepage": {
     "hero": {
       "title": "Votre Santé, Notre Priorité",
+      "imageAlt": "Professionnel de santé",
       "subtitle": "Découvrez la gestion moderne des soins de santé avec notre plateforme complète conçue pour les patients, les médecins et les professionnels de la santé."
     },
     "services": {
@@ -168,6 +172,25 @@
       "expertDoctors": "Médecins Experts",
       "medicalSpecialties": "Spécialités Médicales",
       "emergencySupport": "Support d'Urgence"
+    },
+    "community": {
+      "totals": {
+        "patients": "Patients",
+        "doctors": "Médecins",
+        "receptionists": "Réceptionnistes",
+        "specialties": "Spécialités"
+      },
+      "receptionists": {
+        "assigned": "Affectés",
+        "unassigned": "Non affectés"
+      },
+      "charts": {
+        "patientsByAge": "Patients par âge",
+        "doctorsBySpecialty": "Médecins par spécialité",
+        "receptionistsByAssignment": "Réceptionnistes par affectation"
+      },
+      "unknown": "Inconnu",
+      "other": "Autres"
     },
     "sections": {
       "whyChoose": "Pourquoi Choisir Notre Plateforme ?",

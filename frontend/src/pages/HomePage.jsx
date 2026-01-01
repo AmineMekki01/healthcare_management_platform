@@ -16,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../features/auth/context/AuthContext';
 import AgePieChart from '../components/common/Charts/AgePieChart';
+import axios from '../components/axiosConfig';
 import stetoImage from "./../assets/images/no_background_doc_steto.png";
 
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -112,8 +113,70 @@ const ModernButton = styled(Button)(({ theme }) => ({
 function HomePage() {
   const theme = useTheme();
   const { isLoggedIn } = useContext(AuthContext);
-  const { t, i18n} = useTranslation(['common']);
+  const { t, i18n} = useTranslation(['common', 'medical']);
   const isRTL = i18n.language === 'ar';
+
+  const [communityStats, setCommunityStats] = useState(null);
+  const [communityStatsLoading, setCommunityStatsLoading] = useState(false);
+
+  const formatNumber = (value) => {
+    const n = typeof value === 'number' ? value : 0;
+    return new Intl.NumberFormat(i18n.language).format(n);
+  };
+
+  const toPieData = (items, { maxItems = null } = {}) => {
+    if (!Array.isArray(items) || items.length === 0) {
+      return { labels: [], values: [] };
+    }
+
+    const filtered = items.filter((item) => (item?.count || 0) > 0);
+    if (filtered.length === 0) {
+      return { labels: [], values: [] };
+    }
+
+    let finalItems = filtered;
+    if (typeof maxItems === 'number' && maxItems > 0 && filtered.length > maxItems) {
+      const top = filtered.slice(0, maxItems);
+      const rest = filtered.slice(maxItems);
+      const restCount = rest.reduce((sum, item) => sum + (item?.count || 0), 0);
+      finalItems = restCount > 0
+        ? [...top, { label: t('common:homepage.community.other'), count: restCount }]
+        : top;
+    }
+
+    return {
+      labels: finalItems.map((item) => item.label),
+      values: finalItems.map((item) => item.count),
+    };
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCommunityStats = async () => {
+      setCommunityStatsLoading(true);
+      try {
+        const response = await axios.get('/api/v1/community/stats');
+        console.log('Community stats:', response.data);
+        if (mounted) {
+          setCommunityStats(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch community stats:', error);
+        if (mounted) {
+          setCommunityStats(null);
+        }
+      } finally {
+        if (mounted) {
+          setCommunityStatsLoading(false);
+        }
+      }
+    };
+
+    fetchCommunityStats();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const services = [
     {
@@ -148,22 +211,103 @@ function HomePage() {
     }
   ];
 
+  const totals = communityStats?.totals;
+  const receptionistBreakdown =
+    !communityStatsLoading &&
+    typeof totals?.receptionistsAssigned === 'number' &&
+    typeof totals?.receptionistsUnassigned === 'number'
+      ? `${t('common:homepage.community.receptionists.assigned')}: ${formatNumber(totals.receptionistsAssigned)} | ${t('common:homepage.community.receptionists.unassigned')}: ${formatNumber(totals.receptionistsUnassigned)}`
+      : null;
+
+  const receptionistChartData =
+    !communityStatsLoading &&
+    typeof totals?.receptionistsAssigned === 'number' &&
+    typeof totals?.receptionistsUnassigned === 'number'
+      ? {
+          labels: [
+            t('common:homepage.community.receptionists.assigned'),
+            t('common:homepage.community.receptionists.unassigned'),
+          ],
+          values: [totals.receptionistsAssigned, totals.receptionistsUnassigned],
+        }
+      : { labels: [], values: [] };
   const stats = [
-    { value: "10,000+", label: t('common:homepage.stats.happyPatients') },
-    { value: "500+", label: t('common:homepage.stats.expertDoctors') },
-    { value: "50+", label: t('common:homepage.stats.medicalSpecialties') },
-    { value: "24/7", label: t('common:homepage.stats.emergencySupport') }
+    {
+      value: communityStatsLoading ? '—' : formatNumber(totals?.patients),
+      label: t('common:homepage.community.totals.patients'),
+    },
+    {
+      value: communityStatsLoading ? '—' : formatNumber(totals?.doctors),
+      label: t('common:homepage.community.totals.doctors'),
+    },
+    {
+      value: communityStatsLoading ? '—' : formatNumber(totals?.receptionists),
+      label: t('common:homepage.community.totals.receptionists'),
+      subLabel: receptionistBreakdown,
+    },
+    {
+      value: communityStatsLoading ? '—' : formatNumber(totals?.specialties),
+      label: t('common:homepage.community.totals.specialties'),
+    },
   ];
 
-  const patientData = {
-    labels: ['18-25', '26-35', '36-45', '46-60', '60+'],
-    values: [20, 30, 25, 15, 10]
+  const patientData = toPieData(communityStats?.patientsByAge);
+  const mapSpecialtyKey = (rawLabel) => {
+    const raw = (rawLabel ?? '').toString().trim();
+    const normalized = raw.toLowerCase().trim();
+
+    const toCamelCase = (value) => {
+      const cleaned = (value ?? '')
+        .toString()
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-_]/g, ' ')
+        .trim();
+
+      const parts = cleaned.split(/[\s-_]+/).filter(Boolean);
+      if (parts.length === 0) {
+        return '';
+      }
+      return parts[0] + parts.slice(1).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+    };
+
+    const map = {
+      'general': 'generalPractice',
+      'general practice': 'generalPractice',
+      'internal medicine': 'internalMedicine',
+      'family medicine': 'familyMedicine',
+      'obstetrics and gynecology': 'obstetricsGynecology',
+      'obstetrics & gynecology': 'obstetricsGynecology',
+      'obstetrics gynecology': 'obstetricsGynecology',
+      'ent': 'otolaryngology',
+      'orl': 'otolaryngology',
+      'oto rhino laryngology': 'otolaryngology',
+      'oto-rhino-laryngology': 'otolaryngology',
+      'gastro enterology': 'gastroenterology',
+      'gastro-enterology': 'gastroenterology',
+    };
+
+    return map[normalized] || toCamelCase(normalized) || normalized;
   };
 
-  const doctorData = {
-    labels: ['General', 'Specialist', 'Surgeon', 'Consultant'],
-    values: [35, 40, 15, 10]
+  const getLocalizedSpecialtyLabel = (rawLabel) => {
+    const raw = (rawLabel ?? '').toString().trim();
+    if (!raw || raw.toLowerCase() === 'unknown') {
+      return t('common:homepage.community.unknown');
+    }
+
+    const key = mapSpecialtyKey(raw);
+    const translated = t(`medical:specialties.${key}`, { defaultValue: '' });
+    return translated || raw;
   };
+
+  const doctorSpecialtyItems = Array.isArray(communityStats?.doctorsBySpecialty)
+    ? communityStats.doctorsBySpecialty.map((item) => ({
+        ...item,
+        label: getLocalizedSpecialtyLabel(item?.label),
+      }))
+    : [];
+  const doctorData = toPieData(doctorSpecialtyItems, { maxItems: 7 });
 
   return (
     
@@ -253,7 +397,7 @@ function HomePage() {
               <Box sx={{ textAlign: 'center', display: { xs: 'none', md: 'block' } }}>
                 <img 
                   src={stetoImage} 
-                  alt="Healthcare Professional" 
+                  alt={t('common:homepage.hero.imageAlt')} 
                   style={{ 
                     maxWidth: '100%', 
                     height: 'auto',
@@ -308,6 +452,11 @@ function HomePage() {
                   <Typography variant="h6" component="div" color="text.secondary">
                     {stat.label}
                   </Typography>
+                  {stat.subLabel ? (
+                    <Typography variant="body2" component="div" color="text.secondary" sx={{ mt: 1 }}>
+                      {stat.subLabel}
+                    </Typography>
+                  ) : null}
                 </StatCard>
               </Grid>
             ))}
@@ -322,7 +471,7 @@ function HomePage() {
             {t('common:homepage.sections.ourCommunity')}
           </Typography>
           <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Paper 
                 elevation={4} 
                 sx={{ 
@@ -337,10 +486,10 @@ function HomePage() {
                   border: '1px solid #e3f2fd'
                 }}
               >
-                <AgePieChart data={patientData} title="Patient Demographics" />
+                <AgePieChart data={patientData} title={t('common:homepage.community.charts.patientsByAge')} />
               </Paper>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Paper 
                 elevation={4} 
                 sx={{ 
@@ -355,7 +504,29 @@ function HomePage() {
                   color: 'white'
                 }}
               >
-                <AgePieChart data={doctorData} title="Doctor Specializations" textColor="white" />
+                <AgePieChart data={doctorData} title={t('common:homepage.community.charts.doctorsBySpecialty')} textColor="white" />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper
+                elevation={4}
+                sx={{
+                  p: 4,
+                  borderRadius: 3,
+                  minHeight: 450,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #2dd4bf 0%, #0ea5e9 100%)',
+                  color: 'white'
+                }}
+              >
+                <AgePieChart
+                  data={receptionistChartData}
+                  title={t('common:homepage.community.charts.receptionistsByAssignment')}
+                  textColor="white"
+                />
               </Paper>
             </Grid>
           </Grid>

@@ -79,6 +79,9 @@
     "active": "Active",
     "inactive": "Inactive"
   },
+  "charts": {
+    "noDataAvailable": "No data available for this chart"
+  },
   "common": {
     "yes": "Yes",
     "no": "No",
@@ -138,6 +141,7 @@
   "homepage": {
     "hero": {
       "title": "Your Health, Our Priority",
+      "imageAlt": "Healthcare Professional",
       "subtitle": "Experience modern healthcare management with our comprehensive platform designed for patients, doctors, and healthcare professionals."
     },
     "services": {
@@ -171,6 +175,25 @@
       "expertDoctors": "Expert Doctors",
       "medicalSpecialties": "Medical Specialties",
       "emergencySupport": "Emergency Support"
+    },
+    "community": {
+      "totals": {
+        "patients": "Patients",
+        "doctors": "Doctors",
+        "receptionists": "Receptionists",
+        "specialties": "Specialties"
+      },
+      "receptionists": {
+        "assigned": "Assigned",
+        "unassigned": "Unassigned"
+      },
+      "charts": {
+        "patientsByAge": "Patients by Age",
+        "doctorsBySpecialty": "Doctors by Specialty",
+        "receptionistsByAssignment": "Receptionists by Assignment"
+      },
+      "unknown": "Unknown",
+      "other": "Other"
     },
     "sections": {
       "whyChoose": "Why Choose Our Platform?",
