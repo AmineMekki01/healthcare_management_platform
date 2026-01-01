@@ -110,6 +110,7 @@
     "viewProfile": "عرض الملف الشخصي",
     "cancel": "إلغاء",
     "createReport": "إنشاء تقرير",
+    "reportCreated": "تم إنشاء التقرير",
     "status": {
       "canceled": "ملغي",
       "completed": "مكتمل",

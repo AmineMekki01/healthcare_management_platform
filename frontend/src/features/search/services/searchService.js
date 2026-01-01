@@ -9,7 +9,6 @@ class SearchService {
 
   async searchDoctors(params = {}, currentLanguage = 'en') {
     try {
-      // Translate search parameters to English for backend compatibility
       const translatedParams = translateSearchParams(params, currentLanguage);
       const searchParams = this.buildSearchParams(translatedParams);
       const response = await axios.get(`${this.baseURL}/doctors`, { params: searchParams });
@@ -19,8 +18,7 @@ class SearchService {
       console.log('Search response:', response.data);
       console.log('Response status:', response.status);
       
-      const doctors = this.normalizeSearchResults(response.data);
-      // Localize doctor data for display
+      const doctors = response.data
       const localizedDoctors = doctors.map(doctor => this.localizeDoctorData(doctor, currentLanguage));
       return this.sortDoctorsByRelevance(localizedDoctors, params);
     } catch (error) {
@@ -136,13 +134,17 @@ class SearchService {
       id: doctor.DoctorId || doctor.UserId || doctor.id,
       userId: doctor.UserId || doctor.DoctorId || doctor.id,
       firstName: doctor.FirstName || doctor.first_name || '',
+      firstNameAr: doctor.firstNameAr || doctor.FirstNameAr || doctor.first_name_ar || '',
       lastName: doctor.LastName || doctor.last_name || '',
+      lastNameAr: doctor.lastNameAr || doctor.LastNameAr || doctor.last_name_ar || '',
       fullName: `Dr. ${(doctor.FirstName || doctor.first_name || '')} ${(doctor.LastName || doctor.last_name || '')}`.trim(),
       specialty: doctor.Specialty || doctor.specialty || '',
       experience: doctor.Experience || doctor.years_experience || 0,
       rating: doctor.RatingScore || doctor.rating || doctor.doctor_rating || 0,
       ratingCount: doctor.RatingCount || doctor.number_of_raters || 0,
       location: doctor.Location || doctor.location || '',
+      locationAr: doctor.locationAr || doctor.LocationAr || doctor.location_ar || '',
+      bioAr: doctor.bioAr || doctor.BioAr || doctor.bio_ar || '',
       profilePicture: doctor.ProfilePictureUrl || doctor.imageUrl || '',
       username: doctor.Username || doctor.doctor_user_name || '',
       verified: doctor.verified || true,
@@ -156,12 +158,11 @@ class SearchService {
   localizeDoctorData(doctor, language = 'en') {
     if (language === 'en') return doctor;
     
+
     return {
       ...doctor,
       specialty: getLocalizedSpecialty(doctor.specialty, language),
-      location: getLocalizedLocation(doctor.location, language),
       localizedSpecialty: getLocalizedSpecialty(doctor.specialty, language),
-      localizedLocation: getLocalizedLocation(doctor.location, language)
     };
   }
 

@@ -31,6 +31,8 @@ export default function PersonalInfo({ userId }) {
     lastName: '',
     email: '',
     phoneNumber: '',
+    clinicPhoneNumber: '',
+    showClinicPhone: true,
     bio: '',
     streetAddress: '',
     cityName: '',
@@ -86,6 +88,10 @@ export default function PersonalInfo({ userId }) {
     formData.append('lastName', profile.lastName);
     formData.append('email', profile.email);
     formData.append('phoneNumber', profile.phoneNumber);
+    if (userType === 'doctor') {
+      formData.append('clinicPhoneNumber', profile.clinicPhoneNumber || '');
+      formData.append('showClinicPhone', String(!!profile.showClinicPhone));
+    }
     formData.append('bio', profile.bio);
     formData.append('cityName', profile.cityName);
     formData.append('stateName', profile.stateName || '');
@@ -219,6 +225,34 @@ export default function PersonalInfo({ userId }) {
           />
         </FormGroup>
       </FormRow>
+
+      {userType === 'doctor' && (
+        <>
+          <FormRow>
+            <FormGroup>
+              <Label htmlFor="clinicPhoneNumber">{t('personalInfo.fields.clinicPhoneNumber.label')}</Label>
+              <Input
+                id="clinicPhoneNumber"
+                name="clinicPhoneNumber"
+                type="tel"
+                placeholder={t('personalInfo.fields.clinicPhoneNumber.placeholder')}
+                value={profile.clinicPhoneNumber || ''}
+                onChange={handleChange}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="showClinicPhone">{t('personalInfo.fields.showClinicPhone.label')}</Label>
+              <Input
+                id="showClinicPhone"
+                name="showClinicPhone"
+                type="checkbox"
+                checked={!!profile.showClinicPhone}
+                onChange={(e) => setProfile(prev => ({ ...prev, showClinicPhone: e.target.checked }))}
+              />
+            </FormGroup>
+          </FormRow>
+        </>
+      )}
 
       {/* Personal Information Section */}
       {profile.birthDate && (

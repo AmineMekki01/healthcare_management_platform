@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 
 const AvatarContainer = styled.div`
   position: relative;
@@ -101,11 +102,14 @@ const UserAvatar = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
 
+  const { i18n } = useTranslation();
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+
   const getInitials = (user) => {
     if (!user) return '?';
 
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
+    const firstName = isArabic ? (user.firstNameAr || user.firstName || '') : (user.firstName || '');
+    const lastName = isArabic ? (user.lastNameAr || user.lastName || '') : (user.lastName || '');
     const email = user.email || '';
 
     if (firstName && lastName) {
@@ -138,7 +142,7 @@ const UserAvatar = ({
     }
   };
   const isOnline = user?.isOnline || false;
-  const userName = user?.firstName || 'User';
+  const userName = isArabic ? (user?.firstNameAr || user?.firstName || 'User') : (user?.firstName || 'User');
 
   return (
     <AvatarContainer className={className} onClick={handleClick}>

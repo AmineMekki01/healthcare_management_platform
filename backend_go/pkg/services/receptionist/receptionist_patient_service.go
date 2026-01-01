@@ -332,7 +332,7 @@ func (s *ReceptionistPatientService) GetPatientDetailedInfo(receptionistID, pati
 			END as status,
 			d.first_name as doctor_first_name,
 			d.last_name as doctor_last_name,
-			d.specialty as doctor_specialty,
+			d.specialty_code as doctor_specialty,
 			a.canceled,
 			a.canceled_by,
 			a.cancellation_reason,
@@ -565,7 +565,7 @@ func (s *ReceptionistPatientService) CreateAppointment(receptionistID string, re
 	}
 
 	var doctorFirstName, doctorLastName, doctorSpecialty string
-	err = s.db.QueryRow(ctx, "SELECT first_name, last_name, specialty FROM doctor_info WHERE doctor_id = $1", req.DoctorID).Scan(&doctorFirstName, &doctorLastName, &doctorSpecialty)
+	err = s.db.QueryRow(ctx, "SELECT first_name, last_name, specialty_code FROM doctor_info WHERE doctor_id = $1", req.DoctorID).Scan(&doctorFirstName, &doctorLastName, &doctorSpecialty)
 	if err != nil {
 		log.Printf("CreateAppointment: failed to get doctor info: %v", err)
 		return nil, fmt.Errorf("failed to get doctor info: %v", err)

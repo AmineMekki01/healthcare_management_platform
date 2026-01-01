@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import UserProfile from '../components/UserProfile';
 import { useUserManagement } from '../hooks/useUserManagement';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 const PatientProfileContainer = styled.div`
   max-width: 1200px;
@@ -136,11 +137,16 @@ const ErrorMessage = styled.div`
 `;
 
 const PatientProfilePage = () => {
+  const { t, i18n } = useTranslation(['userManagement', 'common']);
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { user: patient, loading, error, fetchUser } = useUserManagement();
   const { currentUser } = useAuth();
-  
+  console.log('patient', patient);
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+  const languageCode = isArabic ? 'ar' : (isFrench ? 'fr' : 'en');
+
   const [patientStats, setPatientStats] = useState({
     appointments: 0,
     records: 0,
@@ -153,19 +159,18 @@ const PatientProfilePage = () => {
   const canScheduleAppointment = currentUser && (currentUser.userType === 'doctor' || currentUser.userType === 'receptionist');
 
   const patientFields = [
-    { key: 'firstName', label: 'First Name', type: 'text' },
-    { key: 'lastName', label: 'Last Name', type: 'text' },
-    { key: 'email', label: 'email', type: 'email' },
-    { key: 'phoneNumber', label: 'Phone', type: 'tel' },
-    { key: 'username', label: 'username', type: 'text' },
-    { key: 'birthDate', label: 'Date of Birth', type: 'date' },
-    { key: 'age', label: 'age', type: 'number' },
-    { key: 'bio', label: 'bio', type: 'textarea' },
-    { key: 'streetAddress', label: 'Address', type: 'text' },
-    { key: 'cityName', label: 'City', type: 'text' },
-    { key: 'stateName', label: 'State', type: 'text' },
-    { key: 'zipCode', label: 'Zip Code', type: 'text' },
-    { key: 'countryName', label: 'Country', type: 'text' },
+    { key: 'firstName', label: t('userProfile.fields.firstName'), type: 'text' },
+    { key: 'lastName', label: t('userProfile.fields.lastName'), type: 'text' },
+    { key: 'email', label: t('userProfile.fields.email'), type: 'email' },
+    { key: 'phoneNumber', label: t('userProfile.fields.phoneNumber'), type: 'tel' },
+    { key: 'birthDate', label: t('userProfile.fields.dateOfBirth'), type: 'date' },
+    { key: 'age', label: t('userProfile.fields.age'), type: 'number' },
+    { key: 'bio', label: t('userProfile.fields.bio'), type: 'textarea' },
+    { key: 'streetAddress', label: t('userProfile.fields.address'), type: 'text' },
+    { key: 'cityName', label: t('userProfile.fields.city'), type: 'text' },
+    { key: 'stateName', label: t('userProfile.fields.state'), type: 'text' },
+    { key: 'zipCode', label: t('userProfile.fields.zipCode'), type: 'text' },
+    { key: 'countryName', label: t('userProfile.fields.country'), type: 'text' },
   ];
 
   useEffect(() => {
@@ -266,54 +271,23 @@ const PatientProfilePage = () => {
         </MainProfile>
 
         <Sidebar>
-          {/* Patient Statistics */}
-          <StatsCard>
-            <SectionTitle>Health Overview</SectionTitle>
-            <StatsGrid>
-              <StatItem>
-                <StatNumber>{patientStats.appointments || 0}</StatNumber>
-                <StatLabel>Appointments</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatNumber>{patientStats.totalVisits || patient?.totalVisits || 0}</StatNumber>
-                <StatLabel>Visits</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatNumber>{patientStats.doctors || 0}</StatNumber>
-                <StatLabel>Doctors</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatNumber>{patient?.age || 'N/A'}</StatNumber>
-                <StatLabel>Age</StatLabel>
-              </StatItem>
-            </StatsGrid>
-          </StatsCard>
-
           {/* Health Information */}
           <HealthInfoCard>
             <SectionTitle>Health Information</SectionTitle>
             <HealthInfoList>
               <HealthInfoItem>
-                <InfoLabel>Gender:</InfoLabel>
-                <InfoValue>{patient?.Sex || 'Not specified'}</InfoValue>
-              </HealthInfoItem>
-              <HealthInfoItem>
-                <InfoLabel>Blood Type:</InfoLabel>
-                <InfoValue>{patient?.bloodType || 'Unknown'}</InfoValue>
-              </HealthInfoItem>
-              <HealthInfoItem>
-                <InfoLabel>Last Visit:</InfoLabel>
-                <InfoValue>{patientStats.lastVisit}</InfoValue>
-              </HealthInfoItem>
-              <HealthInfoItem>
-                <InfoLabel>Emergency Contact:</InfoLabel>
+                <InfoLabel>
+                  {t('patientProfile.healthInfo.gender')}
+                </InfoLabel>
                 <InfoValue>
-                  {typeof patient?.emergencyContact === 'object' && patient?.emergencyContact?.name
-                    ? patient.emergencyContact.name
-                    : typeof patient?.emergencyContact === 'string'
-                    ? patient.emergencyContact
-                    : 'Not provided'}
+                  {t(`common:patient.gender.${(patient?.sex || 'unknown').toLowerCase()}`)}
                 </InfoValue>
+              </HealthInfoItem>
+              <HealthInfoItem>
+                <InfoLabel>
+                  {t('patientProfile.healthInfo.bloodType')}
+                </InfoLabel>
+                <InfoValue>{patient?.healthProfile.bloodGroup || 'Unknown'}</InfoValue>
               </HealthInfoItem>
             </HealthInfoList>
           </HealthInfoCard>
@@ -348,30 +322,17 @@ const PatientProfilePage = () => {
           )}
 
           {/* Allergies */}
-          {patient?.allergies && Array.isArray(patient.allergies) && patient.allergies.length > 0 && (
+          {patient?.healthProfile.allergies && Array.isArray(patient.healthProfile.allergies) && patient.healthProfile.allergies.length > 0 && (
             <HealthInfoCard>
               <SectionTitle>Allergies</SectionTitle>
               <HealthInfoList>
-                {patient.allergies.slice(0, 3).map((allergy, index) => (
+                {patient.healthProfile.allergies.slice(0, 3).map((allergy, index) => (
                   <HealthInfoItem key={index}>
                     <InfoLabel>
-                      {typeof allergy === 'object' 
-                        ? (allergy.allergen || allergy.name || `Allergy ${index + 1}`)
-                        : allergy || `Allergy ${index + 1}`}:
+                      {allergy}
                     </InfoLabel>
-                    <InfoValue>
-                      {typeof allergy === 'object' 
-                        ? (allergy.severity || allergy.reaction || 'Known')
-                        : 'Known'}
-                    </InfoValue>
                   </HealthInfoItem>
                 ))}
-                {patient.allergies.length > 3 && (
-                  <HealthInfoItem>
-                    <InfoLabel>More:</InfoLabel>
-                    <InfoValue>{patient.allergies.length - 3} more allergies</InfoValue>
-                  </HealthInfoItem>
-                )}
               </HealthInfoList>
             </HealthInfoCard>
           )}

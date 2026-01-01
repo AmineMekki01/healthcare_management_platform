@@ -34,6 +34,13 @@
         "label": "رقم الهاتف",
         "placeholder": "أدخل رقم هاتفك"
       },
+      "clinicPhoneNumber": {
+        "label": "رقم هاتف العيادة",
+        "placeholder": "أدخل رقم هاتف العيادة"
+      },
+      "showClinicPhone": {
+        "label": "عرض هاتف العيادة في الملف العام"
+      },
       "birthDate": {
         "label": "تاريخ الميلاد"
       },

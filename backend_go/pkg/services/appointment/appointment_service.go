@@ -224,7 +224,7 @@ func (s *AppointmentService) GetDoctorWeeklySchedule(doctorId string, rangeStart
 			COALESCE(p.age, 0) as age,
 			COALESCE(d.first_name, '') as doctor_first_name,
 			COALESCE(d.last_name, '') as doctor_last_name,
-			COALESCE(d.specialty, '') as specialty
+			COALESCE(d.specialty_code, '') as specialty
 		FROM appointments a
 		LEFT JOIN patient_info p ON a.patient_id = p.patient_id
 		LEFT JOIN doctor_info d ON a.doctor_id = d.doctor_id
@@ -391,7 +391,7 @@ func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezo
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
 			doctor_info.last_name AS doctor_last_name,
-			doctor_info.specialty,
+			doctor_info.specialty_code,
 			receptionists.first_name AS patient_first_name,
 			receptionists.last_name AS patient_last_name,
 			NULL::int AS age,
@@ -401,13 +401,16 @@ func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezo
 			appointments.canceled,
 			appointments.canceled_by,
 			appointments.cancellation_reason,
-			appointments.cancellation_timestamp
+			appointments.cancellation_timestamp,
+			CASE WHEN medical_reports.report_id IS NOT NULL THEN true ELSE false END AS report_exists
 		FROM 
 			appointments
 		JOIN
 			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
 		JOIN
 			receptionists ON appointments.patient_id = receptionists.receptionist_id
+		LEFT JOIN
+			medical_reports ON appointments.appointment_id = medical_reports.appointment_id
 		WHERE
 			appointments.patient_id = $1;
 	`
@@ -439,6 +442,7 @@ func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezo
 			&r.CanceledBy,
 			&r.CancellationReason,
 			&r.CancellationTimestamp,
+			&r.ReportExists,
 		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
@@ -479,7 +483,7 @@ func (s *AppointmentService) getReceptionistReservationsAsReceptionist(reception
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
 			doctor_info.last_name AS doctor_last_name,
-			doctor_info.specialty,
+			doctor_info.specialty_code,
 			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
 			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
 			CASE 
@@ -566,7 +570,7 @@ func (s *AppointmentService) getPatientReservations(userID, timezone string) []m
 			appointments.appointment_end,
 			doctor_info.first_name,
 			doctor_info.last_name,
-			doctor_info.specialty,
+			doctor_info.specialty_code,
 			patient_info.first_name AS patient_first_name,
 			patient_info.last_name AS patient_last_name,
 			patient_info.age,
@@ -576,13 +580,16 @@ func (s *AppointmentService) getPatientReservations(userID, timezone string) []m
 			appointments.canceled,
 			appointments.canceled_by,
 			appointments.cancellation_reason,
-			appointments.cancellation_timestamp
+			appointments.cancellation_timestamp,
+			CASE WHEN medical_reports.report_id IS NOT NULL THEN true ELSE false END AS report_exists
 		FROM 
 			appointments
 		JOIN
 			doctor_info ON appointments.doctor_id = doctor_info.doctor_id
 		JOIN
 			patient_info ON appointments.patient_id = patient_info.patient_id
+		LEFT JOIN
+			medical_reports ON appointments.appointment_id = medical_reports.appointment_id
 		WHERE
 			appointments.patient_id = $1;
 	`
@@ -614,6 +621,7 @@ func (s *AppointmentService) getPatientReservations(userID, timezone string) []m
 			&r.CanceledBy,
 			&r.CancellationReason,
 			&r.CancellationTimestamp,
+			&r.ReportExists,
 		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
@@ -641,7 +649,7 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
 			doctor_info.last_name AS doctor_last_name,
-			doctor_info.specialty,
+			doctor_info.specialty_code,
 			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
 			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
 			CASE 
@@ -728,7 +736,7 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 			appointments.appointment_end,
 			treating_doctor.first_name AS doctor_first_name,
 			treating_doctor.last_name AS doctor_last_name,
-			treating_doctor.specialty,
+			treating_doctor.specialty_code,
 			patient_doctor.first_name AS patient_first_name,
 			patient_doctor.last_name AS patient_last_name,
 			patient_doctor.age,
@@ -738,11 +746,13 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 			appointments.canceled,
 			appointments.canceled_by,
 			appointments.cancellation_reason,
-			appointments.cancellation_timestamp
+			appointments.cancellation_timestamp,
+			CASE WHEN medical_reports.report_id IS NOT NULL THEN true ELSE false END AS report_exists
 		FROM 
 			appointments
 		JOIN doctor_info AS treating_doctor ON appointments.doctor_id = treating_doctor.doctor_id
 		JOIN doctor_info AS patient_doctor ON appointments.patient_id = patient_doctor.doctor_id
+		LEFT JOIN medical_reports ON appointments.appointment_id = medical_reports.appointment_id
 		WHERE 
 			appointments.patient_id = $1;
 	`
@@ -774,6 +784,7 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 			&r.CanceledBy,
 			&r.CancellationReason,
 			&r.CancellationTimestamp,
+			&r.ReportExists,
 		)
 		if err != nil {
 			log.Println("Row Scan Error:", err)
@@ -796,7 +807,7 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 func (s *AppointmentService) CancelAppointment(appointmentID uuid.UUID, canceledBy, cancellationReason string) error {
 	sqlQuery := `
 		UPDATE appointments
-		SET canceled = TRUE, 
+		SET canceled = TRUE,
 			canceled_by = $1,
 			cancellation_reason = $2,
 			cancellation_timestamp = NOW()
@@ -816,8 +827,7 @@ func (s *AppointmentService) CancelAppointment(appointmentID uuid.UUID, canceled
 		return fmt.Errorf("failed to cancel appointment")
 	}
 
-	err = tx.Commit(context.Background())
-	if err != nil {
+	if err := tx.Commit(context.Background()); err != nil {
 		log.Println("Commit Error:", err)
 		return fmt.Errorf("failed to commit transaction")
 	}
@@ -833,18 +843,26 @@ func (s *AppointmentService) GetAppointmentByID(appointmentID string) (*models.R
 			apt.appointment_id,
 			apt.appointment_start,
 			apt.appointment_end,
-			apt.doctor_id,
-			apt.patient_id,
+			apt.doctor_id::text,
+			apt.patient_id::text,
 			di.first_name as doctor_first_name,
 			di.last_name as doctor_last_name,
-			pi.first_name as patient_first_name,
-			pi.last_name as patient_last_name		
+			di.specialty_code,
+			COALESCE(pi.first_name, r.first_name, dp.first_name, '') as patient_first_name,
+			COALESCE(pi.last_name, r.last_name, dp.last_name, '') as patient_last_name,
+			CASE WHEN mr.report_id IS NOT NULL THEN true ELSE false END AS report_exists
 		FROM 
 			appointments apt
 		JOIN 
 			doctor_info di on di.doctor_id = apt.doctor_id
-		JOIN 
+		LEFT JOIN 
 			patient_info pi on pi.patient_id = apt.patient_id
+		LEFT JOIN
+			receptionists r ON r.receptionist_id = apt.patient_id
+		LEFT JOIN
+			doctor_info dp ON dp.doctor_id = apt.patient_id
+		LEFT JOIN
+			medical_reports mr ON mr.appointment_id = apt.appointment_id
 		WHERE
 			apt.appointment_id = $1;
 	`
@@ -857,8 +875,10 @@ func (s *AppointmentService) GetAppointmentByID(appointmentID string) (*models.R
 		&appointment.PatientID,
 		&appointment.DoctorFirstName,
 		&appointment.DoctorLastName,
+		&appointment.Specialty,
 		&appointment.PatientFirstName,
 		&appointment.PatientLastName,
+		&appointment.ReportExists,
 	)
 	if err != nil {
 		log.Println("Query Error:", err)
@@ -1017,9 +1037,9 @@ func (s *AppointmentService) saveDiagnosisToHistory(tx pgx.Tx, patientID string,
 	}
 
 	query := `
-		INSERT INTO medical_history (
-			diagnosis_history_id, diagnosis_name, diagnosis_details, 
-			diagnosis_doctor_name, diagnosis_doctor_id, patient_id, 
+		INSERT INTO medical_diagnosis_history (
+			diag_history_id, diagnosis_name, diagnosis_details, 
+			diagnosis_doctor_name, diagnosis_doctor_id, diagnosis_patient_id, 
 			created_at, updated_at
 		) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 	`
@@ -1239,7 +1259,7 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 			doctor_id,
 			first_name,
 			last_name,
-			specialty,
+			specialty_code,
 			experience,
 			rating_score,
 			rating_count
@@ -1252,7 +1272,7 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 	argCount := 1
 
 	if searchQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty) LIKE $%d)", argCount, argCount)
+		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty_code) LIKE $%d)", argCount, argCount)
 		args = append(args, "%"+strings.ToLower(searchQuery)+"%")
 		argCount++
 	}

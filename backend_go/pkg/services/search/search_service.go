@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"healthcare_backend/pkg/config"
@@ -32,12 +33,16 @@ func (s *SearchService) SearchDoctors(query, specialty, location string, userLat
         doctor_id, 
         username, 
         first_name, 
+        COALESCE(first_name_ar, ''),
         last_name, 
-        specialty, 
+        COALESCE(last_name_ar, ''),
+        specialty_code, 
         experience, 
         rating_score,
         rating_count, 
         location, 
+        COALESCE(location_ar, ''),
+		COALESCE(location_fr, ''),
         profile_photo_url,
         COALESCE(latitude, 0) as latitude,
         COALESCE(longitude, 0) as longitude,
@@ -66,7 +71,7 @@ func (s *SearchService) SearchDoctors(query, specialty, location string, userLat
 		paramIndex++
 	}
 	if specialty != "" {
-		conditions = append(conditions, fmt.Sprintf("specialty ILIKE $%d", paramIndex))
+		conditions = append(conditions, fmt.Sprintf("specialty_code ILIKE $%d", paramIndex))
 		queryParams = append(queryParams, "%"+specialty+"%")
 		paramIndex++
 	}
@@ -86,6 +91,7 @@ func (s *SearchService) SearchDoctors(query, specialty, location string, userLat
 
 	rows, err := s.db.Query(context.Background(), sqlSelect, queryParams...)
 	if err != nil {
+		log.Printf("Search query error: %v", err)
 		return nil, fmt.Errorf("error executing search query: %v", err)
 	}
 	defer rows.Close()
@@ -97,20 +103,26 @@ func (s *SearchService) SearchDoctors(query, specialty, location string, userLat
 			&doctor.DoctorID,
 			&doctor.Username,
 			&doctor.FirstName,
+			&doctor.FirstNameAr,
 			&doctor.LastName,
-			&doctor.Specialty,
+			&doctor.LastNameAr,
+			&doctor.SpecialtyCode,
 			&doctor.Experience,
 			&doctor.RatingScore,
 			&doctor.RatingCount,
 			&doctor.Location,
+			&doctor.LocationAr,
+			&doctor.LocationFr,
 			&doctor.ProfilePictureURL,
 			&doctor.Latitude,
 			&doctor.Longitude,
 			&distance,
 		)
 		if err != nil {
+			log.Printf("Error scanning doctor row: %v", err)
 			return nil, fmt.Errorf("error scanning doctor row: %v", err)
 		}
+		doctor.Specialty = doctor.SpecialtyCode
 
 		if distance.Valid {
 			doctor.DoctorDistance = distance.Float64
@@ -127,8 +139,10 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 		SELECT 
 			doctor_id,
 			first_name,
+			COALESCE(first_name_ar, ''),
 			last_name,
-			specialty,
+			COALESCE(last_name_ar, ''),
+			specialty_code,
 			experience,
 			rating_score,
 			rating_count
@@ -141,13 +155,13 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 	argCount := 1
 
 	if searchQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty) LIKE $%d)", argCount, argCount)
+		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty_code) LIKE $%d)", argCount, argCount)
 		args = append(args, "%"+strings.ToLower(searchQuery)+"%")
 		argCount++
 	}
 
 	if specialty != "" {
-		query += fmt.Sprintf(" AND LOWER(specialty) LIKE $%d", argCount)
+		query += fmt.Sprintf(" AND LOWER(specialty_code) LIKE $%d", argCount)
 		args = append(args, "%"+strings.ToLower(specialty)+"%")
 		argCount++
 	}
@@ -168,7 +182,9 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 		var doctor struct {
 			DoctorID    string  `json:"doctor_id"`
 			FirstName   string  `json:"first_name"`
+			FirstNameAr string  `json:"first_name_ar"`
 			LastName    string  `json:"last_name"`
+			LastNameAr  string  `json:"last_name_ar"`
 			Specialty   string  `json:"specialty"`
 			Experience  string  `json:"experience"`
 			RatingScore float64 `json:"rating_score"`
@@ -178,7 +194,9 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 		err := rows.Scan(
 			&doctor.DoctorID,
 			&doctor.FirstName,
+			&doctor.FirstNameAr,
 			&doctor.LastName,
+			&doctor.LastNameAr,
 			&doctor.Specialty,
 			&doctor.Experience,
 			&doctor.RatingScore,
@@ -189,14 +207,16 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 		}
 
 		doctorMap := map[string]interface{}{
-			"doctor_id":    doctor.DoctorID,
-			"first_name":   doctor.FirstName,
-			"last_name":    doctor.LastName,
-			"full_name":    fmt.Sprintf("Dr. %s %s", doctor.FirstName, doctor.LastName),
-			"specialty":    doctor.Specialty,
-			"experience":   doctor.Experience,
-			"rating_score": doctor.RatingScore,
-			"rating_count": doctor.RatingCount,
+			"doctor_id":     doctor.DoctorID,
+			"first_name":    doctor.FirstName,
+			"first_name_ar": doctor.FirstNameAr,
+			"last_name":     doctor.LastName,
+			"last_name_ar":  doctor.LastNameAr,
+			"full_name":     fmt.Sprintf("Dr. %s %s", doctor.FirstName, doctor.LastName),
+			"specialty":     doctor.Specialty,
+			"experience":    doctor.Experience,
+			"rating_score":  doctor.RatingScore,
+			"rating_count":  doctor.RatingCount,
 		}
 
 		doctors = append(doctors, doctorMap)
@@ -210,7 +230,7 @@ func (s *SearchService) SearchUsers(inputName, currentUserId, currentUserType st
 
 	if currentUserType == "patient" {
 		query := `
-            SELECT DISTINCT di.doctor_id, di.first_name, di.last_name
+            SELECT DISTINCT di.doctor_id, di.first_name, di.first_name_ar, di.last_name, di.last_name_ar
 			FROM doctor_info di
 			LEFT JOIN followers f ON di.doctor_id = f.doctor_id AND f.follower_id = $2
 			LEFT JOIN appointments apt ON di.doctor_id = apt.doctor_id AND apt.patient_id = $2 AND apt.canceled = FALSE
@@ -226,7 +246,7 @@ func (s *SearchService) SearchUsers(inputName, currentUserId, currentUserType st
 
 		for rows.Next() {
 			var user models.CombinedUser
-			err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName)
+			err := rows.Scan(&user.UserID, &user.FirstName, &user.FirstNameAr, &user.LastName, &user.LastNameAr)
 			if err != nil {
 				continue
 			}
@@ -236,13 +256,13 @@ func (s *SearchService) SearchUsers(inputName, currentUserId, currentUserType st
 	} else if currentUserType == "doctor" {
 		queries := map[string]string{
 			"patient": `
-				SELECT pi.patient_id, pi.first_name, pi.last_name 
+				SELECT pi.patient_id, pi.first_name, pi.first_name_ar, pi.last_name, pi.last_name_ar 
 				FROM patient_info pi
 				WHERE LOWER(pi.first_name || ' ' || pi.last_name) LIKE LOWER($1)
 				  AND pi.patient_id != $2
 			`,
 			"doctor": `
-				SELECT di.doctor_id, di.first_name, di.last_name 
+				SELECT di.doctor_id, di.first_name, di.first_name_ar, di.last_name, di.last_name_ar 
 				FROM doctor_info di
 				WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
 				  AND di.doctor_id != $2
@@ -257,7 +277,7 @@ func (s *SearchService) SearchUsers(inputName, currentUserId, currentUserType st
 
 			for rows.Next() {
 				var user models.CombinedUser
-				err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName)
+				err := rows.Scan(&user.UserID, &user.FirstName, &user.FirstNameAr, &user.LastName, &user.LastNameAr)
 				if err != nil {
 					continue
 				}

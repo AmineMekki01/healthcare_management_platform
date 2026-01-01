@@ -444,6 +444,8 @@ export const StatusChip = styled.span`
                 return 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)';
             case 'passed': 
                 return 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+            case 'report':
+                return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
             default: 
                 return 'linear-gradient(135deg, #9f7aea 0%, #805ad5 100%)';
         }

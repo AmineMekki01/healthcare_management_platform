@@ -69,20 +69,32 @@ class AppointmentService {
       const startTime = new Date(appointmentData.appointmentStart);
       const endTime = new Date(startTime.getTime() + appointmentData.duration * 60000);
 
+      if (!endTime || isNaN(endTime.getTime()) || !endTime.getTime || !endTime.getTime()) {
+        throw new Error('Invalid appointment end time');
+      }
+
+      if (!(endTime > startTime)) {
+        throw new Error('Appointment end time must be after start time');
+      }
+
       const requestData = {
-        AppointmentStart: appointmentData.appointmentStart,
-        AppointmentEnd: endTime.toISOString(),
-        DoctorID: appointmentData.doctorId,
-        PatientID: appointmentData.patientId,
-        Title: appointmentData.appointmentType || 'Consultation',
-        Notes: appointmentData.notes || '',
-        IsDoctorPatient: appointmentData.isDoctorPatient || false
+        appointmentStart: startTime.toISOString(),
+        appointmentEnd: endTime.toISOString(),
+        doctorId: appointmentData.doctorId,
+        patientId: appointmentData.patientId,
+        title: appointmentData.appointmentType || 'Consultation',
+        notes: appointmentData.notes || '',
+        isDoctorPatient: appointmentData.isDoctorPatient || false
       };
 
       const response = await axios.post('/api/v1/reservations', requestData);
       return response.data;
     } catch (error) {
       console.error('Error creating appointment:', error);
+      const message = error?.response?.data?.error || error?.response?.data?.message || error?.message;
+      if (message) {
+        throw new Error(message);
+      }
       throw error;
     }
   }

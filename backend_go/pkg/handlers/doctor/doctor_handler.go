@@ -66,6 +66,10 @@ func (h *DoctorHandler) GetDoctorByID(c *gin.Context) {
 func (h *DoctorHandler) SearchDoctors(c *gin.Context) {
 	searchQuery := c.Query("query")
 	specialty := c.Query("specialty")
+	specialtyCode := c.Query("specialtyCode")
+	if specialty == "" {
+		specialty = specialtyCode
+	}
 	location := c.Query("location")
 
 	var userLatitude, userLongitude float64

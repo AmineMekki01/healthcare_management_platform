@@ -617,7 +617,7 @@ func TestCreateReservation_InvalidDates(t *testing.T) {
 			name:         "End before start",
 			startTime:    time.Now().Add(2 * time.Hour),
 			endTime:      time.Now().Add(1 * time.Hour),
-			expectedCode: http.StatusInternalServerError,
+			expectedCode: http.StatusBadRequest,
 		},
 	}
 

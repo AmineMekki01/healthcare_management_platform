@@ -52,9 +52,11 @@ const MyNavbar = () => {
     userType,
     assignedDoctorId,
     userFullName,
+    userFullNameAr,
     userProfilePictureUrl,
   } = useContext(AuthContext);
-  
+
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
   const { sidebarOpen, handleSidebarToggle } = useSidebar();
   const { activeMode, canSwitchModes, handleModeToggle } = useRoleMode();
   const location = useLocation();
@@ -281,7 +283,7 @@ const MyNavbar = () => {
                   textOverflow: 'ellipsis',
                 }}
               >
-                {capitalizeWords(userFullName)}
+                {capitalizeWords(isArabic ? userFullNameAr : userFullName)}
               </Typography>
               <Typography 
                 variant="caption" 

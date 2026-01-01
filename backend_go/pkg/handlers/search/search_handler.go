@@ -1,6 +1,7 @@
 package search
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,11 @@ func NewSearchHandler(searchService *search.SearchService) *SearchHandler {
 func (h *SearchHandler) SearchDoctors(c *gin.Context) {
 	query := c.DefaultQuery("query", "")
 	specialty := c.DefaultQuery("specialty", "")
+	specialtyCode := c.DefaultQuery("specialtyCode", "")
+
+	if specialty == "" {
+		specialty = specialtyCode
+	}
 	location := c.DefaultQuery("location", "")
 	userLatitudeStr := c.DefaultQuery("latitude", "")
 	userLongitudeStr := c.DefaultQuery("longitude", "")
@@ -32,11 +38,13 @@ func (h *SearchHandler) SearchDoctors(c *gin.Context) {
 	if userLatitudeStr != "" && userLongitudeStr != "" {
 		userLatitude, err = strconv.ParseFloat(userLatitudeStr, 64)
 		if err != nil {
+			log.Printf("Error parsing latitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid latitude"})
 			return
 		}
 		userLongitude, err = strconv.ParseFloat(userLongitudeStr, 64)
 		if err != nil {
+			log.Printf("Error parsing longitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid longitude"})
 			return
 		}
@@ -44,6 +52,7 @@ func (h *SearchHandler) SearchDoctors(c *gin.Context) {
 
 	doctors, err := h.searchService.SearchDoctors(query, specialty, location, userLatitude, userLongitude)
 	if err != nil {
+		log.Printf("Error searching doctors: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -54,6 +63,10 @@ func (h *SearchHandler) SearchDoctors(c *gin.Context) {
 func (h *SearchHandler) SearchDoctorsForReferral(c *gin.Context) {
 	searchQuery := c.DefaultQuery("q", "")
 	specialty := c.DefaultQuery("specialty", "")
+	specialtyCode := c.DefaultQuery("specialtyCode", "")
+	if specialty == "" {
+		specialty = specialtyCode
+	}
 	limit := c.DefaultQuery("limit", "10")
 
 	limitInt, err := strconv.Atoi(limit)

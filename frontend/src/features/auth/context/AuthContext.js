@@ -13,6 +13,8 @@ const AuthProvider = ({ children, navigate }) => {
     const [userName, setUserName] = useState(null);
     const [userAge, setUserAge] = useState(null);
     const [userFullName, setUserFullName] = useState(null);
+    const [userFullNameAr, setUserFullNameAr] = useState(null);
+
     const [userProfilePictureUrl, setUserProfilePhotoUrl] = useState(null);
     const [userId, setUserId] = useState(null);
 
@@ -20,6 +22,7 @@ const AuthProvider = ({ children, navigate }) => {
     useEffect(() => {
         const bootstrap = async () => {
             setUserFullName(localStorage.getItem('userFullName'));
+            setUserFullNameAr(localStorage.getItem('userFullNameAr'));
             setUserType(localStorage.getItem('userType'));
             setUserProfilePhotoUrl(localStorage.getItem("userProfilePictureUrl"));
             setDoctorId(localStorage.getItem('doctorId'));
@@ -82,6 +85,7 @@ const AuthProvider = ({ children, navigate }) => {
                 setAssignedDoctorId(null);
                 setUserType('patient');
                 setUserFullName(null);
+                setUserFullNameAr(null);
                 setUserProfilePhotoUrl(null);
                 setUserId(null);
                 setIsLoggedIn(false);
@@ -106,6 +110,7 @@ const AuthProvider = ({ children, navigate }) => {
         localStorage.removeItem('assignedDoctorId');
         localStorage.removeItem('userType');
         localStorage.removeItem('userFullName');
+        localStorage.removeItem('userFullNameAr');
         localStorage.removeItem('userProfilePictureUrl');
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRoleMode');
@@ -117,6 +122,7 @@ const AuthProvider = ({ children, navigate }) => {
         setIsLoggedIn(false);
         setUserType(null);
         setUserFullName(null);
+        setUserFullNameAr(null);
         setUserProfilePhotoUrl(null);
         setUserId(null);
 
@@ -168,6 +174,7 @@ const AuthProvider = ({ children, navigate }) => {
             receptionistId,
             assignedDoctorId,
             userFullName,
+            userFullNameAr,
             userProfilePictureUrl,
             userId,
             setIsLoggedIn,
@@ -180,6 +187,7 @@ const AuthProvider = ({ children, navigate }) => {
             setAssignedDoctorId,
             logout,
             setUserFullName,
+            setUserFullNameAr,
             setUserProfilePhotoUrl,
             setUserId,
             refreshAccessToken

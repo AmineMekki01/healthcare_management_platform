@@ -10,6 +10,7 @@ type HiringDoctorInfo struct {
 	DoctorID        uuid.UUID `json:"doctorId"`
 	FirstName       string    `json:"firstName"`
 	LastName        string    `json:"lastName"`
+	SpecialtyCode   string    `json:"specialtyCode"`
 	Specialty       string    `json:"specialty"`
 	ProfilePhotoURL string    `json:"profilePictureUrl"`
 	CityName        string    `json:"cityName"`

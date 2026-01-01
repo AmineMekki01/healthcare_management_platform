@@ -225,7 +225,6 @@ const ReceptionistProfilePage = () => {
   const receptionistFields = [
     { key: 'firstName', label: 'First Name', type: 'text' },
     { key: 'lastName', label: 'Last Name', type: 'text' },
-    { key: 'username', label: 'Username', type: 'text' },
     { key: 'email', label: 'Email', type: 'email' },
     { key: 'phoneNumber', label: 'Phone', type: 'tel' },
     { key: 'birthDate', label: 'Date of Birth', type: 'date' },

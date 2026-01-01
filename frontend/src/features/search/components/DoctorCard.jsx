@@ -17,7 +17,7 @@ const DoctorCard = ({
   username,
   doctor
 }) => {
-  const { t } = useTranslation(['search', 'medical']);
+  const { t, i18n } = useTranslation(['search', 'medical']);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -35,7 +35,15 @@ const DoctorCard = ({
     username: username,
   };
 
-  const doctorName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+  const displayFirstName = isArabic ? data.firstNameAr : data.firstName;
+  const displayLastName = isArabic ? data.lastNameAr : data.lastName;
+  const displaySpecialty = data.localizedSpecialty || data.specialty;
+  
+  const displayLocation = isArabic ? data.locationAr : isFrench ? data.locationFr : data.location;
+
+  const doctorName = `${displayFirstName || ''} ${displayLastName || ''}`.trim();
   const doctorLabel = doctorName
     ? t('labels.doctor', { ns: 'medical', name: doctorName, defaultValue: `Dr. ${doctorName}` })
     : t('doctorCard.unknownDoctor', { defaultValue: 'Unknown Doctor' });
@@ -54,7 +62,7 @@ const DoctorCard = ({
     if (navigator.share) {
       navigator.share({
         title: doctorLabel,
-        text: `Check out ${doctorLabel}, ${data.specialty || data.specialty} specialist`,
+        text: `Check out ${doctorLabel}, ${displaySpecialty || displaySpecialty} specialist`,
         url: window.location.href
       });
     } else {
@@ -72,6 +80,7 @@ const DoctorCard = ({
   };
 
   const formatLocation = (location) => {
+    console.log(location);
     if (!location) return t('doctorCard.locationNotSpecified');
     return location.length > 30 ? location.substring(0, 30) + '...' : location;
   };
@@ -139,7 +148,7 @@ const DoctorCard = ({
     return { primary: '#667eea', secondary: '#764ba2' };
   };
 
-  const specialtyColors = getSpecialtyColor(data.specialty || data.specialty);
+  const specialtyColors = getSpecialtyColor(displaySpecialty || displaySpecialty);
   const doctorId_final = data.doctorId || data.userId || doctorId;
 
   return (
@@ -156,13 +165,13 @@ const DoctorCard = ({
         
         <DoctorImage 
           src={data.profilePictureUrl} 
-          alt={`${data.firstName || data.firstName} ${data.lastName || data.lastName}`}
+          alt={`${displayFirstName || ''} ${displayLastName || ''}`}
           onError={handleImageError}
         />
         
         <NameSpecialtyContainer>
           <DoctorName>{doctorLabel}</DoctorName>
-          <SpecialtyTag specialtyColors={specialtyColors}>{data.specialty || data.specialty}</SpecialtyTag>
+          <SpecialtyTag specialtyColors={specialtyColors}>{displaySpecialty || displaySpecialty}</SpecialtyTag>
         </NameSpecialtyContainer>
       </TopSection>
       
@@ -175,7 +184,7 @@ const DoctorCard = ({
           
           <LocationInfo>
             <FaMapMarkerAlt />
-            <span>{formatLocation(data.location || data.location)}</span>
+            <span>{formatLocation(displayLocation || displayLocation)}</span>
           </LocationInfo>
         </div>
         

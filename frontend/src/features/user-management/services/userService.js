@@ -84,9 +84,8 @@ class UserService {
     if (userType === 'doctor') {
       return {
         ...baseData,
-        specialization: getFieldValue(user, 'Specialty', 'specialty'),
+        specialization: getFieldValue(user, 'specialtyCode', 'specialty_code', 'SpecialtyCode', 'Specialty', 'specialty'),
         experience: getFieldValue(user, 'Experience', 'experience'),
-        qualification: getFieldValue(user, 'qualification', 'Qualification'),
         licenseNumber: getFieldValue(user, 'MedicalLicense', 'medical_license'),
         consultationFee: user.consultationFee || 0,
         availability: user.availability || [],
@@ -133,7 +132,7 @@ class UserService {
         receptionistId: getFieldValue(user, 'receptionistId'),
       };
     }
-
+    console.log('User data:', baseData);
     return baseData;
   }
 
@@ -153,31 +152,20 @@ class UserService {
         params.userType = userType;
       }
 
+
+
       const response = await this.axiosInstance.get(endpoint, { params });
-      
+      const healthProfileResponse = await this.axiosInstance.get(`/api/v1/user/${userId}/health-profile?userType=${userType}`);
+
       const userData = userType === 'receptionist' 
         ? response.data.receptionist || response.data 
         : response.data;
+      
         
       return {
         ...userData,
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || '',
-        email: userData.email || '',
-        phoneNumber: userData.phoneNumber || '',
-        bio: userData.bio || '',
-        streetAddress: userData.streetAddress || '',
-        cityName: userData.cityName || '',
-        stateName: userData.stateName || '',
-        zipCode: userData.zipCode || '',
-        countryName: userData.countryName || '',
-        profilePictureUrl: userData.profilePictureUrl || '',
-        birthDate: userData.birthDate || '',
-        sex: userData.sex || '',
-        age: userData.age || null,
-        experiences: userData.experiences || [],
-        experienceYears: typeof userData.experienceYears === 'number' ? userData.experienceYears : 0,
-      };
+        healthProfile: healthProfileResponse.data,
+      }
     } catch (error) {
       console.error(`Error fetching ${userType} profile:`, error);
       const message = error.response?.data?.error || error.message || `Failed to fetch ${userType} profile`;

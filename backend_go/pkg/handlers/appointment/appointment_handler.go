@@ -261,6 +261,11 @@ func (h *AppointmentHandler) CreateReservation(c *gin.Context) {
 		return
 	}
 
+	if !reservation.AppointmentEnd.After(reservation.AppointmentStart) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Appointment end time must be after start time"})
+		return
+	}
+
 	err := h.appointmentService.CreateReservation(reservation)
 	if err != nil {
 		log.Printf("Error creating reservation: %v", err)
