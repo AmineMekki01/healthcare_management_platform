@@ -25,6 +25,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
 
   const isPastAppointment = new Date(reservation.appointmentEnd) < new Date();
   const isCanceledAppointment = Boolean(reservation.canceled ?? reservation.Canceled);
+  const hasReport = Boolean(reservation.reportExists ?? reservation.ReportExists);
 
   const createICSFile = () => {
     const start = new Date(reservation.appointmentStart);
@@ -106,9 +107,16 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
         <TitleText variant="h6">
           {userType === 'patient' ? `Dr. ${reservation.doctorFirstName} ${reservation.doctorLastName}` : `${reservation.patientFirstName} ${reservation.patientLastName}`}
         </TitleText>
-        <StatusChip status={getAppointmentStatus()}>
-          {getStatusText()}
-        </StatusChip>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {userType === 'doctor' && isPastAppointment && !isCanceledAppointment && hasReport && (
+            <StatusChip status="report">
+              {t('card.reportCreated')}
+            </StatusChip>
+          )}
+          <StatusChip status={getAppointmentStatus()}>
+            {getStatusText()}
+          </StatusChip>
+        </div>
       </CardHeader>
       <CardBody>
         <Typography variant="body1">
@@ -154,7 +162,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
         </CancelButtonContainer>
       )}
       
-      {userType === 'doctor' && !reservation.reportExists && isPastAppointment && !isCanceledAppointment && (
+      {userType === 'doctor' && !hasReport && isPastAppointment && !isCanceledAppointment && (
         <CreateReportButton onClick={() => navigate(`/create-medical-report/${reservation.appointmentId}`)}>
           {t('card.createReport')}
         </CreateReportButton>

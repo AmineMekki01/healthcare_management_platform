@@ -23,18 +23,32 @@ type Receptionist struct {
 	ReceptionistID    uuid.UUID                `json:"receptionistId"`
 	Username          string                   `json:"username"`
 	FirstName         string                   `json:"firstName"`
+	FirstNameAr       string                   `json:"firstNameAr"`
 	LastName          string                   `json:"lastName"`
+	LastNameAr        string                   `json:"lastNameAr"`
 	Sex               string                   `json:"sex"`
 	Password          string                   `json:"password,omitempty"`
 	Email             string                   `json:"email"`
 	PhoneNumber       string                   `json:"phoneNumber"`
 	StreetAddress     string                   `json:"streetAddress"`
+	StreetAddressAr   string                   `json:"streetAddressAr"`
+	StreetAddressFr   string                   `json:"streetAddressFr"`
 	CityName          string                   `json:"cityName"`
+	CityNameAr        string                   `json:"cityNameAr"`
+	CityNameFr        string                   `json:"cityNameFr"`
 	StateName         string                   `json:"stateName"`
+	StateNameAr       string                   `json:"stateNameAr"`
+	StateNameFr       string                   `json:"stateNameFr"`
 	ZipCode           string                   `json:"zipCode"`
 	CountryName       string                   `json:"countryName"`
+	CountryNameAr     string                   `json:"countryNameAr"`
+	CountryNameFr     string                   `json:"countryNameFr"`
+	Location          string                   `json:"location"`
+	LocationAr        string                   `json:"locationAr"`
+	LocationFr        string                   `json:"locationFr"`
 	BirthDate         *time.Time               `json:"birthDate"`
 	Bio               string                   `json:"bio"`
+	BioAr             string                   `json:"bioAr"`
 	ProfilePictureURL string                   `json:"profilePictureUrl"`
 	AssignedDoctorID  *uuid.UUID               `json:"assignedDoctorId"`
 	IsActive          bool                     `json:"isActive"`
@@ -58,19 +72,30 @@ type ReceptionistRegisterRequest struct {
 	ReceptionistID    string                                `json:"receptionistId"`
 	Username          string                                `json:"username" binding:"required"`
 	FirstName         string                                `json:"firstName" binding:"required"`
+	FirstNameAr       string                                `json:"firstNameAr"`
 	LastName          string                                `json:"lastName" binding:"required"`
+	LastNameAr        string                                `json:"lastNameAr"`
 	Sex               string                                `json:"sex" binding:"required"`
 	Email             string                                `json:"email" binding:"required,email"`
 	Password          string                                `json:"password" binding:"required,min=6"`
 	PhoneNumber       string                                `json:"phoneNumber" binding:"required"`
 	ProfilePictureURL string                                `json:"profilePhotoUrl"`
 	StreetAddress     string                                `json:"streetAddress"`
+	StreetAddressAr   string                                `json:"streetAddressAr"`
+	StreetAddressFr   string                                `json:"streetAddressFr"`
 	CityName          string                                `json:"cityName" binding:"required"`
+	CityNameAr        string                                `json:"cityNameAr"`
+	CityNameFr        string                                `json:"cityNameFr"`
 	StateName         string                                `json:"stateName" binding:"required"`
+	StateNameAr       string                                `json:"stateNameAr"`
+	StateNameFr       string                                `json:"stateNameFr"`
 	ZipCode           string                                `json:"zipCode"`
 	CountryName       string                                `json:"countryName" binding:"required"`
+	CountryNameAr     string                                `json:"countryNameAr"`
+	CountryNameFr     string                                `json:"countryNameFr"`
 	BirthDate         string                                `json:"birthDate"`
 	Bio               string                                `json:"bio"`
+	BioAr             string                                `json:"bioAr"`
 	AssignedDoctorID  string                                `json:"assignedDoctorId"`
 	Experiences       []ReceptionistExperienceCreateRequest `json:"experiences"`
 }
@@ -81,15 +106,26 @@ type ReceptionistLoginRequest struct {
 }
 
 type ReceptionistProfileUpdateRequest struct {
-	FirstName     string `json:"firstName"`
-	LastName      string `json:"lastName"`
-	PhoneNumber   string `json:"phoneNumber"`
-	StreetAddress string `json:"streetAddress"`
-	CityName      string `json:"cityName"`
-	StateName     string `json:"stateName"`
-	ZipCode       string `json:"zipCode"`
-	CountryName   string `json:"countryName"`
-	Bio           string `json:"bio"`
+	FirstName       string `json:"firstName"`
+	FirstNameAr     string `json:"firstNameAr"`
+	LastName        string `json:"lastName"`
+	LastNameAr      string `json:"lastNameAr"`
+	PhoneNumber     string `json:"phoneNumber"`
+	StreetAddress   string `json:"streetAddress"`
+	StreetAddressAr string `json:"streetAddressAr"`
+	StreetAddressFr string `json:"streetAddressFr"`
+	CityName        string `json:"cityName"`
+	CityNameAr      string `json:"cityNameAr"`
+	CityNameFr      string `json:"cityNameFr"`
+	StateName       string `json:"stateName"`
+	StateNameAr     string `json:"stateNameAr"`
+	StateNameFr     string `json:"stateNameFr"`
+	ZipCode         string `json:"zipCode"`
+	CountryName     string `json:"countryName"`
+	CountryNameAr   string `json:"countryNameAr"`
+	CountryNameFr   string `json:"countryNameFr"`
+	Bio             string `json:"bio"`
+	BioAr           string `json:"bioAr"`
 }
 
 type AppointmentHistoryFilters struct {

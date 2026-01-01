@@ -315,19 +315,43 @@ func (h *AuthHandler) RegisterDoctor(c *gin.Context) {
 	doctor.Password = c.PostForm("Password")
 	doctor.Email = c.PostForm("Email")
 	doctor.PhoneNumber = c.PostForm("PhoneNumber")
+	doctor.ClinicPhoneNumber = c.PostForm("ClinicPhoneNumber")
+	showClinicPhoneRaw := strings.ToLower(strings.TrimSpace(c.PostForm("ShowClinicPhone")))
+	if showClinicPhoneRaw == "" {
+		doctor.ShowClinicPhone = true
+	} else {
+		doctor.ShowClinicPhone = showClinicPhoneRaw == "true" || showClinicPhoneRaw == "1" || showClinicPhoneRaw == "yes" || showClinicPhoneRaw == "on"
+	}
 	doctor.FirstName = c.PostForm("FirstName")
+	doctor.FirstNameAr = c.PostForm("FirstNameAr")
 	doctor.LastName = c.PostForm("LastName")
+	doctor.LastNameAr = c.PostForm("LastNameAr")
 	doctor.BirthDate = c.PostForm("BirthDate")
 	doctor.MedicalLicense = c.PostForm("MedicalLicense")
 	doctor.StreetAddress = c.PostForm("StreetAddress")
+	doctor.StreetAddressAr = c.PostForm("StreetAddressAr")
+	doctor.StreetAddressFr = c.PostForm("StreetAddressFr")
 	doctor.CityName = c.PostForm("CityName")
+	doctor.CityNameAr = c.PostForm("CityNameAr")
+	doctor.CityNameFr = c.PostForm("CityNameFr")
 	doctor.StateName = c.PostForm("StateName")
+	doctor.StateNameAr = c.PostForm("StateNameAr")
+	doctor.StateNameFr = c.PostForm("StateNameFr")
 	doctor.ZipCode = c.PostForm("ZipCode")
 	doctor.CountryName = c.PostForm("CountryName")
+	doctor.CountryNameAr = c.PostForm("CountryNameAr")
+	doctor.CountryNameFr = c.PostForm("CountryNameFr")
 	doctor.Bio = c.PostForm("Bio")
-	doctor.Specialty = c.PostForm("Specialty")
+	doctor.BioAr = c.PostForm("BioAr")
+	doctor.BioFr = c.PostForm("BioFr")
+	doctor.SpecialtyCode = c.PostForm("SpecialtyCode")
+	if doctor.SpecialtyCode == "" {
+		doctor.SpecialtyCode = c.PostForm("Specialty")
+	}
+	doctor.Specialty = doctor.SpecialtyCode
 	doctor.Experience = c.PostForm("Experience")
 	doctor.Sex = c.PostForm("Sex")
+	doctor.ProfilePictureURL = fmt.Sprintf("images/profile_photos/%s.jpg", doctor.DoctorID)
 
 	if latitude := c.PostForm("Latitude"); latitude != "" {
 		if lat, err := strconv.ParseFloat(latitude, 64); err == nil {
@@ -344,7 +368,6 @@ func (h *AuthHandler) RegisterDoctor(c *gin.Context) {
 	file, handler, err := c.Request.FormFile("file")
 	if err == nil {
 		defer file.Close()
-		doctor.ProfilePictureURL = fmt.Sprintf("images/profile_photos/%s.jpg", doctor.DoctorID)
 		err = utils.UploadToS3(file, handler, doctor.ProfilePictureURL)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload profile photo"})
@@ -352,8 +375,8 @@ func (h *AuthHandler) RegisterDoctor(c *gin.Context) {
 		}
 	}
 
-	if doctor.Email == "" || doctor.Password == "" || doctor.FirstName == "" || doctor.LastName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email, password, first name, and last name are required"})
+	if doctor.Username == "" || doctor.Email == "" || doctor.Password == "" || doctor.FirstName == "" || doctor.LastName == "" || doctor.SpecialtyCode == "" || doctor.Experience == "" || doctor.ClinicPhoneNumber == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required"})
 		return
 	}
 
@@ -441,8 +464,10 @@ func (h *AuthHandler) LoginDoctor(c *gin.Context) {
 		"refreshToken":      refreshToken,
 		"userId":            doctor.DoctorID,
 		"firstName":         doctor.FirstName,
+		"firstNameAr":       doctor.FirstNameAr,
 		"email":             doctor.Email,
 		"lastName":          doctor.LastName,
+		"lastNameAr":        doctor.LastNameAr,
 		"profilePictureUrl": doctor.ProfilePictureURL,
 	})
 }
@@ -462,15 +487,26 @@ func (h *AuthHandler) RegisterPatient(c *gin.Context) {
 	patient.Email = c.PostForm("Email")
 	patient.PhoneNumber = c.PostForm("PhoneNumber")
 	patient.FirstName = c.PostForm("FirstName")
+	patient.FirstNameAr = c.PostForm("FirstNameAr")
 	patient.LastName = c.PostForm("LastName")
+	patient.LastNameAr = c.PostForm("LastNameAr")
 	patient.BirthDate = c.PostForm("BirthDate")
 	patient.StreetAddress = c.PostForm("StreetAddress")
+	patient.StreetAddressAr = c.PostForm("StreetAddressAr")
+	patient.StreetAddressFr = c.PostForm("StreetAddressFr")
 	patient.CityName = c.PostForm("CityName")
+	patient.CityNameAr = c.PostForm("CityNameAr")
+	patient.CityNameFr = c.PostForm("CityNameFr")
 	patient.StateName = c.PostForm("StateName")
+	patient.StateNameAr = c.PostForm("StateNameAr")
+	patient.StateNameFr = c.PostForm("StateNameFr")
 	patient.ZipCode = c.PostForm("ZipCode")
 	patient.CountryName = c.PostForm("CountryName")
+	patient.CountryNameAr = c.PostForm("CountryNameAr")
+	patient.CountryNameFr = c.PostForm("CountryNameFr")
 	patient.Sex = c.PostForm("Sex")
 	patient.Bio = c.PostForm("PatientBio")
+	patient.BioAr = c.PostForm("PatientBioAr")
 
 	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
@@ -522,11 +558,13 @@ func (h *AuthHandler) LoginPatient(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
+		log.Println("Invalid JSON format")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
 		return
 	}
 
 	if loginRequest.Email == "" || loginRequest.Password == "" {
+		log.Println("Email and password are required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
 		return
 	}
@@ -534,12 +572,14 @@ func (h *AuthHandler) LoginPatient(c *gin.Context) {
 	patient, accessToken, refreshToken, err := h.patientService.LoginPatient(loginRequest.Email, loginRequest.Password)
 	if err != nil {
 		if err.Error() == "account not verified" {
+			log.Println("Account not verified")
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"message": "Account Not Verified, Please check your email to verify your account.",
 			})
 			return
 		}
+		log.Println("Invalid email or password")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "Invalid email or password",
@@ -565,7 +605,9 @@ func (h *AuthHandler) LoginPatient(c *gin.Context) {
 		"refreshToken":      refreshToken,
 		"userId":            patient.PatientID.String(),
 		"firstName":         patient.FirstName,
+		"firstNameAr":       patient.FirstNameAr,
 		"lastName":          patient.LastName,
+		"lastNameAr":        patient.LastNameAr,
 		"profilePictureUrl": patient.ProfilePictureURL,
 	}
 
@@ -604,9 +646,17 @@ func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 		if req.FirstName == "" {
 			req.FirstName = c.PostForm("firstName")
 		}
+		req.FirstNameAr = c.PostForm("FirstNameAr")
+		if req.FirstNameAr == "" {
+			req.FirstNameAr = c.PostForm("firstNameAr")
+		}
 		req.LastName = c.PostForm("LastName")
 		if req.LastName == "" {
 			req.LastName = c.PostForm("lastName")
+		}
+		req.LastNameAr = c.PostForm("LastNameAr")
+		if req.LastNameAr == "" {
+			req.LastNameAr = c.PostForm("lastNameAr")
 		}
 		req.BirthDate = c.PostForm("BirthDate")
 		if req.BirthDate == "" {
@@ -616,13 +666,37 @@ func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 		if req.StreetAddress == "" {
 			req.StreetAddress = c.PostForm("streetAddress")
 		}
+		req.StreetAddressAr = c.PostForm("StreetAddressAr")
+		if req.StreetAddressAr == "" {
+			req.StreetAddressAr = c.PostForm("streetAddressAr")
+		}
+		req.StreetAddressFr = c.PostForm("StreetAddressFr")
+		if req.StreetAddressFr == "" {
+			req.StreetAddressFr = c.PostForm("streetAddressFr")
+		}
 		req.CityName = c.PostForm("CityName")
 		if req.CityName == "" {
 			req.CityName = c.PostForm("cityName")
 		}
+		req.CityNameAr = c.PostForm("CityNameAr")
+		if req.CityNameAr == "" {
+			req.CityNameAr = c.PostForm("cityNameAr")
+		}
+		req.CityNameFr = c.PostForm("CityNameFr")
+		if req.CityNameFr == "" {
+			req.CityNameFr = c.PostForm("cityNameFr")
+		}
 		req.StateName = c.PostForm("StateName")
 		if req.StateName == "" {
 			req.StateName = c.PostForm("stateName")
+		}
+		req.StateNameAr = c.PostForm("StateNameAr")
+		if req.StateNameAr == "" {
+			req.StateNameAr = c.PostForm("stateNameAr")
+		}
+		req.StateNameFr = c.PostForm("StateNameFr")
+		if req.StateNameFr == "" {
+			req.StateNameFr = c.PostForm("stateNameFr")
 		}
 		req.ZipCode = c.PostForm("ZipCode")
 		if req.ZipCode == "" {
@@ -632,6 +706,14 @@ func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 		if req.CountryName == "" {
 			req.CountryName = c.PostForm("countryName")
 		}
+		req.CountryNameAr = c.PostForm("CountryNameAr")
+		if req.CountryNameAr == "" {
+			req.CountryNameAr = c.PostForm("countryNameAr")
+		}
+		req.CountryNameFr = c.PostForm("CountryNameFr")
+		if req.CountryNameFr == "" {
+			req.CountryNameFr = c.PostForm("countryNameFr")
+		}
 		req.Sex = c.PostForm("Sex")
 		if req.Sex == "" {
 			req.Sex = c.PostForm("sex")
@@ -639,6 +721,10 @@ func (h *AuthHandler) RegisterReceptionist(c *gin.Context) {
 		req.Bio = c.PostForm("Bio")
 		if req.Bio == "" {
 			req.Bio = c.PostForm("bio")
+		}
+		req.BioAr = c.PostForm("BioAr")
+		if req.BioAr == "" {
+			req.BioAr = c.PostForm("bioAr")
 		}
 
 		experiencesRaw := c.PostForm("Experiences")

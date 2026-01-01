@@ -33,6 +33,13 @@ func NewReceptionistService(db *pgxpool.Pool, cfg *config.Config) *ReceptionistS
 }
 
 func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegisterRequest) (*models.Receptionist, error) {
+	nullIfEmpty := func(v string) interface{} {
+		if v == "" {
+			return nil
+		}
+		return v
+	}
+
 	var assignedDoctorID *uuid.UUID
 	if req.AssignedDoctorID != "" {
 		doctorID, err := uuid.Parse(req.AssignedDoctorID)
@@ -78,6 +85,19 @@ func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegist
 		birthDate = &parsedDate
 	}
 
+	location := fmt.Sprintf("%s, %s, %s, %s, %s",
+		req.StreetAddress, req.ZipCode, req.CityName, req.StateName, req.CountryName)
+	var locationAr interface{} = nil
+	if req.StreetAddressAr != "" || req.ZipCode != "" || req.CityNameAr != "" || req.StateNameAr != "" || req.CountryNameAr != "" {
+		locationAr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			req.StreetAddressAr, req.ZipCode, req.CityNameAr, req.StateNameAr, req.CountryNameAr)
+	}
+	var locationFr interface{} = nil
+	if req.StreetAddressFr != "" || req.ZipCode != "" || req.CityNameFr != "" || req.StateNameFr != "" || req.CountryNameFr != "" {
+		locationFr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			req.StreetAddressFr, req.ZipCode, req.CityNameFr, req.StateNameFr, req.CountryNameFr)
+	}
+
 	tx, err := s.db.Begin(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("database transaction error: %v", err)
@@ -92,14 +112,64 @@ func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegist
 	}
 
 	query := `INSERT INTO receptionists 
-		(receptionist_id, username, first_name, last_name, sex, hashed_password, salt, email, phone_number, street_address, city_name, state_name, zip_code, country_name, birth_date, bio, profile_photo_url, assigned_doctor_id, is_active, email_verified, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`
+		(receptionist_id, username,
+			first_name, first_name_ar,
+			last_name, last_name_ar,
+			sex,
+			hashed_password, salt,
+			email, phone_number,
+			street_address, street_address_ar, street_address_fr,
+			city_name, city_name_ar, city_name_fr,
+			state_name, state_name_ar, state_name_fr,
+			zip_code,
+			country_name, country_name_ar, country_name_fr,
+			location, location_ar, location_fr,
+			birth_date,
+			bio, bio_ar,
+			profile_photo_url,
+			assigned_doctor_id,
+			is_active, email_verified,
+			created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)`
 
 	_, err = tx.Exec(context.Background(), query,
-		receptionistID, req.Username, req.FirstName, req.LastName, req.Sex, hashedPassword, salt,
-		req.Email, req.PhoneNumber, req.StreetAddress, req.CityName, req.StateName,
-		req.ZipCode, req.CountryName, birthDate, req.Bio, req.ProfilePictureURL, assignedDoctorID,
-		true, false, time.Now(), time.Now())
+		receptionistID,
+		req.Username,
+		req.FirstName,
+		nullIfEmpty(req.FirstNameAr),
+		req.LastName,
+		nullIfEmpty(req.LastNameAr),
+		req.Sex,
+		hashedPassword,
+		salt,
+		req.Email,
+		req.PhoneNumber,
+		nullIfEmpty(req.StreetAddress),
+		nullIfEmpty(req.StreetAddressAr),
+		nullIfEmpty(req.StreetAddressFr),
+		req.CityName,
+		nullIfEmpty(req.CityNameAr),
+		nullIfEmpty(req.CityNameFr),
+		req.StateName,
+		nullIfEmpty(req.StateNameAr),
+		nullIfEmpty(req.StateNameFr),
+		nullIfEmpty(req.ZipCode),
+		req.CountryName,
+		nullIfEmpty(req.CountryNameAr),
+		nullIfEmpty(req.CountryNameFr),
+		location,
+		locationAr,
+		locationFr,
+		birthDate,
+		nullIfEmpty(req.Bio),
+		nullIfEmpty(req.BioAr),
+		nullIfEmpty(req.ProfilePictureURL),
+		assignedDoctorID,
+		true,
+		false,
+		time.Now(),
+		time.Now(),
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating receptionist account: %v", err)
@@ -156,7 +226,9 @@ func (s *ReceptionistService) RegisterReceptionist(req models.ReceptionistRegist
 		ReceptionistID:    receptionistID,
 		Username:          req.Username,
 		FirstName:         req.FirstName,
+		FirstNameAr:       req.FirstNameAr,
 		LastName:          req.LastName,
+		LastNameAr:        req.LastNameAr,
 		Email:             req.Email,
 		ProfilePictureURL: req.ProfilePictureURL,
 		AssignedDoctorID:  assignedDoctorID,
@@ -233,23 +305,58 @@ func (s *ReceptionistService) GetReceptionistProfile(receptionistID string) (*mo
 	}
 
 	var receptionist models.Receptionist
-	var streetAddress sql.NullString
-	var zipCode sql.NullString
-	var bio sql.NullString
 	var profilePhotoURL sql.NullString
-	query := `SELECT receptionist_id, username, first_name, last_name, sex, email, phone_number,
-		street_address, city_name, state_name, zip_code, country_name, birth_date, bio,
+	query := `SELECT receptionist_id, username,
+		first_name, COALESCE(first_name_ar, ''),
+		last_name, COALESCE(last_name_ar, ''),
+		sex, email, phone_number,
+		COALESCE(street_address, ''), COALESCE(street_address_ar, ''), COALESCE(street_address_fr, ''),
+		city_name, COALESCE(city_name_ar, ''), COALESCE(city_name_fr, ''),
+		COALESCE(state_name, ''), COALESCE(state_name_ar, ''), COALESCE(state_name_fr, ''),
+		COALESCE(zip_code, ''),
+		country_name, COALESCE(country_name_ar, ''), COALESCE(country_name_fr, ''),
+		COALESCE(location, ''), COALESCE(location_ar, ''), COALESCE(location_fr, ''),
+		birth_date,
+		COALESCE(bio, ''), COALESCE(bio_ar, ''),
 		profile_photo_url, assigned_doctor_id, is_active, email_verified, created_at, updated_at
 		FROM receptionists WHERE receptionist_id = $1`
 
 	err = s.db.QueryRow(context.Background(), query, id).Scan(
-		&receptionist.ReceptionistID, &receptionist.Username, &receptionist.FirstName,
-		&receptionist.LastName, &receptionist.Sex, &receptionist.Email,
-		&receptionist.PhoneNumber, &streetAddress, &receptionist.CityName, &receptionist.StateName,
-		&zipCode, &receptionist.CountryName, &receptionist.BirthDate,
-		&bio, &profilePhotoURL, &receptionist.AssignedDoctorID,
-		&receptionist.IsActive, &receptionist.EmailVerified, &receptionist.CreatedAt,
-		&receptionist.UpdatedAt)
+		&receptionist.ReceptionistID,
+		&receptionist.Username,
+		&receptionist.FirstName,
+		&receptionist.FirstNameAr,
+		&receptionist.LastName,
+		&receptionist.LastNameAr,
+		&receptionist.Sex,
+		&receptionist.Email,
+		&receptionist.PhoneNumber,
+		&receptionist.StreetAddress,
+		&receptionist.StreetAddressAr,
+		&receptionist.StreetAddressFr,
+		&receptionist.CityName,
+		&receptionist.CityNameAr,
+		&receptionist.CityNameFr,
+		&receptionist.StateName,
+		&receptionist.StateNameAr,
+		&receptionist.StateNameFr,
+		&receptionist.ZipCode,
+		&receptionist.CountryName,
+		&receptionist.CountryNameAr,
+		&receptionist.CountryNameFr,
+		&receptionist.Location,
+		&receptionist.LocationAr,
+		&receptionist.LocationFr,
+		&receptionist.BirthDate,
+		&receptionist.Bio,
+		&receptionist.BioAr,
+		&profilePhotoURL,
+		&receptionist.AssignedDoctorID,
+		&receptionist.IsActive,
+		&receptionist.EmailVerified,
+		&receptionist.CreatedAt,
+		&receptionist.UpdatedAt,
+	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("receptionist not found")
@@ -257,15 +364,6 @@ func (s *ReceptionistService) GetReceptionistProfile(receptionistID string) (*mo
 		return nil, fmt.Errorf("database error: %v", err)
 	}
 
-	if streetAddress.Valid {
-		receptionist.StreetAddress = streetAddress.String
-	}
-	if zipCode.Valid {
-		receptionist.ZipCode = zipCode.String
-	}
-	if bio.Valid {
-		receptionist.Bio = bio.String
-	}
 	if profilePhotoURL.Valid {
 		receptionist.ProfilePictureURL = profilePhotoURL.String
 		presignedURL, presignErr := utils.GeneratePresignedObjectURL(receptionist.ProfilePictureURL)
@@ -309,7 +407,7 @@ func (s *ReceptionistService) GetReceptionistAssignmentStatus(receptionistID str
 			r.assigned_doctor_id,
 			d.first_name,
 			d.last_name,
-			d.specialty,
+			d.specialty_code,
 			d.profile_photo_url,
 			d.city_name,
 			d.state_name,
@@ -343,6 +441,7 @@ func (s *ReceptionistService) GetReceptionistAssignmentStatus(receptionistID str
 			doc.LastName = dLast.String
 		}
 		if dSpecialty.Valid {
+			doc.SpecialtyCode = dSpecialty.String
 			doc.Specialty = dSpecialty.String
 		}
 		if dPhoto.Valid {
@@ -374,7 +473,7 @@ func (s *ReceptionistService) GetReceptionistAssignmentStatus(receptionistID str
 			e.dismissed_by,
 			d.first_name,
 			d.last_name,
-			d.specialty,
+			d.specialty_code,
 			d.profile_photo_url,
 			d.city_name,
 			d.state_name,
@@ -413,6 +512,7 @@ func (s *ReceptionistService) GetReceptionistAssignmentStatus(receptionistID str
 		lastDoc.LastName = ldLast.String
 	}
 	if ldSpecialty.Valid {
+		lastDoc.SpecialtyCode = ldSpecialty.String
 		lastDoc.Specialty = ldSpecialty.String
 	}
 	if ldPhoto.Valid {
@@ -624,7 +724,7 @@ func (s *ReceptionistService) ListHiringProposals(receptionistID string) ([]mode
 			p.updated_at,
 			d.first_name,
 			d.last_name,
-			d.specialty,
+			d.specialty_code,
 			d.profile_photo_url,
 			d.city_name,
 			d.state_name,
@@ -673,13 +773,14 @@ func (s *ReceptionistService) ListHiringProposals(receptionistID string) ([]mode
 		}
 
 		doc := &models.HiringDoctorInfo{
-			DoctorID:    p.DoctorID,
-			FirstName:   dFirst,
-			LastName:    dLast,
-			Specialty:   dSpecialty,
-			CityName:    dCity,
-			StateName:   dState,
-			CountryName: dCountry,
+			DoctorID:      p.DoctorID,
+			FirstName:     dFirst,
+			LastName:      dLast,
+			SpecialtyCode: dSpecialty,
+			Specialty:     dSpecialty,
+			CityName:      dCity,
+			StateName:     dState,
+			CountryName:   dCountry,
 		}
 		if profilePhotoURL.Valid {
 			doc.ProfilePhotoURL = profilePhotoURL.String
@@ -931,7 +1032,7 @@ func (s *ReceptionistService) getHiringProposalByID(proposalID uuid.UUID) (*mode
 			p.updated_at,
 			d.first_name,
 			d.last_name,
-			d.specialty,
+			d.specialty_code,
 			d.profile_photo_url,
 			d.city_name,
 			d.state_name,
@@ -972,13 +1073,14 @@ func (s *ReceptionistService) getHiringProposalByID(proposalID uuid.UUID) (*mode
 	}
 
 	doc := &models.HiringDoctorInfo{
-		DoctorID:    p.DoctorID,
-		FirstName:   dFirst,
-		LastName:    dLast,
-		Specialty:   dSpecialty,
-		CityName:    dCity,
-		StateName:   dState,
-		CountryName: dCountry,
+		DoctorID:      p.DoctorID,
+		FirstName:     dFirst,
+		LastName:      dLast,
+		SpecialtyCode: dSpecialty,
+		Specialty:     dSpecialty,
+		CityName:      dCity,
+		StateName:     dState,
+		CountryName:   dCountry,
 	}
 	if profilePhotoURL.Valid {
 		doc.ProfilePhotoURL = profilePhotoURL.String
@@ -1009,15 +1111,66 @@ func (s *ReceptionistService) UpdateReceptionistProfile(receptionistID string, r
 		return fmt.Errorf("invalid receptionist ID")
 	}
 
+	nullIfEmpty := func(v string) interface{} {
+		if v == "" {
+			return nil
+		}
+		return v
+	}
+
+	location := fmt.Sprintf("%s, %s, %s, %s, %s",
+		req.StreetAddress, req.ZipCode, req.CityName, req.StateName, req.CountryName)
+	var locationAr interface{} = nil
+	if req.StreetAddressAr != "" || req.ZipCode != "" || req.CityNameAr != "" || req.StateNameAr != "" || req.CountryNameAr != "" {
+		locationAr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			req.StreetAddressAr, req.ZipCode, req.CityNameAr, req.StateNameAr, req.CountryNameAr)
+	}
+	var locationFr interface{} = nil
+	if req.StreetAddressFr != "" || req.ZipCode != "" || req.CityNameFr != "" || req.StateNameFr != "" || req.CountryNameFr != "" {
+		locationFr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			req.StreetAddressFr, req.ZipCode, req.CityNameFr, req.StateNameFr, req.CountryNameFr)
+	}
+
 	query := `UPDATE receptionists SET 
-		first_name = $1, last_name = $2, phone_number = $3, street_address = $4,
-		city_name = $5, state_name = $6, zip_code = $7, country_name = $8, bio = $9, updated_at = $10
-		WHERE receptionist_id = $11`
+		first_name = $1, first_name_ar = $2,
+		last_name = $3, last_name_ar = $4,
+		phone_number = $5,
+		street_address = $6, street_address_ar = $7, street_address_fr = $8,
+		city_name = $9, city_name_ar = $10, city_name_fr = $11,
+		state_name = $12, state_name_ar = $13, state_name_fr = $14,
+		zip_code = $15,
+		country_name = $16, country_name_ar = $17, country_name_fr = $18,
+		location = $19, location_ar = $20, location_fr = $21,
+		bio = $22, bio_ar = $23,
+		updated_at = NOW()
+		WHERE receptionist_id = $24`
 
 	_, err = s.db.Exec(context.Background(), query,
-		req.FirstName, req.LastName, req.PhoneNumber, req.StreetAddress,
-		req.CityName, req.StateName, req.ZipCode, req.CountryName,
-		req.Bio, time.Now(), id)
+		req.FirstName,
+		nullIfEmpty(req.FirstNameAr),
+		req.LastName,
+		nullIfEmpty(req.LastNameAr),
+		req.PhoneNumber,
+		nullIfEmpty(req.StreetAddress),
+		nullIfEmpty(req.StreetAddressAr),
+		nullIfEmpty(req.StreetAddressFr),
+		req.CityName,
+		nullIfEmpty(req.CityNameAr),
+		nullIfEmpty(req.CityNameFr),
+		req.StateName,
+		nullIfEmpty(req.StateNameAr),
+		nullIfEmpty(req.StateNameFr),
+		nullIfEmpty(req.ZipCode),
+		req.CountryName,
+		nullIfEmpty(req.CountryNameAr),
+		nullIfEmpty(req.CountryNameFr),
+		location,
+		locationAr,
+		locationFr,
+		nullIfEmpty(req.Bio),
+		nullIfEmpty(req.BioAr),
+		id,
+	)
 
 	if err != nil {
 		return fmt.Errorf("error updating profile: %v", err)

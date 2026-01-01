@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import UserAvatar from './shared/UserAvatar';
 import { useUserManagement } from '../hooks/useUserManagement';
+import { getLocalizedSpecialty } from '../../search/utils/translationMaps';
 
 const ProfileContainer = styled.div`
   background: white;
@@ -238,7 +239,7 @@ const UserProfile = ({
   className,
   headerActions = []
 }) => {
-  const { t } = useTranslation('userManagement');
+  const { t, i18n } = useTranslation('userManagement');
   const { 
     user: hookUser, 
     loading, 
@@ -248,9 +249,80 @@ const UserProfile = ({
   } = useUserManagement(propUser ? null : userId, propUser ? null : userType);
   
   const user = propUser || hookUser;
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+  const languageCode = isArabic ? 'ar' : (isFrench ? 'fr' : 'en');
+
+  const getLocalizedUserValue = (u, key) => {
+    if (!u) return '';
+    if (languageCode === 'en') return u[key];
+
+    if (key === 'specialty') {
+      return getLocalizedSpecialty(u[key], languageCode) || u[key];
+    }
+
+    if (key === 'sex') {
+      const v = (u[key] || '').toLowerCase();
+      if (isArabic) {
+        if (v === 'male') return 'ذكر';
+        if (v === 'female') return 'أنثى';
+        return u[key];
+      }
+
+      if (isFrench) {
+        if (v === 'male') return 'Homme';
+        if (v === 'female') return 'Femme';
+        return u[key];
+      }
+
+      return u[key];
+    }
+
+    if (key === 'experience') {
+      const raw = u[key];
+      if (isArabic) {
+        if (typeof raw === 'number') return `${raw} سنة`;
+        if (typeof raw === 'string') {
+          const m = raw.match(/(\d+)/);
+          if (m) return `${m[1]} سنة`;
+        }
+        return raw;
+      }
+
+      if (isFrench) {
+        if (typeof raw === 'number') return `${raw} ans`;
+        if (typeof raw === 'string') {
+          const m = raw.match(/(\d+)/);
+          if (m) return `${m[1]} ans`;
+        }
+        return raw;
+      }
+
+      return raw;
+    }
+
+    if (!isArabic) return u[key];
+
+    const map = {
+      firstName: 'firstNameAr',
+      lastName: 'lastNameAr',
+      bio: 'bioAr',
+      location: 'locationAr',
+      address: 'streetAddressAr',
+      streetAddress: 'streetAddressAr',
+      cityName: 'cityNameAr',
+      stateName: 'stateNameAr',
+      zipCode: 'zipCodeAr',
+      countryName: 'countryNameAr',
+    };
+
+    const altKey = map[key];
+    return (altKey && u[altKey]) ? u[altKey] : u[key];
+  };
 
   useEffect(() => {
     if (user) {
@@ -295,7 +367,9 @@ const UserProfile = ({
   };
 
   const getFullName = (user) => {
-    return `${user?.firstName} ${user?.lastName}`.trim() || t('userProfile.messages.unknownUser');
+    const first = getLocalizedUserValue(user, 'firstName') || '';
+    const last = getLocalizedUserValue(user, 'lastName') || '';
+    return `${first} ${last}`.trim() || t('userProfile.messages.unknownUser');
   };
 
   const getUserRole = (user) => {
@@ -359,7 +433,7 @@ const UserProfile = ({
           <HeaderText>
             <UserName>{getFullName(user)}</UserName>
             <UserRole>{getUserRole(user)}</UserRole>
-            <UserEmail>{getUserEmail(user)}</UserEmail>
+            {getUserEmail(user) ? <UserEmail>{getUserEmail(user)}</UserEmail> : null}
           </HeaderText>
         </HeaderLeft>
         {headerActions.length > 0 && (
@@ -404,7 +478,7 @@ const UserProfile = ({
                   )
                 ) : (
                   <FieldValue>
-                    {user[field.key] || t('common.notAvailable')}
+                    {getLocalizedUserValue(user, field.key) || t('common.notAvailable')}
                   </FieldValue>
                 )}
               </Field>

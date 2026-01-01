@@ -65,15 +65,30 @@ class ReceptionistPatientService {
 
   async createReservation(appointmentData) {
     const assignedDoctorId = localStorage.getItem('assignedDoctorId');
+
+	const startTime = appointmentData.appointmentStart instanceof Date
+		? appointmentData.appointmentStart
+		: new Date(appointmentData.appointmentStart);
+	const endTime = appointmentData.appointmentEnd instanceof Date
+		? appointmentData.appointmentEnd
+		: new Date(appointmentData.appointmentEnd);
+
+	if (!startTime || isNaN(startTime.getTime()) || !endTime || isNaN(endTime.getTime())) {
+		throw new Error('Invalid appointment time');
+	}
+
+	if (!(endTime > startTime)) {
+		throw new Error('Appointment end time must be after start time');
+	}
     
     const reservationData = {
-      AppointmentStart: appointmentData.appointmentStart,
-      AppointmentEnd: appointmentData.appointmentEnd,
-      AppointmentTitle: appointmentData.title || `Appointment with Patient`,
-      DoctorID: assignedDoctorId,
-      PatientID: appointmentData.patientId || appointmentData.patient_id,
-      AvailabilityID: appointmentData.availabilityId,
-      Notes: appointmentData.notes
+		appointmentStart: startTime.toISOString(),
+		appointmentEnd: endTime.toISOString(),
+		title: appointmentData.title || appointmentData.appointmentType || 'Consultation',
+		doctorId: assignedDoctorId,
+		patientId: appointmentData.patientId || appointmentData.patient_id,
+		notes: appointmentData.notes || '',
+		isDoctorPatient: appointmentData.isDoctorPatient || false
     };
 
     const response = await axios.post('/api/v1/reservations', reservationData);

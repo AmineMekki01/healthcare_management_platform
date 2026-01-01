@@ -112,6 +112,7 @@ const LoginForm = () => {
     setUserType,
     setUserId,
     setUserFullName,
+    setUserFullNameAr,
     setUserProfilePhotoUrl,
     setDoctorId,
     setPatientId,
@@ -147,6 +148,7 @@ const LoginForm = () => {
         localStorage.setItem('userType', localUserType);
         localStorage.setItem('userProfilePictureUrl', result.profilePictureUrl || '');
         localStorage.setItem('userFullName', `${result.firstName} ${result.lastName}`);
+        localStorage.setItem('userFullNameAr', `${result.firstNameAr} ${result.lastNameAr}`);
         
         if (localUserType === 'doctor') {
           localStorage.setItem('doctorId', result.userId);
@@ -163,6 +165,7 @@ const LoginForm = () => {
         setIsLoggedIn(true);
         setUserType(localUserType);
         setUserFullName(`${result.firstName} ${result.lastName}`);
+        setUserFullNameAr(`${result.firstNameAr} ${result.lastNameAr}`)
         setUserProfilePhotoUrl(result.profilePictureUrl || '');
         setUserId(result.userId);
         

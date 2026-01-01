@@ -110,6 +110,7 @@
     "viewProfile": "View Profile",
     "cancel": "Cancel",
     "createReport": "Create Report",
+    "reportCreated": "Report Created",
     "status": {
       "canceled": "Canceled",
       "completed": "Completed",

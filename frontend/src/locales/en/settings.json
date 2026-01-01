@@ -34,6 +34,13 @@
         "label": "Phone Number",
         "placeholder": "Enter your phone number"
       },
+      "clinicPhoneNumber": {
+        "label": "Clinic Phone Number",
+        "placeholder": "Enter your clinic phone number"
+      },
+      "showClinicPhone": {
+        "label": "Show clinic phone on public profile"
+      },
       "birthDate": {
         "label": "Date of Birth"
       },

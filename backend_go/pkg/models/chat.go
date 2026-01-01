@@ -42,8 +42,10 @@ type Message struct {
 }
 
 type CombinedUser struct {
-	UserID    string `json:"userId"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	UserType  string `json:"userType"`
+	UserID      string `json:"userId"`
+	FirstName   string `json:"firstName"`
+	FirstNameAr string `json:"firstNameAr"`
+	LastName    string `json:"lastName"`
+	LastNameAr  string `json:"lastNameAr"`
+	UserType    string `json:"userType"`
 }

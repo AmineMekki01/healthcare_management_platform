@@ -941,7 +941,7 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			password:      "Password123!",
 			firstName:     "John",
 			lastName:      "Doe",
-			expectedError: "Email, password, first name, and last name are required",
+			expectedError: "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required",
 		},
 		{
 			name:          "Missing password",
@@ -949,7 +949,7 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			password:      "",
 			firstName:     "John",
 			lastName:      "Doe",
-			expectedError: "Email, password, first name, and last name are required",
+			expectedError: "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required",
 		},
 		{
 			name:          "Missing firstName",
@@ -957,7 +957,7 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			password:      "Password123!",
 			firstName:     "",
 			lastName:      "Doe",
-			expectedError: "Email, password, first name, and last name are required",
+			expectedError: "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required",
 		},
 		{
 			name:          "Missing lastName",
@@ -965,7 +965,7 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			password:      "Password123!",
 			firstName:     "John",
 			lastName:      "",
-			expectedError: "Email, password, first name, and last name are required",
+			expectedError: "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required",
 		},
 		{
 			name:          "All fields empty",
@@ -973,7 +973,7 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			password:      "",
 			firstName:     "",
 			lastName:      "",
-			expectedError: "Email, password, first name, and last name are required",
+			expectedError: "Username, email, password, first name, last name, specialtyCode, experience, and clinic phone number are required",
 		},
 	}
 
@@ -988,7 +988,9 @@ func TestRegisterDoctor_Integration_MissingRequiredFields(t *testing.T) {
 			writer.WriteField("LastName", tc.lastName)
 			writer.WriteField("Username", "testuser")
 			writer.WriteField("PhoneNumber", "+1234567890")
-			writer.WriteField("Specialty", "Cardiology")
+			writer.WriteField("ClinicPhoneNumber", "+1234567891")
+			writer.WriteField("SpecialtyCode", "Cardiology")
+			writer.WriteField("Experience", "5 years")
 			writer.WriteField("MedicalLicense", "MD12345")
 			writer.Close()
 
@@ -1045,7 +1047,9 @@ func TestRegisterDoctor_Integration_DuplicateEmail(t *testing.T) {
 	writer.WriteField("LastName", "Doctor")
 	writer.WriteField("Username", "newdoctor")
 	writer.WriteField("PhoneNumber", "+1234567890")
-	writer.WriteField("Specialty", "Cardiology")
+	writer.WriteField("ClinicPhoneNumber", "+1234567891")
+	writer.WriteField("SpecialtyCode", "Cardiology")
+	writer.WriteField("Experience", "5 years")
 	writer.WriteField("MedicalLicense", "MD67890")
 	writer.Close()
 

@@ -7,6 +7,7 @@ import { useUserManagement } from '../hooks/useUserManagement';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useFollow } from '../hooks/useFollow';
 import AppointmentBooking from '../components/AppointmentBooking';
+import { getLocalizedSpecialty } from '../../search/utils/translationMaps';
 
 const DoctorProfileContainer = styled.div`
   max-width: 1200px;
@@ -133,10 +134,57 @@ const ErrorMessage = styled.div`
 `;
 
 const DoctorProfilePage = () => {
-  const { t } = useTranslation('userManagement');
+  const { t, i18n } = useTranslation('userManagement');
   const navigate = useNavigate();
   const { doctorId } = useParams();
   const { user: doctor, loading, error, fetchUser } = useUserManagement();
+
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+  const languageCode = isArabic ? 'ar' : (isFrench ? 'fr' : 'en');
+
+  const getExperienceNumber = (value) => {
+    if (value == null) return null;
+    if (typeof value === 'number') return value;
+    const m = String(value).match(/(\d+)/);
+    return m ? Number(m[1]) : null;
+  };
+
+  const getArabicLanguageName = (value) => {
+    const v = (value || '').toLowerCase();
+    if (v === 'arabic') return 'العربية';
+    if (v === 'french') return 'الفرنسية';
+    if (v === 'english') return 'الإنجليزية';
+    if (v === 'tamazight') return 'الأمازيغية';
+    return value;
+  };
+
+  const getFrenchLanguageName = (value) => {
+    const v = (value || '').toLowerCase();
+    if (v === 'arabic') return 'Arabe';
+    if (v === 'french') return 'Français';
+    if (v === 'english') return 'Anglais';
+    if (v === 'tamazight') return 'Amazigh';
+    return value;
+  };
+
+  const getArabicProficiency = (value) => {
+    const v = (value || '').toLowerCase();
+    if (v === 'basic') return 'مبتدئ';
+    if (v === 'intermediate') return 'متوسط';
+    if (v === 'fluent') return 'طليق';
+    if (v === 'native') return 'اللغة الأم';
+    return value;
+  };
+
+  const getFrenchProficiency = (value) => {
+    const v = (value || '').toLowerCase();
+    if (v === 'basic') return 'Débutant';
+    if (v === 'intermediate') return 'Intermédiaire';
+    if (v === 'fluent') return 'Courant';
+    if (v === 'native') return 'Langue maternelle';
+    return value;
+  };
 
   const { currentUser } = useAuth();
   const {
@@ -147,11 +195,14 @@ const DoctorProfilePage = () => {
     followerCount
   } = useFollow(doctorId, currentUser); 
 
+  const notAvailableText = t('common.notAvailable', { defaultValue: 'N/A' });
   const doctorStats = {
-    patients: doctor?.patients || 'N/A',
-    experience: doctor?.experience || 'N/A',
-    rating: doctor?.ratingScore || 'N/A',
-    followersCount: followerCount || 'N/A'
+    patients: doctor?.patients || notAvailableText,
+    experience: (isArabic || isFrench)
+      ? (getExperienceNumber(doctor?.experience) ?? notAvailableText)
+      : (doctor?.experience || notAvailableText),
+    rating: doctor?.ratingScore || notAvailableText,
+    followersCount: followerCount || notAvailableText
   };
   const [showBooking, setShowBooking] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -163,17 +214,12 @@ const DoctorProfilePage = () => {
   const doctorFields = [
     { key: 'firstName', label: t('doctorProfile.fields.firstName'), type: 'text' },
     { key: 'lastName', label: t('doctorProfile.fields.lastName'), type: 'text' },
-    { key: 'email', label: t('doctorProfile.fields.email'), type: 'email' },
-    { key: 'phoneNumber', label: t('doctorProfile.fields.phoneNumber'), type: 'tel' },
-    { key: 'username', label: t('doctorProfile.fields.username'), type: 'text' },
+    { key: 'clinicPhoneNumber', label: t('doctorProfile.fields.clinicPhoneNumber'), type: 'tel' },
     { key: 'specialty', label: t('doctorProfile.fields.specialty'), type: 'text' },
     { key: 'experience', label: t('doctorProfile.fields.experience'), type: 'text' },
-    { key: 'qualification', label: t('doctorProfile.fields.qualification'), type: 'text' },
     { key: 'consultationFee', label: t('doctorProfile.fields.consultationFee'), type: 'number' },
     { key: 'bio', label: t('doctorProfile.fields.bio'), type: 'textarea' },
-    { key: 'birthDate', label: t('doctorProfile.fields.birthDate'), type: 'date' },
-    { key: 'sex', label: t('doctorProfile.fields.gender'), type: 'text' },
-    { key: 'address', label: t('doctorProfile.fields.address'), type: 'text' },
+    { key: 'streetAddress', label: t('doctorProfile.fields.address'), type: 'text' },
     { key: 'cityName', label: t('doctorProfile.fields.city'), type: 'text' },
     { key: 'stateName', label: t('doctorProfile.fields.state'), type: 'text' },
     { key: 'zipCode', label: t('doctorProfile.fields.zipCode'), type: 'text' },
@@ -304,7 +350,11 @@ const DoctorProfilePage = () => {
             <SpecialtiesCard>
               <SectionTitle>{t('doctorProfile.sections.specialties')}</SectionTitle>
               <SpecialtiesList>
-                <SpecialtyTag>{doctor.specialty}</SpecialtyTag>
+                <SpecialtyTag>
+                  {languageCode === 'en'
+                    ? doctor.specialty
+                    : (getLocalizedSpecialty(doctor.specialty, languageCode) || doctor.specialty)}
+                </SpecialtyTag>
               </SpecialtiesList>
             </SpecialtiesCard>
           )}
@@ -317,14 +367,20 @@ const DoctorProfilePage = () => {
                 {doctor.hospitals.map((hospital, index) => (
                   <SpecialtyTag key={index}>
                     <p>
-                      {hospital.hospitalName}
+                      {isArabic ? (hospital.hospitalNameAr || hospital.hospitalName) : hospital.hospitalName}
                     </p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
-                      {hospital.position}
+                      {isArabic ? (hospital.positionAr || hospital.position) : hospital.position}
                     </p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
                       {hospital.startDate} - {hospital.endDate}
                     </p>
+
+                    {(isArabic ? hospital.descriptionAr : hospital.description) && (
+                      <p style={{ fontSize: '12px', color: '#64748b' }}>
+                        {isArabic ? (hospital.descriptionAr || hospital.description) : hospital.description}
+                      </p>
+                    )}
 
                   </SpecialtyTag>
                 ))}
@@ -339,13 +395,19 @@ const DoctorProfilePage = () => {
               <SpecialtiesList>
                 {doctor.certifications.map((cert, index) => (
                   <SpecialtyTag key={index}>
-                    {cert.certificationName}
+                    {isArabic ? (cert.certificationNameAr || cert.certificationName) : cert.certificationName}
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
-                    Issued by :  {cert.issuedBy}
+                      {t('doctorProfile.fields.issuedBy', { defaultValue: 'Issued by' })}: {isArabic ? (cert.issuedByAr || cert.issuedBy) : cert.issuedBy}
                     </p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
                       {cert.issueDate} - {cert.expirationDate}
                     </p>
+
+                    {(isArabic ? cert.descriptionAr : cert.description) && (
+                      <p style={{ fontSize: '12px', color: '#64748b' }}>
+                        {isArabic ? (cert.descriptionAr || cert.description) : cert.description}
+                      </p>
+                    )}
                   </SpecialtyTag>
                 ))}
               </SpecialtiesList>
@@ -359,9 +421,19 @@ const DoctorProfilePage = () => {
               <SpecialtiesList>
                 {doctor.languages.map((lang, index) => (
                   <SpecialtyTag key={index}>
-                    <p>{lang.languageName}</p>
+                    <p>
+                      {isArabic
+                        ? (lang.languageNameAr || getArabicLanguageName(lang.languageName) || lang.languageName)
+                        : isFrench
+                          ? (getFrenchLanguageName(lang.languageName) || lang.languageName)
+                        : lang.languageName}
+                    </p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
-                      {lang.proficiencyLevel}
+                      {isArabic
+                        ? (lang.proficiencyLevelAr || getArabicProficiency(lang.proficiencyLevel) || lang.proficiencyLevel)
+                        : isFrench
+                          ? (getFrenchProficiency(lang.proficiencyLevel) || lang.proficiencyLevel)
+                        : lang.proficiencyLevel}
                     </p>
                   </SpecialtyTag>
                 ))}
@@ -376,13 +448,18 @@ const DoctorProfilePage = () => {
               <SpecialtiesList>
                 {doctor.awards.map((award, index) => (
                   <SpecialtyTag key={index}>
-                    <p>{award.awardName}</p>
+                    <p>{isArabic ? (award.awardNameAr || award.awardName) : award.awardName}</p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
                       {award.dateAwarded}
                     </p>
                     <p style={{ fontSize: '12px', color: '#64748b' }}>
-                      Awarded by: {award.issuingOrganization}
+                      {t('doctorProfile.fields.awardedBy', { defaultValue: 'Awarded by' })}: {isArabic ? (award.issuingOrganizationAr || award.issuingOrganization) : award.issuingOrganization}
                     </p>
+                    {(isArabic ? award.descriptionAr : award.description) && (
+                      <p style={{ fontSize: '12px', color: '#64748b' }}>
+                        {isArabic ? (award.descriptionAr || award.description) : award.description}
+                      </p>
+                    )}
                   </SpecialtyTag>
                 ))}
               </SpecialtiesList>

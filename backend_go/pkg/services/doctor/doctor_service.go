@@ -3,7 +3,9 @@ package doctor
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -15,6 +17,7 @@ import (
 	"healthcare_backend/pkg/utils"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -101,25 +104,90 @@ func (s *DoctorService) RegisterDoctor(doctor models.Doctor) (*models.Doctor, er
 	doctor.Location = fmt.Sprintf("%s, %s, %s, %s, %s",
 		doctor.StreetAddress, doctor.ZipCode, doctor.CityName, doctor.StateName, doctor.CountryName)
 
+	if doctor.StreetAddressAr != "" || doctor.ZipCode != "" || doctor.CityNameAr != "" || doctor.StateNameAr != "" || doctor.CountryNameAr != "" {
+		doctor.LocationAr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			doctor.StreetAddressAr, doctor.ZipCode, doctor.CityNameAr, doctor.StateNameAr, doctor.CountryNameAr)
+	}
+
+	if doctor.StreetAddressFr != "" || doctor.ZipCode != "" || doctor.CityNameFr != "" || doctor.StateNameFr != "" || doctor.CountryNameFr != "" {
+		doctor.LocationFr = fmt.Sprintf("%s, %s, %s, %s, %s",
+			doctor.StreetAddressFr, doctor.ZipCode, doctor.CityNameFr, doctor.StateNameFr, doctor.CountryNameFr)
+	}
+
+	if doctor.SpecialtyCode == "" {
+		doctor.SpecialtyCode = doctor.Specialty
+	}
+	if doctor.Specialty == "" {
+		doctor.Specialty = doctor.SpecialtyCode
+	}
+	if doctor.SpecialtyCode == "" {
+		return nil, fmt.Errorf("specialty code is required")
+	}
+	if doctor.ClinicPhoneNumber == "" {
+		return nil, fmt.Errorf("clinic phone number is required")
+	}
+
 	query := `
 		INSERT INTO doctor_info (
-			doctor_id, username, first_name, last_name, age, sex, hashed_password, salt,
-			specialty, experience, rating_score, rating_count, created_at, updated_at,
-			medical_license, bio, email, phone_number, street_address, city_name,
-			state_name, zip_code, country_name, birth_date, location, profile_photo_url,
-			latitude, longitude
+			doctor_id, username, first_name, first_name_ar, last_name, last_name_ar, age, sex,
+			hashed_password, salt, specialty_code, experience, rating_score, rating_count, created_at,
+			updated_at, medical_license, bio, bio_ar, bio_fr, email, phone_number,
+			clinic_phone_number, show_clinic_phone,
+			street_address, street_address_ar, street_address_fr, city_name, city_name_ar, city_name_fr, state_name, state_name_ar, state_name_fr,
+			zip_code, country_name, country_name_ar, country_name_fr, birth_date, location, location_ar, location_fr,
+			profile_photo_url, latitude, longitude
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-			$19, $20, $21, $22, $23, $24, $25, $26, $27, $28
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+			$20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36,
+			$37, $38, $39, $40, $41, $42, $43, $44
 		)`
 
 	_, err = s.db.Exec(context.Background(), query,
-		doctor.DoctorID, doctor.Username, doctor.FirstName, doctor.LastName, doctor.Age,
-		doctor.Sex, string(hashedPassword), salt, doctor.Specialty, doctor.Experience,
-		nil, 0, time.Now(), time.Now(), doctor.MedicalLicense, doctor.Bio, doctor.Email,
-		doctor.PhoneNumber, doctor.StreetAddress, doctor.CityName, doctor.StateName,
-		doctor.ZipCode, doctor.CountryName, birthDate, doctor.Location, doctor.ProfilePictureURL,
-		doctor.Latitude, doctor.Longitude)
+		doctor.DoctorID,
+		doctor.Username,
+		doctor.FirstName,
+		doctor.FirstNameAr,
+		doctor.LastName,
+		doctor.LastNameAr,
+		doctor.Age,
+		doctor.Sex,
+		string(hashedPassword),
+		salt,
+		doctor.SpecialtyCode,
+		doctor.Experience,
+		nil,
+		0,
+		time.Now(),
+		time.Now(),
+		doctor.MedicalLicense,
+		doctor.Bio,
+		doctor.BioAr,
+		doctor.BioFr,
+		doctor.Email,
+		doctor.PhoneNumber,
+		doctor.ClinicPhoneNumber,
+		doctor.ShowClinicPhone,
+		doctor.StreetAddress,
+		doctor.StreetAddressAr,
+		doctor.StreetAddressFr,
+		doctor.CityName,
+		doctor.CityNameAr,
+		doctor.CityNameFr,
+		doctor.StateName,
+		doctor.StateNameAr,
+		doctor.StateNameFr,
+		doctor.ZipCode,
+		doctor.CountryName,
+		doctor.CountryNameAr,
+		doctor.CountryNameFr,
+		birthDate,
+		doctor.Location,
+		doctor.LocationAr,
+		doctor.LocationFr,
+		doctor.ProfilePictureURL,
+		doctor.Latitude,
+		doctor.Longitude,
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("error inserting doctor: %v", err)
@@ -167,12 +235,11 @@ func (s *DoctorService) LoginDoctor(email, password string) (*models.Doctor, str
 	var hashedPassword, salt string
 
 	query := `
-		SELECT doctor_id, username, first_name, last_name, email, hashed_password, salt, profile_photo_url
+		SELECT doctor_id, username, first_name, COALESCE(first_name_ar, ''), last_name, COALESCE(last_name_ar, ''), email, hashed_password, salt, COALESCE(profile_photo_url, '')
 		FROM doctor_info WHERE email = $1`
 
 	err := s.db.QueryRow(context.Background(), query, email).Scan(
-		&doctor.DoctorID, &doctor.Username, &doctor.FirstName, &doctor.LastName,
-		&doctor.Email, &hashedPassword, &salt, &doctor.ProfilePictureURL)
+		&doctor.DoctorID, &doctor.Username, &doctor.FirstName, &doctor.FirstNameAr, &doctor.LastName, &doctor.LastNameAr, &doctor.Email, &hashedPassword, &salt, &doctor.ProfilePictureURL)
 
 	if err != nil {
 		log.Println("No user found with email: ", email)
@@ -185,9 +252,13 @@ func (s *DoctorService) LoginDoctor(email, password string) (*models.Doctor, str
 		return nil, "", "", fmt.Errorf("invalid password")
 	}
 
-	doctor.ProfilePictureURL, err = utils.GeneratePresignedObjectURL(doctor.ProfilePictureURL)
-	if err != nil {
-		log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+	if doctor.ProfilePictureURL != "" {
+		presignedURL, presignErr := utils.GeneratePresignedObjectURL(doctor.ProfilePictureURL)
+		if presignErr != nil {
+			log.Printf("Warning: failed to generate presigned URL for profile picture: %v", presignErr)
+		} else {
+			doctor.ProfilePictureURL = presignedURL
+		}
 	}
 
 	userIdString := doctor.DoctorID.String()
@@ -209,20 +280,101 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 	var doctor models.Doctor
 
 	query := `
-		SELECT email, phone_number, first_name, last_name, TO_CHAR(birth_date, 'YYYY-MM-DD'), bio, sex, location, specialty, experience, rating_score, rating_count, profile_photo_url, city_name, country_name, COALESCE(latitude, 0), COALESCE(longitude, 0)
+		SELECT email,
+		phone_number,
+		clinic_phone_number,
+		show_clinic_phone,
+		 first_name,
+		 COALESCE(first_name_ar, ''),
+		 last_name,
+		 COALESCE(last_name_ar, ''),
+		 TO_CHAR(birth_date, 'YYYY-MM-DD'),
+		 COALESCE(bio, ''),
+		 COALESCE(bio_ar, ''),
+		 COALESCE(bio_fr, ''),
+		 sex,
+		 location,
+		 COALESCE(location_ar, ''),
+		 COALESCE(location_fr, ''),
+		 specialty_code,
+		 experience,
+		 rating_score,
+		 rating_count,
+		 profile_photo_url,
+		 street_address,
+		 COALESCE(street_address_ar, ''),
+		 COALESCE(street_address_fr, ''),
+		 city_name,
+		 COALESCE(city_name_ar, ''),
+		 COALESCE(state_name, ''),
+		 COALESCE(state_name_ar, ''),
+		 COALESCE(state_name_fr, ''),
+		 zip_code,
+		 country_name,
+		 COALESCE(country_name_ar, ''),
+		 COALESCE(country_name_fr, ''),
+		 COALESCE(latitude, 0),
+		 COALESCE(longitude,
+		 0)
 		FROM doctor_info WHERE doctor_id = $1`
 
 	err = s.db.QueryRow(context.Background(), query, doctorUUID).Scan(
-		&doctor.Email, &doctor.PhoneNumber, &doctor.FirstName, &doctor.LastName,
-		&doctor.BirthDate, &doctor.Bio, &doctor.Sex, &doctor.Location, &doctor.Specialty,
-		&doctor.Experience, &doctor.RatingScore, &doctor.RatingCount, &doctor.ProfilePictureURL,
-		&doctor.CityName, &doctor.CountryName, &doctor.Latitude, &doctor.Longitude)
+		&doctor.Email,
+		&doctor.PhoneNumber,
+		&doctor.ClinicPhoneNumber,
+		&doctor.ShowClinicPhone,
+		&doctor.FirstName,
+		&doctor.FirstNameAr,
+		&doctor.LastName,
+		&doctor.LastNameAr,
+		&doctor.BirthDate,
+		&doctor.Bio,
+		&doctor.BioAr,
+		&doctor.BioFr,
+		&doctor.Sex,
+		&doctor.Location,
+		&doctor.LocationAr,
+		&doctor.LocationFr,
+		&doctor.SpecialtyCode,
+		&doctor.Experience,
+		&doctor.RatingScore,
+		&doctor.RatingCount,
+		&doctor.ProfilePictureURL,
+		&doctor.StreetAddress,
+		&doctor.StreetAddressAr,
+		&doctor.StreetAddressFr,
+		&doctor.CityName,
+		&doctor.CityNameAr,
+		&doctor.StateName,
+		&doctor.StateNameAr,
+		&doctor.StateNameFr,
+		&doctor.ZipCode,
+		&doctor.CountryName,
+		&doctor.CountryNameAr,
+		&doctor.CountryNameFr,
+		&doctor.Latitude,
+		&doctor.Longitude,
+	)
 
 	if err != nil {
-		return nil, fmt.Errorf("doctor not found: %v", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("doctor not found")
+		}
+		return nil, fmt.Errorf("error retrieving doctor: %v", err)
 	}
 
 	doctor.DoctorID = doctorUUID
+	if doctor.Specialty == "" {
+		doctor.Specialty = doctor.SpecialtyCode
+	}
+
+	// Public endpoint safety: never expose personal contact fields.
+	doctor.Email = ""
+	doctor.PhoneNumber = ""
+	doctor.BirthDate = ""
+	if !doctor.ShowClinicPhone {
+		doctor.ClinicPhoneNumber = ""
+	}
 
 	doctor.Hospitals, _ = s.getDoctorHospitals(doctorUUID)
 	doctor.Organizations, _ = s.getDoctorOrganizations(doctorUUID)
@@ -241,13 +393,18 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 	var doctors []models.Doctor
 
 	sqlSelect := `
-		SELECT doctor_id, username, first_name, last_name, specialty, experience, rating_score, rating_count, location, profile_photo_url, COALESCE(latitude, 0) as latitude, COALESCE(longitude, 0) as longitude,
+		SELECT doctor_id, username,
+		first_name, COALESCE(first_name_ar, ''),
+		last_name, COALESCE(last_name_ar, ''),
+		specialty_code, experience, rating_score, rating_count,
+		location, COALESCE(location_ar, ''), COALESCE(location_fr, ''),
+		profile_photo_url, COALESCE(latitude, 0) as latitude, COALESCE(longitude, 0) as longitude,
 		CASE 
 			WHEN $1::float8 IS NOT NULL AND $2::float8 IS NOT NULL
 		AND 
 			latitude IS NOT NULL 
 		AND 
-			longitude IS NOT NULL THEN (6371 * acos(cos(radians($1::float8)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2::float8)) + sin(radians($1::float8)) * sin(radians(latitude))))
+			longitude IS NOT NULL THEN (6371 * acos(LEAST(1, GREATEST(-1, cos(radians($1::float8)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2::float8)) + sin(radians($1::float8)) * sin(radians(latitude))))))
 		ELSE NULL
 		END AS distance
 		FROM doctor_info`
@@ -265,7 +422,7 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 		paramIndex++
 	}
 	if specialty != "" {
-		conditions = append(conditions, fmt.Sprintf("specialty ILIKE $%d", paramIndex))
+		conditions = append(conditions, fmt.Sprintf("specialty_code ILIKE $%d", paramIndex))
 		queryParams = append(queryParams, "%"+specialty+"%")
 		paramIndex++
 	}
@@ -290,18 +447,34 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 
 	for rows.Next() {
 		var doctor models.Doctor
-		var distance *float64
+		var distance sql.NullFloat64
 		err := rows.Scan(
-			&doctor.DoctorID, &doctor.Username, &doctor.FirstName, &doctor.LastName,
-			&doctor.Specialty, &doctor.Experience, &doctor.RatingScore, &doctor.RatingCount,
-			&doctor.Location, &doctor.ProfilePictureURL, &doctor.Latitude, &doctor.Longitude,
+			&doctor.DoctorID,
+			&doctor.Username,
+			&doctor.FirstName,
+			&doctor.FirstNameAr,
+			&doctor.LastName,
+			&doctor.LastNameAr,
+			&doctor.SpecialtyCode,
+			&doctor.Experience,
+			&doctor.RatingScore,
+			&doctor.RatingCount,
+			&doctor.Location,
+			&doctor.LocationAr,
+			&doctor.LocationFr,
+			&doctor.ProfilePictureURL,
+			&doctor.Latitude,
+			&doctor.Longitude,
 			&distance)
 		if err != nil {
 			log.Printf("Error scanning doctor row: %v", err)
 			continue
 		}
-		if distance != nil {
-			doctor.DoctorDistance = *distance
+		if doctor.Specialty == "" {
+			doctor.Specialty = doctor.SpecialtyCode
+		}
+		if distance.Valid {
+			doctor.DoctorDistance = distance.Float64
 		}
 		var doctorIDStr string
 		doctorIDStr = doctor.DoctorID.String()
@@ -315,7 +488,7 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 func (s *DoctorService) getDoctorHospitals(doctorID uuid.UUID) ([]models.DoctorHospital, error) {
 	var hospitals []models.DoctorHospital
 	rows, err := s.db.Query(context.Background(),
-		"SELECT id, hospital_name, position, start_date, end_date, description FROM doctor_hospitals WHERE doctor_id = $1",
+		"SELECT id, hospital_name, COALESCE(hospital_name_ar, ''), COALESCE(hospital_name_fr, ''), COALESCE(position, ''), COALESCE(position_ar, ''), COALESCE(position_fr, ''), start_date, end_date, description, description_ar, description_fr FROM doctor_hospitals WHERE doctor_id = $1",
 		doctorID)
 	if err != nil {
 		return hospitals, err
@@ -325,7 +498,7 @@ func (s *DoctorService) getDoctorHospitals(doctorID uuid.UUID) ([]models.DoctorH
 	for rows.Next() {
 		var hospital models.DoctorHospital
 		var startDate, endDate *time.Time
-		err = rows.Scan(&hospital.ID, &hospital.HospitalName, &hospital.Position, &startDate, &endDate, &hospital.Description)
+		err = rows.Scan(&hospital.ID, &hospital.HospitalName, &hospital.HospitalNameAr, &hospital.HospitalNameFr, &hospital.Position, &hospital.PositionAr, &hospital.PositionFr, &startDate, &endDate, &hospital.Description, &hospital.DescriptionAr, &hospital.DescriptionFr)
 		if err != nil {
 			continue
 		}
@@ -345,7 +518,7 @@ func (s *DoctorService) getDoctorHospitals(doctorID uuid.UUID) ([]models.DoctorH
 func (s *DoctorService) getDoctorOrganizations(doctorID uuid.UUID) ([]models.DoctorOrganization, error) {
 	var organizations []models.DoctorOrganization
 	rows, err := s.db.Query(context.Background(),
-		"SELECT id, organization_name, role, start_date, end_date, description FROM doctor_organizations WHERE doctor_id = $1",
+		"SELECT id, organization_name, COALESCE(organization_name_ar, ''), COALESCE(organization_name_fr, ''), COALESCE(role, ''), COALESCE(role_ar, ''), COALESCE(role_fr, ''), start_date, end_date, description, description_ar, description_fr FROM doctor_organizations WHERE doctor_id = $1",
 		doctorID)
 	if err != nil {
 		return organizations, err
@@ -355,7 +528,7 @@ func (s *DoctorService) getDoctorOrganizations(doctorID uuid.UUID) ([]models.Doc
 	for rows.Next() {
 		var org models.DoctorOrganization
 		var startDate, endDate *time.Time
-		err = rows.Scan(&org.ID, &org.OrganizationName, &org.Role, &startDate, &endDate, &org.Description)
+		err = rows.Scan(&org.ID, &org.OrganizationName, &org.OrganizationNameAr, &org.OrganizationNameFr, &org.Role, &org.RoleAr, &org.RoleFr, &startDate, &endDate, &org.Description, &org.DescriptionAr, &org.DescriptionFr)
 		if err != nil {
 			continue
 		}
@@ -375,7 +548,7 @@ func (s *DoctorService) getDoctorOrganizations(doctorID uuid.UUID) ([]models.Doc
 func (s *DoctorService) getDoctorAwards(doctorID uuid.UUID) ([]models.DoctorAward, error) {
 	var awards []models.DoctorAward
 	rows, err := s.db.Query(context.Background(),
-		"SELECT id, award_name, date_awarded, issuing_organization, description FROM doctor_awards WHERE doctor_id = $1",
+		"SELECT id, award_name, COALESCE(award_name_ar, ''), COALESCE(award_name_fr, ''), date_awarded, issuing_organization, COALESCE(issuing_organization_ar, ''), COALESCE(issuing_organization_fr, ''), description, description_ar, description_fr FROM doctor_awards WHERE doctor_id = $1",
 		doctorID)
 	if err != nil {
 		return awards, err
@@ -385,7 +558,7 @@ func (s *DoctorService) getDoctorAwards(doctorID uuid.UUID) ([]models.DoctorAwar
 	for rows.Next() {
 		var award models.DoctorAward
 		var dateAwarded *time.Time
-		err = rows.Scan(&award.ID, &award.AwardName, &dateAwarded, &award.IssuingOrganization, &award.Description)
+		err = rows.Scan(&award.ID, &award.AwardName, &award.AwardNameAr, &award.AwardNameFr, &dateAwarded, &award.IssuingOrganization, &award.IssuingOrganizationAr, &award.IssuingOrganizationFr, &award.Description, &award.DescriptionAr, &award.DescriptionFr)
 		if err != nil {
 			continue
 		}
@@ -401,7 +574,7 @@ func (s *DoctorService) getDoctorAwards(doctorID uuid.UUID) ([]models.DoctorAwar
 func (s *DoctorService) getDoctorCertifications(doctorID uuid.UUID) ([]models.DoctorCertification, error) {
 	var certifications []models.DoctorCertification
 	rows, err := s.db.Query(context.Background(),
-		"SELECT id, certification_name, issued_by, issue_date, expiration_date, description FROM doctor_certifications WHERE doctor_id = $1",
+		"SELECT id, certification_name, COALESCE(certification_name_ar, ''), COALESCE(certification_name_fr, ''), COALESCE(issued_by, ''), COALESCE(issued_by_ar, ''), COALESCE(issued_by_fr, ''), issue_date, expiration_date, description, description_ar, description_fr FROM doctor_certifications WHERE doctor_id = $1",
 		doctorID)
 	if err != nil {
 		return certifications, err
@@ -411,7 +584,7 @@ func (s *DoctorService) getDoctorCertifications(doctorID uuid.UUID) ([]models.Do
 	for rows.Next() {
 		var cert models.DoctorCertification
 		var issueDate, expirationDate *time.Time
-		err = rows.Scan(&cert.ID, &cert.CertificationName, &cert.IssuedBy, &issueDate, &expirationDate, &cert.Description)
+		err = rows.Scan(&cert.ID, &cert.CertificationName, &cert.CertificationNameAr, &cert.CertificationNameFr, &cert.IssuedBy, &cert.IssuedByAr, &cert.IssuedByFr, &issueDate, &expirationDate, &cert.Description, &cert.DescriptionAr, &cert.DescriptionFr)
 		if err != nil {
 			continue
 		}
@@ -431,7 +604,7 @@ func (s *DoctorService) getDoctorCertifications(doctorID uuid.UUID) ([]models.Do
 func (s *DoctorService) getDoctorLanguages(doctorID uuid.UUID) ([]models.DoctorLanguage, error) {
 	var languages []models.DoctorLanguage
 	rows, err := s.db.Query(context.Background(),
-		"SELECT language_name, proficiency_level FROM doctor_languages WHERE doctor_id = $1",
+		"SELECT id, language_name, COALESCE(language_name_ar, ''), COALESCE(language_name_fr, ''), COALESCE(proficiency_level, ''), COALESCE(proficiency_level_ar, ''), COALESCE(proficiency_level_fr, '') FROM doctor_languages WHERE doctor_id = $1",
 		doctorID)
 	if err != nil {
 		return languages, err
@@ -440,7 +613,7 @@ func (s *DoctorService) getDoctorLanguages(doctorID uuid.UUID) ([]models.DoctorL
 
 	for rows.Next() {
 		var lang models.DoctorLanguage
-		err = rows.Scan(&lang.LanguageName, &lang.ProficiencyLevel)
+		err = rows.Scan(&lang.ID, &lang.LanguageName, &lang.LanguageNameAr, &lang.LanguageNameFr, &lang.ProficiencyLevel, &lang.ProficiencyLevelAr, &lang.ProficiencyLevelFr)
 		if err != nil {
 			continue
 		}

@@ -89,8 +89,14 @@
       "email": "عنوان البريد الإلكتروني",
       "phoneNumber": "رقم الهاتف",
       "dateOfBirth": "تاريخ الميلاد",
+      "age": "العمر",
+      "bio": "السيرة الذاتية",
       "gender": "الجنس",
       "address": "العنوان",
+      "city": "المدينة",
+      "state": "الولاية",
+      "zipCode": "الرمز البريدي",
+      "country": "البلد",
       "emergencyContact": "جهة الاتصال في حالات الطوارئ",
       "medicalHistory": "التاريخ الطبي",
       "allergies": "الحساسيات",
@@ -132,8 +138,11 @@
       "lastName": "اسم العائلة",
       "email": "البريد الإلكتروني",
       "phoneNumber": "الهاتف",
+      "clinicPhoneNumber": "هاتف العيادة",
       "username": "اسم المستخدم",
       "specialty": "التخصص",
+      "issuedBy": "صادرة عن",
+      "awardedBy": "مقدمة من",
       "licenseNumber": "رخصة الطب",
       "experience": "سنوات الخبرة",
       "qualification": "المؤهل",
@@ -175,6 +184,7 @@
   "patientProfile": {
     "title": "ملف المريض الشخصي",
     "sections": {
+      "healthInfo": "معلومات الصحة",
       "overview": "نظرة عامة",
       "appointments": "المواعيد",
       "medicalHistory": "التاريخ الطبي",
@@ -186,6 +196,12 @@
       "upcomingAppointments": "القادمة",
       "completedAppointments": "المكتملة",
       "lastVisit": "آخر زيارة"
+    },
+    "healthInfo": {
+      "gender": "الجنس",
+      "bloodType": "فصيلة الدم",
+      "lastVisit": "آخر زيارة",
+      "emergencyContact": "جهة الاتصال في حالات الطوارئ" 
     }
   },
   "receptionistProfile": {

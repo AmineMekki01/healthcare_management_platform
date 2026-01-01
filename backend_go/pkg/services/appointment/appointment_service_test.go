@@ -39,9 +39,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to acquire test DB lock: %v", err)
 	}
 
-	err = createMedicalHistoryTable(ctx)
+	if err := testDB.CleanupTables(ctx); err != nil {
+		log.Fatalf("Failed to cleanup test database: %v", err)
+	}
+
+	err = createMedicalDiagnosisHistoryTable(ctx)
 	if err != nil {
-		log.Printf("Warning: Could not create medical_history table: %v", err)
+		log.Printf("Warning: Could not create medical_diagnosis_history table: %v", err)
 	}
 
 	cfg := &config.Config{}
@@ -55,17 +59,17 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func createMedicalHistoryTable(ctx context.Context) error {
+func createMedicalDiagnosisHistoryTable(ctx context.Context) error {
 	query := `
-		CREATE TABLE IF NOT EXISTS medical_history (
-			diagnosis_history_id UUID PRIMARY KEY,
-			diagnosis_name TEXT NOT NULL,
+		CREATE TABLE IF NOT EXISTS medical_diagnosis_history (
+			diag_history_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			diagnosis_name VARCHAR(50) NOT NULL,
 			diagnosis_details TEXT,
-			diagnosis_doctor_name TEXT NOT NULL,
-			diagnosis_doctor_id UUID NOT NULL,
-			patient_id UUID NOT NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+			diagnosis_doctor_name VARCHAR(50) NOT NULL,
+			diagnosis_doctor_id UUID,
+			diagnosis_patient_id UUID,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)
 	`
 	_, err := testDB.Pool.Exec(ctx, query)

@@ -244,7 +244,6 @@ export const userTransformation = {
         ...baseTransform,
         specialization: profileData.specialization?.trim(),
         experience: parseInt(profileData.experience) || 0,
-        qualification: profileData.qualification?.trim(),
         license_number: profileData.licenseNumber?.trim(),
         consultation_fee: parseFloat(profileData.consultationFee) || 0,
         languages: Array.isArray(profileData.languages) ? profileData.languages : []

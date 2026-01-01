@@ -116,7 +116,7 @@ export default function CreateMedicalReportPage() {
       <Box display="flex" alignItems="center" mb={3}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/patient-appointments')}
+          onClick={() => navigate('/appointments')}
           sx={{ mr: 2 }}
         >
           Back to Appointments
@@ -301,8 +301,8 @@ export default function CreateMedicalReportPage() {
                   <TextField
                     fullWidth
                     label="Referral Message"
-                    value={formData.referral_message}
-                    onChange={handleChange('referral_message')}
+                    value={formData.referralMessage}
+                    onChange={handleChange('referralMessage')}
                     multiline
                     rows={3}
                     placeholder="Additional information for the specialist"
@@ -315,7 +315,7 @@ export default function CreateMedicalReportPage() {
           <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               variant="outlined"
-              onClick={() => navigate('/patient-appointments')}
+              onClick={() => navigate('/appointments')}
               disabled={loading}
             >
               Cancel

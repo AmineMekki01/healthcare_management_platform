@@ -33,7 +33,7 @@ func NewShareService(db *pgxpool.Pool, cfg *config.Config) *ShareService {
 
 func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 	rows, err := s.db.Query(context.Background(),
-		"SELECT doctor_id, first_name, last_name, specialty FROM doctor_info")
+		"SELECT doctor_id, first_name, last_name, specialty_code FROM doctor_info")
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve doctors list: %v", err)
 	}
@@ -42,9 +42,10 @@ func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 	var doctors []models.Doctor
 	for rows.Next() {
 		var doctor models.Doctor
-		if err := rows.Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.Specialty); err != nil {
+		if err := rows.Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.SpecialtyCode); err != nil {
 			continue
 		}
+		doctor.Specialty = doctor.SpecialtyCode
 		doctors = append(doctors, doctor)
 	}
 
@@ -54,7 +55,7 @@ func (s *ShareService) ListDoctors() ([]models.Doctor, error) {
 func (s *ShareService) ListDoctorsForPatient(patientID string) ([]models.Doctor, error) {
 	rows, err := s.db.Query(
 		context.Background(),
-		`SELECT DISTINCT d.doctor_id, d.first_name, d.last_name, d.specialty
+		`SELECT DISTINCT d.doctor_id, d.first_name, d.last_name, d.specialty_code
 		FROM doctor_info d
 		JOIN appointments a ON a.doctor_id = d.doctor_id
 		WHERE a.patient_id = $1 AND COALESCE(a.is_doctor_patient, false) = false
@@ -69,9 +70,10 @@ func (s *ShareService) ListDoctorsForPatient(patientID string) ([]models.Doctor,
 	var doctors []models.Doctor
 	for rows.Next() {
 		var doctor models.Doctor
-		if err := rows.Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.Specialty); err != nil {
+		if err := rows.Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.SpecialtyCode); err != nil {
 			continue
 		}
+		doctor.Specialty = doctor.SpecialtyCode
 		doctors = append(doctors, doctor)
 	}
 
@@ -82,15 +84,17 @@ func (s *ShareService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 	var doctor models.Doctor
 	err := s.db.QueryRow(
 		context.Background(),
-		"SELECT doctor_id, first_name, last_name, specialty FROM doctor_info WHERE doctor_id = $1",
+		"SELECT doctor_id, first_name, last_name, specialty_code FROM doctor_info WHERE doctor_id = $1",
 		doctorID,
-	).Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.Specialty)
+	).Scan(&doctor.DoctorID, &doctor.FirstName, &doctor.LastName, &doctor.SpecialtyCode)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("could not retrieve doctor: %v", err)
 	}
+
+	doctor.Specialty = doctor.SpecialtyCode
 
 	return &doctor, nil
 }

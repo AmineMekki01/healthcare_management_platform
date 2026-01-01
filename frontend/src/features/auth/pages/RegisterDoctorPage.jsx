@@ -15,6 +15,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Switch,
   Card,
   useTheme,
   InputAdornment,
@@ -168,6 +169,8 @@ const RegisterDoctorPage = () => {
     password: '',
     confirmPassword: '',
     phone: '',
+    clinicPhone: '',
+    showClinicPhone: true,
     birthdate: '',
     sex: '',
     licenseNumber: '',
@@ -189,6 +192,7 @@ const RegisterDoctorPage = () => {
     password: false,
     confirmPassword: false,
     phone: false,
+    clinicPhone: false,
   });
 
   const [focus, setFocus] = useState({});
@@ -234,6 +238,13 @@ const RegisterDoctorPage = () => {
       phone: PHONE_REGEX.test(formData.phone)
     }));
   }, [formData.phone]);
+
+  useEffect(() => {
+    setValidation(prev => ({
+      ...prev,
+      clinicPhone: PHONE_REGEX.test(formData.clinicPhone)
+    }));
+  }, [formData.clinicPhone]);
 
   useEffect(() => {
     setError('');
@@ -316,7 +327,7 @@ const RegisterDoctorPage = () => {
     setLoading(true);
     setError('');
 
-    const requiredFields = ['username', 'firstName', 'lastName', 'email', 'password', 'phone', 'licenseNumber', 'specialty'];
+    const requiredFields = ['username', 'firstName', 'lastName', 'email', 'password', 'phone', 'clinicPhone', 'birthdate', 'licenseNumber', 'specialty', 'experience'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
@@ -325,7 +336,7 @@ const RegisterDoctorPage = () => {
       return;
     }
 
-    if (!validation.username || !validation.email || !validation.password || !validation.confirmPassword || !validation.phone) {
+    if (!validation.username || !validation.email || !validation.password || !validation.confirmPassword || !validation.phone || !validation.clinicPhone) {
       setError(t('auth:doctorRegistration.correctValidationErrors'));
       setLoading(false);
       return;
@@ -337,11 +348,13 @@ const RegisterDoctorPage = () => {
     submitData.append('Password', formData.password);
     submitData.append('Email', formData.email);
     submitData.append('PhoneNumber', formData.phone);
+    submitData.append('ClinicPhoneNumber', formData.clinicPhone);
+    submitData.append('ShowClinicPhone', String(!!formData.showClinicPhone));
     submitData.append('FirstName', formData.firstName);
     submitData.append('LastName', formData.lastName);
     submitData.append('BirthDate', formData.birthdate);
     submitData.append('MedicalLicense', formData.licenseNumber);
-    submitData.append('Specialty', formData.specialty);
+    submitData.append('SpecialtyCode', formData.specialty);
     submitData.append('Experience', formData.experience);
     submitData.append('StreetAddress', formData.address);
     submitData.append('CityName', formData.city);
@@ -350,7 +363,7 @@ const RegisterDoctorPage = () => {
     submitData.append('CountryName', formData.country);
     submitData.append('Latitude', formData.latitude);
     submitData.append('Longitude', formData.longitude);
-    submitData.append('DoctorBio', formData.bio);
+    submitData.append('Bio', formData.bio);
     submitData.append('Sex', formData.sex);
 
     try {
@@ -363,7 +376,9 @@ const RegisterDoctorPage = () => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      if (error.response?.data?.message) {
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else {
         setError(t('auth:errors.generic'));
@@ -625,7 +640,7 @@ const RegisterDoctorPage = () => {
               />
             </Grid>
 
-            {/* Phone */}
+            {/* Personal Phone */}
             <Grid item xs={12} md={6}>
               <StyledTextField
                 fullWidth
@@ -653,6 +668,49 @@ const RegisterDoctorPage = () => {
                   ),
                 }}
                 required
+              />
+            </Grid>
+
+            {/* Clinic Phone */}
+            <Grid item xs={12} md={6}>
+              <StyledTextField
+                fullWidth
+                label={t('auth:doctorRegistration.clinicPhoneNumber')}
+                value={formData.clinicPhone}
+                onChange={handleInputChange('clinicPhone')}
+                onFocus={handleFocus('clinicPhone')}
+                onBlur={handleBlur('clinicPhone')}
+                error={focus.clinicPhone && formData.clinicPhone && !validation.clinicPhone}
+                helperText={
+                  focus.clinicPhone && formData.clinicPhone && !validation.clinicPhone
+                    ? t('validation:phone.invalid')
+                    : ''
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon sx={{ color: '#667eea' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: validation.clinicPhone && (
+                    <InputAdornment position="end">
+                      <CheckCircle sx={{ color: 'success.main' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!formData.showClinicPhone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, showClinicPhone: e.target.checked }))}
+                  />
+                }
+                label={t('auth:doctorRegistration.showClinicPhone')}
               />
             </Grid>
           </Grid>
