@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { ChatContext } from '../contexts/ChatContext'; 
 import chatService from '../services/chatService';
+import { getLocalizedFullName } from '../utils/chatI18n';
 
 const SearchContainer = styled.div`
   padding: 20px 20px 16px 20px;
@@ -211,12 +212,19 @@ const ErrorMessage = styled.div`
 `;
 
 const SearchComponent = ({ onUserSelect, onSelectChat }) => {
-  const { t } = useTranslation('chat');
+  const { t, i18n } = useTranslation(['chat', 'common']);
   const [username, setUsername] = useState('');
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(false);
   const { userId, userType } = useContext(AuthContext);
   const { dispatch } = useContext(ChatContext);
+
+  const getLocalizedUserTypeLabel = (type) => {
+    if (!type) return '';
+    const key = `common:userTypes.${type}`;
+    const translated = t(key);
+    return translated === key ? type : translated;
+  };
 
   const handleSearch = async () => {
     if (!username.trim()) {
@@ -307,14 +315,14 @@ const SearchComponent = ({ onUserSelect, onSelectChat }) => {
             <UserResult key={user.userId || index} onClick={() => handleSelect(user)}>
               <UserAvatar
                 src={user.profile_photo_url || user.profile_photo}
-                alt={`${user.firstName} ${user.lastName}`}
+                alt={getLocalizedFullName(user, i18n.language)}
               />
               <UserInfo>
                 <UserName>
-                  {`${user.firstName || ''} ${user.lastName || ''}`}
+                  {getLocalizedFullName(user, i18n.language)}
                 </UserName>
                 {user.userType && (
-                  <UserType>{user.userType}</UserType>
+                  <UserType>{getLocalizedUserTypeLabel(user.userType)}</UserType>
                 )}
               </UserInfo>
             </UserResult>

@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
+import { isArabicLanguage } from '../utils/chatI18n';
 
 const Navbar = styled.div`
     display: flex;
@@ -132,8 +133,11 @@ const UserName = styled.span`
 
 
 const NavbarComponent = () => {
-    const { t } = useTranslation('chat');
-    const { userFullName, userProfilePictureUrl } = useContext(AuthContext);
+    const { t, i18n } = useTranslation('chat');
+    const { userFullName, userFullNameAr, userProfilePictureUrl } = useContext(AuthContext);
+
+    const resolvedFullName = isArabicLanguage(i18n.language) ? (userFullNameAr || userFullName) : (userFullName || userFullNameAr);
+    const resolvedFirstName = (resolvedFullName && String(resolvedFullName).trim().split(' ')[0]) || '';
     return (
         
         <Navbar>
@@ -143,7 +147,7 @@ const NavbarComponent = () => {
                     <ProfileImg src={userProfilePictureUrl} alt=""/>
                     <OnlineStatusIndicator />
                 </ProfileContainer>
-                <UserName>{(userFullName && userFullName.split(' ')[0]) || ''}</UserName>
+                <UserName>{resolvedFirstName}</UserName>
             </User>
         </Navbar>
     )

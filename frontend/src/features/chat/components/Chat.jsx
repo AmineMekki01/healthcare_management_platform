@@ -7,6 +7,7 @@ import InputComponent from './Input';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import { ChatContext } from '../contexts/ChatContext';
 import chatService from '../services/chatService';
+import { getLocalizedChatRecipientName } from '../utils/chatI18n';
 
 const Chat = styled.div`
   flex: 2;
@@ -148,7 +149,7 @@ const ToggleSidebarButton = styled.button`
 `;
 
 const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
-  const { t } = useTranslation('chat');
+  const { t, i18n } = useTranslation('chat');
   const { userId, userProfilePictureUrl } = useContext(AuthContext);
   const { state, dispatch} = useContext(ChatContext);
   const { messages, chats } = state;
@@ -238,12 +239,12 @@ const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
       <ChatInfo>
         <ChatInfoContent>
           <ChatUserName>
-            {actualCurrentChat ? `${actualCurrentChat.firstNameRecipient} ${actualCurrentChat.lastNameRecipient}` : t('ui.selectChatPrompt')}
+            {actualCurrentChat ? getLocalizedChatRecipientName(actualCurrentChat, i18n.language) : t('header.selectChat')}
           </ChatUserName>
           {actualCurrentChat && <OnlineIndicator />}
         </ChatInfoContent>
         <ToggleSidebarButton onClick={toggleSidebar}>
-          {isSidebarVisible ? t('ui.hideSidebar') : t('ui.showSidebar')}
+          {isSidebarVisible ? t('header.hide') : t('header.show')}
         </ToggleSidebarButton>
       </ChatInfo>
       {actualCurrentChat ? (
@@ -265,7 +266,7 @@ const ChatComponent = ({chatId, toggleSidebar, isSidebarVisible }) => {
           color: '#64748b',
           fontSize: '16px'
         }}>
-          {t('ui.selectChatPrompt')}
+          {t('header.selectChat')}
         </div>
       )}
     </Chat>

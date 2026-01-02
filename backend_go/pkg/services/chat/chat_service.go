@@ -21,7 +21,9 @@ import (
 type CombinedUser struct {
 	UserID                string `json:"userId"`
 	FirstName             string `json:"firstName"`
+	FirstNameAr           string `json:"firstNameAr"`
 	LastName              string `json:"lastName"`
+	LastNameAr            string `json:"lastNameAr"`
 	UserType              string `json:"userType"`
 	UserProfilePictureURL string `json:"profile_photo_url"`
 }
@@ -55,81 +57,64 @@ func (s *ChatService) GetChatsForUser(userID string) ([]models.Chat, error) {
 	defer conn.Release()
 
 	const query = `
+	WITH one_to_one_chats AS (
+		SELECT chat_id
+		FROM participants
+		GROUP BY chat_id
+		HAVING COUNT(DISTINCT user_id) = 2
+	),
+	my_one_to_one_chats AS (
+		SELECT oc.chat_id
+		FROM one_to_one_chats oc
+		JOIN participants p ON p.chat_id = oc.chat_id
+		WHERE p.user_id::text = $1
+	)
 	SELECT
 		c.id,
-		MAX(c.updated_at) AS updated_at,
+		c.updated_at AS updated_at,
 		$1 AS sender_user_id,
-		CASE
-			WHEN curr_p.user_id::text = $1 THEN other_p.user_id
-			ELSE curr_p.user_id
-		END AS recipient_user_id,
-		MAX(
-			CASE
-				WHEN curr_p.user_id::text = $1 THEN other_user.first_name
-				ELSE curr_user.first_name
-			END
-		) AS first_name_recipient,
-		MAX(
-			CASE
-				WHEN curr_p.user_id::text = $1 THEN other_user.last_name
-				ELSE curr_user.last_name
-			END
-		) AS last_name_recipient,
-		MAX(lm.content) AS latest_message_content,
-		MAX(lm.created_at) AS latest_message_time,
-		MAX(
-			CASE
-				WHEN curr_p.user_id::text = $1 THEN other_user.profile_photo_url
-				ELSE curr_user.profile_photo_url
-			END
-		) AS recipient_image_url,
-		MAX(
-			CASE
-				WHEN curr_p.user_id::text = $1 THEN other_user.user_type
-				ELSE curr_user.user_type
-			END
-		) AS recipient_user_type
+		other_p.user_id AS recipient_user_id,
+		other_user.first_name AS first_name_recipient,
+		other_user.first_name_ar AS first_name_recipient_ar,
+		other_user.last_name AS last_name_recipient,
+		other_user.last_name_ar AS last_name_recipient_ar,
+		lm.content AS latest_message_content,
+		lm.created_at AS latest_message_time,
+		other_user.profile_photo_url AS recipient_image_url,
+		other_user.user_type AS recipient_user_type
 	FROM
-		chats c
+		my_one_to_one_chats mc
 	JOIN
-		participants curr_p ON c.id = curr_p.chat_id
+		chats c ON c.id = mc.chat_id
 	JOIN
-		participants other_p ON c.id = other_p.chat_id AND curr_p.user_id != other_p.user_id
+		(
+			SELECT DISTINCT chat_id, user_id
+			FROM participants
+		) other_p ON c.id = other_p.chat_id AND other_p.user_id::text <> $1
 	LEFT JOIN (
-		SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url, 'doctor' AS user_type
+		SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar, profile_photo_url, 'doctor' AS user_type
 		FROM doctor_info
 		UNION
-		SELECT patient_id AS user_id, first_name, last_name, profile_photo_url, 'patient' AS user_type
+		SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar, profile_photo_url, 'patient' AS user_type
 		FROM patient_info
 		UNION
-		SELECT receptionist_id AS user_id, first_name, last_name, profile_photo_url, 'receptionist' AS user_type
-		FROM receptionists
-	) curr_user ON curr_p.user_id = curr_user.user_id
-	LEFT JOIN (
-		SELECT doctor_id AS user_id, first_name, last_name, profile_photo_url, 'doctor' AS user_type
-		FROM doctor_info
-		UNION
-		SELECT patient_id AS user_id, first_name, last_name, profile_photo_url, 'patient' AS user_type
-		FROM patient_info
-		UNION
-		SELECT receptionist_id AS user_id, first_name, last_name, profile_photo_url, 'receptionist' AS user_type
+		SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar, profile_photo_url, 'receptionist' AS user_type
 		FROM receptionists
 	) other_user ON other_p.user_id = other_user.user_id
 	LEFT JOIN (
-		SELECT
-			chat_id,
-			content,
-			created_at,
-			ROW_NUMBER() OVER (PARTITION BY chat_id ORDER BY created_at DESC) AS rn
-		FROM
-			messages
-	) lm ON c.id = lm.chat_id AND lm.rn = 1
-	WHERE
-		(curr_p.user_id::text = $1 OR other_p.user_id::text = $1)	
-	GROUP BY
-		c.id, recipient_user_id
+		SELECT chat_id, content, created_at
+		FROM (
+			SELECT
+				chat_id,
+				content,
+				created_at,
+				ROW_NUMBER() OVER (PARTITION BY chat_id ORDER BY created_at DESC) AS rn
+			FROM messages
+		) ranked
+		WHERE rn = 1
+	) lm ON c.id = lm.chat_id
 	ORDER BY
-		latest_message_time DESC`
+		COALESCE(lm.created_at, c.updated_at) DESC`
 
 	rows, err := conn.Query(context.Background(), query, userID)
 	if err != nil {
@@ -141,7 +126,7 @@ func (s *ChatService) GetChatsForUser(userID string) ([]models.Chat, error) {
 	for rows.Next() {
 		var chat models.Chat
 		if err := rows.Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-			&chat.FirstNameRecipient, &chat.LastNameRecipient, &chat.LastMessage, &chat.LastMessageCreatedAt,
+			&chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr, &chat.LastMessage, &chat.LastMessageCreatedAt,
 			&chat.RecipientImageURL, &chat.RecipientUserType); err != nil {
 			return nil, fmt.Errorf("error scanning chat row: %v", err)
 		}
@@ -235,11 +220,16 @@ func (s *ChatService) SearchUsers(inputName, currentUserID, currentUserType stri
 
 	if currentUserType == "patient" || currentUserType == "receptionist" {
 		query := `
-            SELECT DISTINCT di.doctor_id, di.first_name, di.last_name, di.profile_photo_url
+            SELECT DISTINCT di.doctor_id, di.first_name, COALESCE(di.first_name_ar, ''), di.last_name, COALESCE(di.last_name_ar, ''), di.profile_photo_url
 			FROM doctor_info di
 			LEFT JOIN followers f ON di.doctor_id = f.doctor_id AND f.follower_id = $2
 			LEFT JOIN appointments apt ON di.doctor_id = apt.doctor_id AND apt.patient_id = $2 AND apt.canceled = FALSE
-			WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+			WHERE (
+				LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+				OR LOWER(COALESCE(di.first_name_ar, '') || ' ' || COALESCE(di.last_name_ar, '')) LIKE LOWER($1)
+				OR LOWER(COALESCE(di.first_name_ar, '')) LIKE LOWER($1)
+				OR LOWER(COALESCE(di.last_name_ar, '')) LIKE LOWER($1)
+			)
 			AND di.doctor_id != $2
 			AND (f.follower_id IS NOT NULL OR apt.patient_id IS NOT NULL)`
 
@@ -251,7 +241,7 @@ func (s *ChatService) SearchUsers(inputName, currentUserID, currentUserType stri
 
 		for rows.Next() {
 			var user CombinedUser
-			err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName, &user.UserProfilePictureURL)
+			err := rows.Scan(&user.UserID, &user.FirstName, &user.FirstNameAr, &user.LastName, &user.LastNameAr, &user.UserProfilePictureURL)
 			if err != nil {
 				log.Printf("Error scanning user: %v", err)
 				continue
@@ -267,19 +257,34 @@ func (s *ChatService) SearchUsers(inputName, currentUserID, currentUserType stri
 	} else if currentUserType == "doctor" {
 		queries := map[string]string{
 			"patient": `
-				SELECT pi.patient_id, pi.first_name, pi.last_name, pi.profile_photo_url
+				SELECT pi.patient_id, pi.first_name, COALESCE(pi.first_name_ar, ''), pi.last_name, COALESCE(pi.last_name_ar, ''), pi.profile_photo_url
 				FROM patient_info pi
-				WHERE LOWER(pi.first_name || ' ' || pi.last_name) LIKE LOWER($1)
+				WHERE (
+					LOWER(pi.first_name || ' ' || pi.last_name) LIKE LOWER($1)
+					OR LOWER(COALESCE(pi.first_name_ar, '') || ' ' || COALESCE(pi.last_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(pi.first_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(pi.last_name_ar, '')) LIKE LOWER($1)
+				)
 				AND pi.patient_id != $2`,
 			"doctor": `
-				SELECT di.doctor_id, di.first_name, di.last_name, di.profile_photo_url
+				SELECT di.doctor_id, di.first_name, COALESCE(di.first_name_ar, ''), di.last_name, COALESCE(di.last_name_ar, ''), di.profile_photo_url
 				FROM doctor_info di
-				WHERE LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+				WHERE (
+					LOWER(di.first_name || ' ' || di.last_name) LIKE LOWER($1)
+					OR LOWER(COALESCE(di.first_name_ar, '') || ' ' || COALESCE(di.last_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(di.first_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(di.last_name_ar, '')) LIKE LOWER($1)
+				)
 				AND di.doctor_id != $2`,
 			"receptionist": `
-				SELECT r.receptionist_id, r.first_name, r.last_name, r.profile_photo_url
+				SELECT r.receptionist_id, r.first_name, COALESCE(r.first_name_ar, ''), r.last_name, COALESCE(r.last_name_ar, ''), r.profile_photo_url
 				FROM receptionists r
-				WHERE LOWER(r.first_name || ' ' || r.last_name) LIKE LOWER($1)
+				WHERE (
+					LOWER(r.first_name || ' ' || r.last_name) LIKE LOWER($1)
+					OR LOWER(COALESCE(r.first_name_ar, '') || ' ' || COALESCE(r.last_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(r.first_name_ar, '')) LIKE LOWER($1)
+					OR LOWER(COALESCE(r.last_name_ar, '')) LIKE LOWER($1)
+				)
 				AND r.receptionist_id != $2`,
 		}
 
@@ -292,7 +297,7 @@ func (s *ChatService) SearchUsers(inputName, currentUserID, currentUserType stri
 
 			for rows.Next() {
 				var user CombinedUser
-				err := rows.Scan(&user.UserID, &user.FirstName, &user.LastName, &user.UserProfilePictureURL)
+				err := rows.Scan(&user.UserID, &user.FirstName, &user.FirstNameAr, &user.LastName, &user.LastNameAr, &user.UserProfilePictureURL)
 				if err != nil {
 					log.Printf("Error scanning user: %v", err)
 					continue
@@ -377,7 +382,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_user.first_name AS first_name_sender,
             curr_user.last_name AS last_name_sender,
             other_user.first_name AS first_name_recipient,
+            other_user.first_name_ar AS first_name_recipient_ar,
             other_user.last_name AS last_name_recipient,
+            other_user.last_name_ar AS last_name_recipient_ar,
             lm.content AS latest_message_content,
             lm.created_at AS latest_message_time
         FROM
@@ -387,17 +394,17 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
         JOIN
             participants other_p ON c.id = other_p.chat_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+            SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+            SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
         LEFT JOIN
             (SELECT
                 chat_id,
@@ -410,10 +417,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_p.user_id = $1 
         AND
             other_p.user_id = $2 
+        AND
+            (SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
         ORDER BY
             lm.created_at DESC`,
 			currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 			&chat.LastMessage, &chat.LastMessageCreatedAt)
 	} else if currentUserType == "doctor" {
 		err = conn.QueryRow(context.Background(),
@@ -425,7 +434,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_user.first_name AS first_name_sender,
             curr_user.last_name AS last_name_sender,
             other_user.first_name AS first_name_recipient,
+            other_user.first_name_ar AS first_name_recipient_ar,
             other_user.last_name AS last_name_recipient,
+            other_user.last_name_ar AS last_name_recipient_ar,
             lm.content AS latest_message_content,
             lm.created_at AS latest_message_time
         FROM
@@ -435,17 +446,17 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
         JOIN
             participants other_p ON c.id = other_p.chat_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+            SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+            SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
         LEFT JOIN
             (SELECT
                 chat_id,
@@ -458,10 +469,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_p.user_id = $1 
         AND
             other_p.user_id = $2 
+        AND
+            (SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
         ORDER BY
             lm.created_at DESC`,
 			currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 			&chat.LastMessage, &chat.LastMessageCreatedAt)
 	} else if currentUserType == "receptionist" {
 		err = conn.QueryRow(context.Background(),
@@ -473,7 +486,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_user.first_name AS first_name_sender,
             curr_user.last_name AS last_name_sender,
             other_user.first_name AS first_name_recipient,
+            other_user.first_name_ar AS first_name_recipient_ar,
             other_user.last_name AS last_name_recipient,
+            other_user.last_name_ar AS last_name_recipient_ar,
             lm.content AS latest_message_content,
             lm.created_at AS latest_message_time
         FROM
@@ -483,13 +498,13 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
         JOIN
             participants other_p ON c.id = other_p.chat_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
         LEFT JOIN
-            (SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+            (SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
             UNION
-            SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+            SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
         LEFT JOIN
             (SELECT
                 chat_id,
@@ -502,10 +517,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
             curr_p.user_id = $1 
         AND
             other_p.user_id = $2 
+        AND
+            (SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
         ORDER BY
             lm.created_at DESC`,
 			currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+			&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 			&chat.LastMessage, &chat.LastMessageCreatedAt)
 	}
 	chat.UpdatedAt = time.Now()
@@ -555,7 +572,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_user.first_name AS first_name_sender,
 				curr_user.last_name AS last_name_sender,
 				other_user.first_name AS first_name_recipient,
+				other_user.first_name_ar AS first_name_recipient_ar,
 				other_user.last_name AS last_name_recipient,
+				other_user.last_name_ar AS last_name_recipient_ar,
 				lm.content AS latest_message_content,
 				lm.created_at AS latest_message_time
 			FROM
@@ -565,17 +584,17 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 			JOIN
 				participants other_p ON c.id = other_p.chat_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+				SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+				SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
 			LEFT JOIN
 				(SELECT
 					chat_id,
@@ -588,10 +607,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_p.user_id = $1 
 			AND
 				other_p.user_id = $2 
+			AND
+				(SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
 			ORDER BY
 				lm.created_at DESC`,
 				currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 				&chat.LastMessage, &chat.LastMessageCreatedAt)
 
 		} else if currentUserType == "doctor" {
@@ -604,7 +625,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_user.first_name AS first_name_sender,
 				curr_user.last_name AS last_name_sender,
 				other_user.first_name AS first_name_recipient,
+				COALESCE(other_user.first_name_ar, '') AS first_name_recipient_ar,
 				other_user.last_name AS last_name_recipient,
+				COALESCE(other_user.last_name_ar, '') AS last_name_recipient_ar,
 				lm.content AS latest_message_content,
 				lm.created_at AS latest_message_time
 			FROM
@@ -614,17 +637,17 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 			JOIN
 				participants other_p ON c.id = other_p.chat_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+				SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT patient_id AS user_id, first_name, last_name FROM patient_info
+				SELECT patient_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM patient_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
 			LEFT JOIN
 				(SELECT
 					chat_id,
@@ -637,10 +660,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_p.user_id = $1 
 			AND
 				other_p.user_id = $2 
+			AND
+				(SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
 			ORDER BY
 				lm.created_at DESC`,
 				currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 				&chat.LastMessage, &chat.LastMessageCreatedAt)
 
 		} else if currentUserType == "receptionist" {
@@ -653,7 +678,9 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_user.first_name AS first_name_sender,
 				curr_user.last_name AS last_name_sender,
 				other_user.first_name AS first_name_recipient,
+				COALESCE(other_user.first_name_ar, '') AS first_name_recipient_ar,
 				other_user.last_name AS last_name_recipient,
+				COALESCE(other_user.last_name_ar, '') AS last_name_recipient_ar,
 				lm.content AS latest_message_content,
 				lm.created_at AS latest_message_time
 			FROM
@@ -663,13 +690,13 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 			JOIN
 				participants other_p ON c.id = other_p.chat_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) curr_user ON curr_p.user_id = curr_user.user_id
 			LEFT JOIN
-				(SELECT doctor_id AS user_id, first_name, last_name FROM doctor_info
+				(SELECT doctor_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM doctor_info
 				UNION
-				SELECT receptionist_id AS user_id, first_name, last_name FROM receptionists) other_user ON other_p.user_id = other_user.user_id
+				SELECT receptionist_id AS user_id, first_name, COALESCE(first_name_ar, '') AS first_name_ar, last_name, COALESCE(last_name_ar, '') AS last_name_ar FROM receptionists) other_user ON other_p.user_id = other_user.user_id
 			LEFT JOIN
 				(SELECT
 					chat_id,
@@ -682,10 +709,12 @@ func (s *ChatService) findOrCreateChat(conn *pgxpool.Conn, currentUserID, select
 				curr_p.user_id = $1 
 			AND
 				other_p.user_id = $2 
+			AND
+				(SELECT COUNT(DISTINCT user_id) FROM participants p2 WHERE p2.chat_id = c.id) = 2
 			ORDER BY
 				lm.created_at DESC`,
 				currentUserID, selectedUserID).Scan(&chat.ID, &chat.UpdatedAt, &chat.SenderUserID, &chat.RecipientUserID,
-				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.LastNameRecipient,
+				&chat.FirstNameSender, &chat.LastNameSender, &chat.FirstNameRecipient, &chat.FirstNameRecipientAr, &chat.LastNameRecipient, &chat.LastNameRecipientAr,
 				&chat.LastMessage, &chat.LastMessageCreatedAt)
 		}
 

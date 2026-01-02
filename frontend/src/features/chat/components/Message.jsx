@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components'
-import moment from 'moment';
+import { formatChatTimestamp } from '../utils/chatI18n';
 
 const Message = styled.div`
     display: flex;
@@ -176,21 +176,7 @@ const MessageImage = styled.img`
 `;
 
 const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientImage }) => {
-    const { t } = useTranslation('chat');
-
-    const formatMessageDate = (dateString) => {
-        if (!dateString) {
-            return t('ui.justNow');
-        }
-        return moment(dateString).calendar(null, {
-            sameDay: 'LT',
-            nextDay: '[Tomorrow at] LT',
-            nextWeek: 'dddd [at] LT',
-            lastDay: '[Yesterday at] LT',
-            lastWeek: '[Last] dddd [at] LT',
-            sameElse: 'L'
-        });
-    };
+    const { t, i18n } = useTranslation('chat');
 
     const renderMessageContent = (content) => {
         console.log("content : ", content)
@@ -212,7 +198,7 @@ const MessageComponent = React.memo(({ message, isOwner, senderImage, recipientI
             )}
             <MessageContent className={isOwner ? 'owner' : 'not-owner'}>
                 {renderMessageContent(message.content)}
-                <MessageTime>{formatMessageDate(message.createdAt)}</MessageTime>
+                <MessageTime>{formatChatTimestamp(message.createdAt, { t, language: i18n.language })}</MessageTime>
             </MessageContent>
         </Message>
     );

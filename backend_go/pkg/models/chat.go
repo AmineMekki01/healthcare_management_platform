@@ -11,7 +11,9 @@ type Chat struct {
 	FirstNameSender      string     `json:"firstNameSender"`
 	LastNameSender       string     `json:"lastNameSender"`
 	FirstNameRecipient   string     `json:"firstNameRecipient"`
+	FirstNameRecipientAr string     `json:"firstNameRecipientAr"`
 	LastNameRecipient    string     `json:"lastNameRecipient"`
+	LastNameRecipientAr  string     `json:"lastNameRecipientAr"`
 	UpdatedAt            time.Time  `json:"updatedAt"`
 	LastMessage          *string    `json:"latestMessageContent"`
 	LastMessageCreatedAt *time.Time `json:"latestMessageTime"`
