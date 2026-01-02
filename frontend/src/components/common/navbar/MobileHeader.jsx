@@ -20,10 +20,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../features/auth/context/AuthContext';
 import { useRoleMode } from '../../../contexts/RoleModeContext';
 import { getMobilePageTitle, shouldShowBackButton } from '../../../hooks/useMobileNavigation';
+import { getProfileHrefForMode } from './navConfig';
 
 const MobileHeader = ({ title, showBackButton, actions = [] }) => {
   const { t } = useTranslation('common');
-  const { userProfilePictureUrl, userId } = useContext(AuthContext);
+  const { userProfilePictureUrl, userId, userType } = useContext(AuthContext);
   const { activeMode } = useRoleMode();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -53,12 +54,7 @@ const MobileHeader = ({ title, showBackButton, actions = [] }) => {
   };
 
   const handleProfileClick = () => {
-    const profilePath = activeMode === 'doctor' 
-      ? `/doctor-profile/${userId}`
-      : activeMode === 'patient' 
-      ? `/patient-profile/${userId}` 
-      : `/receptionist-profile/${userId}`;
-    navigate(profilePath);
+    navigate(getProfileHrefForMode(userType, userId));
   };
 
   return (

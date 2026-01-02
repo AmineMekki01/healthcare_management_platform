@@ -61,7 +61,7 @@ const MyNavbar = () => {
   const { activeMode, canSwitchModes, handleModeToggle } = useRoleMode();
   const location = useLocation();
 
-  const profileHref = getProfileHrefForMode(activeMode || userType, userId);
+  const profileHref = getProfileHrefForMode(userType, userId);
 
   const nextMode = activeMode === userType ? 'patient' : userType;
   const nextModeLabel = t(`common:userTypes.${nextMode}`);

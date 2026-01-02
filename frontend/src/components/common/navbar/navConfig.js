@@ -272,7 +272,7 @@ export const buildNavConfig = ({
 
   const bottomTabs = [...bottomTabsBase, ...bottomTabsModeSpecific];
 
-  const profileHref = getProfileHrefForMode(activeMode || userType, userId);
+  const profileHref = getProfileHrefForMode(userType, userId);
 
   const bottomMenuItems = [
     ...(activeMode === 'doctor'
