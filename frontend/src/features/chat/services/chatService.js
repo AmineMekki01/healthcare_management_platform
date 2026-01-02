@@ -59,7 +59,9 @@ class ChatService {
 
   async searchUsers(username, userId, userType) {
     try {
-      const response = await axios.get(`/api/v1/chats/search/${username}/${userId}`, {
+      const encodedUsername = encodeURIComponent(username);
+      const encodedUserId = encodeURIComponent(userId);
+      const response = await axios.get(`/api/v1/chats/search/${encodedUsername}/${encodedUserId}`, {
         params: {
           userType: userType
         }

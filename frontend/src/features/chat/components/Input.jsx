@@ -6,6 +6,7 @@ import { ChatContext } from '../contexts/ChatContext';
 import chatService from '../services/chatService';
 import ImgAttachment from './../../../assets/images/ChatImages/img-attachment.png';
 import Send from './../../../assets/images/ChatImages/send.png';
+import { isArabicLanguage } from '../utils/chatI18n';
 
 const InputSection = styled.div`
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -61,6 +62,8 @@ const UserTextarea = styled.textarea`
     font-family: inherit;
     line-height: 1.5;
     transition: all 0.2s ease;
+    direction: ${props => (props.$isRtl ? 'rtl' : 'ltr')};
+    text-align: ${props => (props.$isRtl ? 'right' : 'left')};
 
     &::placeholder {
         color: #a0aec0;
@@ -76,7 +79,7 @@ const InputOptions = styled.div`
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-left: 16px;
+    margin-right: 16px;
 `;
 
 const AttachButton = styled.label`
@@ -217,13 +220,15 @@ const RemovePreviewButton = styled.button`
 `;
 
 const InputComponent = ({ sendMessage }) => {
-    const { t } = useTranslation('chat');
+    const { t, i18n } = useTranslation('chat');
     const [inputValue, setInputValue] = useState('');
     const [attachedFile, setAttachedFile] = useState(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
     const { userId } = useContext(AuthContext);
     const { state } = useContext(ChatContext); 
     const { currentChat } = state;
+
+    const isRtl = isArabicLanguage(i18n.language);
 
     const handleSend = async () => {
         if (attachedFile) {
@@ -287,20 +292,6 @@ const InputComponent = ({ sendMessage }) => {
 
     return (
         <InputSection>
-            <InputContainer>
-                {imagePreviewUrl && (
-                    <ImagePreviewWrapper>
-                        <ImagePreview src={imagePreviewUrl} alt="Preview" />
-                        <RemovePreviewButton onClick={removePreview}>{t('input.remove')}</RemovePreviewButton>
-                    </ImagePreviewWrapper>
-                )}
-                <UserTextarea
-                    placeholder={t('input.placeholder')}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    hasImage={!!imagePreviewUrl}
-                />
-            </InputContainer>
             <InputOptions>
                 <input
                     type="file"
@@ -320,6 +311,21 @@ const InputComponent = ({ sendMessage }) => {
                     <img src={Send} alt={t('input.send')} />
                 </SendButton>
             </InputOptions>
+            <InputContainer>
+                {imagePreviewUrl && (
+                    <ImagePreviewWrapper>
+                        <ImagePreview src={imagePreviewUrl} alt="Preview" />
+                        <RemovePreviewButton onClick={removePreview}>{t('input.removePreview')}</RemovePreviewButton>
+                    </ImagePreviewWrapper>
+                )}
+                <UserTextarea
+                    placeholder={t('input.placeholder')}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    hasImage={!!imagePreviewUrl}
+                    $isRtl={isRtl}
+                />
+            </InputContainer>
         </InputSection>
     );
 };
