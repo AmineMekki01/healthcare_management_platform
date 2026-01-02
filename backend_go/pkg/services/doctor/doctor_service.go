@@ -646,7 +646,9 @@ func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interfa
 		SELECT DISTINCT 
 			p.patient_id,
 			p.first_name,
+			COALESCE(p.first_name_ar, '') AS first_name_ar,
 			p.last_name,
+			COALESCE(p.last_name_ar, '') AS last_name_ar,
 			p.email,
 			p.phone_number,
 			p.age,
@@ -667,12 +669,12 @@ func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interfa
 
 	var patients []map[string]interface{}
 	for rows.Next() {
-		var patientID, firstName, lastName, email, phoneNumber, sex string
+		var patientID, firstName, firstNameAr, lastName, lastNameAr, email, phoneNumber, sex string
 		var profilePhotoURL *string
 		var age *int
 
 		err := rows.Scan(
-			&patientID, &firstName, &lastName, &email, &phoneNumber,
+			&patientID, &firstName, &firstNameAr, &lastName, &lastNameAr, &email, &phoneNumber,
 			&age, &sex, &profilePhotoURL,
 		)
 		if err != nil {
@@ -685,8 +687,12 @@ func (s *DoctorService) GetDoctorPatients(doctorID string) ([]map[string]interfa
 			"patient_id":      patientID,
 			"firstName":       firstName,
 			"first_name":      firstName,
+			"firstNameAr":     firstNameAr,
+			"first_name_ar":   firstNameAr,
 			"lastName":        lastName,
 			"last_name":       lastName,
+			"lastNameAr":      lastNameAr,
+			"last_name_ar":    lastNameAr,
 			"email":           email,
 			"phoneNumber":     phoneNumber,
 			"phone_number":    phoneNumber,

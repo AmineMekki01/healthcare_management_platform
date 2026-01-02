@@ -28,7 +28,9 @@ export default function PersonalInfo({ userId }) {
   const { t } = useTranslation('settings');
   const [profile, setProfile] = useState({
     firstName: '',
+    firstNameAr: '',
     lastName: '',
+    lastNameAr: '',
     email: '',
     phoneNumber: '',
     clinicPhoneNumber: '',
@@ -85,7 +87,9 @@ export default function PersonalInfo({ userId }) {
     const formData = new FormData();
     
     formData.append('firstName', profile.firstName);
+    formData.append('firstNameAr', profile.firstNameAr || '');
     formData.append('lastName', profile.lastName);
+    formData.append('lastNameAr', profile.lastNameAr || '');
     formData.append('email', profile.email);
     formData.append('phoneNumber', profile.phoneNumber);
     if (userType === 'doctor') {
@@ -196,6 +200,29 @@ export default function PersonalInfo({ userId }) {
             name="lastName"
             placeholder={t('personalInfo.fields.lastName.placeholder')}
             value={profile.lastName || ''}
+            onChange={handleChange}
+          />
+        </FormGroup>
+      </FormRow>
+
+      <FormRow>
+        <FormGroup>
+          <Label htmlFor="firstNameAr">{t('personalInfo.fields.firstNameAr.label')}</Label>
+          <Input
+            id="firstNameAr"
+            name="firstNameAr"
+            placeholder={t('personalInfo.fields.firstNameAr.placeholder')}
+            value={profile.firstNameAr || ''}
+            onChange={handleChange}
+          />
+        </FormGroup>
+        <FormGroup>
+          <Label htmlFor="lastNameAr">{t('personalInfo.fields.lastNameAr.label')}</Label>
+          <Input
+            id="lastNameAr"
+            name="lastNameAr"
+            placeholder={t('personalInfo.fields.lastNameAr.placeholder')}
+            value={profile.lastNameAr || ''}
             onChange={handleChange}
           />
         </FormGroup>

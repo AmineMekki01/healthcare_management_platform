@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { reportsService } from '../services';
 import { formatReportDate, formatPatientName, formatDoctorName } from '../utils';
+import i18n from '../../../i18n';
 
 export const useReportDetail = (reportId) => {
   const [report, setReport] = useState(null);
@@ -59,11 +60,19 @@ export const useReportDetail = (reportId) => {
   const formattedReport = useCallback(() => {
     if (!report) return null;
 
+    const isRtl = (i18n.language || '').startsWith('ar');
+
+    const patientFirst = isRtl && report.patientFirstNameAr ? report.patientFirstNameAr : report.patientFirstName;
+    const patientLast = isRtl && report.patientLastNameAr ? report.patientLastNameAr : report.patientLastName;
+
+    const doctorFirst = isRtl && report.doctorFirstNameAr ? report.doctorFirstNameAr : report.doctorFirstName;
+    const doctorLast = isRtl && report.doctorLastNameAr ? report.doctorLastNameAr : report.doctorLastName;
+
     return {
       ...report,
       formattedDate: formatReportDate(report.createdAt || report.created_at),
-      patientName: formatPatientName(report.patientFirstName, report.patientLastName),
-      doctorName: formatDoctorName(report.doctorFirstName, report.doctorLastName)
+      patientName: formatPatientName(patientFirst, patientLast),
+      doctorName: formatDoctorName(doctorFirst, doctorLast)
     };
   }, [report]);
 

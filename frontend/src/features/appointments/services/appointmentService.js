@@ -1,10 +1,11 @@
 import axios from '../../../components/axiosConfig';
+import i18n from '../../../i18n';
 
 class AppointmentService {
 
   async fetchReservations(userId, userType, viewAs) {
     if (!userId) {
-      throw new Error('User ID is required');
+      throw new Error(i18n.t('appointments:errors.userIdRequired'));
     }
 
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -70,11 +71,11 @@ class AppointmentService {
       const endTime = new Date(startTime.getTime() + appointmentData.duration * 60000);
 
       if (!endTime || isNaN(endTime.getTime()) || !endTime.getTime || !endTime.getTime()) {
-        throw new Error('Invalid appointment end time');
+        throw new Error(i18n.t('appointments:errors.invalidEndTime'));
       }
 
       if (!(endTime > startTime)) {
-        throw new Error('Appointment end time must be after start time');
+        throw new Error(i18n.t('appointments:errors.endAfterStart'));
       }
 
       const requestData = {

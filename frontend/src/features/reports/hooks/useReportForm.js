@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
+import i18n from '../../../i18n';
 import { reportsService } from '../services';
 import { validateReportForm } from '../utils';
+import { normalizeSpecialtyCode } from '../../../utils/specialties';
 
 export const useReportForm = (initialData = {}) => {
   const [formData, setFormData] = useState({
@@ -12,6 +14,7 @@ export const useReportForm = (initialData = {}) => {
     medications: [],
     referralSpecialty: '',
     referralDoctorName: '',
+    referralDoctorId: null,
     referralMessage: '',
     ...initialData
   });
@@ -25,6 +28,11 @@ export const useReportForm = (initialData = {}) => {
     if (initialData && Object.keys(initialData).length > 0) {
       setFormData(prevData => {
         const updatedData = { ...prevData, ...initialData };
+
+
+        if (Object.prototype.hasOwnProperty.call(initialData, 'referralSpecialty')) {
+          updatedData.referralSpecialty = normalizeSpecialtyCode(initialData.referralSpecialty);
+        }
         
         if (initialData.medications && Array.isArray(initialData.medications)) {
           updatedData.medications = initialData.medications.map((med, index) => ({
@@ -96,7 +104,25 @@ export const useReportForm = (initialData = {}) => {
   }, [updateField]);
 
   const handleReferralDoctorChange = useCallback((value) => {
+    if (value && typeof value === 'object') {
+      const isArabic = (i18n.language || '').startsWith('ar');
+      const firstName = value.firstName || value.first_name || '';
+      const lastName = value.lastName || value.last_name || '';
+      const firstNameAr = value.firstNameAr || value.first_name_ar || '';
+      const lastNameAr = value.lastNameAr || value.last_name_ar || '';
+
+      const arFull = [firstNameAr, lastNameAr].filter(Boolean).join(' ').trim();
+      const enFull = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+      const fullName = (isArabic && arFull)
+        ? arFull
+        : (value.fullName || value.full_name || enFull || arFull || '').trim();
+      updateField('referralDoctorName', fullName);
+      updateField('referralDoctorId', value.doctorId || null);
+      return;
+    }
     updateField('referralDoctorName', value);
+    updateField('referralDoctorId', null);
   }, [updateField]);
 
   const validateForm = useCallback(() => {
@@ -116,6 +142,7 @@ export const useReportForm = (initialData = {}) => {
       medications: [],
       referralSpecialty: '',
       referralDoctorName: '',
+      referralDoctorId: null,
       referralMessage: '',
       ...initialData
     });
@@ -135,14 +162,14 @@ export const useReportForm = (initialData = {}) => {
     try {
       const reportData = {
         ...formData,
-        patientFirstName: appointmentData.patientFirstName || appointmentData.patient_first_name || 'Unknown',
-        patientLastName: appointmentData.patientLastName || appointmentData.patient_last_name || 'Patient',
-        doctorFirstName: appointmentData.doctorFirstName || appointmentData.doctor_first_name || 'Dr.',
-        doctorLastName: appointmentData.doctorLastName || appointmentData.doctor_last_name || 'Unknown'
+        patientFirstName: appointmentData.patientFirstName || appointmentData.patient_first_name || i18n.t('reports:defaults.unknown'),
+        patientLastName: appointmentData.patientLastName || appointmentData.patient_last_name || i18n.t('reports:defaults.patient'),
+        doctorFirstName: appointmentData.doctorFirstName || appointmentData.doctor_first_name || i18n.t('reports:defaults.unknown'),
+        doctorLastName: appointmentData.doctorLastName || appointmentData.doctor_last_name || i18n.t('reports:defaults.doctor')
       };
           
       await reportsService.createReport(reportData, appointmentId, doctorId, patientId);
-      setSuccess('Medical report created successfully!');
+      setSuccess(i18n.t('reports:messages.createSuccess'));
       return true;
     } catch (error) {
       setErrors([error.message]);
@@ -162,7 +189,7 @@ export const useReportForm = (initialData = {}) => {
 
     try {
       await reportsService.updateReport(reportId, formData);
-      setSuccess('Medical report updated successfully!');
+      setSuccess(i18n.t('reports:messages.updateSuccess'));
       return true;
     } catch (error) {
       setErrors([error.message]);

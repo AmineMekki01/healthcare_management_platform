@@ -24,7 +24,7 @@ export default function ReportFilters({
   onSearch, 
   loading = false 
 }) {
-  const { t } = useTranslation('reports');
+  const { t, i18n } = useTranslation('reports');
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const currentDay = new Date().getDate();
@@ -168,7 +168,7 @@ export default function ReportFilters({
               </MenuItem>
               {getMonths().map((month) => (
                 <MenuItem key={month} value={month}>
-                  {new Date(0, month - 1).toLocaleString("default", {
+                  {new Date(0, month - 1).toLocaleString(i18n.language || undefined, {
                     month: "long",
                   })}
                 </MenuItem>

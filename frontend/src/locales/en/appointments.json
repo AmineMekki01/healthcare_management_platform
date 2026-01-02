@@ -21,7 +21,17 @@
     "upcomingAppointments": "Upcoming Appointments",
     "completedAppointments": "Completed Appointments",
     "canceledAppointments": "Canceled Appointments",
-    "allAppointments": "All Appointments"
+    "allAppointments": "All Appointments",
+    "subtitle": "Manage your medical appointments",
+    "activeAppointments": "Upcoming",
+    "passedAppointments": "Past",
+    "canceledAppointments": "Canceled",
+    "fetchError": "Failed to fetch appointments"
+  },
+  "errors": {
+    "userIdRequired": "User ID is required",
+    "invalidEndTime": "Invalid appointment end time",
+    "endAfterStart": "Appointment end time must be after start time"
   },
   "status": {
     "scheduled": "Scheduled",
@@ -161,6 +171,11 @@
     "gridView": "Grid View",
     "calendarView": "Calendar View",
     "noAppointments": "No appointments",
+    "blocksAppointments": "Blocks appointments",
+    "tooltips": {
+      "doctorProvider": "Left-click: Schedule appointment | Right-click: Add personal event",
+      "receptionistProvider": "Click: Schedule appointment"
+    },
     "filters": {
       "upcoming": "Upcoming",
       "passed": "Passed",
@@ -216,6 +231,13 @@
       "recurringMessage": "This is a recurring event. Do you want to delete all occurrences?",
       "recurringPrompt": "This is a recurring event. Delete all occurrences?"
     },
+    "recurring": {
+      "daily": "Repeats daily",
+      "weeklyOn": "Repeats weekly on {{days}}",
+      "monthlyOn": "Repeats monthly on day {{day}}",
+      "until": "until {{date}}",
+      "event": "Recurring event"
+    },
     "deleteError": "Failed to delete event. Please try again."
   },
   "quickSchedule": {
@@ -223,6 +245,9 @@
     "patient": "Patient",
     "selectPatient": "Please select a patient",
     "selectPatientPlaceholder": "Search and select patient...",
+    "loadingPatients": "Loading patients...",
+    "noPatientsAvailable": "No patients available",
+    "unknownPatient": "Unknown patient",
     "duration": "Duration",
     "minutes": "minutes",
     "type": "Appointment Type",

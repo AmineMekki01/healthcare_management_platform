@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import i18n from '../../../i18n';
 import appointmentService from '../services/appointmentService';
 
 export const useAppointments = (userId, userType, activeMode) => {
@@ -131,7 +132,7 @@ export const useAppointments = (userId, userType, activeMode) => {
       processReservations(data);
     } catch (err) {
       console.error('Error fetching appointments:', err);
-      setError(err.message || 'Failed to fetch appointments');
+      setError(err.message || i18n.t('appointments:dashboard.fetchError'));
     } finally {
       setLoading(false);
     }

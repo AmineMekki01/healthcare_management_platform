@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 import DoctorAutocomplete from '../../../components/DoctorAutocomplete';
 import MedicationsSection from '../components/MedicationsSection';
 import { reportsService } from '../services';
 import { useReportForm } from '../hooks';
+import { buildSpecialtyOptions, normalizeSpecialtyCode, getLocalizedSpecialtyLabel } from '../../../utils/specialties';
 import {
   Container,
   Paper,
@@ -19,7 +21,11 @@ import {
   Card,
   CardContent,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -33,6 +39,41 @@ export default function CreateMedicalReportPage() {
   const { appointmentId } = useParams();
   const { userId } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('reports');
+  const { t: tMedical } = useTranslation('medical');
+
+  const isRtl = (i18n.language || '').startsWith('ar');
+  const rtlTextFieldSx = isRtl
+    ? {
+        '& .MuiOutlinedInput-root': {
+          direction: 'rtl',
+        },
+        '& .MuiOutlinedInput-notchedOutline': {
+          textAlign: 'right',
+        },
+        '& .MuiInputLabel-root': {
+          left: 'auto',
+          right: 14,
+          transformOrigin: 'top right',
+          textAlign: 'right',
+          transform: 'translate(0, 16px) scale(1)',
+        },
+        '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+          transformOrigin: 'top right',
+          transform: 'translate(0, -9px) scale(0.75)',
+        },
+        '& .MuiOutlinedInput-input': {
+          direction: 'rtl',
+          textAlign: 'right',
+        },
+      }
+    : undefined;
+
+  const getLocalizedName = (firstName, lastName, firstNameAr, lastNameAr) => {
+    const preferredFirst = isRtl && firstNameAr ? firstNameAr : firstName;
+    const preferredLast = isRtl && lastNameAr ? lastNameAr : lastName;
+    return [preferredFirst, preferredLast].filter(Boolean).join(' ');
+  };
   
   const [appointmentLoading, setAppointmentLoading] = useState(true);
   const [appointmentData, setAppointmentData] = useState(null);
@@ -53,6 +94,8 @@ export default function CreateMedicalReportPage() {
     removeMedication
   } = useReportForm();
 
+  const specialtyOptions = buildSpecialtyOptions(tMedical);
+
   useEffect(() => {
     const fetchAppointmentDetails = async () => {
       try {
@@ -62,7 +105,7 @@ export default function CreateMedicalReportPage() {
         setAppointmentError('');
       } catch (error) {
         console.error('Error fetching appointment details:', error);
-        setAppointmentError('Failed to load appointment details');
+        setAppointmentError(t('errors.loadAppointmentDetails'));
       } finally {
         setAppointmentLoading(false);
       }
@@ -71,7 +114,7 @@ export default function CreateMedicalReportPage() {
     if (appointmentId) {
       fetchAppointmentDetails();
     }
-  }, [appointmentId]);
+  }, [appointmentId, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +138,7 @@ export default function CreateMedicalReportPage() {
       <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
         <CircularProgress />
         <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading appointment details...
+          {t('status.loadingAppointmentDetails')}
         </Typography>
       </Container>
     );
@@ -105,7 +148,7 @@ export default function CreateMedicalReportPage() {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error">
-          {appointmentError || 'Appointment not found or you don\'t have permission to create a report for this appointment.'}
+          {appointmentError || t('pages.createMedicalReport.appointmentNotFound')}
         </Alert>
       </Container>
     );
@@ -119,10 +162,10 @@ export default function CreateMedicalReportPage() {
           onClick={() => navigate('/appointments')}
           sx={{ mr: 2 }}
         >
-          Back to Appointments
+          {t('pages.createMedicalReport.backToAppointments')}
         </Button>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-          Create Medical Report
+          {t('pages.createMedicalReport.title')}
         </Typography>
       </Box>
 
@@ -130,14 +173,20 @@ export default function CreateMedicalReportPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
             <EventIcon sx={{ mr: 1 }} />
-            Appointment Details
+            {t('pages.createMedicalReport.appointmentDetails')}
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <Box display="flex" alignItems="center">
                 <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Patient:</strong> {appointmentData.patientFirstName} {appointmentData.patientLastName}
+                  <strong>{t('labels.patient')}:</strong>{' '}
+                  {getLocalizedName(
+                    appointmentData.patientFirstName,
+                    appointmentData.patientLastName,
+                    appointmentData.patientFirstNameAr || appointmentData.patient_first_name_ar,
+                    appointmentData.patientLastNameAr || appointmentData.patient_last_name_ar
+                  )}
                 </Typography>
               </Box>
             </Grid>
@@ -145,7 +194,7 @@ export default function CreateMedicalReportPage() {
               <Box display="flex" alignItems="center">
                 <EventIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Date:</strong> {new Date(appointmentData.appointmentStart).toLocaleDateString()}
+                  <strong>{t('common:common.date')}:</strong> {new Date(appointmentData.appointmentStart).toLocaleDateString(i18n.language || undefined)}
                 </Typography>
               </Box>
             </Grid>
@@ -153,7 +202,7 @@ export default function CreateMedicalReportPage() {
               <Box display="flex" alignItems="center">
                 <LocalHospitalIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Time:</strong> {new Date(appointmentData.appointmentStart).toLocaleTimeString()} - {new Date(appointmentData.appointmentEnd).toLocaleTimeString()}
+                  <strong>{t('common:common.time')}:</strong> {new Date(appointmentData.appointmentStart).toLocaleTimeString(i18n.language || undefined)} - {new Date(appointmentData.appointmentEnd).toLocaleTimeString(i18n.language || undefined)}
                 </Typography>
               </Box>
             </Grid>
@@ -163,7 +212,7 @@ export default function CreateMedicalReportPage() {
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Medical Report Form
+          {t('form.medicalReportForm')}
         </Typography>
 
         {errors.length > 0 && (
@@ -185,7 +234,7 @@ export default function CreateMedicalReportPage() {
         <form onSubmit={handleSubmit}>
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Diagnosis Information
+              {t('form.diagnosisInformation')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
@@ -198,7 +247,7 @@ export default function CreateMedicalReportPage() {
                       onChange={handleChange('diagnosisMade')}
                     />
                   }
-                  label="Diagnosis Made"
+                  label={t('form.diagnosisMade')}
                   sx={{ mb: 1 }}
                 />
               </Grid>
@@ -208,22 +257,26 @@ export default function CreateMedicalReportPage() {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Diagnosis Name"
+                      label={t('form.diagnosisName')}
                       value={formData.diagnosisName}
                       onChange={handleChange('diagnosisName')}
                       required
-                      placeholder="e.g., Hypertension, Diabetes Type 2, Upper Respiratory Infection"
+                      placeholder={t('placeholders.diagnosisName')}
+                      sx={rtlTextFieldSx}
+                      inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                     />
                   </Grid>
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Diagnosis Details"
+                      label={t('form.diagnosisDetails')}
                       value={formData.diagnosisDetails}
                       onChange={handleChange('diagnosisDetails')}
                       multiline
                       rows={3}
-                      placeholder="Detailed description of the diagnosis, symptoms observed, and clinical findings"
+                      placeholder={t('placeholders.diagnosisDetails')}
+                      sx={rtlTextFieldSx}
+                      inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                     />
                   </Grid>
                 </>
@@ -233,19 +286,21 @@ export default function CreateMedicalReportPage() {
 
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Examination Report
+              {t('form.examinationReport')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
             <TextField
               fullWidth
-              label="Report Content"
+              label={t('form.reportContent')}
               value={formData.reportContent}
               onChange={handleChange('reportContent')}
               multiline
               rows={6}
               required
-              placeholder="Detailed examination findings, treatment provided, medications prescribed, recommendations, and follow-up instructions"
+              placeholder={t('placeholders.reportContent')}
+              sx={rtlTextFieldSx}
+              inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
             />
           </Box>
 
@@ -261,7 +316,7 @@ export default function CreateMedicalReportPage() {
 
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Referral Information
+              {t('form.referralInformation')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
@@ -272,40 +327,60 @@ export default function CreateMedicalReportPage() {
                   onChange={handleChange('referralNeeded')}
                 />
               }
-              label="Referral Required"
+              label={t('form.referralRequired')}
               sx={{ mb: 2 }}
             />
 
             {formData.referralNeeded && (
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Referral Specialty"
-                    value={formData.referralSpecialty}
-                    onChange={handleChange('referralSpecialty')}
-                    placeholder="e.g., Cardiology, Dermatology, Orthopedics"
-                  />
+                  <FormControl fullWidth sx={rtlTextFieldSx}>
+                    <InputLabel id="referralSpecialty-label">{t('form.referralSpecialty')}</InputLabel>
+                    <Select
+                      labelId="referralSpecialty-label"
+                      value={normalizeSpecialtyCode(formData.referralSpecialty) || ''}
+                      label={t('form.referralSpecialty')}
+                      onChange={handleChange('referralSpecialty')}
+                      displayEmpty
+                      inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
+                      renderValue={(selected) => (
+                        selected
+                          ? getLocalizedSpecialtyLabel(selected, tMedical)
+                          : t('placeholders.referralSpecialty')
+                      )}
+                    >
+                      <MenuItem value="">
+                        <em>{t('placeholders.referralSpecialty')}</em>
+                      </MenuItem>
+                      {specialtyOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <DoctorAutocomplete
                     value={formData.referralDoctorName}
                     onChange={handleReferralDoctorChange}
-                    specialty={formData.referralSpecialty}
-                    label="Referred Doctor Name"
-                    placeholder="Search for a doctor or enter manually"
+                    specialty={normalizeSpecialtyCode(formData.referralSpecialty)}
+                    label={t('form.referredDoctorName')}
+                    placeholder={t('placeholders.referredDoctorName')}
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Referral Message"
+                    label={t('form.referralMessage')}
                     value={formData.referralMessage}
                     onChange={handleChange('referralMessage')}
                     multiline
                     rows={3}
-                    placeholder="Additional information for the specialist"
+                    placeholder={t('placeholders.referralMessage')}
+                    sx={rtlTextFieldSx}
+                    inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                   />
                 </Grid>
               </Grid>
@@ -318,7 +393,7 @@ export default function CreateMedicalReportPage() {
               onClick={() => navigate('/appointments')}
               disabled={loading}
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
             <Button
               type="submit"
@@ -327,7 +402,7 @@ export default function CreateMedicalReportPage() {
               disabled={loading}
               sx={{ minWidth: 150 }}
             >
-              {loading ? 'Creating...' : 'Create Report'}
+              {loading ? t('status.creating') : t('actions.createReport')}
             </Button>
           </Box>
         </form>

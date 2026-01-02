@@ -21,7 +21,13 @@
     "upcomingAppointments": "Rendez-vous à venir",
     "completedAppointments": "Rendez-vous terminés",
     "canceledAppointments": "Rendez-vous annulés",
-    "allAppointments": "Tous les rendez-vous"
+    "allAppointments": "Tous les rendez-vous",
+    "fetchError": "Échec du chargement des rendez-vous"
+  },
+  "errors": {
+    "userIdRequired": "L'identifiant utilisateur est requis",
+    "invalidEndTime": "Heure de fin du rendez-vous invalide",
+    "endAfterStart": "L'heure de fin doit être après l'heure de début"
   },
   "status": {
     "scheduled": "Planifié",
@@ -161,6 +167,11 @@
     "gridView": "Vue Grille",
     "calendarView": "Vue Calendrier",
     "noAppointments": "Aucun rendez-vous",
+    "blocksAppointments": "Bloque les rendez-vous",
+    "tooltips": {
+      "doctorProvider": "Clic gauche : planifier un rendez-vous | Clic droit : ajouter un événement personnel",
+      "receptionistProvider": "Cliquer : planifier un rendez-vous"
+    },
     "filters": {
       "upcoming": "À venir",
       "passed": "Passés",
@@ -216,6 +227,13 @@
       "recurringMessage": "Ceci est un événement récurrent. Voulez-vous supprimer toutes les occurrences?",
       "recurringPrompt": "Ceci est un événement récurrent. Supprimer toutes les occurrences?"
     },
+    "recurring": {
+      "daily": "Se répète quotidiennement",
+      "weeklyOn": "Se répète chaque semaine le {{days}}",
+      "monthlyOn": "Se répète chaque mois le jour {{day}}",
+      "until": "jusqu'au {{date}}",
+      "event": "Événement récurrent"
+    },
     "deleteError": "Échec de la suppression de l'événement. Veuillez réessayer."
   },
   "quickSchedule": {
@@ -223,6 +241,9 @@
     "patient": "Patient",
     "selectPatient": "Veuillez sélectionner un patient",
     "selectPatientPlaceholder": "Rechercher et sélectionner un patient...",
+    "loadingPatients": "Chargement des patients...",
+    "noPatientsAvailable": "Aucun patient disponible",
+    "unknownPatient": "Patient inconnu",
     "duration": "Durée",
     "minutes": "minutes",
     "type": "Type de rendez-vous",

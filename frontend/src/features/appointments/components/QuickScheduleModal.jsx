@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { Close, Person, AccessTime, Event } from '@mui/icons-material';
 import appointmentService from '../services/appointmentService';
 import receptionistPatientService from '../../receptionist/services/receptionistPatientService';
+import { formatAppointmentTime, getLocalizedFullName } from '../utils/appointmentI18n';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -192,7 +193,7 @@ const QuickScheduleModal = ({
   loading: loadingPatients = false,
   onSuccess 
 }) => {
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
   const [formData, setFormData] = useState({
     patientId: '',
     duration: 30,
@@ -203,15 +204,30 @@ const QuickScheduleModal = ({
   const [error, setError] = useState('');
   const [endTime, setEndTime] = useState('');
 
+  const getPatientLabel = (patient) => {
+    const label = getLocalizedFullName(
+      {
+        firstName: patient?.firstName || patient?.first_name,
+        lastName: patient?.lastName || patient?.last_name,
+        firstNameAr: patient?.firstNameAr || patient?.first_name_ar,
+        lastNameAr: patient?.lastNameAr || patient?.last_name_ar,
+        fullName: patient?.name,
+      },
+      i18n.language
+    );
+
+    return label || t('quickSchedule.unknownPatient');
+  };
+
   useEffect(() => {
     if (selectedDate && selectedTime && formData.duration) {
       const [hours, minutes] = selectedTime.split(':');
       const start = new Date(selectedDate);
       start.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       const end = new Date(start.getTime() + formData.duration * 60000);
-      setEndTime(end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setEndTime(formatAppointmentTime(end, i18n.language));
     }
-  }, [selectedDate, selectedTime, formData.duration]);
+  }, [selectedDate, selectedTime, formData.duration, i18n.language]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -282,18 +298,34 @@ const QuickScheduleModal = ({
   if (!isOpen) return null;
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString([], { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    try {
+      return new Intl.DateTimeFormat(i18n.language || undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(date));
+    } catch {
+      return new Date(date).toLocaleDateString(i18n.language || undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  };
+
+  const formatSelectedStartTime = () => {
+    if (!selectedDate || !selectedTime) return selectedTime;
+    const [hours, minutes] = selectedTime.split(':');
+    const start = new Date(selectedDate);
+    start.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    return formatAppointmentTime(start, i18n.language);
   };
 
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <Title>{t('quickSchedule.title')} - {formatDate(selectedDate)}, {selectedTime}</Title>
+          <Title>{t('quickSchedule.title')} - {formatDate(selectedDate)}, {formatSelectedStartTime()}</Title>
           <CloseButton onClick={onClose}>
             <Close />
           </CloseButton>
@@ -316,20 +348,15 @@ const QuickScheduleModal = ({
             >
               <option value="">
                 {loadingPatients 
-                  ? 'Loading patients...' 
+                  ? t('quickSchedule.loadingPatients') 
                   : patients.length === 0 
-                    ? 'No patients available' 
+                    ? t('quickSchedule.noPatientsAvailable') 
                     : t('quickSchedule.selectPatientPlaceholder')
                 }
               </option>
               {patients.map(patient => (
                 <option key={patient.patientId || patient.patient_id} value={patient.patientId || patient.patient_id}>
-                  {patient.firstName && patient.lastName 
-                    ? `${patient.firstName} ${patient.lastName}`
-                    : patient.first_name && patient.last_name
-                      ? `${patient.first_name} ${patient.last_name}`
-                      : patient.name || 'Unknown Patient'
-                  }
+                  {getPatientLabel(patient)}
                 </option>
               ))}
             </Select>
@@ -383,7 +410,7 @@ const QuickScheduleModal = ({
           <TimeSummary>
             <TimeRow>
               <strong>{t('quickSchedule.start')}:</strong>
-              <span>{selectedTime}</span>
+              <span>{formatSelectedStartTime()}</span>
             </TimeRow>
             <TimeRow>
               <strong>{t('quickSchedule.end')}:</strong>
@@ -393,10 +420,10 @@ const QuickScheduleModal = ({
 
           <ButtonGroup>
             <CancelButton type="button" onClick={onClose}>
-              {t('common:cancel')}
+              {t('common:buttons.cancel')}
             </CancelButton>
             <CreateButton type="submit" disabled={loading}>
-              {loading ? t('common:loading') : t('quickSchedule.create')}
+              {loading ? t('common:status.loading') : t('quickSchedule.create')}
             </CreateButton>
           </ButtonGroup>
         </form>

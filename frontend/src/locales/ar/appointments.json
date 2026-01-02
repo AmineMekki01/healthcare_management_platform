@@ -21,7 +21,13 @@
     "upcomingAppointments": "المواعيد القادمة",
     "completedAppointments": "المواعيد المكتملة",
     "canceledAppointments": "المواعيد الملغاة",
-    "allAppointments": "جميع المواعيد"
+    "allAppointments": "جميع المواعيد",
+    "fetchError": "فشل جلب المواعيد"
+  },
+  "errors": {
+    "userIdRequired": "معرّف المستخدم مطلوب",
+    "invalidEndTime": "وقت انتهاء الموعد غير صالح",
+    "endAfterStart": "يجب أن يكون وقت انتهاء الموعد بعد وقت البدء"
   },
   "status": {
     "scheduled": "مجدول",
@@ -161,6 +167,11 @@
     "gridView": "عرض الشبكة",
     "calendarView": "عرض التقويم",
     "noAppointments": "لا توجد مواعيد",
+    "blocksAppointments": "يحظر المواعيد",
+    "tooltips": {
+      "doctorProvider": "نقرة يسار: جدولة موعد | نقرة يمين: إضافة حدث شخصي",
+      "receptionistProvider": "انقر: جدولة موعد"
+    },
     "filters": {
       "upcoming": "القادمة",
       "passed": "السابقة",
@@ -216,6 +227,13 @@
       "recurringMessage": "هذا حدث متكرر. هل تريد حذف جميع التكرارات؟",
       "recurringPrompt": "هذا حدث متكرر. حذف جميع التكرارات؟"
     },
+    "recurring": {
+      "daily": "يتكرر يومياً",
+      "weeklyOn": "يتكرر أسبوعياً في {{days}}",
+      "monthlyOn": "يتكرر شهرياً في اليوم {{day}}",
+      "until": "حتى {{date}}",
+      "event": "حدث متكرر"
+    },
     "deleteError": "فشل حذف الحدث. يرجى المحاولة مرة أخرى."
   },
   "quickSchedule": {
@@ -223,6 +241,9 @@
     "patient": "المريض",
     "selectPatient": "الرجاء اختيار مريض",
     "selectPatientPlaceholder": "ابحث واختر مريض...",
+    "loadingPatients": "جاري تحميل المرضى...",
+    "noPatientsAvailable": "لا يوجد مرضى متاحون",
+    "unknownPatient": "مريض غير معروف",
     "duration": "المدة",
     "minutes": "دقيقة",
     "type": "نوع الموعد",

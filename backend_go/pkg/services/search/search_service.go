@@ -155,14 +155,47 @@ func (s *SearchService) SearchDoctorsForReferral(searchQuery, specialty string, 
 	argCount := 1
 
 	if searchQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty_code) LIKE $%d)", argCount, argCount)
-		args = append(args, "%"+strings.ToLower(searchQuery)+"%")
+		q := strings.TrimSpace(searchQuery)
+		qLower := strings.ToLower(q)
+		if strings.HasPrefix(qLower, "dr. ") {
+			q = strings.TrimSpace(q[4:])
+		} else if strings.HasPrefix(qLower, "dr ") {
+			q = strings.TrimSpace(q[3:])
+		} else if qLower == "dr" || qLower == "dr." {
+			q = ""
+		}
+
+		q = strings.TrimSpace(q)
+		if strings.HasPrefix(q, "د. ") {
+			q = strings.TrimSpace(q[3:])
+		} else if strings.HasPrefix(q, "د.") {
+			q = strings.TrimSpace(q[2:])
+		} else if strings.HasPrefix(q, "د ") {
+			q = strings.TrimSpace(q[2:])
+		} else if q == "د" || q == "د." {
+			q = ""
+		}
+
+		query += fmt.Sprintf(
+			" AND ("+
+				"LOWER(first_name || ' ' || last_name) LIKE $%d "+
+				"OR LOWER(COALESCE(first_name_ar, '') || ' ' || COALESCE(last_name_ar, '')) LIKE $%d "+
+				"OR LOWER(COALESCE(last_name_ar, '') || ' ' || COALESCE(first_name_ar, '')) LIKE $%d "+
+				"OR LOWER(specialty_code) LIKE $%d"+
+				")",
+			argCount, argCount, argCount, argCount,
+		)
+		args = append(args, "%"+strings.ToLower(q)+"%")
 		argCount++
 	}
 
 	if specialty != "" {
-		query += fmt.Sprintf(" AND LOWER(specialty_code) LIKE $%d", argCount)
-		args = append(args, "%"+strings.ToLower(specialty)+"%")
+		norm := strings.ToLower(strings.TrimSpace(specialty))
+		norm = strings.ReplaceAll(norm, " ", "")
+		norm = strings.ReplaceAll(norm, "_", "")
+		norm = strings.ReplaceAll(norm, "-", "")
+		query += fmt.Sprintf(" AND regexp_replace(LOWER(specialty_code), '[^a-z0-9]+', '', 'g') LIKE $%d", argCount)
+		args = append(args, "%"+norm+"%")
 		argCount++
 	}
 

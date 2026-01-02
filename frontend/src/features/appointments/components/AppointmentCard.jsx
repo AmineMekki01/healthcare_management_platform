@@ -7,21 +7,26 @@ import { useTranslation } from 'react-i18next';
 import { CardContainer, CardHeader, TitleText, CardBody, CardFooter, IconButton, CancelButton, CancelButtonContainer, StatusChip, CreateReportButton } from '../styles/appointmentStyles';
 import CancelAppointmentModal from './CancelAppointmentModal';
 import appointmentService from '../services/appointmentService';
+import {
+  formatAppointmentDate,
+  formatAppointmentTime,
+  getDoctorPrefix,
+  getLocalizedDoctorName,
+  getLocalizedPatientName,
+  getLocalizedSpecialtyLabel,
+} from '../utils/appointmentI18n';
 
 export default function AppointmentCard({ reservation, userType, onAppointmentUpdate }) {
   console.log("reservation : ", reservation)
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
+  const { t: tMedical } = useTranslation('medical');
   const navigate = useNavigate();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  const formatDate = (dateString) => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  const doctorName = getLocalizedDoctorName(reservation, i18n.language);
+  const patientName = getLocalizedPatientName(reservation, i18n.language);
+  const doctorPrefix = getDoctorPrefix(i18n.language);
+  const specialtyLabel = getLocalizedSpecialtyLabel(reservation.specialty, tMedical);
 
   const isPastAppointment = new Date(reservation.appointmentEnd) < new Date();
   const isCanceledAppointment = Boolean(reservation.canceled ?? reservation.Canceled);
@@ -33,8 +38,8 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
     const event = createEvent({
       start: [start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes()],
       end: [end.getFullYear(), end.getMonth() + 1, end.getDate(), end.getHours(), end.getMinutes()],
-      title: t('card.appointmentWith', { doctorName: `${reservation.doctorFirstName} ${reservation.doctorLastName}` }),
-      description: t('card.specialty', { specialty: reservation.specialty }),
+      title: t('card.appointmentWith', { doctorName: doctorName }),
+      description: t('card.specialty', { specialty: specialtyLabel || reservation.specialty }),
       location: t('card.onlineConsultation'),
     });
 
@@ -56,9 +61,9 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
     const shareData = {
       title: t('card.appointmentDetails'),
       text: t('card.shareText', {
-        doctorName: `${reservation.doctorFirstName} ${reservation.doctorLastName}`,
-        date: formatDate(reservation.appointmentStart),
-        time: formatTime(reservation.appointmentStart)
+        doctorName: doctorName,
+        date: formatAppointmentDate(reservation.appointmentStart, i18n.language),
+        time: formatAppointmentTime(reservation.appointmentStart, i18n.language)
       }),
     };
 
@@ -105,7 +110,7 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
     <CardContainer>
       <CardHeader>
         <TitleText variant="h6">
-          {userType === 'patient' ? `Dr. ${reservation.doctorFirstName} ${reservation.doctorLastName}` : `${reservation.patientFirstName} ${reservation.patientLastName}`}
+          {userType === 'patient' ? `${doctorPrefix} ${doctorName}` : patientName}
         </TitleText>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {userType === 'doctor' && isPastAppointment && !isCanceledAppointment && hasReport && (
@@ -120,14 +125,14 @@ export default function AppointmentCard({ reservation, userType, onAppointmentUp
       </CardHeader>
       <CardBody>
         <Typography variant="body1">
-          <CalendarToday /> {formatDate(reservation.appointmentStart)}
+          <CalendarToday /> {formatAppointmentDate(reservation.appointmentStart, i18n.language)}
         </Typography>
         <Typography variant="body1">
-          <AccessTime /> {formatTime(reservation.appointmentStart)} - {formatTime(reservation.appointmentEnd)}
+          <AccessTime /> {formatAppointmentTime(reservation.appointmentStart, i18n.language)} - {formatAppointmentTime(reservation.appointmentEnd, i18n.language)}
         </Typography>
         {userType === 'patient' && (
           <Typography variant="body1">
-            <MedicalServices /> {reservation.specialty}
+            <MedicalServices /> {specialtyLabel || reservation.specialty}
           </Typography>
         )}
         {userType === 'doctor' && (

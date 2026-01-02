@@ -25,7 +25,37 @@ export default function ReportCard({
   onDelete, 
   deleteLoading = false 
 }) {
-  const { t } = useTranslation('reports');
+  const { t, i18n } = useTranslation('reports');
+  const isRtl = (i18n.language || '').startsWith('ar');
+
+  const patientName = [
+    isRtl && report.patientFirstNameAr ? report.patientFirstNameAr : report.patientFirstName,
+    isRtl && report.patientLastNameAr ? report.patientLastNameAr : report.patientLastName,
+  ].filter(Boolean).join(' ');
+
+  const rawCreatedAt = report.createdAt || report.created_at;
+  const createdAtDate = rawCreatedAt ? new Date(rawCreatedAt) : null;
+  const createdAtText = createdAtDate && !Number.isNaN(createdAtDate.getTime())
+    ? createdAtDate.toLocaleDateString(i18n.language || undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    : t('common:common.notAvailable');
+
+  const referralDoctorDisplayName = (() => {
+    const hasReferralDoctorId = Boolean(report.referralDoctorId || report.referral_doctor_id);
+    if (!hasReferralDoctorId) return report.referralDoctorName;
+
+    const first = isRtl && report.referralDoctorFirstNameAr
+      ? report.referralDoctorFirstNameAr
+      : report.referralDoctorFirstName;
+    const last = isRtl && report.referralDoctorLastNameAr
+      ? report.referralDoctorLastNameAr
+      : report.referralDoctorLastName;
+    const full = [first, last].filter(Boolean).join(' ').trim();
+    return full || report.referralDoctorName;
+  })();
   return (
     <Card
       sx={{
@@ -80,7 +110,7 @@ export default function ReportCard({
                 mb: 0.5
               }}
             >
-              {report.patientFirstName} {report.patientLastName}
+              {patientName}
             </Typography>
             <Chip 
               label={t('labels.patient')}
@@ -162,7 +192,7 @@ export default function ReportCard({
                   fontWeight: 500
                 }}
               >
-                Dr. {report.referralDoctorName}
+                {t('labels.doctorPrefix')} {referralDoctorDisplayName}
               </Typography>
             </Box>
           </Box>
@@ -200,11 +230,7 @@ export default function ReportCard({
                   fontWeight: 500
                 }}
               >
-                {new Date(report.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
+                {createdAtText}
               </Typography>
             </Box>
           </Box>

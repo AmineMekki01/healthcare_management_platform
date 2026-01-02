@@ -19,7 +19,9 @@ type PatientSearchRequest struct {
 type PatientSearchResult struct {
 	PatientID             uuid.UUID  `json:"patientId"`
 	FirstName             string     `json:"firstName"`
+	FirstNameAr           string     `json:"firstNameAr"`
 	LastName              string     `json:"lastName"`
+	LastNameAr            string     `json:"lastNameAr"`
 	Email                 string     `json:"email"`
 	PhoneNumber           *string    `json:"phoneNumber"`
 	Age                   *int       `json:"age"`

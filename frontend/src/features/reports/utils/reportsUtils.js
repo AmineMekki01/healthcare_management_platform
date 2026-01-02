@@ -1,3 +1,5 @@
+import i18n from '../../../i18n';
+
 export const formatReportDate = (date, format = 'long') => {
   if (!date) return '';
   
@@ -6,20 +8,20 @@ export const formatReportDate = (date, format = 'long') => {
     
     switch (format) {
       case 'short':
-        return dateObj.toLocaleDateString('en-US', {
+        return dateObj.toLocaleDateString(i18n.language || undefined, {
           month: 'short',
           day: 'numeric',
           year: 'numeric'
         });
       case 'numeric':
-        return dateObj.toLocaleDateString('en-US', {
+        return dateObj.toLocaleDateString(i18n.language || undefined, {
           month: '2-digit',
           day: '2-digit',
           year: 'numeric'
         });
       case 'long':
       default:
-        return dateObj.toLocaleDateString('en-US', {
+        return dateObj.toLocaleDateString(i18n.language || undefined, {
           year: 'numeric',
           month: 'long',
           day: 'numeric'
@@ -32,29 +34,29 @@ export const formatReportDate = (date, format = 'long') => {
 };
 
 export const formatPatientName = (firstName, lastName, middleName = '') => {
-  if (!firstName && !lastName) return 'Unknown Patient';
+  if (!firstName && !lastName) return i18n.t('reports:defaults.unknownPatient');
   
   const nameParts = [firstName, middleName, lastName].filter(Boolean);
   return nameParts.join(' ');
 };
 
 export const formatDoctorName = (firstName, lastName, includeTitle = true) => {
-  if (!firstName && !lastName) return 'Unknown Doctor';
+  if (!firstName && !lastName) return i18n.t('reports:defaults.unknownDoctor');
   
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
-  return includeTitle ? `Dr. ${fullName}` : fullName;
+  return includeTitle ? `${i18n.t('reports:labels.doctorPrefix')} ${fullName}` : fullName;
 };
 
 export const getReportStatus = (report) => {
   if (!report) {
-    return { text: 'Unknown', color: 'default' };
+    return { text: i18n.t('reports:statusLabels.unknown'), color: 'default' };
   }
 
   if (report.referralNeeded) {
-    return { text: 'Referral Required', color: 'warning' };
+    return { text: i18n.t('reports:statusLabels.referralRequired'), color: 'warning' };
   }
 
-  return { text: 'Complete', color: 'success' };
+  return { text: i18n.t('reports:statusLabels.complete'), color: 'success' };
 };
 
 
@@ -63,32 +65,32 @@ export const validateReportForm = (reportData) => {
   const warnings = [];
 
   if (!reportData.diagnosisName?.trim()) {
-    errors.push('Diagnosis name is required');
+    errors.push(i18n.t('reports:validation.diagnosisNameRequired'));
   }
 
   if (!reportData.diagnosisDetails?.trim()) {
-    errors.push('Diagnosis details are required');
+    errors.push(i18n.t('reports:validation.diagnosisDetailsRequired'));
   }
 
   if (!reportData.reportContent?.trim()) {
-    errors.push('Report content is required');
+    errors.push(i18n.t('reports:validation.reportContentRequired'));
   }
 
   if (reportData.referralNeeded) {
     if (!reportData.referralSpecialty?.trim()) {
-      errors.push('Referral specialty is required when referral is needed');
+      errors.push(i18n.t('reports:validation.referralSpecialtyRequired'));
     }
     if (!reportData.referralDoctorName?.trim()) {
-      errors.push('Referral doctor name is required when referral is needed');
+      errors.push(i18n.t('reports:validation.referralDoctorNameRequired'));
     }
   }
 
   if (reportData.diagnosisName && reportData.diagnosisName.length > 200) {
-    warnings.push('Diagnosis name should be under 200 characters');
+    warnings.push(i18n.t('reports:validation.diagnosisNameMaxLength'));
   }
 
   if (reportData.reportContent && reportData.reportContent.length < 50) {
-    warnings.push('Report content seems too short for a medical report');
+    warnings.push(i18n.t('reports:validation.reportContentTooShort'));
   }
 
   return {
@@ -99,28 +101,28 @@ export const validateReportForm = (reportData) => {
 };
 
 export const getReportType = (report) => {
-  if (!report?.diagnosisName) return 'General';
+  if (!report?.diagnosisName) return i18n.t('reports:types.general');
 
   const diagnosis = report.diagnosisName.toLowerCase();
   
   if (diagnosis.includes('surgery') || diagnosis.includes('operation')) {
-    return 'Surgical';
+    return i18n.t('reports:types.surgical');
   }
   if (diagnosis.includes('follow-up') || diagnosis.includes('followup')) {
-    return 'Follow-up';
+    return i18n.t('reports:types.followUp');
   }
   if (diagnosis.includes('consultation')) {
-    return 'Consultation';
+    return i18n.t('reports:types.consultation');
   }
   if (diagnosis.includes('emergency')) {
-    return 'Emergency';
+    return i18n.t('reports:types.emergency');
   }
   
-  return 'General';
+  return i18n.t('reports:types.general');
 };
 
 export const generateReportSummary = (report, maxLength = 150) => {
-  if (!report?.reportContent) return 'No summary available';
+  if (!report?.reportContent) return i18n.t('reports:defaults.noSummary');
 
   const content = report.reportContent.replace(/\n/g, ' ').trim();
   
@@ -270,13 +272,13 @@ export const exportReportsToCSV = (reports) => {
   }
 
   const headers = [
-    'Date',
-    'Patient Name',
-    'Diagnosis',
-    'Report Type',
-    'Referral Needed',
-    'Referral Specialty',
-    'Referral Doctor'
+    i18n.t('reports:csv.headers.date'),
+    i18n.t('reports:csv.headers.patientName'),
+    i18n.t('reports:csv.headers.diagnosis'),
+    i18n.t('reports:csv.headers.reportType'),
+    i18n.t('reports:csv.headers.referralNeeded'),
+    i18n.t('reports:csv.headers.referralSpecialty'),
+    i18n.t('reports:csv.headers.referralDoctor')
   ];
 
   const csvRows = [
@@ -286,7 +288,7 @@ export const exportReportsToCSV = (reports) => {
       `"${formatPatientName(report.patientFirstName, report.patientLastName)}"`,
       `"${report.diagnosisName || ''}"`,
       `"${getReportType(report)}"`,
-      report.referralNeeded ? 'Yes' : 'No',
+      report.referralNeeded ? i18n.t('common:common.yes') : i18n.t('common:common.no'),
       `"${report.referralSpecialty || ''}"`,
       `"${report.referralDoctorName || ''}"`
     ].join(','))
