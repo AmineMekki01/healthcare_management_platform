@@ -22,9 +22,17 @@
         "label": "First Name",
         "placeholder": "Enter your first name"
       },
+      "firstNameAr": {
+        "label": "First Name (Arabic)",
+        "placeholder": "Enter your first name in Arabic"
+      },
       "lastName": {
         "label": "Last Name",
         "placeholder": "Enter your last name"
+      },
+      "lastNameAr": {
+        "label": "Last Name (Arabic)",
+        "placeholder": "Enter your last name in Arabic"
       },
       "email": {
         "label": "Email Address",

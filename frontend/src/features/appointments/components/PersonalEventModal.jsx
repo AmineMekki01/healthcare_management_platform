@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatTime24HHmm } from '../utils/appointmentI18n';
 import styled from 'styled-components';
 import { Close, Event, AccessTime, Block, Repeat } from '@mui/icons-material';
 import calendarEventService from '../services/calendarEventService';
@@ -302,7 +303,7 @@ const PersonalEventModal = ({
       setFormData(prev => ({
         ...prev,
         startTime: selectedTime,
-        endTime: end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+        endTime: formatTime24HHmm(end)
       }));
     }
   }, [selectedTime]);
@@ -560,10 +561,10 @@ const PersonalEventModal = ({
 
           <ButtonGroup>
             <CancelButton type="button" onClick={onClose}>
-              {t('common:cancel')}
+              {t('common:buttons.cancel')}
             </CancelButton>
             <CreateButton type="submit" disabled={loading}>
-              {loading ? t('common:loading') : t('personalEvent.create')}
+              {loading ? t('common:status.loading') : t('personalEvent.create')}
             </CreateButton>
           </ButtonGroup>
         </form>

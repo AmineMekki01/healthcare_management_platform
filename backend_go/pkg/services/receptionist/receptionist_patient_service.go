@@ -87,7 +87,9 @@ func (s *ReceptionistPatientService) SearchPatients(receptionistID string, req m
 		SELECT DISTINCT
 			p.patient_id,
 			p.first_name,
+			COALESCE(p.first_name_ar, '') AS first_name_ar,
 			p.last_name,
+			COALESCE(p.last_name_ar, '') AS last_name_ar,
 			p.email,
 			p.phone_number,
 			p.age,
@@ -118,8 +120,8 @@ func (s *ReceptionistPatientService) SearchPatients(receptionistID string, req m
 
 	if req.SearchQuery != "" {
 		searchPattern := "%" + strings.ToLower(req.SearchQuery) + "%"
-		baseQuery += fmt.Sprintf(" AND (LOWER(p.first_name || ' ' || p.last_name) LIKE $%d OR LOWER(p.email) LIKE $%d)", argCount, argCount)
-		countQuery += fmt.Sprintf(" AND (LOWER(p.first_name || ' ' || p.last_name) LIKE $%d OR LOWER(p.email) LIKE $%d)", argCount, argCount)
+		baseQuery += fmt.Sprintf(" AND (LOWER(p.first_name || ' ' || p.last_name) LIKE $%d OR LOWER(COALESCE(p.first_name_ar,'') || ' ' || COALESCE(p.last_name_ar,'')) LIKE $%d OR LOWER(p.email) LIKE $%d)", argCount, argCount, argCount)
+		countQuery += fmt.Sprintf(" AND (LOWER(p.first_name || ' ' || p.last_name) LIKE $%d OR LOWER(COALESCE(p.first_name_ar,'') || ' ' || COALESCE(p.last_name_ar,'')) LIKE $%d OR LOWER(p.email) LIKE $%d)", argCount, argCount, argCount)
 		args = append(args, searchPattern)
 		argCount++
 	}
@@ -139,7 +141,7 @@ func (s *ReceptionistPatientService) SearchPatients(receptionistID string, req m
 	}
 
 	baseQuery += `
-		GROUP BY p.patient_id, p.first_name, p.last_name, p.email, p.phone_number, p.age, p.sex, p.profile_photo_url
+		GROUP BY p.patient_id, p.first_name, p.first_name_ar, p.last_name, p.last_name_ar, p.email, p.phone_number, p.age, p.sex, p.profile_photo_url
 		ORDER BY last_appointment_date DESC NULLS LAST`
 
 	countArgsCount := argCount
@@ -179,7 +181,9 @@ func (s *ReceptionistPatientService) SearchPatients(receptionistID string, req m
 		err := rows.Scan(
 			&patient.PatientID,
 			&patient.FirstName,
+			&patient.FirstNameAr,
 			&patient.LastName,
+			&patient.LastNameAr,
 			&patient.Email,
 			&phoneNumber,
 			&age,

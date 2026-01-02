@@ -20,11 +20,132 @@ type AppointmentService struct {
 	cfg *config.Config
 }
 
+type resolvedReferralDoctor struct {
+	DoctorID    uuid.UUID
+	FirstName   string
+	FirstNameAr string
+	LastName    string
+	LastNameAr  string
+}
+
 func NewAppointmentService(db *pgxpool.Pool, cfg *config.Config) *AppointmentService {
 	return &AppointmentService{
 		db:  db,
 		cfg: cfg,
 	}
+}
+
+func normalizeReferralDoctorNameForMatch(name string) string {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return ""
+	}
+
+	collapsed := strings.Join(strings.Fields(trimmed), " ")
+	lower := strings.ToLower(collapsed)
+
+	if strings.HasPrefix(lower, "dr. ") {
+		return strings.TrimSpace(collapsed[4:])
+	}
+	if strings.HasPrefix(lower, "dr ") {
+		return strings.TrimSpace(collapsed[3:])
+	}
+	if lower == "dr" || lower == "dr." {
+		return ""
+	}
+
+	if strings.HasPrefix(collapsed, "د. ") {
+		return strings.TrimSpace(collapsed[3:])
+	}
+	if strings.HasPrefix(collapsed, "د.") {
+		return strings.TrimSpace(collapsed[2:])
+	}
+	if strings.HasPrefix(collapsed, "د ") {
+		return strings.TrimSpace(collapsed[2:])
+	}
+	if collapsed == "د" || collapsed == "د." {
+		return ""
+	}
+
+	return collapsed
+}
+
+func (s *AppointmentService) resolveReferralDoctorByName(ctx context.Context, name string) (*resolvedReferralDoctor, error) {
+	normalized := normalizeReferralDoctorNameForMatch(name)
+	if normalized == "" {
+		return nil, nil
+	}
+
+	query := `
+		SELECT
+			doctor_id,
+			first_name,
+			COALESCE(first_name_ar, ''),
+			last_name,
+			COALESCE(last_name_ar, '')
+		FROM doctor_info
+		WHERE LOWER(TRIM(first_name || ' ' || last_name)) = LOWER($1)
+		LIMIT 2
+	`
+
+	rows, err := s.db.Query(ctx, query, normalized)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matches []resolvedReferralDoctor
+	for rows.Next() {
+		var m resolvedReferralDoctor
+		if err := rows.Scan(&m.DoctorID, &m.FirstName, &m.FirstNameAr, &m.LastName, &m.LastNameAr); err != nil {
+			return nil, err
+		}
+		matches = append(matches, m)
+	}
+
+	if len(matches) != 1 {
+		return nil, nil
+	}
+	return &matches[0], nil
+}
+
+func (s *AppointmentService) resolveReferralDoctorByNameTx(ctx context.Context, tx pgx.Tx, name string) (*resolvedReferralDoctor, error) {
+	normalized := normalizeReferralDoctorNameForMatch(name)
+	if normalized == "" {
+		return nil, nil
+	}
+
+	query := `
+		SELECT
+			doctor_id,
+			first_name,
+			COALESCE(first_name_ar, ''),
+			last_name,
+			COALESCE(last_name_ar, '')
+		FROM doctor_info
+		WHERE LOWER(TRIM(first_name || ' ' || last_name)) = LOWER($1)
+		LIMIT 2
+	`
+
+	rows, err := tx.Query(ctx, query, normalized)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matches []resolvedReferralDoctor
+	for rows.Next() {
+		var m resolvedReferralDoctor
+		if err := rows.Scan(&m.DoctorID, &m.FirstName, &m.FirstNameAr, &m.LastName, &m.LastNameAr); err != nil {
+			return nil, err
+		}
+		matches = append(matches, m)
+	}
+
+	if len(matches) != 1 {
+		return nil, nil
+	}
+	return &matches[0], nil
 }
 
 func (s *AppointmentService) GetAvailabilities(doctorId, day, currentTime string) ([]models.Availability, error) {
@@ -219,14 +340,24 @@ func (s *AppointmentService) GetDoctorWeeklySchedule(doctorId string, rangeStart
 			a.appointment_end, 
 			a.doctor_id, 
 			a.patient_id,
-			COALESCE(p.first_name, '') as patient_first_name,
-			COALESCE(p.last_name, '') as patient_last_name,
-			COALESCE(p.age, 0) as age,
+			COALESCE(p.first_name, r.first_name, dp.first_name, '') as patient_first_name,
+			COALESCE(p.first_name_ar, r.first_name_ar, dp.first_name_ar, '') as patient_first_name_ar,
+			COALESCE(p.last_name, r.last_name, dp.last_name, '') as patient_last_name,
+			COALESCE(p.last_name_ar, r.last_name_ar, dp.last_name_ar, '') as patient_last_name_ar,
+			CASE 
+				WHEN p.age IS NOT NULL THEN p.age
+				WHEN dp.age IS NOT NULL THEN dp.age
+				ELSE NULL
+			END AS age,
 			COALESCE(d.first_name, '') as doctor_first_name,
+			COALESCE(d.first_name_ar, '') as doctor_first_name_ar,
 			COALESCE(d.last_name, '') as doctor_last_name,
+			COALESCE(d.last_name_ar, '') as doctor_last_name_ar,
 			COALESCE(d.specialty_code, '') as specialty
 		FROM appointments a
 		LEFT JOIN patient_info p ON a.patient_id = p.patient_id
+		LEFT JOIN receptionists r ON a.patient_id = r.receptionist_id
+		LEFT JOIN doctor_info dp ON a.patient_id = dp.doctor_id
 		LEFT JOIN doctor_info d ON a.doctor_id = d.doctor_id
 		WHERE a.doctor_id = $1 
 		AND a.appointment_start >= $2 
@@ -251,10 +382,14 @@ func (s *AppointmentService) GetDoctorWeeklySchedule(doctorId string, rangeStart
 			&reservation.DoctorID,
 			&reservation.PatientID,
 			&reservation.PatientFirstName,
+			&reservation.PatientFirstNameAr,
 			&reservation.PatientLastName,
+			&reservation.PatientLastNameAr,
 			&reservation.Age,
 			&reservation.DoctorFirstName,
+			&reservation.DoctorFirstNameAr,
 			&reservation.DoctorLastName,
+			&reservation.DoctorLastNameAr,
 			&reservation.Specialty,
 		)
 		if err != nil {
@@ -390,10 +525,14 @@ func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezo
 			appointments.appointment_start,
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
+			COALESCE(doctor_info.first_name_ar, '') AS doctor_first_name_ar,
 			doctor_info.last_name AS doctor_last_name,
+			COALESCE(doctor_info.last_name_ar, '') AS doctor_last_name_ar,
 			doctor_info.specialty_code,
 			receptionists.first_name AS patient_first_name,
+			COALESCE(receptionists.first_name_ar, '') AS patient_first_name_ar,
 			receptionists.last_name AS patient_last_name,
+			COALESCE(receptionists.last_name_ar, '') AS patient_last_name_ar,
 			NULL::int AS age,
 			receptionists.receptionist_id AS patient_id,
 			doctor_info.doctor_id,
@@ -430,10 +569,14 @@ func (s *AppointmentService) getReceptionistReservationsAsPatient(userID, timezo
 			&r.AppointmentStart,
 			&r.AppointmentEnd,
 			&r.DoctorFirstName,
+			&r.DoctorFirstNameAr,
 			&r.DoctorLastName,
+			&r.DoctorLastNameAr,
 			&r.Specialty,
 			&r.PatientFirstName,
+			&r.PatientFirstNameAr,
 			&r.PatientLastName,
+			&r.PatientLastNameAr,
 			&r.Age,
 			&r.PatientID,
 			&r.DoctorID,
@@ -482,10 +625,14 @@ func (s *AppointmentService) getReceptionistReservationsAsReceptionist(reception
 			appointments.appointment_start,
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
+			COALESCE(doctor_info.first_name_ar, '') AS doctor_first_name_ar,
 			doctor_info.last_name AS doctor_last_name,
+			COALESCE(doctor_info.last_name_ar, '') AS doctor_last_name_ar,
 			doctor_info.specialty_code,
 			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
+			COALESCE(patient_info.first_name_ar, receptionists.first_name_ar, doctor_patient.first_name_ar, '') AS patient_first_name_ar,
 			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
+			COALESCE(patient_info.last_name_ar, receptionists.last_name_ar, doctor_patient.last_name_ar, '') AS patient_last_name_ar,
 			CASE 
 				WHEN patient_info.age IS NOT NULL THEN patient_info.age
 				WHEN doctor_patient.age IS NOT NULL THEN doctor_patient.age
@@ -530,10 +677,14 @@ func (s *AppointmentService) getReceptionistReservationsAsReceptionist(reception
 			&r.AppointmentStart,
 			&r.AppointmentEnd,
 			&r.DoctorFirstName,
+			&r.DoctorFirstNameAr,
 			&r.DoctorLastName,
+			&r.DoctorLastNameAr,
 			&r.Specialty,
 			&r.PatientFirstName,
+			&r.PatientFirstNameAr,
 			&r.PatientLastName,
+			&r.PatientLastNameAr,
 			&r.Age,
 			&r.PatientID,
 			&r.DoctorID,
@@ -569,10 +720,14 @@ func (s *AppointmentService) getPatientReservations(userID, timezone string) []m
 			appointments.appointment_start,
 			appointments.appointment_end,
 			doctor_info.first_name,
+			COALESCE(doctor_info.first_name_ar, '') AS doctor_first_name_ar,
 			doctor_info.last_name,
+			COALESCE(doctor_info.last_name_ar, '') AS doctor_last_name_ar,
 			doctor_info.specialty_code,
 			patient_info.first_name AS patient_first_name,
+			COALESCE(patient_info.first_name_ar, '') AS patient_first_name_ar,
 			patient_info.last_name AS patient_last_name,
+			COALESCE(patient_info.last_name_ar, '') AS patient_last_name_ar,
 			patient_info.age,
 			patient_info.patient_id,
 			doctor_info.doctor_id,
@@ -609,10 +764,14 @@ func (s *AppointmentService) getPatientReservations(userID, timezone string) []m
 			&r.AppointmentStart,
 			&r.AppointmentEnd,
 			&r.DoctorFirstName,
+			&r.DoctorFirstNameAr,
 			&r.DoctorLastName,
+			&r.DoctorLastNameAr,
 			&r.Specialty,
 			&r.PatientFirstName,
+			&r.PatientFirstNameAr,
 			&r.PatientLastName,
+			&r.PatientLastNameAr,
 			&r.Age,
 			&r.PatientID,
 			&r.DoctorID,
@@ -648,10 +807,14 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 			appointments.appointment_start,
 			appointments.appointment_end,
 			doctor_info.first_name AS doctor_first_name,
+			COALESCE(doctor_info.first_name_ar, '') AS doctor_first_name_ar,
 			doctor_info.last_name AS doctor_last_name,
+			COALESCE(doctor_info.last_name_ar, '') AS doctor_last_name_ar,
 			doctor_info.specialty_code,
 			COALESCE(patient_info.first_name, receptionists.first_name, doctor_patient.first_name, '') AS patient_first_name,
+			COALESCE(patient_info.first_name_ar, receptionists.first_name_ar, doctor_patient.first_name_ar, '') AS patient_first_name_ar,
 			COALESCE(patient_info.last_name, receptionists.last_name, doctor_patient.last_name, '') AS patient_last_name,
+			COALESCE(patient_info.last_name_ar, receptionists.last_name_ar, doctor_patient.last_name_ar, '') AS patient_last_name_ar,
 			CASE 
 				WHEN patient_info.age IS NOT NULL THEN patient_info.age
 				WHEN doctor_patient.age IS NOT NULL THEN doctor_patient.age
@@ -696,10 +859,14 @@ func (s *AppointmentService) getDoctorReservationsAsDoctor(userID, timezone stri
 			&r.AppointmentStart,
 			&r.AppointmentEnd,
 			&r.DoctorFirstName,
+			&r.DoctorFirstNameAr,
 			&r.DoctorLastName,
+			&r.DoctorLastNameAr,
 			&r.Specialty,
 			&r.PatientFirstName,
+			&r.PatientFirstNameAr,
 			&r.PatientLastName,
+			&r.PatientLastNameAr,
 			&r.Age,
 			&r.PatientID,
 			&r.DoctorID,
@@ -735,10 +902,14 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 			appointments.appointment_start,
 			appointments.appointment_end,
 			treating_doctor.first_name AS doctor_first_name,
+			COALESCE(treating_doctor.first_name_ar, '') AS doctor_first_name_ar,
 			treating_doctor.last_name AS doctor_last_name,
+			COALESCE(treating_doctor.last_name_ar, '') AS doctor_last_name_ar,
 			treating_doctor.specialty_code,
 			patient_doctor.first_name AS patient_first_name,
+			COALESCE(patient_doctor.first_name_ar, '') AS patient_first_name_ar,
 			patient_doctor.last_name AS patient_last_name,
+			COALESCE(patient_doctor.last_name_ar, '') AS patient_last_name_ar,
 			patient_doctor.age,
 			appointments.patient_id,
 			appointments.doctor_id,
@@ -772,10 +943,14 @@ func (s *AppointmentService) getDoctorReservationsAsPatient(userID, timezone str
 			&r.AppointmentStart,
 			&r.AppointmentEnd,
 			&r.DoctorFirstName,
+			&r.DoctorFirstNameAr,
 			&r.DoctorLastName,
+			&r.DoctorLastNameAr,
 			&r.Specialty,
 			&r.PatientFirstName,
+			&r.PatientFirstNameAr,
 			&r.PatientLastName,
+			&r.PatientLastNameAr,
 			&r.Age,
 			&r.PatientID,
 			&r.DoctorID,
@@ -846,10 +1021,14 @@ func (s *AppointmentService) GetAppointmentByID(appointmentID string) (*models.R
 			apt.doctor_id::text,
 			apt.patient_id::text,
 			di.first_name as doctor_first_name,
+			COALESCE(di.first_name_ar, '') as doctor_first_name_ar,
 			di.last_name as doctor_last_name,
+			COALESCE(di.last_name_ar, '') as doctor_last_name_ar,
 			di.specialty_code,
 			COALESCE(pi.first_name, r.first_name, dp.first_name, '') as patient_first_name,
+			COALESCE(pi.first_name_ar, r.first_name_ar, dp.first_name_ar, '') as patient_first_name_ar,
 			COALESCE(pi.last_name, r.last_name, dp.last_name, '') as patient_last_name,
+			COALESCE(pi.last_name_ar, r.last_name_ar, dp.last_name_ar, '') as patient_last_name_ar,
 			CASE WHEN mr.report_id IS NOT NULL THEN true ELSE false END AS report_exists
 		FROM 
 			appointments apt
@@ -874,10 +1053,14 @@ func (s *AppointmentService) GetAppointmentByID(appointmentID string) (*models.R
 		&appointment.DoctorID,
 		&appointment.PatientID,
 		&appointment.DoctorFirstName,
+		&appointment.DoctorFirstNameAr,
 		&appointment.DoctorLastName,
+		&appointment.DoctorLastNameAr,
 		&appointment.Specialty,
 		&appointment.PatientFirstName,
+		&appointment.PatientFirstNameAr,
 		&appointment.PatientLastName,
+		&appointment.PatientLastNameAr,
 		&appointment.ReportExists,
 	)
 	if err != nil {
@@ -899,14 +1082,24 @@ func (s *AppointmentService) CreateReport(report models.MedicalReport) (*models.
 	}
 	defer tx.Rollback(context.Background())
 
+	if report.ReferralDoctorID == nil && strings.TrimSpace(report.ReferralDoctorName) != "" {
+		resolved, err := s.resolveReferralDoctorByNameTx(context.Background(), tx, report.ReferralDoctorName)
+		if err != nil {
+			log.Printf("Failed to resolve referral doctor by name: %v", err)
+		} else if resolved != nil {
+			report.ReferralDoctorID = &resolved.DoctorID
+		}
+	}
+
 	query := `
 		INSERT INTO medical_reports (
 			report_id, appointment_id, doctor_id, patient_id, 
 			patient_first_name, patient_last_name, doctor_first_name, doctor_last_name,
 			report_content, diagnosis_made, diagnosis_name, diagnosis_details,
 			referral_needed, referral_specialty, referral_doctor_name, referral_message,
+			referral_doctor_id,
 			created_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
 		RETURNING report_id
 	`
 
@@ -927,6 +1120,7 @@ func (s *AppointmentService) CreateReport(report models.MedicalReport) (*models.
 		report.ReferralSpecialty,
 		report.ReferralDoctorName,
 		report.ReferralMessage,
+		report.ReferralDoctorID,
 	).Scan(&report.ReportID)
 
 	if err != nil {
@@ -1064,43 +1258,62 @@ func (s *AppointmentService) saveDiagnosisToHistory(tx pgx.Tx, patientID string,
 func (s *AppointmentService) GetReports(userID, year, month, day, patientName, diagnosisName, referralDoctor string) ([]models.MedicalReport, error) {
 	query := `
 		SELECT 
-			report_id, 
-			appointment_id, 
-			doctor_id, 
-			patient_id, 
-			patient_first_name, 
-			patient_last_name, 
-			doctor_first_name, 
-			doctor_last_name, 
-			report_content, 
-			diagnosis_made, 
-			diagnosis_name, 
-			diagnosis_details, 
-			referral_needed, 
-			referral_specialty, 
-			referral_doctor_name, 
-			referral_message, 
-			created_at
+			mr.report_id, 
+			mr.appointment_id, 
+			mr.doctor_id, 
+			mr.patient_id, 
+			mr.patient_first_name, 
+			COALESCE(pi.first_name_ar, r.first_name_ar, dp.first_name_ar, '') as patient_first_name_ar,
+			mr.patient_last_name, 
+			COALESCE(pi.last_name_ar, r.last_name_ar, dp.last_name_ar, '') as patient_last_name_ar,
+			mr.doctor_first_name, 
+			COALESCE(di.first_name_ar, '') as doctor_first_name_ar,
+			mr.doctor_last_name, 
+			COALESCE(di.last_name_ar, '') as doctor_last_name_ar,
+			mr.report_content, 
+			mr.diagnosis_made, 
+			mr.diagnosis_name, 
+			mr.diagnosis_details, 
+			mr.referral_needed, 
+			mr.referral_specialty, 
+			mr.referral_doctor_id,
+			mr.referral_doctor_name, 
+			COALESCE(rdi.first_name, '') as referral_doctor_first_name,
+			COALESCE(rdi.first_name_ar, '') as referral_doctor_first_name_ar,
+			COALESCE(rdi.last_name, '') as referral_doctor_last_name,
+			COALESCE(rdi.last_name_ar, '') as referral_doctor_last_name_ar,
+			mr.referral_message, 
+			mr.created_at
 		FROM 
-			medical_reports
+			medical_reports mr
+		JOIN
+			doctor_info di ON di.doctor_id = mr.doctor_id
+		LEFT JOIN
+			doctor_info rdi ON rdi.doctor_id = mr.referral_doctor_id
+		LEFT JOIN
+			patient_info pi ON pi.patient_id = mr.patient_id
+		LEFT JOIN
+			receptionists r ON r.receptionist_id = mr.patient_id
+		LEFT JOIN
+			doctor_info dp ON dp.doctor_id = mr.patient_id
 		WHERE 
-			doctor_id = $1`
+			mr.doctor_id = $1::uuid`
 
 	args := []interface{}{userID}
 	argCount := 2
 
 	if year != "" {
-		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM created_at) = $%d", argCount)
+		query += fmt.Sprintf(" AND EXTRACT(YEAR FROM mr.created_at) = $%d", argCount)
 		args = append(args, year)
 		argCount++
 
 		if month != "" {
-			query += fmt.Sprintf(" AND EXTRACT(MONTH FROM created_at) = $%d", argCount)
+			query += fmt.Sprintf(" AND EXTRACT(MONTH FROM mr.created_at) = $%d", argCount)
 			args = append(args, month)
 			argCount++
 
 			if day != "" {
-				query += fmt.Sprintf(" AND EXTRACT(DAY FROM created_at) = $%d", argCount)
+				query += fmt.Sprintf(" AND EXTRACT(DAY FROM mr.created_at) = $%d", argCount)
 				args = append(args, day)
 				argCount++
 			}
@@ -1123,7 +1336,7 @@ func (s *AppointmentService) GetReports(userID, year, month, day, patientName, d
 		argCount++
 	}
 
-	query += " ORDER BY created_at DESC"
+	query += " ORDER BY mr.created_at DESC"
 
 	rows, err := s.db.Query(context.Background(), query, args...)
 	if err != nil {
@@ -1133,6 +1346,7 @@ func (s *AppointmentService) GetReports(userID, year, month, day, patientName, d
 	defer rows.Close()
 
 	var reports []models.MedicalReport
+	resolvedByName := map[string]*resolvedReferralDoctor{}
 	for rows.Next() {
 		var report models.MedicalReport
 		err := rows.Scan(
@@ -1141,16 +1355,25 @@ func (s *AppointmentService) GetReports(userID, year, month, day, patientName, d
 			&report.DoctorID,
 			&report.PatientID,
 			&report.PatientFirstName,
+			&report.PatientFirstNameAr,
 			&report.PatientLastName,
+			&report.PatientLastNameAr,
 			&report.DoctorFirstName,
+			&report.DoctorFirstNameAr,
 			&report.DoctorLastName,
+			&report.DoctorLastNameAr,
 			&report.ReportContent,
 			&report.DiagnosisMade,
 			&report.DiagnosisName,
 			&report.DiagnosisDetails,
 			&report.ReferralNeeded,
 			&report.ReferralSpecialty,
+			&report.ReferralDoctorID,
 			&report.ReferralDoctorName,
+			&report.ReferralDoctorFirstName,
+			&report.ReferralDoctorFirstNameAr,
+			&report.ReferralDoctorLastName,
+			&report.ReferralDoctorLastNameAr,
 			&report.ReferralMessage,
 			&report.CreatedAt,
 		)
@@ -1168,6 +1391,54 @@ func (s *AppointmentService) GetReports(userID, year, month, day, patientName, d
 		}
 
 		reports = append(reports, report)
+	}
+
+	for i := range reports {
+		if reports[i].ReferralDoctorID != nil {
+			continue
+		}
+		if strings.TrimSpace(reports[i].ReferralDoctorName) == "" {
+			continue
+		}
+
+		key := strings.ToLower(normalizeReferralDoctorNameForMatch(reports[i].ReferralDoctorName))
+		if key == "" {
+			continue
+		}
+
+		var resolved *resolvedReferralDoctor
+		if cached, ok := resolvedByName[key]; ok {
+			resolved = cached
+		} else {
+			found, err := s.resolveReferralDoctorByName(context.Background(), reports[i].ReferralDoctorName)
+			if err != nil {
+				log.Printf("Failed to resolve referral doctor by name: %v", err)
+				resolvedByName[key] = nil
+				continue
+			}
+			resolvedByName[key] = found
+			resolved = found
+		}
+
+		if resolved == nil {
+			continue
+		}
+
+		reports[i].ReferralDoctorID = &resolved.DoctorID
+		reports[i].ReferralDoctorFirstName = resolved.FirstName
+		reports[i].ReferralDoctorFirstNameAr = resolved.FirstNameAr
+		reports[i].ReferralDoctorLastName = resolved.LastName
+		reports[i].ReferralDoctorLastNameAr = resolved.LastNameAr
+
+		_, err := s.db.Exec(
+			context.Background(),
+			"UPDATE medical_reports SET referral_doctor_id = $1 WHERE report_id = $2 AND referral_doctor_id IS NULL",
+			resolved.DoctorID,
+			reports[i].ReportID,
+		)
+		if err != nil {
+			log.Printf("Failed to backfill referral_doctor_id for report %s: %v", reports[i].ReportID, err)
+		}
 	}
 
 	return reports, nil
@@ -1258,7 +1529,9 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 		SELECT 
 			doctor_id,
 			first_name,
+			COALESCE(first_name_ar, '') as first_name_ar,
 			last_name,
+			COALESCE(last_name_ar, '') as last_name_ar,
 			specialty_code,
 			experience,
 			rating_score,
@@ -1272,8 +1545,57 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 	argCount := 1
 
 	if searchQuery != "" {
-		query += fmt.Sprintf(" AND (LOWER(first_name || ' ' || last_name) LIKE $%d OR LOWER(specialty_code) LIKE $%d)", argCount, argCount)
-		args = append(args, "%"+strings.ToLower(searchQuery)+"%")
+		q := strings.TrimSpace(searchQuery)
+		qLower := strings.ToLower(q)
+		if strings.HasPrefix(qLower, "dr. ") {
+			q = strings.TrimSpace(q[4:])
+		} else if strings.HasPrefix(qLower, "dr ") {
+			q = strings.TrimSpace(q[3:])
+		} else if qLower == "dr" || qLower == "dr." {
+			q = ""
+		}
+
+		q = strings.TrimSpace(q)
+		if strings.HasPrefix(q, "د. ") {
+			q = strings.TrimSpace(q[3:])
+		} else if strings.HasPrefix(q, "د.") {
+			q = strings.TrimSpace(q[2:])
+		} else if strings.HasPrefix(q, "د ") {
+			q = strings.TrimSpace(q[2:])
+		} else if q == "د" || q == "د." {
+			q = ""
+		}
+
+		arabicNorm := strings.NewReplacer(
+			"أ", "ا",
+			"إ", "ا",
+			"آ", "ا",
+			"ى", "ي",
+			"ة", "ه",
+			"ؤ", "و",
+			"ئ", "ي",
+		).Replace(strings.ToLower(strings.TrimSpace(q)))
+
+		query += fmt.Sprintf(
+			" AND ("+
+				"LOWER(first_name || ' ' || last_name) LIKE $%d "+
+				"OR translate(LOWER(COALESCE(first_name_ar, '') || ' ' || COALESCE(last_name_ar, '')), 'أإآىةؤئ', 'ااايهوي') LIKE $%d "+
+				"OR translate(LOWER(COALESCE(last_name_ar, '') || ' ' || COALESCE(first_name_ar, '')), 'أإآىةؤئ', 'ااايهوي') LIKE $%d "+
+				"OR LOWER(specialty_code) LIKE $%d"+
+				")",
+			argCount, argCount, argCount, argCount,
+		)
+		args = append(args, "%"+arabicNorm+"%")
+		argCount++
+	}
+
+	if specialty != "" {
+		norm := strings.ToLower(strings.TrimSpace(specialty))
+		norm = strings.ReplaceAll(norm, " ", "")
+		norm = strings.ReplaceAll(norm, "_", "")
+		norm = strings.ReplaceAll(norm, "-", "")
+		query += fmt.Sprintf(" AND regexp_replace(LOWER(specialty_code), '[^a-z0-9]+', '', 'g') LIKE $%d", argCount)
+		args = append(args, "%"+norm+"%")
 		argCount++
 	}
 
@@ -1295,7 +1617,9 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 		err := rows.Scan(
 			&doctor.DoctorID,
 			&doctor.FirstName,
+			&doctor.FirstNameAr,
 			&doctor.LastName,
+			&doctor.LastNameAr,
 			&doctor.Specialty,
 			&doctor.Experience,
 			&doctor.RatingScore,
@@ -1307,7 +1631,6 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 
 		doctors = append(doctors, doctor)
 	}
-
 	return doctors, nil
 }
 
@@ -1440,24 +1763,94 @@ func (s *AppointmentService) GetReport(reportID string) (*models.MedicalReport, 
 	var report models.MedicalReport
 	err := s.db.QueryRow(context.Background(),
 		`SELECT 
-			report_id, appointment_id, doctor_id, patient_id, patient_first_name, patient_last_name,
-			doctor_first_name, doctor_last_name, report_content, diagnosis_made, diagnosis_name,
-			diagnosis_details, referral_needed, referral_specialty, referral_doctor_name,
-			referral_message, created_at
-		FROM medical_reports 
-		WHERE report_id = $1`, reportID,
+			mr.report_id,
+			mr.appointment_id,
+			mr.doctor_id,
+			mr.patient_id,
+			mr.patient_first_name,
+			COALESCE(pi.first_name_ar, r.first_name_ar, dp.first_name_ar, '') as patient_first_name_ar,
+			mr.patient_last_name,
+			COALESCE(pi.last_name_ar, r.last_name_ar, dp.last_name_ar, '') as patient_last_name_ar,
+			mr.doctor_first_name,
+			COALESCE(di.first_name_ar, '') as doctor_first_name_ar,
+			mr.doctor_last_name,
+			COALESCE(di.last_name_ar, '') as doctor_last_name_ar,
+			mr.report_content,
+			mr.diagnosis_made,
+			mr.diagnosis_name,
+			mr.diagnosis_details,
+			mr.referral_needed,
+			mr.referral_specialty,
+			mr.referral_doctor_id,
+			mr.referral_doctor_name,
+			COALESCE(rdi.first_name, '') as referral_doctor_first_name,
+			COALESCE(rdi.first_name_ar, '') as referral_doctor_first_name_ar,
+			COALESCE(rdi.last_name, '') as referral_doctor_last_name,
+			COALESCE(rdi.last_name_ar, '') as referral_doctor_last_name_ar,
+			mr.referral_message,
+			mr.created_at
+		FROM medical_reports mr
+		JOIN doctor_info di ON di.doctor_id = mr.doctor_id
+		LEFT JOIN doctor_info rdi ON rdi.doctor_id = mr.referral_doctor_id
+		LEFT JOIN patient_info pi ON pi.patient_id = mr.patient_id
+		LEFT JOIN receptionists r ON r.receptionist_id = mr.patient_id
+		LEFT JOIN doctor_info dp ON dp.doctor_id = mr.patient_id
+		WHERE mr.report_id = $1::uuid`, reportID,
 	).Scan(
-		&report.ReportID, &report.AppointmentID, &report.DoctorID, &report.PatientID,
-		&report.PatientFirstName, &report.PatientLastName, &report.DoctorFirstName,
-		&report.DoctorLastName, &report.ReportContent, &report.DiagnosisMade,
-		&report.DiagnosisName, &report.DiagnosisDetails, &report.ReferralNeeded,
-		&report.ReferralSpecialty, &report.ReferralDoctorName, &report.ReferralMessage,
+		&report.ReportID,
+		&report.AppointmentID,
+		&report.DoctorID,
+		&report.PatientID,
+		&report.PatientFirstName,
+		&report.PatientFirstNameAr,
+		&report.PatientLastName,
+		&report.PatientLastNameAr,
+		&report.DoctorFirstName,
+		&report.DoctorFirstNameAr,
+		&report.DoctorLastName,
+		&report.DoctorLastNameAr,
+		&report.ReportContent,
+		&report.DiagnosisMade,
+		&report.DiagnosisName,
+		&report.DiagnosisDetails,
+		&report.ReferralNeeded,
+		&report.ReferralSpecialty,
+		&report.ReferralDoctorID,
+		&report.ReferralDoctorName,
+		&report.ReferralDoctorFirstName,
+		&report.ReferralDoctorFirstNameAr,
+		&report.ReferralDoctorLastName,
+		&report.ReferralDoctorLastNameAr,
+		&report.ReferralMessage,
 		&report.CreatedAt,
 	)
 
 	if err != nil {
 		log.Printf("Failed to retrieve report: %v", err)
 		return nil, fmt.Errorf("failed to retrieve report")
+	}
+
+	if report.ReferralDoctorID == nil && strings.TrimSpace(report.ReferralDoctorName) != "" {
+		resolved, err := s.resolveReferralDoctorByName(context.Background(), report.ReferralDoctorName)
+		if err != nil {
+			log.Printf("Failed to resolve referral doctor by name: %v", err)
+		} else if resolved != nil {
+			report.ReferralDoctorID = &resolved.DoctorID
+			report.ReferralDoctorFirstName = resolved.FirstName
+			report.ReferralDoctorFirstNameAr = resolved.FirstNameAr
+			report.ReferralDoctorLastName = resolved.LastName
+			report.ReferralDoctorLastNameAr = resolved.LastNameAr
+
+			_, backfillErr := s.db.Exec(
+				context.Background(),
+				"UPDATE medical_reports SET referral_doctor_id = $1 WHERE report_id = $2::uuid AND referral_doctor_id IS NULL",
+				resolved.DoctorID,
+				reportID,
+			)
+			if backfillErr != nil {
+				log.Printf("Failed to backfill referral_doctor_id for report %s: %v", reportID, backfillErr)
+			}
+		}
 	}
 
 	medications, err := s.getMedicationsForReport(report.ReportID)
@@ -1478,10 +1871,19 @@ func (s *AppointmentService) UpdateReport(reportID string, updateData models.Med
 	}
 	defer tx.Rollback(context.Background())
 
+	if updateData.ReferralDoctorID == nil && strings.TrimSpace(updateData.ReferralDoctorName) != "" {
+		resolved, err := s.resolveReferralDoctorByNameTx(context.Background(), tx, updateData.ReferralDoctorName)
+		if err != nil {
+			log.Printf("Failed to resolve referral doctor by name: %v", err)
+		} else if resolved != nil {
+			updateData.ReferralDoctorID = &resolved.DoctorID
+		}
+	}
+
 	var currentDiagnosisMade bool
 	var currentDiagnosisName *string
 	err = tx.QueryRow(context.Background(),
-		"SELECT diagnosis_made, diagnosis_name FROM medical_reports WHERE report_id = $1",
+		"SELECT diagnosis_made, diagnosis_name FROM medical_reports WHERE report_id = $1::uuid",
 		reportID).Scan(&currentDiagnosisMade, &currentDiagnosisName)
 
 	if err != nil {
@@ -1495,11 +1897,11 @@ func (s *AppointmentService) UpdateReport(reportID string, updateData models.Med
 		SET 
 			diagnosis_made = $1, diagnosis_name = $2, diagnosis_details = $3, report_content = $4,
 			referral_needed = $5, referral_specialty = $6, referral_doctor_name = $7,
-			referral_message = $8
-		WHERE report_id = $9`,
+			referral_message = $8, referral_doctor_id = $9
+		WHERE report_id = $10::uuid`,
 		updateData.DiagnosisMade, updateData.DiagnosisName, updateData.DiagnosisDetails, updateData.ReportContent,
 		updateData.ReferralNeeded, updateData.ReferralSpecialty, updateData.ReferralDoctorName,
-		updateData.ReferralMessage, reportID,
+		updateData.ReferralMessage, updateData.ReferralDoctorID, reportID,
 	)
 
 	if err != nil {
@@ -1560,7 +1962,7 @@ func (s *AppointmentService) UpdateReport(reportID string, updateData models.Med
 func (s *AppointmentService) DeleteReport(reportID string) error {
 	var exists bool
 	err := s.db.QueryRow(context.Background(),
-		"SELECT EXISTS(SELECT 1 FROM medical_reports WHERE report_id = $1)", reportID).Scan(&exists)
+		"SELECT EXISTS(SELECT 1 FROM medical_reports WHERE report_id = $1::uuid)", reportID).Scan(&exists)
 	if err != nil {
 		log.Printf("Failed to check report existence: %v", err)
 		return fmt.Errorf("failed to check report existence")
@@ -1570,7 +1972,7 @@ func (s *AppointmentService) DeleteReport(reportID string) error {
 		return fmt.Errorf("report not found")
 	}
 
-	_, err = s.db.Exec(context.Background(), "DELETE FROM medical_reports WHERE report_id = $1", reportID)
+	_, err = s.db.Exec(context.Background(), "DELETE FROM medical_reports WHERE report_id = $1::uuid", reportID)
 	if err != nil {
 		log.Printf("Failed to delete report: %v", err)
 		return fmt.Errorf("failed to delete report")

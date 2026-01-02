@@ -3,6 +3,13 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { X, Calendar, Clock, User, MapPin, FileText, Repeat, Trash2 } from 'lucide-react';
+import {
+  formatAppointmentDate,
+  formatAppointmentTime,
+  getDoctorPrefix,
+  getLocalizedDoctorName,
+  getLocalizedPatientName,
+} from '../utils/appointmentI18n';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -213,7 +220,7 @@ const ConfirmActions = styled.div`
 `;
 
 const EventDetailsModal = ({ event, onClose, onDelete }) => {
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -223,46 +230,34 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
   const isAppointment = !event.isPersonalEvent && (event.appointmentId || event.appointmentStart);
   const isRecurring = event.recurringPattern && Object.keys(event.recurringPattern).length > 0;
 
-  const doctorName = event.doctorName || 
-    (event.doctorFirstName && event.doctorLastName 
-      ? `Dr. ${event.doctorFirstName} ${event.doctorLastName}` 
-      : null);
-  
-  const patientName = event.patientName || 
-    (event.patientFirstName && event.patientLastName 
-      ? `${event.patientFirstName} ${event.patientLastName}` 
-      : null);
+  const doctorPrefix = getDoctorPrefix(i18n.language);
+  const doctorName = event.doctorName || (() => {
+    const localized = getLocalizedDoctorName(event, i18n.language);
+    return localized ? `${doctorPrefix} ${localized}` : null;
+  })();
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const patientName = event.patientName || (() => {
+    const localized = getLocalizedPatientName(event, i18n.language);
+    return localized || null;
+  })();
 
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+  const eventTypeKey = isAppointment ? 'appointment' : (event.eventType || 'personal');
+  const eventTypeLabel = t(`calendar.eventTypes.${eventTypeKey}`);
 
   const getRecurringText = () => {
     if (!isRecurring) return '';
     
     const pattern = event.recurringPattern;
-    if (pattern.frequency === 'daily') return 'Repeats Daily';
+    if (pattern.frequency === 'daily') return t('calendar.recurring.daily');
     if (pattern.frequency === 'weekly') {
-      const days = pattern.daysOfWeek?.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ');
-      return `Repeats Weekly on ${days}`;
+      const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const days = (pattern.daysOfWeek || [])
+        .map((d) => t(`calendar.days.${dayKeys[d]}`))
+        .join(', ');
+      return t('calendar.recurring.weeklyOn', { days });
     }
-    if (pattern.frequency === 'monthly') return `Repeats Monthly on day ${pattern.dayOfMonth}`;
-    return 'Recurring Event';
+    if (pattern.frequency === 'monthly') return t('calendar.recurring.monthlyOn', { day: pattern.dayOfMonth });
+    return t('calendar.recurring.event');
   };
 
   const handleDoctorClick = () => {
@@ -286,7 +281,7 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
       onClose();
     } catch (error) {
       console.error('Error deleting event:', error);
-      alert('Failed to delete event');
+      alert(t('calendar.deleteError'));
     } finally {
       setDeleting(false);
     }
@@ -299,12 +294,12 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
           <div>
             <ModalTitle>
               {isAppointment 
-                ? `Appointment with ${patientName || doctorName || 'Patient'}`
-                : event.title || 'Event Details'
+                ? `${t('calendar.eventTypes.appointment')} - ${patientName || doctorName || t('calendar.labels.patient')}`
+                : event.title || t('calendar.eventTypes.personal')
               }
             </ModalTitle>
             <EventType $eventColor={event.color || (isAppointment ? '#667eea' : '#FFB84D')}>
-              {isAppointment ? t('calendar.eventTypes.appointment') : event.eventType || 'Personal Event'}
+              {eventTypeLabel === `calendar.eventTypes.${eventTypeKey}` ? event.eventType || t('calendar.eventTypes.personal') : eventTypeLabel}
             </EventType>
           </div>
           <CloseButton onClick={onClose}>
@@ -320,7 +315,7 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
               </InfoIcon>
               <InfoContent>
                 <InfoLabel>{t('calendar.labels.date')}</InfoLabel>
-                <InfoValue>{formatDate(event.appointmentStart || event.startTime)}</InfoValue>
+                <InfoValue>{formatAppointmentDate(event.appointmentStart || event.startDate, i18n.language)}</InfoValue>
               </InfoContent>
             </InfoRow>
 
@@ -331,7 +326,7 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
               <InfoContent>
                 <InfoLabel>{t('calendar.labels.time')}</InfoLabel>
                 <InfoValue>
-                  {formatTime(event.appointmentStart || event.startTime)} - {formatTime(event.appointmentEnd || event.endTime)}
+                  {formatAppointmentTime(event.appointmentStart || event.startDate, i18n.language)} - {formatAppointmentTime(event.appointmentEnd || event.endDate, i18n.language)}
                 </InfoValue>
               </InfoContent>
             </InfoRow>
@@ -397,7 +392,7 @@ const EventDetailsModal = ({ event, onClose, onDelete }) => {
             <RecurringBadge>
               <Repeat size={16} />
               {getRecurringText()}
-              {event.recurringPattern?.endDate && ` until ${formatDate(event.recurringPattern.endDate)}`}
+              {event.recurringPattern?.endDate && ` ${t('calendar.recurring.until', { date: formatAppointmentDate(event.recurringPattern.endDate, i18n.language) })}`}
             </RecurringBadge>
           )}
 

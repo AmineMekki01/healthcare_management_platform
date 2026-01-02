@@ -1,9 +1,11 @@
 import React, {useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../auth/context/AuthContext';
 import DoctorAutocomplete from '../../../components/DoctorAutocomplete';
 import MedicationsSection from '../components/MedicationsSection';
 import { useReportDetail, useReportForm } from '../hooks';
+import { buildSpecialtyOptions, normalizeSpecialtyCode, getLocalizedSpecialtyLabel } from '../../../utils/specialties';
 import {
   Container,
   Paper,
@@ -18,7 +20,11 @@ import {
   Card,
   CardContent,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -31,6 +37,35 @@ import {
 export default function EditMedicalReportPage() {
   const { reportId } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('reports');
+  const { t: tMedical } = useTranslation('medical');
+
+  const isRtl = (i18n.language || '').startsWith('ar');
+  const rtlTextFieldSx = isRtl
+    ? {
+        '& .MuiOutlinedInput-root': {
+          direction: 'rtl',
+        },
+        '& .MuiOutlinedInput-notchedOutline': {
+          textAlign: 'right',
+        },
+        '& .MuiInputLabel-root': {
+          left: 'auto',
+          right: 14,
+          transformOrigin: 'top right',
+          textAlign: 'right',
+          transform: 'translate(0, 16px) scale(1)',
+        },
+        '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+          transformOrigin: 'top right',
+          transform: 'translate(0, -9px) scale(0.75)',
+        },
+        '& .MuiOutlinedInput-input': {
+          direction: 'rtl',
+          textAlign: 'right',
+        },
+      }
+    : undefined;
   
   const {
     report,
@@ -54,6 +89,8 @@ export default function EditMedicalReportPage() {
     updateMedication,
     removeMedication
   } = useReportForm(report || {});
+
+  const specialtyOptions = buildSpecialtyOptions(tMedical);
 
   useEffect(() => {
     if (report && Object.keys(formData).every(key => !formData[key])) {
@@ -83,7 +120,7 @@ export default function EditMedicalReportPage() {
       <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
         <CircularProgress />
         <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading report details...
+          {t('status.loadingReportDetails')}
         </Typography>
       </Container>
     );
@@ -93,7 +130,7 @@ export default function EditMedicalReportPage() {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error">
-          {fetchError || 'Report not found or you don\'t have permission to edit this report.'}
+          {fetchError || t('pages.editMedicalReport.reportNotFound')}
         </Alert>
       </Container>
     );
@@ -107,10 +144,10 @@ export default function EditMedicalReportPage() {
           onClick={() => navigate(`/doctor-report/${reportId}`)}
           sx={{ mr: 2 }}
         >
-          Back to Report
+          {t('pages.editMedicalReport.backToReport')}
         </Button>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-          Edit Medical Report
+          {t('pages.editMedicalReport.title')}
         </Typography>
       </Box>
 
@@ -118,14 +155,14 @@ export default function EditMedicalReportPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
             <EventIcon sx={{ mr: 1 }} />
-            Report Information
+            {t('pages.editMedicalReport.reportInformation')}
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <Box display="flex" alignItems="center">
                 <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Patient:</strong> {report.patientFirstName} {report.patientLastName}
+                  <strong>{t('labels.patient')}:</strong> {report.patientFirstName} {report.patientLastName}
                 </Typography>
               </Box>
             </Grid>
@@ -133,7 +170,7 @@ export default function EditMedicalReportPage() {
               <Box display="flex" alignItems="center">
                 <EventIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Created:</strong> {new Date(report.createdAt).toLocaleDateString()}
+                  <strong>{t('labels.created')}:</strong> {new Date(report.createdAt).toLocaleDateString(i18n.language || undefined)}
                 </Typography>
               </Box>
             </Grid>
@@ -141,7 +178,7 @@ export default function EditMedicalReportPage() {
               <Box display="flex" alignItems="center">
                 <LocalHospitalIcon sx={{ mr: 1, color: 'text.secondary' }} />
                 <Typography>
-                  <strong>Doctor:</strong> Dr. {report.doctorFirstName} {report.doctorLastName}
+                  <strong>{t('common:userTypes.doctor')}:</strong> {t('labels.doctorPrefix')} {report.doctorFirstName} {report.doctorLastName}
                 </Typography>
               </Box>
             </Grid>
@@ -151,7 +188,7 @@ export default function EditMedicalReportPage() {
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Edit Medical Report
+          {t('pages.editMedicalReport.title')}
         </Typography>
 
         {errors.length > 0 && (
@@ -173,7 +210,7 @@ export default function EditMedicalReportPage() {
         <form onSubmit={handleSubmit}>
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Diagnosis Information
+              {t('form.diagnosisInformation')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
@@ -181,22 +218,26 @@ export default function EditMedicalReportPage() {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Diagnosis Name"
+                  label={t('form.diagnosisName')}
                   value={formData.diagnosisName}
                   onChange={handleChange('diagnosisName')}
                   required
-                  placeholder="e.g., Hypertension, Diabetes Type 2, Upper Respiratory Infection"
+                  placeholder={t('placeholders.diagnosisName')}
+                  sx={rtlTextFieldSx}
+                  inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Diagnosis Details"
+                  label={t('form.diagnosisDetails')}
                   value={formData.diagnosisDetails}
                   onChange={handleChange('diagnosisDetails')}
                   multiline
                   rows={3}
-                  placeholder="Detailed description of the diagnosis, symptoms observed, and clinical findings"
+                  placeholder={t('placeholders.diagnosisDetails')}
+                  sx={rtlTextFieldSx}
+                  inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                 />
               </Grid>
             </Grid>
@@ -204,19 +245,21 @@ export default function EditMedicalReportPage() {
 
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Examination Report
+              {t('form.examinationReport')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
             <TextField
               fullWidth
-              label="Report Content"
+              label={t('form.reportContent')}
               value={formData.reportContent}
               onChange={handleChange('reportContent')}
               multiline
               rows={6}
               required
-              placeholder="Detailed examination findings, treatment provided, medications prescribed, recommendations, and follow-up instructions"
+              placeholder={t('placeholders.reportContent')}
+              sx={rtlTextFieldSx}
+              inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
             />
           </Box>
 
@@ -229,7 +272,7 @@ export default function EditMedicalReportPage() {
 
           <Box mb={3}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
-              Referral Information
+              {t('form.referralInformation')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
@@ -240,40 +283,60 @@ export default function EditMedicalReportPage() {
                   onChange={handleChange('referralNeeded')}
                 />
               }
-              label="Referral Required"
+              label={t('form.referralRequired')}
               sx={{ mb: 2 }}
             />
 
             {formData.referralNeeded && (
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Referral Specialty"
-                    value={formData.referralSpecialty}
-                    onChange={handleChange('referralSpecialty')}
-                    placeholder="e.g., Cardiology, Dermatology, Orthopedics"
-                  />
+                  <FormControl fullWidth sx={rtlTextFieldSx}>
+                    <InputLabel id="referralSpecialty-label">{t('form.referralSpecialty')}</InputLabel>
+                    <Select
+                      labelId="referralSpecialty-label"
+                      value={normalizeSpecialtyCode(formData.referralSpecialty) || ''}
+                      label={t('form.referralSpecialty')}
+                      onChange={handleChange('referralSpecialty')}
+                      displayEmpty
+                      inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
+                      renderValue={(selected) => (
+                        selected
+                          ? getLocalizedSpecialtyLabel(selected, tMedical)
+                          : t('placeholders.referralSpecialty')
+                      )}
+                    >
+                      <MenuItem value="">
+                        <em>{t('placeholders.referralSpecialty')}</em>
+                      </MenuItem>
+                      {specialtyOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <DoctorAutocomplete
                     value={formData.referralDoctorName}
                     onChange={handleReferralDoctorChange}
-                    specialty={formData.referralSpecialty}
-                    label="Referred Doctor Name"
-                    placeholder="Search for a doctor or enter manually"
+                    specialty={normalizeSpecialtyCode(formData.referralSpecialty)}
+                    label={t('form.referredDoctorName')}
+                    placeholder={t('placeholders.referredDoctorName')}
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Referral Message"
+                    label={t('form.referralMessage')}
                     value={formData.referralMessage}
                     onChange={handleChange('referralMessage')}
                     multiline
                     rows={3}
-                    placeholder="Additional information for the specialist"
+                    placeholder={t('placeholders.referralMessage')}
+                    sx={rtlTextFieldSx}
+                    inputProps={{ dir: isRtl ? 'rtl' : 'ltr' }}
                   />
                 </Grid>
               </Grid>
@@ -286,7 +349,7 @@ export default function EditMedicalReportPage() {
               onClick={() => navigate(`/doctor-report/${reportId}`)}
               disabled={loading}
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
             <Button
               type="submit"
@@ -295,7 +358,7 @@ export default function EditMedicalReportPage() {
               disabled={loading}
               sx={{ minWidth: 150 }}
             >
-              {loading ? 'Updating...' : 'Update Report'}
+              {loading ? t('status.updating') : t('actions.updateReport')}
             </Button>
           </Box>
         </form>

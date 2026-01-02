@@ -1,21 +1,30 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedDoctorName, getLocalizedPatientName } from '../utils/appointmentI18n';
 
 export const useAppointmentFilters = (doctorReservations, patientReservations, userType, activeMode) => {
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
   const [filterText, setFilterText] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
 
   const filterReservations = useCallback((reservations) => {
     if (!filterText.trim()) return reservations;
 
+    const q = filterText.toLowerCase();
+
     return reservations.filter(reservation =>
-      reservation.doctorFirstName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      reservation.doctorLastName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      reservation.patientFirstName?.toLowerCase().includes(filterText.toLowerCase()) ||
-      reservation.patientLastName?.toLowerCase().includes(filterText.toLowerCase())
+      reservation.doctorFirstName?.toLowerCase().includes(q) ||
+      reservation.doctorLastName?.toLowerCase().includes(q) ||
+      reservation.doctorFirstNameAr?.toLowerCase().includes(q) ||
+      reservation.doctorLastNameAr?.toLowerCase().includes(q) ||
+      reservation.patientFirstName?.toLowerCase().includes(q) ||
+      reservation.patientLastName?.toLowerCase().includes(q) ||
+      reservation.patientFirstNameAr?.toLowerCase().includes(q) ||
+      reservation.patientLastNameAr?.toLowerCase().includes(q) ||
+      getLocalizedDoctorName(reservation, i18n.language).toLowerCase().includes(q) ||
+      getLocalizedPatientName(reservation, i18n.language).toLowerCase().includes(q)
     );
-  }, [filterText]);
+  }, [filterText, i18n.language]);
 
   const getTabAppointments = useCallback(() => {
     let reservations;

@@ -22,9 +22,17 @@
         "label": "Prénom",
         "placeholder": "Entrez votre prénom"
       },
+      "firstNameAr": {
+        "label": "Prénom (arabe)",
+        "placeholder": "Entrez votre prénom en arabe"
+      },
       "lastName": {
         "label": "Nom de famille",
         "placeholder": "Entrez votre nom de famille"
+      },
+      "lastNameAr": {
+        "label": "Nom de famille (arabe)",
+        "placeholder": "Entrez votre nom de famille en arabe"
       },
       "email": {
         "label": "Adresse e-mail",

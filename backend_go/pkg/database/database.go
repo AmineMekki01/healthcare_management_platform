@@ -512,6 +512,7 @@ func createTables(conn *pgxpool.Pool) error {
 			diagnosis_details TEXT,
 			report_content TEXT,
 			referral_needed boolean,
+			referral_doctor_id UUID REFERENCES doctor_info(doctor_id),
 			referral_specialty VARCHAR(255),
 			referral_doctor_name VARCHAR(255),
 			referral_message TEXT,

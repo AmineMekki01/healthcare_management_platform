@@ -20,10 +20,14 @@ type Reservation struct {
 	AppointmentStart      time.Time  `json:"appointmentStart"`
 	AppointmentEnd        time.Time  `json:"appointmentEnd"`
 	DoctorFirstName       string     `json:"doctorFirstName"`
+	DoctorFirstNameAr     string     `json:"doctorFirstNameAr"`
 	DoctorLastName        string     `json:"doctorLastName"`
+	DoctorLastNameAr      string     `json:"doctorLastNameAr"`
 	Specialty             string     `json:"specialty"`
 	PatientFirstName      string     `json:"patientFirstName"`
+	PatientFirstNameAr    string     `json:"patientFirstNameAr"`
 	PatientLastName       string     `json:"patientLastName"`
+	PatientLastNameAr     string     `json:"patientLastNameAr"`
 	Age                   *int       `json:"age"`
 	Title                 string     `json:"title"`
 	Notes                 *string    `json:"notes"`
@@ -47,24 +51,33 @@ type Appointments struct {
 }
 
 type MedicalReport struct {
-	ReportID           uuid.UUID          `json:"reportId"`
-	PatientID          string             `json:"patientId"`
-	DoctorID           uuid.UUID          `json:"doctorId"`
-	AppointmentID      uuid.UUID          `json:"appointmentId"`
-	PatientFirstName   string             `json:"patientFirstName"`
-	PatientLastName    string             `json:"patientLastName"`
-	DoctorFirstName    string             `json:"doctorFirstName"`
-	DoctorLastName     string             `json:"doctorLastName"`
-	ReportContent      *string            `json:"reportContent"`
-	DiagnosisMade      bool               `json:"diagnosisMade"`
-	DiagnosisName      *string            `json:"diagnosisName"`
-	DiagnosisDetails   *string            `json:"diagnosisDetails"`
-	Medications        []ReportMedication `json:"medications"`
-	ReferralNeeded     bool               `json:"referralNeeded"`
-	ReferralSpecialty  *string            `json:"referralSpecialty"`
-	ReferralDoctorName string             `json:"referralDoctorName"`
-	ReferralMessage    string             `json:"referralMessage"`
-	CreatedAt          time.Time          `json:"createdAt"`
+	ReportID                  uuid.UUID          `json:"reportId"`
+	PatientID                 string             `json:"patientId"`
+	DoctorID                  uuid.UUID          `json:"doctorId"`
+	AppointmentID             uuid.UUID          `json:"appointmentId"`
+	PatientFirstName          string             `json:"patientFirstName"`
+	PatientFirstNameAr        string             `json:"patientFirstNameAr"`
+	PatientLastName           string             `json:"patientLastName"`
+	PatientLastNameAr         string             `json:"patientLastNameAr"`
+	DoctorFirstName           string             `json:"doctorFirstName"`
+	DoctorFirstNameAr         string             `json:"doctorFirstNameAr"`
+	DoctorLastName            string             `json:"doctorLastName"`
+	DoctorLastNameAr          string             `json:"doctorLastNameAr"`
+	ReportContent             *string            `json:"reportContent"`
+	DiagnosisMade             bool               `json:"diagnosisMade"`
+	DiagnosisName             *string            `json:"diagnosisName"`
+	DiagnosisDetails          *string            `json:"diagnosisDetails"`
+	Medications               []ReportMedication `json:"medications"`
+	ReferralNeeded            bool               `json:"referralNeeded"`
+	ReferralSpecialty         *string            `json:"referralSpecialty"`
+	ReferralDoctorID          *uuid.UUID         `json:"referralDoctorId,omitempty"`
+	ReferralDoctorName        string             `json:"referralDoctorName"`
+	ReferralDoctorFirstName   string             `json:"referralDoctorFirstName"`
+	ReferralDoctorFirstNameAr string             `json:"referralDoctorFirstNameAr"`
+	ReferralDoctorLastName    string             `json:"referralDoctorLastName"`
+	ReferralDoctorLastNameAr  string             `json:"referralDoctorLastNameAr"`
+	ReferralMessage           string             `json:"referralMessage"`
+	CreatedAt                 time.Time          `json:"createdAt"`
 }
 
 type ReportMedication struct {

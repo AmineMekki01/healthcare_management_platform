@@ -1,4 +1,5 @@
 import axios from '../../../components/axiosConfig';
+import i18n from '../../../i18n';
 
 class ReportsService {
     constructor() {
@@ -7,7 +8,7 @@ class ReportsService {
 
     async fetchReports(doctorId, filters = {}) {
         if (!doctorId) {
-        throw new Error('Doctor ID is required');
+        throw new Error(i18n.t('reports:errors.doctorIdRequired'));
         }
 
         try {
@@ -23,13 +24,13 @@ class ReportsService {
         return sortedReports;
         } catch (error) {
         console.error('Error fetching reports:', error);
-        throw new Error('Failed to load reports. Please try again.');
+        throw new Error(i18n.t('reports:errors.loadReports'));
         }
     }
 
     async fetchReportById(reportId) {
         if (!reportId) {
-        throw new Error('Report ID is required');
+        throw new Error(i18n.t('reports:errors.reportIdRequired'));
         }
 
         try {
@@ -37,14 +38,14 @@ class ReportsService {
         return response.data;
         } catch (error) {
         console.error('Error fetching report details:', error);
-        throw new Error('Failed to load report details. Please try again.');
+        throw new Error(i18n.t('reports:errors.loadReportDetails'));
         }
     }
 
     async createReport(reportData, appointmentId, doctorId, patientId) {
         if (!reportData || !appointmentId || !doctorId || !patientId) {
             console.log('Missing required fields:', { reportData, appointmentId, doctorId, patientId });
-            throw new Error('All required fields must be provided');
+            throw new Error(i18n.t('reports:errors.requiredFields'));
         }
 
         try {
@@ -59,13 +60,16 @@ class ReportsService {
             return response.data;
         } catch (error) {
             console.error('Error creating report:', error);
-            throw new Error('Failed to create report. Please try again.');
+            throw new Error(i18n.t('reports:errors.createReport'));
         }
     }
 
     async updateReport(reportId, reportData) {
-        if (!reportId || !reportData) {
-        throw new Error('Report ID and data are required');
+        if (!reportId) {
+        throw new Error(i18n.t('reports:errors.reportIdRequired'));
+        }
+        if (!reportData) {
+        throw new Error(i18n.t('reports:errors.requiredFields'));
         }
 
         try {
@@ -73,26 +77,26 @@ class ReportsService {
         return response.data;
         } catch (error) {
         console.error('Error updating report:', error);
-        throw new Error('Failed to update report. Please try again.');
+        throw new Error(i18n.t('reports:errors.updateReport'));
         }
     }
 
     async deleteReport(reportId) {
         if (!reportId) {
-        throw new Error('Report ID is required');
+        throw new Error(i18n.t('reports:errors.reportIdRequired'));
         }
 
         try {
         await axios.delete(`${this.baseURL}/doctor-report/${reportId}`);
         } catch (error) {
         console.error('Error deleting report:', error);
-        throw new Error('Failed to delete report. Please try again.');
+        throw new Error(i18n.t('reports:errors.deleteReport'));
         }
     }
 
     async fetchAppointmentDetails(appointmentId) {
         if (!appointmentId) {
-        throw new Error('Appointment ID is required');
+        throw new Error(i18n.t('reports:errors.appointmentIdRequired'));
         }
 
         try {
@@ -100,7 +104,7 @@ class ReportsService {
         return response.data;
         } catch (error) {
         console.error('Error fetching appointment details:', error);
-        throw new Error('Failed to load appointment details');
+        throw new Error(i18n.t('reports:errors.loadAppointmentDetails'));
         }
     }
 
@@ -121,23 +125,23 @@ class ReportsService {
         const errors = [];
 
         if (!reportData.diagnosisName?.trim()) {
-        errors.push('Diagnosis name is required');
+        errors.push(i18n.t('reports:validation.diagnosisNameRequired'));
         }
 
         if (!reportData.diagnosisDetails?.trim()) {
-        errors.push('Diagnosis details are required');
+        errors.push(i18n.t('reports:validation.diagnosisDetailsRequired'));
         }
 
         if (!reportData.reportContent?.trim()) {
-        errors.push('Report content is required');
+        errors.push(i18n.t('reports:validation.reportContentRequired'));
         }
 
         if (reportData.referralNeeded) {
         if (!reportData.referralSpecialty?.trim()) {
-            errors.push('Referral specialty is required when referral is needed');
+            errors.push(i18n.t('reports:validation.referralSpecialtyRequired'));
         }
         if (!reportData.referralDoctorName?.trim()) {
-            errors.push('Referral doctor name is required when referral is needed');
+            errors.push(i18n.t('reports:validation.referralDoctorNameRequired'));
         }
         }
 
@@ -164,7 +168,7 @@ class ReportsService {
         
         try {
         const dateObj = typeof date === 'string' ? new Date(date) : date;
-        return dateObj.toLocaleDateString('en-US', {
+        return dateObj.toLocaleDateString(i18n.language || undefined, {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -176,14 +180,14 @@ class ReportsService {
     }
 
     formatPatientName(firstName, lastName) {
-        if (!firstName && !lastName) return 'Unknown Patient';
+        if (!firstName && !lastName) return i18n.t('reports:defaults.unknownPatient');
         return [firstName, lastName].filter(Boolean).join(' ');
     }
 
     formatDoctorName(firstName, lastName) {
-        if (!firstName && !lastName) return 'Unknown Doctor';
+        if (!firstName && !lastName) return i18n.t('reports:defaults.unknownDoctor');
         const fullName = [firstName, lastName].filter(Boolean).join(' ');
-        return `Dr. ${fullName}`;
+        return `${i18n.t('reports:labels.doctorPrefix')} ${fullName}`;
     }
 
     generateReportStats(reports) {
@@ -220,11 +224,11 @@ class ReportsService {
         }
 
         const headers = [
-        'Date',
-        'Patient Name',
-        'Diagnosis',
-        'Referral Needed',
-        'Referral Doctor'
+        i18n.t('reports:csv.headers.date'),
+        i18n.t('reports:csv.headers.patientName'),
+        i18n.t('reports:csv.headers.diagnosis'),
+        i18n.t('reports:csv.headers.referralNeeded'),
+        i18n.t('reports:csv.headers.referralDoctor')
         ];
 
         const csvRows = [
@@ -233,7 +237,7 @@ class ReportsService {
             this.formatReportDate(report.createdAt ),
             `"${this.formatPatientName(report.patientFirstName, report.patientLastName)}"`,
             `"${report.diagnosisName || ''}"`,
-            report.referralNeeded ? 'Yes' : 'No',
+            report.referralNeeded ? i18n.t('common:common.yes') : i18n.t('common:common.no'),
             `"${report.referralDoctorName || ''}"`
         ].join(','))
         ];

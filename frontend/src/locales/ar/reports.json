@@ -1,6 +1,7 @@
 {
   "labels": {
     "patient": "مريض",
+    "doctorPrefix": "د.",
     "diagnosis": "التشخيص",
     "referredTo": "محال إلى",
     "created": "تم الإنشاء"
@@ -8,7 +9,10 @@
   "actions": {
     "viewReport": "عرض التقرير",
     "editReport": "تعديل التقرير",
-    "deleteReport": "حذف التقرير"
+    "deleteReport": "حذف التقرير",
+    "createReport": "إنشاء تقرير",
+    "updateReport": "تحديث التقرير",
+    "downloadPdf": "تحميل التقرير كـ PDF"
   },
   "filters": {
     "title": "تصفية التقارير",
@@ -30,6 +34,30 @@
       "subtitle": "إدارة ومراجعة تقارير المرضى",
       "noReportsTitle": "لم يتم العثور على تقارير",
       "noReportsMessage": "حاول تعديل معايير البحث أو إنشاء تقرير جديد للبدء."
+    },
+    "createMedicalReport": {
+      "backToAppointments": "العودة إلى المواعيد",
+      "title": "إنشاء تقرير طبي",
+      "appointmentDetails": "تفاصيل الموعد",
+      "appointmentNotFound": "الموعد غير موجود أو ليس لديك صلاحية لإنشاء تقرير لهذا الموعد."
+    },
+    "editMedicalReport": {
+      "backToReport": "العودة إلى التقرير",
+      "title": "تعديل التقرير الطبي",
+      "reportInformation": "معلومات التقرير",
+      "reportNotFound": "التقرير غير موجود أو ليس لديك صلاحية لتعديل هذا التقرير."
+    },
+    "reportDetail": {
+      "patientReportTitle": "تقرير المريض",
+      "medicalReportTitle": "تقرير طبي",
+      "generatedOn": "تم الإنشاء بتاريخ:",
+      "patientInformation": "معلومات المريض",
+      "diagnosisDetails": "تفاصيل التشخيص",
+      "examinationReport": "تقرير الفحص",
+      "medicationDetails": "تفاصيل الأدوية",
+      "referralInformation": "معلومات الإحالة",
+      "reportNotFound": "لم يتم العثور على التقرير",
+      "confirmDeleteTitle": "تأكيد الحذف"
     }
   },
   "confirmations": {
@@ -37,6 +65,110 @@
   },
   "messages": {
     "deleteSuccess": "تم حذف التقرير بنجاح",
-    "deleteError": "فشل في حذف التقرير. يرجى المحاولة مرة أخرى."
+    "deleteError": "فشل في حذف التقرير. يرجى المحاولة مرة أخرى.",
+    "createSuccess": "تم إنشاء التقرير الطبي بنجاح!",
+    "updateSuccess": "تم تحديث التقرير الطبي بنجاح!"
+  },
+  "status": {
+    "loadingAppointmentDetails": "جارٍ تحميل تفاصيل الموعد...",
+    "loadingReportDetails": "جارٍ تحميل تفاصيل التقرير...",
+    "creating": "جارٍ الإنشاء...",
+    "updating": "جارٍ التحديث...",
+    "deleting": "جارٍ الحذف..."
+  },
+  "form": {
+    "medicalReportForm": "نموذج التقرير الطبي",
+    "diagnosisInformation": "معلومات التشخيص",
+    "diagnosisMade": "تم إجراء التشخيص",
+    "diagnosisName": "اسم التشخيص",
+    "diagnosisDetails": "تفاصيل التشخيص",
+    "examinationReport": "تقرير الفحص",
+    "reportContent": "محتوى التقرير",
+    "referralInformation": "معلومات الإحالة",
+    "referralRequired": "الإحالة مطلوبة",
+    "referralSpecialty": "تخصص الإحالة",
+    "referredDoctorName": "اسم الطبيب المُحال إليه",
+    "referralMessage": "رسالة الإحالة"
+  },
+  "placeholders": {
+    "diagnosisName": "مثال: ارتفاع ضغط الدم، السكري النوع الثاني، التهاب الجهاز التنفسي العلوي",
+    "diagnosisDetails": "وصف تفصيلي للتشخيص والأعراض والملاحظات السريرية",
+    "reportContent": "نتائج الفحص، العلاج المقدم، الأدوية الموصوفة، التوصيات وتعليمات المتابعة",
+    "referralSpecialty": "اختر التخصص",
+    "referredDoctorName": "ابحث عن طبيب أو أدخل الاسم يدوياً",
+    "referralMessage": "معلومات إضافية للطبيب المختص"
+  },
+  "medications": {
+    "title": "الأدوية الموصوفة",
+    "none": "لا توجد أدوية موصوفة بعد",
+    "addMedication": "إضافة دواء",
+    "addAnother": "إضافة دواء آخر",
+    "medicationNumber": "الدواء {{number}}",
+    "fields": {
+      "medicationName": "اسم الدواء",
+      "dosage": "الجرعة",
+      "frequency": "عدد المرات",
+      "duration": "المدة",
+      "instructions": "تعليمات خاصة"
+    },
+    "placeholders": {
+      "medicationName": "مثال: أموكسيسيلين",
+      "dosage": "مثال: 500 ملغ، قرص واحد",
+      "frequency": "مثال: مرتين يومياً، كل 8 ساعات",
+      "duration": "مثال: 7 أيام، أسبوعان",
+      "instructions": "مثال: يؤخذ مع الطعام، تجنب الكحول"
+    }
+  },
+  "validation": {
+    "diagnosisNameRequired": "اسم التشخيص مطلوب",
+    "diagnosisDetailsRequired": "تفاصيل التشخيص مطلوبة",
+    "reportContentRequired": "محتوى التقرير مطلوب",
+    "referralSpecialtyRequired": "تخصص الإحالة مطلوب عند تفعيل الإحالة",
+    "referralDoctorNameRequired": "اسم الطبيب المُحال إليه مطلوب عند تفعيل الإحالة",
+    "diagnosisNameMaxLength": "يجب أن يكون اسم التشخيص أقل من 200 حرف",
+    "reportContentTooShort": "يبدو أن محتوى التقرير قصير جداً لتقرير طبي"
+  },
+  "errors": {
+    "loadAppointmentDetails": "فشل في تحميل تفاصيل الموعد",
+    "doctorIdRequired": "معرّف الطبيب مطلوب",
+    "reportIdRequired": "معرّف التقرير مطلوب",
+    "appointmentIdRequired": "معرّف الموعد مطلوب",
+    "requiredFields": "يجب توفير جميع الحقول المطلوبة",
+    "loadReports": "فشل في تحميل التقارير. يرجى المحاولة مرة أخرى.",
+    "loadReportDetails": "فشل في تحميل تفاصيل التقرير. يرجى المحاولة مرة أخرى.",
+    "createReport": "فشل في إنشاء التقرير. يرجى المحاولة مرة أخرى.",
+    "updateReport": "فشل في تحديث التقرير. يرجى المحاولة مرة أخرى.",
+    "deleteReport": "فشل في حذف التقرير. يرجى المحاولة مرة أخرى."
+  },
+  "defaults": {
+    "unknown": "غير معروف",
+    "patient": "مريض",
+    "doctor": "طبيب",
+    "unknownPatient": "مريض غير معروف",
+    "unknownDoctor": "طبيب غير معروف",
+    "noSummary": "لا توجد خلاصة متاحة"
+  },
+  "statusLabels": {
+    "unknown": "غير معروف",
+    "referralRequired": "الإحالة مطلوبة",
+    "complete": "مكتمل"
+  },
+  "types": {
+    "general": "عام",
+    "surgical": "جراحي",
+    "followUp": "متابعة",
+    "consultation": "استشارة",
+    "emergency": "طوارئ"
+  },
+  "csv": {
+    "headers": {
+      "date": "التاريخ",
+      "patientName": "اسم المريض",
+      "diagnosis": "التشخيص",
+      "reportType": "نوع التقرير",
+      "referralNeeded": "الإحالة مطلوبة",
+      "referralSpecialty": "تخصص الإحالة",
+      "referralDoctor": "الطبيب المُحال إليه"
+    }
   }
 }

@@ -37,6 +37,13 @@ import EventDetailsModal from './EventDetailsModal';
 import appointmentService from '../services/appointmentService';
 import calendarEventService from '../services/calendarEventService';
 import receptionistPatientService from '../../receptionist/services/receptionistPatientService';
+import {
+  formatAppointmentTime,
+  getDoctorPrefix,
+  getLocalizedDoctorName,
+  getLocalizedPatientName,
+  getLocalizedSpecialtyLabel,
+} from '../utils/appointmentI18n';
 
 const WeeklyCalendarView = ({ 
   appointments, 
@@ -47,6 +54,7 @@ const WeeklyCalendarView = ({
   onAppointmentUpdate 
 }) => {
   const { t, i18n } = useTranslation('appointments');
+  const { t: tMedical } = useTranslation('medical');
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -86,6 +94,19 @@ const WeeklyCalendarView = ({
     }
     return slots;
   }, []);
+
+  const formatTimeSlotLabel = (time) => {
+    const [hours, minutes] = String(time).split(':');
+    const d = new Date();
+    d.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    return formatAppointmentTime(d, i18n.language);
+  };
+
+  const getSlotTooltip = () => {
+    if (isDoctorProviderMode) return t('calendar.tooltips.doctorProvider');
+    if (isReceptionistProviderMode) return t('calendar.tooltips.receptionistProvider');
+    return '';
+  };
 
   const weekDays = useMemo(() => {
     const days = [];
@@ -327,10 +348,7 @@ const WeeklyCalendarView = ({
   };
 
   const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return formatAppointmentTime(dateString, i18n.language);
   };
 
   const getAppointmentStatus = (apt) => {
@@ -411,26 +429,23 @@ const WeeklyCalendarView = ({
     }
   };
 
-  const handleDeleteEvent = async (event) => {
-    if (!event || !event.eventId) return;
-    
-    const isRecurring = event.recurringPattern && Object.keys(event.recurringPattern).length > 0;
-    let deleteAll = false;
-    
-    if (isRecurring) {
-      const confirmDelete = window.confirm(
-        t('calendar.confirmDelete.recurringPrompt') || 
-        'This is a recurring event. Delete all occurrences?'
-      );
-      if (confirmDelete === null) return;
-      deleteAll = confirmDelete;
-    }
-    
+  const handleDeleteEvent = async (eventId, isRecurring = false) => {
     try {
-      await calendarEventService.deletePersonalEvent(userId, event.eventId, deleteAll);
+      let deleteAll = false;
+
+      if (isRecurring) {
+        const confirmDelete = window.confirm(t('calendar.confirmDelete.recurringPrompt'));
+        if (confirmDelete === null) return;
+        deleteAll = confirmDelete;
+      } else {
+        const confirmDelete = window.confirm(t('calendar.confirmDelete.message'));
+        if (!confirmDelete) return;
+      }
+
+      await calendarEventService.deletePersonalEvent(userId, eventId, deleteAll);
       
       setCalendarEvents(prev => prev.filter(e => 
-        deleteAll ? e.parentEventId !== event.eventId && e.eventId !== event.eventId : e.eventId !== event.eventId
+        deleteAll ? e.parentEventId !== eventId && e.eventId !== eventId : e.eventId !== eventId
       ));
       
       if (onAppointmentUpdate) {
@@ -445,7 +460,7 @@ const WeeklyCalendarView = ({
       setCalendarEvents(response.events || []);
     } catch (error) {
       console.error('Error deleting calendar event:', error);
-      alert(t('calendar.deleteError') || 'Failed to delete event');
+      alert(t('calendar.deleteError'));
     }
   };
 
@@ -476,7 +491,7 @@ const WeeklyCalendarView = ({
           <TimeColumn>
             <div style={{ height: '78px' }}></div>
             {timeSlots.map((time) => (
-              <TimeSlot key={time}>{time}</TimeSlot>
+              <TimeSlot key={time}>{formatTimeSlotLabel(time)}</TimeSlot>
             ))}
           </TimeColumn>
 
@@ -518,7 +533,7 @@ const WeeklyCalendarView = ({
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
                       }}
-                      title={isDoctorProviderMode ? 'Left-click: Schedule appointment | Right-click: Add personal event' : (isReceptionistProviderMode ? 'Click: Schedule appointment' : '')}
+                      title={getSlotTooltip()}
                     />
                   ))}
                   
@@ -570,17 +585,22 @@ const WeeklyCalendarView = ({
                               )}
                               {appointment.blocksAppointments && (
                                 <AppointmentInfo style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                                  <Block style={{ fontSize: '0.8rem' }} /> Blocks appointments
+                                  <Block style={{ fontSize: '0.8rem' }} /> {t('calendar.blocksAppointments')}
                                 </AppointmentInfo>
                               )}
                             </>
                           ) : (
                             <>
                               <AppointmentTitle>
-                                {effectiveUserType === 'patient' 
-                                  ? `Dr. ${appointment.doctorFirstName} ${appointment.doctorLastName}`
-                                  : `${appointment.patientFirstName} ${appointment.patientLastName}`
-                                }
+                                {(() => {
+                                  const doctorName = getLocalizedDoctorName(appointment, i18n.language);
+                                  const patientName = getLocalizedPatientName(appointment, i18n.language);
+                                  const doctorPrefix = getDoctorPrefix(i18n.language);
+
+                                  return effectiveUserType === 'patient'
+                                    ? `${doctorPrefix} ${doctorName}`
+                                    : patientName;
+                                })()}
                               </AppointmentTitle>
                               <AppointmentTime>
                                 <AccessTime style={{ fontSize: '0.8rem' }} />
@@ -589,7 +609,7 @@ const WeeklyCalendarView = ({
                               {effectiveUserType === 'patient' && (
                                 <AppointmentInfo>
                                   <MedicalServices style={{ fontSize: '0.8rem' }} />
-                                  {appointment.specialty}
+                                  {getLocalizedSpecialtyLabel(appointment.specialty, tMedical) || appointment.specialty}
                                 </AppointmentInfo>
                               )}
                               {effectiveUserType === 'doctor' && (

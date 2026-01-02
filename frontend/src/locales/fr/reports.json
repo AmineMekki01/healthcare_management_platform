@@ -1,6 +1,7 @@
 {
   "labels": {
     "patient": "Patient",
+    "doctorPrefix": "Dr.",
     "diagnosis": "Diagnostic",
     "referredTo": "Référé à",
     "created": "Créé"
@@ -8,7 +9,10 @@
   "actions": {
     "viewReport": "Voir le Rapport",
     "editReport": "Modifier le Rapport",
-    "deleteReport": "Supprimer le Rapport"
+    "deleteReport": "Supprimer le Rapport",
+    "createReport": "Créer un Rapport",
+    "updateReport": "Mettre à jour le Rapport",
+    "downloadPdf": "Télécharger le PDF"
   },
   "filters": {
     "title": "Filtrer les Rapports",
@@ -30,6 +34,30 @@
       "subtitle": "Gérer et examiner vos rapports de patients",
       "noReportsTitle": "Aucun Rapport Trouvé",
       "noReportsMessage": "Essayez d'ajuster vos critères de recherche ou créez un nouveau rapport pour commencer."
+    },
+    "createMedicalReport": {
+      "backToAppointments": "Retour aux rendez-vous",
+      "title": "Créer un Rapport Médical",
+      "appointmentDetails": "Détails du rendez-vous",
+      "appointmentNotFound": "Rendez-vous introuvable ou vous n'avez pas l'autorisation de créer un rapport pour ce rendez-vous."
+    },
+    "editMedicalReport": {
+      "backToReport": "Retour au rapport",
+      "title": "Modifier le Rapport Médical",
+      "reportInformation": "Informations du rapport",
+      "reportNotFound": "Rapport introuvable ou vous n'avez pas l'autorisation de modifier ce rapport."
+    },
+    "reportDetail": {
+      "patientReportTitle": "Rapport du patient",
+      "medicalReportTitle": "Rapport médical",
+      "generatedOn": "Généré le :",
+      "patientInformation": "Informations du patient",
+      "diagnosisDetails": "Détails du diagnostic",
+      "examinationReport": "Compte rendu d'examen",
+      "medicationDetails": "Détails des médicaments",
+      "referralInformation": "Informations de référence",
+      "reportNotFound": "Rapport introuvable",
+      "confirmDeleteTitle": "Confirmer la suppression"
     }
   },
   "confirmations": {
@@ -37,6 +65,110 @@
   },
   "messages": {
     "deleteSuccess": "Rapport supprimé avec succès",
-    "deleteError": "Échec de la suppression du rapport. Veuillez réessayer."
+    "deleteError": "Échec de la suppression du rapport. Veuillez réessayer.",
+    "createSuccess": "Rapport médical créé avec succès !",
+    "updateSuccess": "Rapport médical mis à jour avec succès !"
+  },
+  "status": {
+    "loadingAppointmentDetails": "Chargement des détails du rendez-vous...",
+    "loadingReportDetails": "Chargement des détails du rapport...",
+    "creating": "Création...",
+    "updating": "Mise à jour...",
+    "deleting": "Suppression..."
+  },
+  "form": {
+    "medicalReportForm": "Formulaire de rapport médical",
+    "diagnosisInformation": "Informations du diagnostic",
+    "diagnosisMade": "Diagnostic établi",
+    "diagnosisName": "Nom du diagnostic",
+    "diagnosisDetails": "Détails du diagnostic",
+    "examinationReport": "Compte rendu d'examen",
+    "reportContent": "Contenu du rapport",
+    "referralInformation": "Informations de référence",
+    "referralRequired": "Référence requise",
+    "referralSpecialty": "Spécialité de référence",
+    "referredDoctorName": "Nom du médecin référé",
+    "referralMessage": "Message de référence"
+  },
+  "placeholders": {
+    "diagnosisName": "ex. Hypertension, Diabète de type 2, Infection respiratoire haute",
+    "diagnosisDetails": "Description détaillée du diagnostic, symptômes observés et constatations cliniques",
+    "reportContent": "Constatations détaillées de l'examen, traitement fourni, médicaments prescrits, recommandations et instructions de suivi",
+    "referralSpecialty": "Sélectionner une spécialité",
+    "referredDoctorName": "Recherchez un médecin ou saisissez manuellement",
+    "referralMessage": "Informations supplémentaires pour le spécialiste"
+  },
+  "medications": {
+    "title": "Médicaments prescrits",
+    "none": "Aucun médicament prescrit pour le moment",
+    "addMedication": "Ajouter un médicament",
+    "addAnother": "Ajouter un autre médicament",
+    "medicationNumber": "Médicament {{number}}",
+    "fields": {
+      "medicationName": "Nom du médicament",
+      "dosage": "Dosage",
+      "frequency": "Fréquence",
+      "duration": "Durée",
+      "instructions": "Instructions spéciales"
+    },
+    "placeholders": {
+      "medicationName": "ex. Amoxicilline",
+      "dosage": "ex. 500 mg, 1 comprimé",
+      "frequency": "ex. Deux fois par jour, toutes les 8 heures",
+      "duration": "ex. 7 jours, 2 semaines",
+      "instructions": "ex. À prendre avec de la nourriture, éviter l'alcool"
+    }
+  },
+  "validation": {
+    "diagnosisNameRequired": "Le nom du diagnostic est requis",
+    "diagnosisDetailsRequired": "Les détails du diagnostic sont requis",
+    "reportContentRequired": "Le contenu du rapport est requis",
+    "referralSpecialtyRequired": "La spécialité de référence est requise lorsque la référence est nécessaire",
+    "referralDoctorNameRequired": "Le nom du médecin référé est requis lorsque la référence est nécessaire",
+    "diagnosisNameMaxLength": "Le nom du diagnostic doit contenir moins de 200 caractères",
+    "reportContentTooShort": "Le contenu du rapport semble trop court pour un rapport médical"
+  },
+  "errors": {
+    "loadAppointmentDetails": "Échec du chargement des détails du rendez-vous",
+    "doctorIdRequired": "L'identifiant du médecin est requis",
+    "reportIdRequired": "L'identifiant du rapport est requis",
+    "appointmentIdRequired": "L'identifiant du rendez-vous est requis",
+    "requiredFields": "Tous les champs requis doivent être fournis",
+    "loadReports": "Échec du chargement des rapports. Veuillez réessayer.",
+    "loadReportDetails": "Échec du chargement des détails du rapport. Veuillez réessayer.",
+    "createReport": "Échec de la création du rapport. Veuillez réessayer.",
+    "updateReport": "Échec de la mise à jour du rapport. Veuillez réessayer.",
+    "deleteReport": "Échec de la suppression du rapport. Veuillez réessayer."
+  },
+  "defaults": {
+    "unknown": "Inconnu",
+    "patient": "Patient",
+    "doctor": "Médecin",
+    "unknownPatient": "Patient inconnu",
+    "unknownDoctor": "Médecin inconnu",
+    "noSummary": "Aucun résumé disponible"
+  },
+  "statusLabels": {
+    "unknown": "Inconnu",
+    "referralRequired": "Référence requise",
+    "complete": "Terminé"
+  },
+  "types": {
+    "general": "Général",
+    "surgical": "Chirurgical",
+    "followUp": "Suivi",
+    "consultation": "Consultation",
+    "emergency": "Urgence"
+  },
+  "csv": {
+    "headers": {
+      "date": "Date",
+      "patientName": "Nom du patient",
+      "diagnosis": "Diagnostic",
+      "reportType": "Type de rapport",
+      "referralNeeded": "Référence requise",
+      "referralSpecialty": "Spécialité de référence",
+      "referralDoctor": "Médecin référé"
+    }
   }
 }

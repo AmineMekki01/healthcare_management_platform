@@ -1,6 +1,7 @@
 {
   "labels": {
     "patient": "Patient",
+    "doctorPrefix": "Dr.",
     "diagnosis": "Diagnosis",
     "referredTo": "Referred to",
     "created": "Created"
@@ -8,7 +9,10 @@
   "actions": {
     "viewReport": "View Report",
     "editReport": "Edit Report",
-    "deleteReport": "Delete Report"
+    "deleteReport": "Delete Report",
+    "createReport": "Create Report",
+    "updateReport": "Update Report",
+    "downloadPdf": "Download PDF"
   },
   "filters": {
     "title": "Filter Reports",
@@ -30,6 +34,30 @@
       "subtitle": "Manage and review your patient reports",
       "noReportsTitle": "No Reports Found",
       "noReportsMessage": "Try adjusting your search criteria or create a new report to get started."
+    },
+    "createMedicalReport": {
+      "backToAppointments": "Back to Appointments",
+      "title": "Create Medical Report",
+      "appointmentDetails": "Appointment Details",
+      "appointmentNotFound": "Appointment not found or you don't have permission to create a report for this appointment."
+    },
+    "editMedicalReport": {
+      "backToReport": "Back to Report",
+      "title": "Edit Medical Report",
+      "reportInformation": "Report Information",
+      "reportNotFound": "Report not found or you don't have permission to edit this report."
+    },
+    "reportDetail": {
+      "patientReportTitle": "Patient Report",
+      "medicalReportTitle": "Medical Report",
+      "generatedOn": "Generated on:",
+      "patientInformation": "Patient Information",
+      "diagnosisDetails": "Diagnosis Details",
+      "examinationReport": "Examination Report",
+      "medicationDetails": "Medication Details",
+      "referralInformation": "Referral Information",
+      "reportNotFound": "Report not found",
+      "confirmDeleteTitle": "Confirm Delete"
     }
   },
   "confirmations": {
@@ -37,6 +65,110 @@
   },
   "messages": {
     "deleteSuccess": "Report deleted successfully",
-    "deleteError": "Failed to delete report. Please try again."
+    "deleteError": "Failed to delete report. Please try again.",
+    "createSuccess": "Medical report created successfully!",
+    "updateSuccess": "Medical report updated successfully!"
+  },
+  "status": {
+    "loadingAppointmentDetails": "Loading appointment details...",
+    "loadingReportDetails": "Loading report details...",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "deleting": "Deleting..."
+  },
+  "form": {
+    "medicalReportForm": "Medical Report Form",
+    "diagnosisInformation": "Diagnosis Information",
+    "diagnosisMade": "Diagnosis Made",
+    "diagnosisName": "Diagnosis Name",
+    "diagnosisDetails": "Diagnosis Details",
+    "examinationReport": "Examination Report",
+    "reportContent": "Report Content",
+    "referralInformation": "Referral Information",
+    "referralRequired": "Referral Required",
+    "referralSpecialty": "Referral Specialty",
+    "referredDoctorName": "Referred Doctor Name",
+    "referralMessage": "Referral Message"
+  },
+  "placeholders": {
+    "diagnosisName": "e.g., Hypertension, Diabetes Type 2, Upper Respiratory Infection",
+    "diagnosisDetails": "Detailed description of the diagnosis, symptoms observed, and clinical findings",
+    "reportContent": "Detailed examination findings, treatment provided, medications prescribed, recommendations, and follow-up instructions",
+    "referralSpecialty": "Select a specialty",
+    "referredDoctorName": "Search for a doctor or enter manually",
+    "referralMessage": "Additional information for the specialist"
+  },
+  "medications": {
+    "title": "Prescribed Medications",
+    "none": "No medications prescribed yet",
+    "addMedication": "Add Medication",
+    "addAnother": "Add Another Medication",
+    "medicationNumber": "Medication {{number}}",
+    "fields": {
+      "medicationName": "Medication Name",
+      "dosage": "Dosage",
+      "frequency": "Frequency",
+      "duration": "Duration",
+      "instructions": "Special Instructions"
+    },
+    "placeholders": {
+      "medicationName": "e.g., Amoxicillin",
+      "dosage": "e.g., 500mg, 1 tablet",
+      "frequency": "e.g., Twice daily, Every 8 hours",
+      "duration": "e.g., 7 days, 2 weeks",
+      "instructions": "e.g., Take with food, Avoid alcohol"
+    }
+  },
+  "validation": {
+    "diagnosisNameRequired": "Diagnosis name is required",
+    "diagnosisDetailsRequired": "Diagnosis details are required",
+    "reportContentRequired": "Report content is required",
+    "referralSpecialtyRequired": "Referral specialty is required when referral is needed",
+    "referralDoctorNameRequired": "Referral doctor name is required when referral is needed",
+    "diagnosisNameMaxLength": "Diagnosis name should be under 200 characters",
+    "reportContentTooShort": "Report content seems too short for a medical report"
+  },
+  "errors": {
+    "loadAppointmentDetails": "Failed to load appointment details",
+    "doctorIdRequired": "Doctor ID is required",
+    "reportIdRequired": "Report ID is required",
+    "appointmentIdRequired": "Appointment ID is required",
+    "requiredFields": "All required fields must be provided",
+    "loadReports": "Failed to load reports. Please try again.",
+    "loadReportDetails": "Failed to load report details. Please try again.",
+    "createReport": "Failed to create report. Please try again.",
+    "updateReport": "Failed to update report. Please try again.",
+    "deleteReport": "Failed to delete report. Please try again."
+  },
+  "defaults": {
+    "unknown": "Unknown",
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "unknownPatient": "Unknown Patient",
+    "unknownDoctor": "Unknown Doctor",
+    "noSummary": "No summary available"
+  },
+  "statusLabels": {
+    "unknown": "Unknown",
+    "referralRequired": "Referral Required",
+    "complete": "Complete"
+  },
+  "types": {
+    "general": "General",
+    "surgical": "Surgical",
+    "followUp": "Follow-up",
+    "consultation": "Consultation",
+    "emergency": "Emergency"
+  },
+  "csv": {
+    "headers": {
+      "date": "Date",
+      "patientName": "Patient Name",
+      "diagnosis": "Diagnosis",
+      "reportType": "Report Type",
+      "referralNeeded": "Referral Needed",
+      "referralSpecialty": "Referral Specialty",
+      "referralDoctor": "Referral Doctor"
+    }
   }
 }
