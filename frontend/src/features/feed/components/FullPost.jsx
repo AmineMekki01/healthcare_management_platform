@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import feedService from '../services/feedService';
 import CommentsSection from './CommentsSection';
+import { formatFeedTimestamp, getLocalizedPostAuthorName } from '../utils/feedI18n';
 import {
     PostContainer,
     PostHeader,
@@ -20,7 +21,7 @@ import {
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 
 const FullPost = () => {
-    const { t } = useTranslation('feed');
+    const { t, i18n } = useTranslation('feed');
     const { postId } = useParams();
     const { userId, userType } = useContext(AuthContext);
     const [post, setPost] = useState(null);
@@ -78,13 +79,15 @@ const FullPost = () => {
         return <div>{t('loading')}</div>;
     }
 
+    const authorName = getLocalizedPostAuthorName(post, i18n.language);
+
     return (
         <PostContainer>
             <PostHeader>
-                <PostAuthorAvatar src={feedService.getImageUrl(post.doctorAvatar)} alt={`Dr. ${post.doctorName}`} />
+                <PostAuthorAvatar src={post.doctorAvatar} alt={authorName || post.doctorName} />
                 <div>
-                    <PostAuthorName>{post.doctorName}</PostAuthorName>
-                    <PostTimestamp>{new Date(post.createdAt).toLocaleString()}</PostTimestamp>
+                    <PostAuthorName>{authorName || post.doctorName}</PostAuthorName>
+                    <PostTimestamp>{formatFeedTimestamp(post.createdAt, i18n.language)}</PostTimestamp>
                 </div>
             </PostHeader>
 
