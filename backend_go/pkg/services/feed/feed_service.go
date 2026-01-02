@@ -2,6 +2,7 @@ package feed
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -20,6 +21,8 @@ type FeedService struct {
 	db  *pgxpool.Pool
 	cfg *config.Config
 }
+
+var ErrPostNotFound = errors.New("post not found")
 
 func NewFeedService(db *pgxpool.Pool, cfg *config.Config) *FeedService {
 	return &FeedService{
@@ -74,25 +77,43 @@ func (s *FeedService) AddComment(postID, userID uuid.UUID, userType, content str
 			c.comment_id,
 			c.post_id,
 			c.user_id,
-			COALESCE(di.first_name || ' ' || di.last_name, pi.first_name || ' ' || pi.last_name) AS user_name,
-			COALESCE(di.profile_photo_url, pi.profile_photo_url) AS user_avatar,
+			COALESCE(di.first_name || ' ' || di.last_name, pi.first_name || ' ' || pi.last_name, r.first_name || ' ' || r.last_name, '') AS user_name,
+			COALESCE(di.first_name, pi.first_name, r.first_name, '') AS user_first_name,
+			COALESCE(di.first_name_ar, pi.first_name_ar, r.first_name_ar, '') AS user_first_name_ar,
+			COALESCE(di.last_name, pi.last_name, r.last_name, '') AS user_last_name,
+			COALESCE(di.last_name_ar, pi.last_name_ar, r.last_name_ar, '') AS user_last_name_ar,
+			COALESCE(di.profile_photo_url, pi.profile_photo_url, r.profile_photo_url, '') AS user_avatar,
 			c.content,
 			c.created_at
 		FROM comments c
 		LEFT JOIN doctor_info di ON c.user_id = di.doctor_id AND c.user_type = 'doctor'
 		LEFT JOIN patient_info pi ON c.user_id = pi.patient_id AND c.user_type = 'patient'
+		LEFT JOIN receptionists r ON c.user_id = r.receptionist_id AND c.user_type = 'receptionist'
 		WHERE c.comment_id = $1
 	`, commentID).Scan(
 		&comment.CommentID,
 		&comment.PostID,
 		&comment.UserID,
 		&comment.UserName,
+		&comment.UserFirstName,
+		&comment.UserFirstNameAr,
+		&comment.UserLastName,
+		&comment.UserLastNameAr,
 		&comment.UserAvatar,
 		&comment.Content,
 		&comment.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if comment.UserAvatar != "" {
+		presignedURL, err := utils.GeneratePresignedObjectURL(comment.UserAvatar)
+		if err != nil {
+			log.Printf("Warning: failed to generate presigned URL for comment avatar: %v", err)
+		} else {
+			comment.UserAvatar = presignedURL
+		}
 	}
 
 	return &comment, nil
@@ -104,13 +125,18 @@ func (s *FeedService) GetComments(postID uuid.UUID) ([]models.Comment, error) {
 			c.comment_id,
 			c.post_id,
 			c.user_id,
-			COALESCE(di.first_name || ' ' || di.last_name, pi.first_name || ' ' || pi.last_name) AS user_name,
-			COALESCE(di.profile_photo_url, pi.profile_photo_url) AS user_avatar,
+			COALESCE(di.first_name || ' ' || di.last_name, pi.first_name || ' ' || pi.last_name, r.first_name || ' ' || r.last_name, '') AS user_name,
+			COALESCE(di.first_name, pi.first_name, r.first_name, '') AS user_first_name,
+			COALESCE(di.first_name_ar, pi.first_name_ar, r.first_name_ar, '') AS user_first_name_ar,
+			COALESCE(di.last_name, pi.last_name, r.last_name, '') AS user_last_name,
+			COALESCE(di.last_name_ar, pi.last_name_ar, r.last_name_ar, '') AS user_last_name_ar,
+			COALESCE(di.profile_photo_url, pi.profile_photo_url, r.profile_photo_url, '') AS user_avatar,
 			c.content,
 			c.created_at
 		FROM comments c
 		LEFT JOIN doctor_info di ON c.user_id = di.doctor_id AND c.user_type = 'doctor'
 		LEFT JOIN patient_info pi ON c.user_id = pi.patient_id AND c.user_type = 'patient'
+		LEFT JOIN receptionists r ON c.user_id = r.receptionist_id AND c.user_type = 'receptionist'
 		WHERE c.post_id = $1
 		ORDER BY c.created_at ASC
 	`, postID)
@@ -128,6 +154,10 @@ func (s *FeedService) GetComments(postID uuid.UUID) ([]models.Comment, error) {
 			&comment.PostID,
 			&comment.UserID,
 			&comment.UserName,
+			&comment.UserFirstName,
+			&comment.UserFirstNameAr,
+			&comment.UserLastName,
+			&comment.UserLastNameAr,
 			&comment.UserAvatar,
 			&comment.Content,
 			&comment.CreatedAt,
@@ -136,9 +166,14 @@ func (s *FeedService) GetComments(postID uuid.UUID) ([]models.Comment, error) {
 			return nil, err
 		}
 
-		presignedURL, err := utils.GeneratePresignedObjectURL(comment.UserAvatar)
-
-		comment.UserAvatar = presignedURL
+		if comment.UserAvatar != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(comment.UserAvatar)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for comment avatar: %v", err)
+			} else {
+				comment.UserAvatar = presignedURL
+			}
+		}
 
 		comments = append(comments, comment)
 	}
@@ -194,6 +229,10 @@ func (s *FeedService) GetFeed(userType, userID, specialty, searchQuery string) (
 			bp.created_at,
 			bp.updated_at,
 			di.first_name || ' ' || di.last_name AS doctor_name,
+			di.first_name AS doctor_first_name,
+			COALESCE(di.first_name_ar, '') AS doctor_first_name_ar,
+			di.last_name AS doctor_last_name,
+			COALESCE(di.last_name_ar, '') AS doctor_last_name_ar,
 			di.profile_photo_url AS doctor_avatar,
 			(SELECT COUNT(*) FROM likes l WHERE l.post_id = bp.post_id) AS likes_count,
 			(SELECT COUNT(*) FROM comments c WHERE c.post_id = bp.post_id) AS comments_count,
@@ -245,6 +284,10 @@ func (s *FeedService) GetFeed(userType, userID, specialty, searchQuery string) (
 			&post.CreatedAt,
 			&post.UpdatedAt,
 			&post.DoctorName,
+			&post.DoctorFirstName,
+			&post.DoctorFirstNameAr,
+			&post.DoctorLastName,
+			&post.DoctorLastNameAr,
 			&post.DoctorAvatar,
 			&post.LikesCount,
 			&post.CommentsCount,
@@ -268,7 +311,12 @@ func (s *FeedService) GetPostByID(postID, userID uuid.UUID, userType string) (*m
 	query := `
 		SELECT 
 			bp.post_id,
+			bp.doctor_id,
 			d.first_name || ' ' || d.last_name AS doctor_name,
+			d.first_name AS doctor_first_name,
+			COALESCE(d.first_name_ar, '') AS doctor_first_name_ar,
+			d.last_name AS doctor_last_name,
+			COALESCE(d.last_name_ar, '') AS doctor_last_name_ar,
 			d.profile_photo_url AS doctor_avatar,
 			bp.title,
 			bp.content,
@@ -290,7 +338,12 @@ func (s *FeedService) GetPostByID(postID, userID uuid.UUID, userType string) (*m
 	row := s.db.QueryRow(context.Background(), query, postID, userID, userType)
 	err := row.Scan(
 		&post.PostID,
+		&post.DoctorID,
 		&post.DoctorName,
+		&post.DoctorFirstName,
+		&post.DoctorFirstNameAr,
+		&post.DoctorLastName,
+		&post.DoctorLastNameAr,
 		&post.DoctorAvatar,
 		&post.Title,
 		&post.Content,
@@ -306,6 +359,10 @@ func (s *FeedService) GetPostByID(postID, userID uuid.UUID, userType string) (*m
 		return nil, err
 	}
 
+	var doctorIDStr string
+	doctorIDStr = post.DoctorID.String()
+	post.DoctorAvatar, _ = utils.GetUserImage(doctorIDStr, "doctor", context.Background(), s.db)
+
 	return &post, nil
 }
 
@@ -319,8 +376,12 @@ func (s *FeedService) GetDoctorPosts(userID string) ([]models.BlogPost, error) {
 			bp.created_at,
 			bp.updated_at,
 			bp.specialty,
-			bp.Keywords,
+			bp.keywords,
 			di.first_name || ' ' || di.last_name AS doctor_name,
+			di.first_name AS doctor_first_name,
+			COALESCE(di.first_name_ar, '') AS doctor_first_name_ar,
+			di.last_name AS doctor_last_name,
+			COALESCE(di.last_name_ar, '') AS doctor_last_name_ar,
 			di.profile_photo_url AS doctor_avatar,
 			(SELECT COUNT(*) FROM likes l WHERE l.post_id = bp.post_id) AS likes_count,
 			(SELECT COUNT(*) FROM comments c WHERE c.post_id = bp.post_id) AS comments_count
@@ -348,6 +409,10 @@ func (s *FeedService) GetDoctorPosts(userID string) ([]models.BlogPost, error) {
 			&post.Specialty,
 			pq.Array(&post.Keywords),
 			&post.DoctorName,
+			&post.DoctorFirstName,
+			&post.DoctorFirstNameAr,
+			&post.DoctorLastName,
+			&post.DoctorLastNameAr,
 			&post.DoctorAvatar,
 			&post.LikesCount,
 			&post.CommentsCount,
@@ -361,14 +426,20 @@ func (s *FeedService) GetDoctorPosts(userID string) ([]models.BlogPost, error) {
 	return posts, nil
 }
 
-func (s *FeedService) EditDoctorPost(postID, title, content string) error {
-	_, err := s.db.Exec(context.Background(), `
+func (s *FeedService) EditDoctorPost(postID, doctorID, title, content, specialty string, keywords []string) error {
+	cmd, err := s.db.Exec(context.Background(), `
 		UPDATE blog_posts 
-		SET title = $1, content = $2, updated_at = NOW() 
-		WHERE post_id = $3
-	`, title, content, postID)
+		SET title = $1, content = $2, specialty = $3, keywords = $4, updated_at = NOW() 
+		WHERE post_id = $5 AND doctor_id = $6
+	`, title, content, specialty, pq.Array(keywords), postID, doctorID)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrPostNotFound
+	}
 
-	return err
+	return nil
 }
 
 func (s *FeedService) DeleteDoctorPost(postID string) error {

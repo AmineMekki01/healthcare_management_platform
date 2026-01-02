@@ -4,6 +4,11 @@ import { FaThumbsUp, FaComment, FaChevronDown, FaChevronUp } from 'react-icons/f
 import CommentsSection from './CommentsSection';
 import { usePostInteractions } from '../hooks/usePostInteractions';
 import {
+    formatFeedTimestamp,
+    getLocalizedPostAuthorName,
+    getLocalizedSpecialtyLabel,
+} from '../utils/feedI18n';
+import {
     PostContainer,
     PostTitle,
     PostHeader,
@@ -28,9 +33,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const BlogPost = ({post}) => {
-    const { t } = useTranslation('feed');
+    const { t, i18n } = useTranslation('feed');
+    const { t: tMedical } = useTranslation('medical');
     const [showMore, setShowMore] = useState(false);
     const navigate = useNavigate();
+
+    const authorName = getLocalizedPostAuthorName(post, i18n.language);
+    const specialtyLabel = getLocalizedSpecialtyLabel(post?.specialty, tMedical);
     
     const {
         likes,
@@ -62,10 +71,10 @@ const BlogPost = ({post}) => {
         <PostContainer>
             <PostHeader>
                 <PostAuthorInfoContainer>
-                    <PostAuthorAvatar src={post.doctorAvatar} alt={`Dr. ${post.doctorName}`} />
+                    <PostAuthorAvatar src={post.doctorAvatar} alt={authorName || post.doctorName} />
                     <PostAuthorInfo>
-                        <PostAuthorName>{post.doctorName}</PostAuthorName>
-                        <PostTimestamp>{new Date(post.createdAt).toLocaleString()}</PostTimestamp>
+                        <PostAuthorName>{authorName || post.doctorName}</PostAuthorName>
+                        <PostTimestamp>{formatFeedTimestamp(post.createdAt, i18n.language)}</PostTimestamp>
                     </PostAuthorInfo>
                 </PostAuthorInfoContainer>
                 <GoToPostActionButton onClick={handleGoToPost}>
@@ -73,7 +82,7 @@ const BlogPost = ({post}) => {
                 </GoToPostActionButton>
             </PostHeader>
             <PostMetadata>
-                <SpecialtyTag>{post.specialty}</SpecialtyTag>
+                <SpecialtyTag>{specialtyLabel || post.specialty}</SpecialtyTag>
                 <KeywordsContainer>
                 {post.keywords.map((keyword, index) => (
                     <KeywordTag key={index}>{keyword}</KeywordTag>

@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaEdit, FaTrashAlt, FaEye, FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
+import { getLocalizedSpecialtyLabel } from '../utils/feedI18n';
 
 const DoctorPostsPageContainer = styled.div`
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -284,6 +285,7 @@ const SearchStats = styled.div`
 
 const DoctorPosts = () => {
   const { t } = useTranslation('feed');
+  const { t: tMedical } = useTranslation('medical');
   const { userId } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -416,7 +418,7 @@ const DoctorPosts = () => {
             return (
               <EnhancedPostContainer key={post.postId}>
                 <PostMetadata>
-                  <SpecialtyTag>{post.specialty}</SpecialtyTag>
+                  <SpecialtyTag>{getLocalizedSpecialtyLabel(post.specialty, tMedical) || post.specialty}</SpecialtyTag>
                   <KeywordsContainer>
                     {post.keywords.map((keyword, index) => (
                       <KeywordTag key={index}>{keyword}</KeywordTag>

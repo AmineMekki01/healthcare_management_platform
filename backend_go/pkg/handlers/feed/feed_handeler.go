@@ -305,18 +305,45 @@ func (h *FeedHandler) GetDoctorPosts(c *gin.Context) {
 
 func (h *FeedHandler) EditDoctorPost(c *gin.Context) {
 	postID := c.Param("postID")
-	var requestBody struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
+
+	userID, exists := c.Get("userId")
+	if !exists {
+		log.Println("User ID not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User authentication required"})
+		return
 	}
 
-	if err := c.BindJSON(&requestBody); err != nil {
+	userType, exists := c.Get("userType")
+	if !exists {
+		log.Println("User type not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User type not found"})
+		return
+	}
+
+	if userType != "doctor" {
+		log.Println("Non-doctor user attempted to edit post")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only doctors can edit posts"})
+		return
+	}
+
+	var requestBody struct {
+		Title     string   `json:"title" binding:"required"`
+		Content   string   `json:"content" binding:"required"`
+		Specialty string   `json:"specialty" binding:"required"`
+		Keywords  []string `json:"keywords" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	err := h.feedService.EditDoctorPost(postID, requestBody.Title, requestBody.Content)
+	err := h.feedService.EditDoctorPost(postID, userID.(string), requestBody.Title, requestBody.Content, requestBody.Specialty, requestBody.Keywords)
 	if err != nil {
+		if err == feed.ErrPostNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			return
+		}
 		log.Println("Failed to update blog post: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
 		return
