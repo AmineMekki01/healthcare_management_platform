@@ -20,30 +20,57 @@ class StaffService {
   transformReceptionistData(receptionist) {
     if (!receptionist) return null;
 
+    const lang = String(localStorage.getItem('i18nextLng') || '').toLowerCase();
+    const isArabic = lang.startsWith('ar');
+
+    const receptionistId = receptionist.receptionistId || receptionist.receptionist_id || receptionist.id;
+
+    const firstName = receptionist.firstName || receptionist.first_name || '';
+    const lastName = receptionist.lastName || receptionist.last_name || '';
+    const firstNameAr = receptionist.firstNameAr || receptionist.first_name_ar || '';
+    const lastNameAr = receptionist.lastNameAr || receptionist.last_name_ar || '';
+
+    const displayFirstName = isArabic ? (firstNameAr || firstName) : firstName;
+    const displayLastName = isArabic ? (lastNameAr || lastName) : lastName;
+    const displayFullName = `${displayFirstName || ''} ${displayLastName || ''}`.trim();
 
     const experienceYears = typeof receptionist.experienceYears === 'number'
       ? receptionist.experienceYears
       : (typeof receptionist.experience_years === 'number' ? receptionist.experience_years : 0);
 
+    const profilePictureUrl = receptionist.profilePictureUrl
+      || receptionist.profile_picture_url
+      || receptionist.profilePhotoUrl
+      || receptionist.profile_photo_url
+      || '';
+
     return {
-      id: receptionist.receptionistId,
-      receptionistId: receptionist.receptionistId,
+      id: receptionistId,
+      receptionistId,
       username: receptionist.username || '',
-      firstName: receptionist.firstName || '',
-      lastName: receptionist.lastName || '',
+      firstName,
+      firstNameAr,
+      lastName,
+      lastNameAr,
       email: receptionist.email || '',
-      phoneNumber: receptionist.phoneNumber || '',
+      phoneNumber: receptionist.phoneNumber || receptionist.phone_number || '',
       bio: receptionist.bio || '',
-      profilePhotoUrl: receptionist.profilePictureUrl || '',
-      assignedDoctorId: receptionist.assignedDoctorId || null,
-      isActive: receptionist.isActive || false,
-      emailVerified: receptionist.emailVerified || false,
-      createdAt: receptionist.createdAt || null,
-      updatedAt: receptionist.updatedAt || null,
-      role: 'Receptionist',
-      status: receptionist.isActive ? 'active' : 'inactive',
-      fullName: staffUtils.formatFullName(receptionist.firstName, receptionist.lastName),
-      initials: staffUtils.generateInitials(receptionist.firstName, receptionist.lastName),
+      bioAr: receptionist.bioAr || receptionist.bio_ar || '',
+      profilePhotoUrl: profilePictureUrl,
+      profilePictureUrl: profilePictureUrl,
+      assignedDoctorId: receptionist.assignedDoctorId || receptionist.assigned_doctor_id || null,
+      isActive: receptionist.isActive ?? receptionist.is_active ?? false,
+      emailVerified: receptionist.emailVerified ?? receptionist.email_verified ?? false,
+      createdAt: receptionist.createdAt || receptionist.created_at || null,
+      updatedAt: receptionist.updatedAt || receptionist.updated_at || null,
+      location: receptionist.location || '',
+      locationAr: receptionist.locationAr || receptionist.location_ar || '',
+      locationFr: receptionist.locationFr || receptionist.location_fr || '',
+      role: 'receptionist',
+      status: (receptionist.isActive ?? receptionist.is_active) ? 'active' : 'inactive',
+      fullName: displayFullName,
+      name: displayFullName,
+      initials: staffUtils.generateInitials(displayFirstName, displayLastName),
       lastActive: receptionist.lastActive || null,
       permissions: receptionist.permissions || [],
       workSchedule: receptionist.workSchedule || [],
@@ -54,7 +81,7 @@ class StaffService {
       contactInfo: {
         email: receptionist.email,
         phone: receptionist.phoneNumber,
-        verified: receptionist.emailVerified
+        verified: receptionist.emailVerified ?? receptionist.email_verified
       }
     };
   }
@@ -79,9 +106,9 @@ class StaffService {
 
   async fetchStaffById(staffId) {
     return this.handleApiCall(async () => {
-      return await this.axiosInstance.get(`/receptionist/profile/${staffId}`);
+      return await this.axiosInstance.get(`/api/v1/receptionist/${staffId}`);
     }, 'fetch staff member').then(data => {
-      return this.transformReceptionistData(data);
+      return this.transformReceptionistData(data.receptionist || data);
     });
   }
 
@@ -141,8 +168,9 @@ class StaffService {
   async updateStaffProfile(staffId, profileData) {
     return this.handleApiCall(async () => {
       const transformedData = staffUtils.transformProfileDataForApi(profileData);
-      const response = await this.axiosInstance.put(`/api/v1/receptionist/profile/${staffId}`, transformedData);
-      return this.transformReceptionistData(response.data.receptionist);
+      await this.axiosInstance.put(`/api/v1/receptionist/${staffId}`, transformedData);
+      const response = await this.axiosInstance.get(`/api/v1/receptionist/${staffId}`);
+      return this.transformReceptionistData(response.data.receptionist || response.data);
     }, 'update staff profile');
   }
 

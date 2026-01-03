@@ -5,15 +5,19 @@ import StaffCard from './StaffCard';
 
 
 const ListContainer = styled.div`
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 
+              0 4px 16px rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 `;
 
 const ListHeader = styled.div`
-  padding: 24px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 28px 32px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.5) 100%);
 `;
 
 const HeaderTop = styled.div`
@@ -25,9 +29,10 @@ const HeaderTop = styled.div`
 
 const ListTitle = styled.h2`
   margin: 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: #1a202c;
+  letter-spacing: -0.01em;
 `;
 
 const ListActions = styled.div`
@@ -44,32 +49,37 @@ const ViewToggle = styled.div`
 `;
 
 const ViewButton = styled.button`
-  padding: 8px 12px;
+  padding: 8px 16px;
   border: none;
-  background: ${props => props.$active ? '#667eea' : 'white'};
+  background: ${props => props.$active ? '#6366f1' : 'white'};
   color: ${props => props.$active ? 'white' : '#64748b'};
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.$active ? '#667eea' : '#f8fafc'};
+    background: ${props => props.$active ? '#4f46e5' : '#f8fafc'};
+    color: ${props => props.$active ? 'white' : '#6366f1'};
   }
 `;
 
 const ActionButton = styled.button`
-  padding: 8px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
   color: #64748b;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #6366f1;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.05);
+    transform: translateY(-1px);
   }
 `;
 
@@ -82,42 +92,55 @@ const SearchAndFilters = styled.div`
 
 const SearchInput = styled.input`
   flex: 1;
-  min-width: 200px;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  min-width: 240px;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
-  color: #1a202c;
+  color: #1e293b;
   font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:hover {
+    border-color: #cbd5e1;
   }
   
   &::placeholder {
-    color: #9ca3af;
+    color: #94a3b8;
   }
 `;
 
 const FilterSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
-  color: #1a202c;
+  color: #1e293b;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:hover {
+    border-color: #cbd5e1;
   }
 `;
 
 const ListBody = styled.div`
-  padding: 24px;
+  padding: 28px 32px;
 `;
 
 const ListControls = styled.div`
@@ -134,16 +157,24 @@ const ResultsInfo = styled.div`
 
 
 const SortSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
   background: white;
-  color: #1a202c;
-  font-size: 14px;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:hover {
+    border-color: #cbd5e1;
   }
 `;
 
@@ -206,21 +237,23 @@ const Pagination = styled.div`
 `;
 
 const PaginationButton = styled.button`
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: ${props => props.$active ? '#667eea' : 'white'};
+  padding: 10px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: ${props => props.$active ? '#6366f1' : 'white'};
   color: ${props => props.$active ? 'white' : '#64748b'};
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover:not(:disabled) {
-    border-color: #667eea;
-    background: ${props => props.$active ? '#667eea' : '#f8fafc'};
+    border-color: #6366f1;
+    background: ${props => props.$active ? '#4f46e5' : '#f8fafc'};
+    color: ${props => props.$active ? 'white' : '#6366f1'};
   }
   
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 `;
@@ -269,7 +302,6 @@ const StaffList = ({
   onStaffSelect,
   onStaffEdit,
   onViewSchedule,
-  onManagePermissions,
   onDismiss,
   onBulkAction,
   loading = false,
@@ -284,8 +316,6 @@ const StaffList = ({
   const { t } = useTranslation('staff');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [view, setView] = useState(compact ? 'compact' : 'grid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -312,9 +342,6 @@ const StaffList = ({
         s.id?.toString().includes(query) ||
         s.specializations?.some(spec => 
           (typeof spec === 'string' ? spec : spec.name)?.toLowerCase().includes(query)
-        ) ||
-        s.permissions?.some(perm => 
-          (typeof perm === 'string' ? perm : perm.permission_type)?.toLowerCase().includes(query)
         )
       );
     }
@@ -323,33 +350,21 @@ const StaffList = ({
       filtered = filtered.filter(s => s.role === roleFilter);
     }
 
-    if (statusFilter) {
-      filtered = filtered.filter(s => s.status === statusFilter);
-    }
-
-    if (departmentFilter) {
-      filtered = filtered.filter(s => s.department === departmentFilter);
-    }
-
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return (a.name || '').localeCompare(b.name || '');
         case 'role':
           return (a.role || '').localeCompare(b.role || '');
-        case 'department':
-          return (a.department || '').localeCompare(b.department || '');
         case 'experience':
           return (b.experience || 0) - (a.experience || 0);
-        case 'status':
-          return (a.status || '').localeCompare(b.status || '');
         default:
           return 0;
       }
     });
 
     return filtered;
-  }, [staff, searchQuery, roleFilter, statusFilter, departmentFilter, sortBy]);
+  }, [staff, searchQuery, roleFilter, sortBy]);
 
   const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
   const paginatedStaff = filteredStaff.slice(
@@ -358,8 +373,6 @@ const StaffList = ({
   );
 
   const uniqueRoles = [...new Set(staff.map(s => s.role).filter(Boolean))];
-  const uniqueStatuses = [...new Set(staff.map(s => s.status).filter(Boolean))];
-  const uniqueDepartments = [...new Set(staff.map(s => s.department).filter(Boolean))];
 
   const handleStaffSelect = (staffMember) => {
     if (onStaffSelect) {
@@ -378,8 +391,6 @@ const StaffList = ({
   const resetFilters = () => {
     setSearchQuery('');
     setRoleFilter('');
-    setStatusFilter('');
-    setDepartmentFilter('');
     setCurrentPage(1);
   };
 
@@ -439,30 +450,6 @@ const StaffList = ({
                     </option>
                   ))}
                 </FilterSelect>
-
-                <FilterSelect
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="">{t('list.filters.allStatus')}</option>
-                  {uniqueStatuses.map(status => (
-                    <option key={status} value={status}>
-                      {t(`status.${status}`, status.charAt(0).toUpperCase() + status.slice(1))}
-                    </option>
-                  ))}
-                </FilterSelect>
-
-                <FilterSelect
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                >
-                  <option value="">{t('list.filters.allDepartments')}</option>
-                  {uniqueDepartments.map(dept => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </FilterSelect>
               </>
             )}
           </SearchAndFilters>
@@ -482,9 +469,7 @@ const StaffList = ({
           >
             <option value="name">{t('list.sort.name')}</option>
             <option value="role">{t('list.sort.role')}</option>
-            <option value="department">{t('list.sort.department')}</option>
             <option value="experience">{t('list.sort.experience')}</option>
-            <option value="status">{t('list.sort.status')}</option>
           </SortSelect>
         </ListControls>
 
@@ -531,11 +516,8 @@ const StaffList = ({
                 onClick={() => onStaffSelect && onStaffSelect(staffMember)}
                 onEdit={onStaffEdit}
                 onViewSchedule={onViewSchedule}
-                onManagePermissions={onManagePermissions}
                 onDismiss={onDismiss}
                 showRole={true}
-                showStatus={true}
-                showPermissions={true}
                 showSchedule={true}
               />
             ))}

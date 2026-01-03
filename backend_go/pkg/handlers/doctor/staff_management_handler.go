@@ -167,3 +167,28 @@ func (h *DoctorHandler) DismissReceptionist(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Receptionist dismissed successfully"})
 }
+
+func (h *DoctorHandler) SearchStaff(c *gin.Context) {
+	doctorID := c.GetString("userId")
+	if doctorID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	q := c.DefaultQuery("q", "")
+	filters := map[string]string{
+		"role":           c.DefaultQuery("role", ""),
+		"experience":     c.DefaultQuery("experience", ""),
+		"specialization": c.DefaultQuery("specialization", ""),
+		"shift":          c.DefaultQuery("shift", ""),
+		"limit":          c.DefaultQuery("limit", ""),
+	}
+
+	results, err := h.doctorService.SearchStaff(doctorID, q, filters)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error searching staff: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": results})
+}

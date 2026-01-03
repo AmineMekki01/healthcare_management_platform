@@ -314,6 +314,10 @@ func SetupLocalTestDatabase(ctx context.Context) (*LocalTestDatabase, error) {
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 	)`)
 
+	_, _ = pool.Exec(ctx, `ALTER TABLE tbibi_test.receptionists ADD COLUMN IF NOT EXISTS first_name_ar VARCHAR(100)`)
+	_, _ = pool.Exec(ctx, `ALTER TABLE tbibi_test.receptionists ADD COLUMN IF NOT EXISTS last_name_ar VARCHAR(100)`)
+	_, _ = pool.Exec(ctx, `ALTER TABLE tbibi_test.medical_reports ADD COLUMN IF NOT EXISTS referral_doctor_id UUID`)
+
 	_, _ = pool.Exec(ctx, `ALTER TABLE tbibi_test.doctor_info ADD COLUMN IF NOT EXISTS specialty_code VARCHAR(100)`)
 
 	testDB := &LocalTestDatabase{

@@ -9,15 +9,27 @@ import { AuthContext } from './../../auth/context/AuthContext';
 const PageContainer = styled.div`
   min-height: 100vh;
   background: #f8fafc;
-  padding: 24px;
+  padding: 32px 24px;
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const PageHeader = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 
+              0 4px 16px rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-radius: 20px;
+  }
 `;
 
 const HeaderTop = styled.div`
@@ -29,59 +41,54 @@ const HeaderTop = styled.div`
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
-  color: #1a202c;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
 `;
 
 const PageSubtitle = styled.p`
-  margin: 0;
+  margin: 8px 0 0 0;
   color: #64748b;
   font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const HeaderActions = styled.div`
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 `;
 
 const ActionButton = styled.button`
-  padding: 12px 24px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: 10px;
+  background: #6366f1;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   
-  &.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
+  &:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
   }
   
-  &.secondary {
-    background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
-    
-    &:hover {
-      background: #667eea;
-      color: white;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -92,30 +99,40 @@ const HeaderStats = styled.div`
 `;
 
 const StatCard = styled.div`
-  text-align: center;
-  padding: 16px;
-  background: linear-gradient(135deg, ${props => props.$gradient || '#f8fafc 0%, #e2e8f0 100%'});
+  background: white;
+  padding: 24px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+  }
 `;
 
-const StatNumber = styled.div`
-  font-size: 24px;
+const StatValue = styled.div`
+  font-size: 36px;
   font-weight: 700;
-  color: ${props => props.$color || '#1a202c'};
-  margin-bottom: 4px;
+  color: #6366f1;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
 `;
 
 const StatLabel = styled.div`
-  font-size: 12px;
+  font-size: 11px;
+  color: #64748b;
   color: ${props => props.$color || '#64748b'};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  font-weight: 600;
 `;
 
 const StatIcon = styled.div`
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 24px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 `;
 
 const MainContent = styled.div`
@@ -142,26 +159,34 @@ const ErrorMessage = styled.div`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 48px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 64px 48px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 `;
 
 const EmptyStateIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 `;
 
 const EmptyStateTitle = styled.h3`
-  margin: 0 0 8px 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 700;
   color: #1a202c;
+  letter-spacing: -0.01em;
 `;
 
 const EmptyStateDescription = styled.p`
   margin: 0;
   color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
 `;
 
 const StaffManagementPage = () => {
@@ -234,25 +259,25 @@ const StaffManagementPage = () => {
         <HeaderStats>
           <StatCard $gradient="#dbeafe 0%, #bfdbfe 100%">
             <StatIcon>👥</StatIcon>
-            <StatNumber $color="#1e40af">{stats.total}</StatNumber>
+            <StatValue $color="#1e40af">{stats.total}</StatValue>
             <StatLabel $color="#1e40af">{t('stats.totalStaff')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#d1fae5 0%, #a7f3d0 100%">
             <StatIcon>✅</StatIcon>
-            <StatNumber $color="#059669">{stats.active}</StatNumber>
+            <StatValue $color="#059669">{stats.active}</StatValue>
             <StatLabel $color="#059669">{t('stats.active')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#fee2e2 0%, #fecaca 100%">
             <StatIcon>❌</StatIcon>
-            <StatNumber $color="#dc2626">{stats.inactive}</StatNumber>
+            <StatValue $color="#dc2626">{stats.inactive}</StatValue>
             <StatLabel $color="#dc2626">{t('stats.inactive')}</StatLabel>
           </StatCard>
           
           <StatCard $gradient="#fef3c7 0%, #fde68a 100%">
             <StatIcon>📋</StatIcon>
-            <StatNumber $color="#d97706">{stats.assigned}</StatNumber>
+            <StatValue $color="#d97706">{stats.assigned}</StatValue>
             <StatLabel $color="#d97706">{t('stats.assigned')}</StatLabel>
           </StatCard>
         </HeaderStats>

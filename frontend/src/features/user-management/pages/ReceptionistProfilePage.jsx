@@ -219,8 +219,6 @@ const ReceptionistProfilePage = () => {
     tasksCompleted: 0,
     workDays: 0
   });
-  const [workSchedule, setWorkSchedule] = useState([]);
-  const [permissions, setPermissions] = useState([]);
 
   const receptionistFields = [
     { key: 'firstName', label: 'First Name', type: 'text' },
@@ -286,29 +284,6 @@ const ReceptionistProfilePage = () => {
       </MainProfile>
 
       <Sidebar>
-        {/* Receptionist Statistics */}
-        {/* <StatsCard>
-          <SectionTitle>Work Statistics</SectionTitle>
-          <StatsGrid>
-            <StatItem>
-              <StatNumber>{receptionistStats.appointmentsHandled || 0}</StatNumber>
-              <StatLabel>Appointments</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>{receptionistStats.patientsManaged || 0}</StatNumber>
-              <StatLabel>Patients</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>{receptionistStats.tasksCompleted || 0}</StatNumber>
-              <StatLabel>Tasks</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>{workSchedule.length || 0}</StatNumber>
-              <StatLabel>Work Days</StatLabel>
-            </StatItem>
-          </StatsGrid>
-        </StatsCard> */}
-
         {/* Work Information */}
         <WorkInfoCard>
           <SectionTitle>Work Information</SectionTitle>
