@@ -29,6 +29,7 @@ import {
   ToggleOff as ToggleOffIcon,
   Badge as BadgeIcon,
   PersonOutline as PersonOutlineIcon,
+  Language as LanguageIcon,
 } from '@mui/icons-material';
 import { AuthContext } from './../../../features/auth/context/AuthContext';
 import FlagLanguageSelector from './../LanguageSelector/FlagLanguageSelector';
@@ -393,10 +394,61 @@ const MyNavbar = () => {
             </IconButton>
           </Tooltip>
         )}
+        {/* Language Selector */}
+        <Tooltip 
+          title={!sidebarOpen ? t('common:navigation.language') || 'Language' : ''} 
+          placement="right"
+          arrow
+        >
+          <ListItem
+            sx={{
+              borderRadius: '12px',
+              margin: '4px 0',
+              padding: sidebarOpen ? '12px 16px' : '8px',
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
+              },
+            }}
+          >
+            {sidebarOpen && (
+              <>
+                <ListItemIcon 
+                  sx={{ 
+                    color: 'white',
+                    minWidth: '40px',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LanguageIcon />
+                </ListItemIcon>
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <ListItemText 
+                    primary={t('common:navigation.language') || 'Language'}
+                    sx={{ 
+                      textAlign: 'start',
+                      '& .MuiListItemText-primary': {
+                        fontWeight: 500,
+                      }
+                    }}
+                  />
+                  <FlagLanguageSelector />
+                </Box>
+              </>
+            )}
+            {!sidebarOpen && (
+              <FlagLanguageSelector />
+            )}
+          </ListItem>
+        </Tooltip>
       </Box>
 
+      
+
       {/* Navigation Items */}
-      <List sx={{ flex: 1, padding: '8px' }}>
+      <List sx={{ flex: 1, padding: '8px', direction: isRTL ? 'rtl' : 'ltr' }}>
         {navItems.map((item, index) => (
           <React.Fragment key={index}>
             {item.hasSubItems ? (
@@ -414,7 +466,7 @@ const MyNavbar = () => {
                           transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                         },
                         padding: '12px 16px',
-                        justifyContent: 'initial',
+                        justifyContent: 'flex-start',
                         transition: 'all 0.2s ease-in-out',
                       }}
                     >
@@ -429,7 +481,8 @@ const MyNavbar = () => {
                       </ListItemIcon>
                       <ListItemText 
                         primary={item.label}
-                        sx={{ 
+                        sx={{
+                          textAlign: 'start',
                           '& .MuiListItemText-primary': {
                             fontWeight: 500,
                           }
@@ -456,7 +509,7 @@ const MyNavbar = () => {
                             sx={{
                               borderRadius: '8px',
                               margin: '2px 0',
-                              marginLeft: '20px',
+                              [isRTL ? 'marginRight' : 'marginLeft']: '30px',
                               padding: '8px 16px',
                               backgroundColor: location.pathname === subItem.href 
                                 ? 'rgba(255,255,255,0.15)' 
@@ -465,6 +518,7 @@ const MyNavbar = () => {
                                 backgroundColor: 'rgba(255,255,255,0.1)',
                                 transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                               },
+                              justifyContent: 'flex-start',
                               transition: 'all 0.2s ease-in-out',
                             }}
                           >
@@ -479,6 +533,7 @@ const MyNavbar = () => {
                             <ListItemText 
                               primary={subItem.label}
                               sx={{ 
+                                textAlign: 'start',
                                 '& .MuiListItemText-primary': {
                                   fontSize: '0.9rem',
                                   fontWeight: location.pathname === subItem.href ? 600 : 400,
@@ -622,7 +677,7 @@ const MyNavbar = () => {
                       transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
                     },
                     padding: sidebarOpen ? '12px 16px' : '12px',
-                    justifyContent: sidebarOpen ? 'initial' : 'center',
+                    justifyContent: sidebarOpen ? 'flex-start' : 'center',
                     transition: 'all 0.2s ease-in-out',
                   }}
                 >
@@ -639,6 +694,7 @@ const MyNavbar = () => {
                     <ListItemText 
                       primary={item.label}
                       sx={{ 
+                        textAlign: 'start',
                         '& .MuiListItemText-primary': {
                           fontWeight: location.pathname === item.href ? 600 : 500,
                         }
@@ -677,7 +733,7 @@ const MyNavbar = () => {
                 transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
-              justifyContent: sidebarOpen ? 'initial' : 'center',
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
               transition: 'all 0.2s ease-in-out',
             }}
           >
@@ -726,7 +782,7 @@ const MyNavbar = () => {
                 transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
-              justifyContent: sidebarOpen ? 'initial' : 'center',
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
               transition: 'all 0.2s ease-in-out',
             }}
           >
@@ -752,10 +808,7 @@ const MyNavbar = () => {
           </ListItem>
         </Tooltip>
 
-        {/* Language Selector */}
-        <Box sx={{ padding: '8px 16px', display: 'flex', justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
-          <FlagLanguageSelector />
-        </Box>
+        
 
         <Tooltip 
           title={!sidebarOpen ? 'Logout' : ''} 
@@ -776,7 +829,7 @@ const MyNavbar = () => {
                 transform: isRTL ? 'translateX(-4px)' : 'translateX(4px)',
               },
               padding: sidebarOpen ? '12px 16px' : '12px',
-              justifyContent: sidebarOpen ? 'initial' : 'center',
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
               transition: 'all 0.2s ease-in-out',
             }}
           >
