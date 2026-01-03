@@ -7,39 +7,65 @@ import staffService from '../services/staffService';
 const PageContainer = styled.div`
   min-height: 100vh;
   background: #f8fafc;
-  padding: 24px;
+  padding: 32px 24px;
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const PageHeader = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 
+              0 4px 16px rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-radius: 20px;
+  }
 `;
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
-  color: #1a202c;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
 `;
 
 const PageSubtitle = styled.p`
   margin: 8px 0 0 0;
   color: #64748b;
   font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const ContentCard = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 28px 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 `;
 
 const Row = styled.div`
@@ -47,32 +73,51 @@ const Row = styled.div`
   gap: 16px;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f1f5f9;
-
+  padding: 18px;
+  margin-bottom: 12px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  direction: ${props => props.$rtl ? 'rtl' : 'ltr'};
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+  }
+  
   &:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
   }
 `;
 
 const Name = styled.div`
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 16px;
   color: #0f172a;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
 `;
 
 const Meta = styled.div`
   color: #64748b;
   font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
 `;
 
 const Badge = styled.span`
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 16px;
   font-size: 12px;
   font-weight: 600;
-  background: ${props => (props.$variant === 'active' ? '#dcfce7' : '#fee2e2')};
-  color: ${props => (props.$variant === 'active' ? '#166534' : '#991b1b')};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: ${props => (props.$variant === 'active' ? '#d1fae5' : '#fee2e2')};
+  color: ${props => (props.$variant === 'active' ? '#059669' : '#dc2626')};
 `;
 
 const ErrorMessage = styled.div`
@@ -91,9 +136,34 @@ const LoadingMessage = styled.div`
   font-size: 16px;
 `;
 
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 64px 48px;
+  color: #64748b;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+`;
+
+const EmptyTitle = styled.h3`
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+`;
+
+const EmptyDescription = styled.p`
+  margin: 0;
+  font-size: 14px;
+`;
+
 const ReceptionistHistoryPage = () => {
-  const { t } = useTranslation('staff');
+  const { t, i18n } = useTranslation('staff');
   const { doctorId } = useContext(AuthContext);
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -123,6 +193,29 @@ const ReceptionistHistoryPage = () => {
     loadHistory();
   }, [loadHistory]);
 
+  const getLocalizedName = (item) => {
+    if (isArabic && item?.receptionistNameAr) {
+      return item.receptionistNameAr;
+    }
+    return item?.receptionistName || item?.receptionistId || t('history.unknownReceptionist');
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat(i18n?.language || 'en', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader>
@@ -137,25 +230,41 @@ const ReceptionistHistoryPage = () => {
       ) : (
         <ContentCard>
           {history.length === 0 ? (
-            <Meta>{t('history.empty')}</Meta>
+            <EmptyState>
+              <EmptyIcon>📋</EmptyIcon>
+              <EmptyTitle>{t('history.empty')}</EmptyTitle>
+              <EmptyDescription>{t('history.emptyDescription')}</EmptyDescription>
+            </EmptyState>
           ) : (
             history.map((item) => {
-              const name = item?.receptionistName || item?.receptionistId;
-              const startedAt = item?.startedAt ? new Date(item.startedAt).toLocaleString() : '';
-              const endedAt = item?.endedAt ? new Date(item.endedAt).toLocaleString() : null;
+              const name = getLocalizedName(item);
+              const startedAt = formatDate(item?.startedAt);
+              const endedAt = item?.endedAt ? formatDate(item.endedAt) : null;
               const isActive = !endedAt;
 
               return (
-                <Row key={item?.employmentId || `${item?.receptionistId}-${item?.startedAt}`}> 
-                  <div>
+                <Row key={item?.employmentId || `${item?.receptionistId}-${item?.startedAt}`} $rtl={isArabic}> 
+                  <div style={{ flex: 1 }}>
                     <Name>{name}</Name>
                     <Meta>
                       {t('history.labels.startedAt')}: {startedAt}
-                      {endedAt ? ` • ${t('history.labels.endedAt')}: ${endedAt}` : ''}
-                      {item?.dismissedReason ? ` • ${t('history.labels.reason')}: ${item.dismissedReason}` : ''}
+                      {endedAt && (
+                        <>
+                          {' • '}
+                          {t('history.labels.endedAt')}: {endedAt}
+                        </>
+                      )}
+                      {item?.dismissedReason && (
+                        <>
+                          <br />
+                          {t('history.labels.reason')}: {item.dismissedReason}
+                        </>
+                      )}
                     </Meta>
                   </div>
                   <Badge $variant={isActive ? 'active' : 'inactive'}>
+                    {isActive ? '●' : '○'}
+                    {' '}
                     {isActive ? t('history.status.active') : t('history.status.ended')}
                   </Badge>
                 </Row>

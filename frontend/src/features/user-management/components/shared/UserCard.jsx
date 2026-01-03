@@ -1,19 +1,21 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import UserAvatar from './UserAvatar';
 
 const Card = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
   cursor: ${props => props.$clickable ? 'pointer' : 'default'};
   
   &:hover {
     transform: ${props => props.$clickable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${props => props.$clickable ? '0 8px 24px rgba(0, 0, 0, 0.15)' : '0 4px 16px rgba(0, 0, 0, 0.1)'};
+    box-shadow: ${props => props.$clickable ? '0 18px 44px rgba(15, 23, 42, 0.12)' : '0 12px 30px rgba(15, 23, 42, 0.08)'};
+    border-color: rgba(99, 102, 241, 0.35);
   }
 `;
 
@@ -22,6 +24,7 @@ const Header = styled.div`
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
+  flex-direction: ${props => props.$rtl ? 'row-reverse' : 'row'};
 `;
 
 const UserInfo = styled.div`
@@ -32,14 +35,15 @@ const UserName = styled.h3`
   margin: 0 0 4px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1a202c;
+  color: #0f172a;
+  letter-spacing: -0.2px;
 `;
 
 const UserRole = styled.p`
   margin: 0 0 4px 0;
   font-size: 14px;
-  color: #667eea;
-  font-weight: 500;
+  color: #4f46e5;
+  font-weight: 600;
   text-transform: capitalize;
 `;
 
@@ -47,6 +51,7 @@ const UserEmail = styled.p`
   margin: 0;
   font-size: 14px;
   color: #64748b;
+  font-weight: 500;
 `;
 
 const StatusBadge = styled.span`
@@ -119,6 +124,8 @@ const Actions = styled.div`
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #e2e8f0;
+  justify-content: flex-start;
+  flex-direction: ${props => props.$rtl ? 'row-reverse' : 'row'};
 `;
 
 const ActionButton = styled.button`
@@ -131,35 +138,34 @@ const ActionButton = styled.button`
   transition: all 0.2s ease;
   
   ${props => props.$variant === 'primary' && `
-    background: #667eea;
-    border-color: #667eea;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: rgba(79, 70, 229, 0.9);
     color: white;
     
     &:hover {
-      background: #5a67d8;
-      border-color: #5a67d8;
+      filter: brightness(0.98);
     }
   `}
   
   ${props => props.$variant === 'secondary' && `
-    background: transparent;
-    border-color: #e2e8f0;
-    color: #64748b;
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(148, 163, 184, 0.45);
+    color: #334155;
     
     &:hover {
-      background: #f8fafc;
-      border-color: #cbd5e0;
+      background: rgba(248, 250, 252, 1);
+      border-color: rgba(100, 116, 139, 0.35);
     }
   `}
   
   ${props => props.$variant === 'danger' && `
     background: transparent;
-    border-color: #fecaca;
-    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
     
     &:hover {
-      background: #fef2f2;
-      border-color: #f87171;
+      background: rgba(254, 242, 242, 1);
+      border-color: rgba(248, 113, 113, 0.6);
     }
   `}
 `;
@@ -168,16 +174,30 @@ const UserCard = ({
   user,
   userType,
   onClick,
-  showStatus = true,
   showMetaData = true,
   actions = [],
   metaFields = [],
   className 
 }) => {
+  const { t, i18n } = useTranslation(['common', 'staff']);
+  const lang = String(i18n?.language || '').toLowerCase();
+  const isArabic = lang.startsWith('ar');
+
   const getFullName = (user) => {
     const firstName = user?.firstName || '';
     const lastName = user?.lastName || '';
-    return `${firstName} ${lastName}`.trim() || 'Unknown User';
+    const firstNameAr = user?.firstNameAr || '';
+    const lastNameAr = user?.lastNameAr || '';
+
+    const displayFirstName = isArabic ? (firstNameAr || firstName) : firstName;
+    const displayLastName = isArabic ? (lastNameAr || lastName) : lastName;
+    const fullName = `${displayFirstName} ${displayLastName}`.trim();
+
+    if (fullName) return fullName;
+    if (user?.fullName) return user.fullName;
+    if (user?.name) return user.name;
+
+    return t('staff:utils.unknownUser', { defaultValue: 'Unknown User' });
   };
 
   const getUserStatus = (user) => {
@@ -187,12 +207,9 @@ const UserCard = ({
   };
 
   const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active': return 'Active';
-      case 'inactive': return 'Inactive';
-      case 'pending': return 'Pending';
-      default: return 'Unknown';
-    }
+    return t(`staff:status.${status}`, {
+      defaultValue: t(`common:status.${status}`, { defaultValue: status || '' })
+    });
   };
 
   const handleCardClick = () => {
@@ -201,9 +218,17 @@ const UserCard = ({
     }
   };
 
+  const notAvailable = t('common:common.notAvailable', { defaultValue: 'N/A' });
+
   const defaultMetaFields = [
-    { label: 'Phone', value: user?.phoneNumber || 'N/A' },
-    { label: 'Joined', value: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A' },
+    {
+      label: t('staff:labels.phone', { defaultValue: 'Phone' }),
+      value: user?.phoneNumber || notAvailable
+    },
+    {
+      label: t('staff:labels.joined', { defaultValue: 'Joined' }),
+      value: user?.createdAt ? new Date(user.createdAt).toLocaleDateString(i18n?.language || undefined) : notAvailable
+    },
   ];
 
   const displayMetaFields = metaFields.length > 0 ? metaFields : defaultMetaFields;
@@ -213,24 +238,18 @@ const UserCard = ({
       $clickable={!!onClick}
       onClick={handleCardClick}
       className={className}
+      dir={isArabic ? 'rtl' : 'ltr'}
     >
-      <Header>
+      <Header $rtl={isArabic}>
         <UserAvatar 
           user={user}
           size="56px"
-          showStatus={false}
         />
         <UserInfo>
           <UserName>{getFullName(user)}</UserName>
-          <UserRole>{userType}</UserRole>
-          <UserEmail>{user?.email || 'No email'}</UserEmail>
+          {userType ? <UserRole>{userType}</UserRole> : null}
+          <UserEmail>{user?.email || notAvailable}</UserEmail>
         </UserInfo>
-        {showStatus && (
-          <StatusBadge $status={getUserStatus(user)}>
-            <StatusDot />
-            {getStatusLabel(getUserStatus(user))}
-          </StatusBadge>
-        )}
       </Header>
 
       {showMetaData && (
@@ -247,7 +266,7 @@ const UserCard = ({
       )}
 
       {actions.length > 0 && (
-        <Actions>
+        <Actions $rtl={isArabic}>
           {actions.map((action, index) => (
             <ActionButton
               key={index}

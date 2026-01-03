@@ -8,15 +8,27 @@ import useStaffManagement from '../hooks/useStaffManagement';
 const PageContainer = styled.div`
   min-height: 100vh;
   background: #f8fafc;
-  padding: 24px;
+  padding: 32px 24px;
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const PageHeader = styled.div`
   background: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 
+              0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-radius: 20px;
+  }
 `;
 
 const HeaderTop = styled.div`
@@ -28,27 +40,37 @@ const HeaderTop = styled.div`
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
-  color: #1a202c;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
 `;
 
 const PageSubtitle = styled.p`
-  margin: 0;
+  margin: 8px 0 0 0;
   color: #64748b;
   font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const FilterContainer = styled.div`
   display: flex;
   gap: 16px;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
 `;
 
 const FilterGroup = styled.div`
@@ -58,75 +80,112 @@ const FilterGroup = styled.div`
 `;
 
 const FilterLabel = styled.label`
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
 `;
 
 const FilterSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
   font-size: 14px;
-  color: #374151;
+  font-weight: 500;
+  color: #1e293b;
   cursor: pointer;
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:hover {
+    border-color: #cbd5e1;
   }
 `;
 
 const SearchInput = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
   font-size: 14px;
-  color: #374151;
-  width: 200px;
+  font-weight: 500;
+  color: #1e293b;
+  min-width: 240px;
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  &:hover {
+    border-color: #cbd5e1;
   }
   
   &::placeholder {
-    color: #9ca3af;
+    color: #94a3b8;
+  }
+`;
+
+const FilterButton = styled.button`
+  padding: 10px 20px;
+  border: 2px solid ${props => props.$active ? '#8b5cf6' : '#e2e8f0'};
+  border-radius: 8px;
+  background: ${props => props.$active ? '#8b5cf6' : 'white'};
+  color: ${props => props.$active ? 'white' : '#64748b'};
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: ${props => props.$active ? '#7c3aed' : '#cbd5e1'};
+    background: ${props => props.$active ? '#7c3aed' : '#f8fafc'};
   }
 `;
 
 const ActionButton = styled.button`
-  padding: 12px 24px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #3b82f6;
     color: white;
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
     
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 24px 0 rgba(59, 130, 246, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(0);
     }
   }
   
   &.secondary {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
     
     &:hover {
-      background: #667eea;
+      background: #3b82f6;
       color: white;
+      box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
     }
   }
 
@@ -146,24 +205,34 @@ const StatsRow = styled.div`
 
 const StatCard = styled.div`
   text-align: center;
-  padding: 12px;
-  background: linear-gradient(135deg, ${props => props.$gradient || '#f8fafc 0%, #e2e8f0 100%'});
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 16px 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+  }
 `;
 
 const StatNumber = styled.div`
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: ${props => props.$color || '#1a202c'};
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 const StatLabel = styled.div`
   font-size: 10px;
   color: ${props => props.$color || '#64748b'};
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.8px;
+  font-weight: 600;
 `;
 
 const MainContent = styled.div`
@@ -175,6 +244,10 @@ const GridContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 24px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const LoadingMessage = styled.div`
@@ -195,26 +268,34 @@ const ErrorMessage = styled.div`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 48px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 64px 48px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 `;
 
 const EmptyStateIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 `;
 
 const EmptyStateTitle = styled.h3`
-  margin: 0 0 8px 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 700;
   color: #1a202c;
+  letter-spacing: -0.01em;
 `;
 
 const EmptyStateDescription = styled.p`
   margin: 0;
   color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
 `;
 
 const ReceptionistTalentPoolPage = () => {
@@ -284,9 +365,10 @@ const ReceptionistTalentPoolPage = () => {
 
     if (filters.availability) {
       filtered = filtered.filter(person => {
+        const isAvailable = !person.assignedDoctorId;
         switch (filters.availability) {
-          case 'available': return person.isAvailable;
-          case 'busy': return !person.isAvailable;
+          case 'available': return isAvailable;
+          case 'busy': return !isAvailable;
           default: return true;
         }
       });
@@ -312,8 +394,8 @@ const ReceptionistTalentPoolPage = () => {
 
   const stats = {
     total: talentPool.length,
-    available: talentPool.filter(p => p.isAvailable).length,
-    experienced: talentPool.filter(p => (p.experience || 0) >= 3).length,
+    available: talentPool.filter(p => !p.assignedDoctorId).length,
+    experienced: talentPool.filter(p => (p.experienceYears || p.experience || 0) >= 3).length,
     topRated: talentPool.filter(p => (p.rating || 0) >= 4.5).length
   };
 

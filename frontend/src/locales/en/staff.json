@@ -220,6 +220,8 @@
   },
   "utils": {
     "unknownUser": "Unknown User",
+    "years": "years",
+    "yearsWithValue": "{{value}} years",
     "notAvailable": "N/A",
     "invalidDate": "Invalid Date",
     "invalidDateTime": "Invalid DateTime",

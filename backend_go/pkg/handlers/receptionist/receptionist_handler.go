@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 
 	"healthcare_backend/pkg/models"
@@ -91,9 +93,35 @@ func (h *ReceptionistHandler) GetReceptionistProfile(c *gin.Context) {
 }
 
 func (h *ReceptionistHandler) UpdateReceptionistProfile(c *gin.Context) {
-	receptionistID, exists := c.Get("userId")
+	callerUserID, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	targetReceptionistID := c.Param("userID")
+	if targetReceptionistID == "" {
+		targetReceptionistID = callerUserID.(string)
+	}
+
+	if callerUserType == "receptionist" {
+		if targetReceptionistID != callerUserID.(string) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	} else if callerUserType == "doctor" {
+		allowed, err := h.receptionistService.IsReceptionistAssignedToDoctor(targetReceptionistID, callerUserID.(string))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !allowed {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	} else {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return
 	}
 
@@ -103,13 +131,77 @@ func (h *ReceptionistHandler) UpdateReceptionistProfile(c *gin.Context) {
 		return
 	}
 
-	err := h.receptionistService.UpdateReceptionistProfile(receptionistID.(string), req)
+	err := h.receptionistService.UpdateReceptionistProfile(targetReceptionistID, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+}
+
+func (h *ReceptionistHandler) UploadProfilePhoto(c *gin.Context) {
+	callerUserID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	callerUserType := c.GetString("userType")
+
+	receptionistID := c.Param("userID")
+	if receptionistID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Receptionist ID is required"})
+		return
+	}
+
+	if callerUserType == "receptionist" {
+		if receptionistID != callerUserID.(string) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	} else if callerUserType == "doctor" {
+		allowed, err := h.receptionistService.IsReceptionistAssignedToDoctor(receptionistID, callerUserID.(string))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !allowed {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
+	} else {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	getFile := func(field string) (multipart.File, *multipart.FileHeader, error) {
+		f, h, err := c.Request.FormFile(field)
+		if err != nil {
+			return nil, nil, err
+		}
+		return f, h, nil
+	}
+
+	file, handler, err := getFile("profile_photo")
+	if err != nil {
+		file, handler, err = getFile("file")
+	}
+	if err != nil {
+		file, handler, err = getFile("profilePhoto")
+	}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upload file"})
+		return
+	}
+	defer file.Close()
+
+	photoURL, err := h.receptionistService.UpdateReceptionistProfilePhoto(receptionistID, file, handler)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to upload profile photo: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"profilePictureUrl": photoURL})
 }
 
 func (h *ReceptionistHandler) GetAssignmentStatus(c *gin.Context) {

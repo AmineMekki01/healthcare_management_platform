@@ -220,6 +220,8 @@
   },
   "utils": {
     "unknownUser": "مستخدم غير معروف",
+    "years": "سنة",
+    "yearsWithValue": "{{value}} سنة",
     "notAvailable": "غير متاح",
     "invalidDate": "تاريخ غير صحيح",
     "invalidDateTime": "تاريخ/وقت غير صحيح",

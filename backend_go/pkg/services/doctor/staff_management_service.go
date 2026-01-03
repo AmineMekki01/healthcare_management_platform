@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"healthcare_backend/pkg/models"
+	"healthcare_backend/pkg/utils"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -26,8 +29,25 @@ func (s *DoctorService) GetDoctorStaff(doctorID string) ([]models.Receptionist, 
 
 	query := `
 	SELECT
-		receptionist_id, username, first_name, last_name, email, phone_number,
-		bio, profile_photo_url, is_active, email_verified, created_at, updated_at
+		receptionist_id,
+		username,
+		first_name,
+		COALESCE(first_name_ar, '') as first_name_ar,
+		last_name,
+		COALESCE(last_name_ar, '') as last_name_ar,
+		email,
+		phone_number,
+		COALESCE(bio, '') as bio,
+		COALESCE(bio_ar, '') as bio_ar,
+		COALESCE(profile_photo_url, '') as profile_photo_url,
+		assigned_doctor_id,
+		is_active,
+		email_verified,
+		created_at,
+		updated_at,
+		COALESCE(location, '') as location,
+		COALESCE(location_ar, '') as location_ar,
+		COALESCE(location_fr, '') as location_fr
 	FROM
 		receptionists
 	WHERE
@@ -45,24 +65,41 @@ func (s *DoctorService) GetDoctorStaff(doctorID string) ([]models.Receptionist, 
 	log.Printf("Executing query to fetch staff for doctor ID: %s", doctorID)
 	for rows.Next() {
 		var r models.Receptionist
-		var phoneNumber sql.NullString
-		var bio sql.NullString
-		var profilePhotoURL sql.NullString
+		var assignedDoctorID *uuid.UUID
 
 		if err := rows.Scan(
-			&r.ReceptionistID, &r.Username, &r.FirstName, &r.LastName, &r.Email, &phoneNumber, &bio, &profilePhotoURL, &r.IsActive, &r.EmailVerified, &r.CreatedAt, &r.UpdatedAt,
+			&r.ReceptionistID,
+			&r.Username,
+			&r.FirstName,
+			&r.FirstNameAr,
+			&r.LastName,
+			&r.LastNameAr,
+			&r.Email,
+			&r.PhoneNumber,
+			&r.Bio,
+			&r.BioAr,
+			&r.ProfilePictureURL,
+			&assignedDoctorID,
+			&r.IsActive,
+			&r.EmailVerified,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.Location,
+			&r.LocationAr,
+			&r.LocationFr,
 		); err != nil {
 			return nil, err
 		}
 
-		if phoneNumber.Valid {
-			r.PhoneNumber = phoneNumber.String
-		}
-		if bio.Valid {
-			r.Bio = bio.String
-		}
-		if profilePhotoURL.Valid {
-			r.ProfilePictureURL = profilePhotoURL.String
+		r.AssignedDoctorID = assignedDoctorID
+
+		if r.ProfilePictureURL != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(r.ProfilePictureURL)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+			} else {
+				r.ProfilePictureURL = presignedURL
+			}
 		}
 
 		log.Printf("Fetched receptionist: %+v", r)
@@ -79,13 +116,158 @@ func (s *DoctorService) GetDoctorStaff(doctorID string) ([]models.Receptionist, 
 	return staff, nil
 }
 
+func (s *DoctorService) SearchStaff(doctorID, query string, filters map[string]string) ([]models.Receptionist, error) {
+	role := strings.ToLower(strings.TrimSpace(filters["role"]))
+	if role != "" && role != "receptionist" {
+		return []models.Receptionist{}, nil
+	}
+
+	limitInt := 20
+	if rawLimit := strings.TrimSpace(filters["limit"]); rawLimit != "" {
+		if parsed, err := strconv.Atoi(rawLimit); err == nil {
+			limitInt = parsed
+		}
+	}
+	if limitInt <= 0 {
+		limitInt = 20
+	}
+	if limitInt > 100 {
+		limitInt = 100
+	}
+
+	status := strings.ToLower(strings.TrimSpace(filters["status"]))
+	isActiveFilter := (*bool)(nil)
+	if status == "active" || status == "available" {
+		v := true
+		isActiveFilter = &v
+	}
+	if status == "inactive" {
+		v := false
+		isActiveFilter = &v
+	}
+
+	q := strings.TrimSpace(query)
+	querySQL := `
+		SELECT
+			receptionist_id,
+			username,
+			first_name,
+			COALESCE(first_name_ar, '') as first_name_ar,
+			last_name,
+			COALESCE(last_name_ar, '') as last_name_ar,
+			email,
+			phone_number,
+			COALESCE(bio, '') as bio,
+			COALESCE(bio_ar, '') as bio_ar,
+			COALESCE(profile_photo_url, '') as profile_photo_url,
+			assigned_doctor_id,
+			is_active,
+			email_verified,
+			created_at,
+			updated_at,
+			COALESCE(location, '') as location,
+			COALESCE(location_ar, '') as location_ar,
+			COALESCE(location_fr, '') as location_fr
+		FROM
+			receptionists
+		WHERE
+			assigned_doctor_id = $1
+		`
+
+	args := []interface{}{doctorID}
+	paramIdx := 2
+
+	if q != "" {
+		querySQL += fmt.Sprintf(`
+			AND (
+				username ILIKE $%d
+				OR email ILIKE $%d
+				OR phone_number ILIKE $%d
+				OR first_name ILIKE $%d
+				OR last_name ILIKE $%d
+				OR COALESCE(first_name_ar, '') ILIKE $%d
+				OR COALESCE(last_name_ar, '') ILIKE $%d
+			)
+		`, paramIdx, paramIdx, paramIdx, paramIdx, paramIdx, paramIdx, paramIdx)
+		args = append(args, "%"+q+"%")
+		paramIdx++
+	}
+
+	if isActiveFilter != nil {
+		querySQL += fmt.Sprintf("\n\t\t\tAND is_active = $%d\n\t\t", paramIdx)
+		args = append(args, *isActiveFilter)
+		paramIdx++
+	}
+
+	querySQL += fmt.Sprintf("\n\t\tORDER BY updated_at DESC\n\t\tLIMIT $%d\n\t", paramIdx)
+	args = append(args, limitInt)
+
+	rows, err := s.db.Query(context.Background(), querySQL, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.Receptionist
+	for rows.Next() {
+		var r models.Receptionist
+		var assignedDoctorID *uuid.UUID
+
+		if err := rows.Scan(
+			&r.ReceptionistID,
+			&r.Username,
+			&r.FirstName,
+			&r.FirstNameAr,
+			&r.LastName,
+			&r.LastNameAr,
+			&r.Email,
+			&r.PhoneNumber,
+			&r.Bio,
+			&r.BioAr,
+			&r.ProfilePictureURL,
+			&assignedDoctorID,
+			&r.IsActive,
+			&r.EmailVerified,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.Location,
+			&r.LocationAr,
+			&r.LocationFr,
+		); err != nil {
+			return nil, err
+		}
+
+		r.AssignedDoctorID = assignedDoctorID
+
+		if r.ProfilePictureURL != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(r.ProfilePictureURL)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+			} else {
+				r.ProfilePictureURL = presignedURL
+			}
+		}
+
+		years, yearsErr := s.getReceptionistExperienceYears(r.ReceptionistID)
+		if yearsErr == nil {
+			r.ExperienceYears = years
+		}
+
+		results = append(results, r)
+	}
+
+	return results, nil
+}
+
 func (s *DoctorService) GetDoctorStaffEmploymentHistory(doctorID string) ([]map[string]interface{}, error) {
 	query := `
 		SELECT
 			e.employment_id,
 			e.receptionist_id,
 			r.first_name,
+			COALESCE(r.first_name_ar, '') as first_name_ar,
 			r.last_name,
+			COALESCE(r.last_name_ar, '') as last_name_ar,
 			r.profile_photo_url,
 			e.started_at,
 			e.ended_at,
@@ -108,7 +290,9 @@ func (s *DoctorService) GetDoctorStaffEmploymentHistory(doctorID string) ([]map[
 		var employmentID uuid.UUID
 		var receptionistID uuid.UUID
 		var firstName string
+		var firstNameAr string
 		var lastName string
+		var lastNameAr string
 		var profilePhotoURL sql.NullString
 		var startedAt time.Time
 		var endedAt sql.NullTime
@@ -119,7 +303,9 @@ func (s *DoctorService) GetDoctorStaffEmploymentHistory(doctorID string) ([]map[
 			&employmentID,
 			&receptionistID,
 			&firstName,
+			&firstNameAr,
 			&lastName,
+			&lastNameAr,
 			&profilePhotoURL,
 			&startedAt,
 			&endedAt,
@@ -129,20 +315,30 @@ func (s *DoctorService) GetDoctorStaffEmploymentHistory(doctorID string) ([]map[
 			return nil, err
 		}
 
+		var profilePicURL interface{} = nil
+		if profilePhotoURL.Valid && profilePhotoURL.String != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(profilePhotoURL.String)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+				profilePicURL = profilePhotoURL.String
+			} else {
+				profilePicURL = presignedURL
+			}
+		}
+
 		item := map[string]interface{}{
 			"employmentId":     employmentID.String(),
 			"receptionistId":   receptionistID.String(),
 			"receptionistName": fmt.Sprintf("%s %s", firstName, lastName),
-			"startedAt":        startedAt,
-			"endedAt":          nil,
-			"dismissedReason":  nil,
-			"dismissedBy":      nil,
-			"profilePictureUrl": func() interface{} {
-				if profilePhotoURL.Valid {
-					return profilePhotoURL.String
-				}
-				return nil
+			"receptionistNameAr": func() string {
+				name := strings.TrimSpace(fmt.Sprintf("%s %s", firstNameAr, lastNameAr))
+				return name
 			}(),
+			"startedAt":         startedAt,
+			"endedAt":           nil,
+			"dismissedReason":   nil,
+			"dismissedBy":       nil,
+			"profilePictureUrl": profilePicURL,
 		}
 		if endedAt.Valid {
 			item["endedAt"] = endedAt.Time
@@ -166,8 +362,25 @@ func (s *DoctorService) GetDoctorStaffEmploymentHistory(doctorID string) ([]map[
 
 func (s *DoctorService) GetTalentPool() ([]models.Receptionist, error) {
 	var receptionists []models.Receptionist
-	query := `SELECT receptionist_id, username, first_name, last_name, email, phone_number,
-		bio, profile_photo_url, is_active, email_verified, created_at, updated_at
+	query := `SELECT receptionist_id,
+		username,
+		first_name,
+		COALESCE(first_name_ar, '') as first_name_ar,
+		last_name,
+		COALESCE(last_name_ar, '') as last_name_ar,
+		email,
+		phone_number,
+		COALESCE(bio, '') as bio,
+		COALESCE(bio_ar, '') as bio_ar,
+		COALESCE(profile_photo_url, '') as profile_photo_url,
+		assigned_doctor_id,
+		is_active,
+		email_verified,
+		created_at,
+		updated_at,
+		COALESCE(location, '') as location,
+		COALESCE(location_ar, '') as location_ar,
+		COALESCE(location_fr, '') as location_fr
 		FROM receptionists 
 		WHERE assigned_doctor_id IS NULL
 		ORDER BY created_at DESC
@@ -181,22 +394,39 @@ func (s *DoctorService) GetTalentPool() ([]models.Receptionist, error) {
 
 	for rows.Next() {
 		var r models.Receptionist
-		var phoneNumber sql.NullString
-		var bio sql.NullString
-		var profilePhotoURL sql.NullString
+		var assignedDoctorID *uuid.UUID
 		if err := rows.Scan(
-			&r.ReceptionistID, &r.Username, &r.FirstName, &r.LastName, &r.Email, &phoneNumber, &bio, &profilePhotoURL, &r.IsActive, &r.EmailVerified, &r.CreatedAt, &r.UpdatedAt,
+			&r.ReceptionistID,
+			&r.Username,
+			&r.FirstName,
+			&r.FirstNameAr,
+			&r.LastName,
+			&r.LastNameAr,
+			&r.Email,
+			&r.PhoneNumber,
+			&r.Bio,
+			&r.BioAr,
+			&r.ProfilePictureURL,
+			&assignedDoctorID,
+			&r.IsActive,
+			&r.EmailVerified,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.Location,
+			&r.LocationAr,
+			&r.LocationFr,
 		); err != nil {
 			return nil, err
 		}
-		if phoneNumber.Valid {
-			r.PhoneNumber = phoneNumber.String
-		}
-		if bio.Valid {
-			r.Bio = bio.String
-		}
-		if profilePhotoURL.Valid {
-			r.ProfilePictureURL = profilePhotoURL.String
+		r.AssignedDoctorID = assignedDoctorID
+
+		if r.ProfilePictureURL != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(r.ProfilePictureURL)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+			} else {
+				r.ProfilePictureURL = presignedURL
+			}
 		}
 
 		years, err := s.getReceptionistExperienceYears(r.ReceptionistID)
@@ -322,7 +552,9 @@ func (s *DoctorService) ListHiringProposalsForDoctor(doctorID string) ([]map[str
 			p.proposal_id,
 			p.receptionist_id,
 			r.first_name,
+			COALESCE(r.first_name_ar, '') as first_name_ar,
 			r.last_name,
+			COALESCE(r.last_name_ar, '') as last_name_ar,
 			r.profile_photo_url,
 			p.status,
 			p.initial_message,
@@ -345,7 +577,9 @@ func (s *DoctorService) ListHiringProposalsForDoctor(doctorID string) ([]map[str
 		var proposalID uuid.UUID
 		var receptionistID uuid.UUID
 		var firstName string
+		var firstNameAr string
 		var lastName string
+		var lastNameAr string
 		var profilePhotoURL sql.NullString
 		var status string
 		var initialMessage sql.NullString
@@ -356,7 +590,9 @@ func (s *DoctorService) ListHiringProposalsForDoctor(doctorID string) ([]map[str
 			&proposalID,
 			&receptionistID,
 			&firstName,
+			&firstNameAr,
 			&lastName,
+			&lastNameAr,
 			&profilePhotoURL,
 			&status,
 			&initialMessage,
@@ -366,20 +602,30 @@ func (s *DoctorService) ListHiringProposalsForDoctor(doctorID string) ([]map[str
 			return nil, err
 		}
 
+		var profilePicURL interface{} = nil
+		if profilePhotoURL.Valid && profilePhotoURL.String != "" {
+			presignedURL, err := utils.GeneratePresignedObjectURL(profilePhotoURL.String)
+			if err != nil {
+				log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+				profilePicURL = profilePhotoURL.String
+			} else {
+				profilePicURL = presignedURL
+			}
+		}
+
 		item := map[string]interface{}{
 			"proposalId":       proposalID.String(),
 			"receptionistId":   receptionistID.String(),
 			"receptionistName": fmt.Sprintf("%s %s", firstName, lastName),
-			"status":           status,
-			"initialMessage":   nil,
-			"createdAt":        createdAt,
-			"updatedAt":        updatedAt,
-			"profilePictureUrl": func() interface{} {
-				if profilePhotoURL.Valid {
-					return profilePhotoURL.String
-				}
-				return nil
+			"receptionistNameAr": func() string {
+				name := strings.TrimSpace(fmt.Sprintf("%s %s", firstNameAr, lastNameAr))
+				return name
 			}(),
+			"status":            status,
+			"initialMessage":    nil,
+			"createdAt":         createdAt,
+			"updatedAt":         updatedAt,
+			"profilePictureUrl": profilePicURL,
 		}
 		if initialMessage.Valid {
 			item["initialMessage"] = initialMessage.String
@@ -405,55 +651,64 @@ func (s *DoctorService) GetReceptionistByID(receptionistID string) (*models.Rece
 		receptionist_id,
 		username,
 		first_name,
+		COALESCE(first_name_ar, '') as first_name_ar,
 		last_name,
+		COALESCE(last_name_ar, '') as last_name_ar,
 		email,
 		phone_number,
-		bio,
-		profile_photo_url,
+		COALESCE(bio, '') as bio,
+		COALESCE(bio_ar, '') as bio_ar,
+		COALESCE(profile_photo_url, '') as profile_photo_url,
 		assigned_doctor_id,
 		is_active,
 		email_verified,
 		created_at,
-		updated_at
+		updated_at,
+		COALESCE(location, '') as location,
+		COALESCE(location_ar, '') as location_ar,
+		COALESCE(location_fr, '') as location_fr
 	FROM receptionists
 	WHERE receptionist_id = $1
 	`
 
 	var r models.Receptionist
-	var phoneNumber sql.NullString
-	var bio sql.NullString
-	var profilePhotoURL sql.NullString
 	var assignedDoctorID *uuid.UUID
 
 	err = s.db.QueryRow(context.Background(), query, receptionistUUID).Scan(
 		&r.ReceptionistID,
 		&r.Username,
 		&r.FirstName,
+		&r.FirstNameAr,
 		&r.LastName,
+		&r.LastNameAr,
 		&r.Email,
-		&phoneNumber,
-		&bio,
-		&profilePhotoURL,
+		&r.PhoneNumber,
+		&r.Bio,
+		&r.BioAr,
+		&r.ProfilePictureURL,
 		&assignedDoctorID,
 		&r.IsActive,
 		&r.EmailVerified,
 		&r.CreatedAt,
 		&r.UpdatedAt,
+		&r.Location,
+		&r.LocationAr,
+		&r.LocationFr,
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	if phoneNumber.Valid {
-		r.PhoneNumber = phoneNumber.String
-	}
-	if bio.Valid {
-		r.Bio = bio.String
-	}
-	if profilePhotoURL.Valid {
-		r.ProfilePictureURL = profilePhotoURL.String
-	}
 	r.AssignedDoctorID = assignedDoctorID
+
+	if r.ProfilePictureURL != "" {
+		presignedURL, err := utils.GeneratePresignedObjectURL(r.ProfilePictureURL)
+		if err != nil {
+			log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+		} else {
+			r.ProfilePictureURL = presignedURL
+		}
+	}
+
 	years, err := s.getReceptionistExperienceYears(r.ReceptionistID)
 	if err != nil {
 		log.Printf("Warning: failed to compute receptionist experience years: %v", err)

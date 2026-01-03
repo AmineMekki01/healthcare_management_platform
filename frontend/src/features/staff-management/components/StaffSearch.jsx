@@ -13,7 +13,7 @@ const SearchContainer = styled.div`
 
 const SearchHeader = styled.div`
   padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #6366f1;
   color: white;
 `;
 
@@ -53,18 +53,16 @@ const SearchInput = styled.input`
 
 const SearchButton = styled.button`
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: white;
+  border: 2px solid white;
   border-radius: 8px;
-  color: white;
-  font-weight: 500;
+  color: #6366f1;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
   
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: #f8fafc;
   }
   
   &:disabled {
@@ -245,7 +243,6 @@ const StaffSearch = ({
   onStaffSelect,
   onStaffEdit,
   onViewSchedule,
-  onManagePermissions,
   showAdvancedFilters = true,
   initialQuery = '',
   className 
@@ -254,8 +251,6 @@ const StaffSearch = ({
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState({
     role: '',
-    status: '',
-    department: '',
     experience: '',
     specialization: '',
     shift: ''
@@ -331,8 +326,6 @@ const StaffSearch = ({
     setQuery('');
     setFilters({
       role: '',
-      status: '',
-      department: '',
       experience: '',
       specialization: '',
       shift: ''
@@ -370,14 +363,6 @@ const StaffSearch = ({
       });
     }
 
-    if (staff.role === 'receptionist') {
-      actions.push({
-        label: t('actions.managePermissions'),
-        variant: 'secondary',
-        onClick: (staff) => onManagePermissions?.(staff)
-      });
-    }
-
     return actions;
   };
 
@@ -410,12 +395,8 @@ const StaffSearch = ({
         return (a.name || '').localeCompare(b.name || '');
       case 'role':
         return (a.role || '').localeCompare(b.role || '');
-      case 'department':
-        return (a.department || '').localeCompare(b.department || '');
       case 'experience':
         return (b.experience || 0) - (a.experience || 0);
-      case 'status':
-        return (a.status || '').localeCompare(b.status || '');
       default:
         return 0;
     }
@@ -469,12 +450,6 @@ const StaffSearch = ({
           >
             👩‍⚕️ {t('search.quickFilters.nurses')}
           </QuickFilterButton>
-          <QuickFilterButton
-            $active={filters.status === 'available'}
-            onClick={() => handleFilterChange('status', filters.status === 'available' ? '' : 'available')}
-          >
-            🟢 {t('search.quickFilters.available')}
-          </QuickFilterButton>
         </QuickFilters>
 
         {showAdvancedFilters && (
@@ -485,29 +460,6 @@ const StaffSearch = ({
             
             {showAdvanced && (
               <FilterGrid>
-                <FilterSelect
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                >
-                  <option value="">{t('search.filters.allStatus')}</option>
-                  <option value="available">{t('status.available')}</option>
-                  <option value="busy">{t('status.busy')}</option>
-                  <option value="offline">{t('status.offline')}</option>
-                  <option value="break">{t('status.break')}</option>
-                </FilterSelect>
-
-                <FilterSelect
-                  value={filters.department}
-                  onChange={(e) => handleFilterChange('department', e.target.value)}
-                >
-                  <option value="">{t('search.filters.allDepartments')}</option>
-                  <option value="cardiology">{t('search.filters.departments.cardiology')}</option>
-                  <option value="neurology">{t('search.filters.departments.neurology')}</option>
-                  <option value="orthopedics">{t('search.filters.departments.orthopedics')}</option>
-                  <option value="pediatrics">{t('search.filters.departments.pediatrics')}</option>
-                  <option value="emergency">{t('search.filters.departments.emergency')}</option>
-                </FilterSelect>
-
                 <FilterSelect
                   value={filters.experience}
                   onChange={(e) => handleFilterChange('experience', e.target.value)}
@@ -554,9 +506,7 @@ const StaffSearch = ({
               >
                 <option value="name">{t('search.sort.name')}</option>
                 <option value="role">{t('search.sort.role')}</option>
-                <option value="department">{t('search.sort.department')}</option>
                 <option value="experience">{t('search.sort.experience')}</option>
-                <option value="status">{t('search.sort.status')}</option>
               </SortSelect>
               <ViewToggle>
                 <ViewButton 
@@ -630,7 +580,6 @@ const StaffSearch = ({
                 onClick={handleStaffClick}
                 onEdit={onStaffEdit}
                 onViewSchedule={onViewSchedule}
-                onManagePermissions={onManagePermissions}
                 actions={getStaffActions(staff)}
               />
             ))}

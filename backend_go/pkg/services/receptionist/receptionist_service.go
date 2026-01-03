@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"time"
 
 	"healthcare_backend/pkg/auth"
@@ -1177,4 +1178,71 @@ func (s *ReceptionistService) UpdateReceptionistProfile(receptionistID string, r
 	}
 
 	return nil
+}
+
+func (s *ReceptionistService) IsReceptionistAssignedToDoctor(receptionistID string, doctorID string) (bool, error) {
+	rID, err := uuid.Parse(receptionistID)
+	if err != nil {
+		return false, fmt.Errorf("invalid receptionist ID")
+	}
+	dID, err := uuid.Parse(doctorID)
+	if err != nil {
+		return false, fmt.Errorf("invalid doctor ID")
+	}
+
+	var exists bool
+	err = s.db.QueryRow(
+		context.Background(),
+		"SELECT EXISTS(SELECT 1 FROM receptionists WHERE receptionist_id = $1 AND assigned_doctor_id = $2)",
+		rID,
+		dID,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("database error: %v", err)
+	}
+
+	return exists, nil
+}
+
+func (s *ReceptionistService) UpdateReceptionistProfilePhoto(receptionistID string, file multipart.File, handler *multipart.FileHeader) (string, error) {
+	id, err := uuid.Parse(receptionistID)
+	if err != nil {
+		return "", fmt.Errorf("invalid receptionist ID")
+	}
+
+	fileName := fmt.Sprintf("images/profile_photos/%s.jpg", id.String())
+
+	oldKey := ""
+	_ = s.db.QueryRow(
+		context.Background(),
+		"SELECT COALESCE(profile_photo_url, '') FROM receptionists WHERE receptionist_id = $1",
+		id,
+	).Scan(&oldKey)
+	if oldKey != "" && oldKey != fileName {
+		if delErr := utils.DeleteFromS3(oldKey); delErr != nil {
+			log.Printf("Warning: failed to delete old receptionist profile photo: %v", delErr)
+		}
+	}
+
+	if err := utils.UploadToS3(file, handler, fileName); err != nil {
+		return "", err
+	}
+
+	_, err = s.db.Exec(
+		context.Background(),
+		"UPDATE receptionists SET profile_photo_url = $1, updated_at = NOW() WHERE receptionist_id = $2",
+		fileName,
+		id,
+	)
+	if err != nil {
+		return "", fmt.Errorf("database error: %v", err)
+	}
+
+	presignedURL, err := utils.GeneratePresignedObjectURL(fileName)
+	if err != nil {
+		log.Printf("Warning: failed to generate presigned URL for profile picture: %v", err)
+		return fileName, nil
+	}
+
+	return presignedURL, nil
 }

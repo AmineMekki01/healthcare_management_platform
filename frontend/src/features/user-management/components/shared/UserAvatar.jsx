@@ -95,7 +95,6 @@ const UserAvatar = ({
   user, 
   size = '64px',
   editable = false,
-  showStatus = false,
   borderColor,
   onImageUpload,
   className 
@@ -168,14 +167,6 @@ const UserAvatar = ({
         <EditOverlay $editable={editable}>
           {isUploading ? 'Uploading...' : 'Edit'}
         </EditOverlay>
-      )}
-      
-      {showStatus && (
-        <StatusBadge 
-          $online={isOnline}
-          $avatarSize={size}
-          title={isOnline ? 'Online' : 'Offline'}
-        />
       )}
       
       {editable && (
