@@ -31,6 +31,8 @@ type Config struct {
 	JWTSecretKey string
 
 	AppEnv string
+
+	PythonAPIBaseURL string
 }
 
 func Load() *Config {
@@ -62,6 +64,8 @@ func Load() *Config {
 		JWTSecretKey: getEnv("JWT_SECRET_KEY", ""),
 
 		AppEnv: getEnv("APP_ENV", ""),
+
+		PythonAPIBaseURL: getEnv("PYTHON_API_BASE_URL", "http://localhost:8000"),
 	}
 }
 

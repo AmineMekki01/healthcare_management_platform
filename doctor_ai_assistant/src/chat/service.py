@@ -7,6 +7,7 @@ from src.chat.schemas import (
     ChatResponse, ChatListResponse,
     CreateChatRequest
 )
+from src.shared.logs import logger
 from fastapi import HTTPException
 
 import uuid

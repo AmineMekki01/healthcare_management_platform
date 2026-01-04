@@ -2,8 +2,10 @@ fastapi
 uvicorn
 sqlalchemy
 asyncpg
+greenlet
 alembic
 pydantic
+pydantic-settings
 python-dotenv
 openai
 qdrant-client
@@ -13,4 +15,7 @@ python-docx
 Pillow
 pytesseract
 python-multipart
-agents
+openai-agents
+boto3
+langchain_openai
+fastembed

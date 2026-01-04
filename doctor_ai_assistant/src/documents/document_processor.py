@@ -8,14 +8,15 @@ from PIL import Image
 import pytesseract
 
 from src.shared.logs import logger
-from src.chat.constants import ModelEnum
+from src.chat.constants import ModelsEnum
+
 class DocumentProcessor:
     """
     Handles document text extraction, token counting, and content processing
     """
     
     def __init__(self):
-        self.encoding = tiktoken.encoding_for_model(ModelEnum.OPENAI_GPT.value)
+        self.encoding = tiktoken.encoding_for_model(ModelsEnum.OPENAI_GPT.value)
         
         self.supported_types = {
             'application/pdf': self._extract_pdf_text,
