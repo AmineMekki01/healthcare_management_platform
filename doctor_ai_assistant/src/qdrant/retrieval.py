@@ -1,11 +1,12 @@
 from typing import List, Dict, Any, Optional, Tuple
-from qdrant_client import models
+from qdrant_client import QdrantClient, models
 from src.qdrant.client import qdrant_manager
 from src.qdrant.collections import collection_manager
 from src.qdrant.models import SearchQuery, SearchResult, ChunkMetadata, ChunkPayload
 from src.shared.logs import logger
 from src.config import settings
 from langchain_openai import OpenAIEmbeddings
+from fastembed import SparseTextEmbedding
 
 
 class QdrantRetrievalService:
@@ -15,16 +16,23 @@ class QdrantRetrievalService:
     
     def __init__(self):
         self.embedding_model = None
+        self.sparse_model = None
     
     def _get_embedding_model(self):
-        """Lazy load embedding model."""
+        """Lazy load dense embedding model."""
         if self.embedding_model is None:
             model_name = getattr(settings, 'EMBEDDING_MODEL', 'text-embedding-3-small')
             self.embedding_model = OpenAIEmbeddings(model=model_name)
         return self.embedding_model
     
+    def _get_sparse_model(self):
+        """Lazy load BM25 sparse embedding model."""
+        if self.sparse_model is None:
+            self.sparse_model = SparseTextEmbedding(model_name="Qdrant/bm25")
+        return self.sparse_model
+    
     def generate_query_embedding(self, query_text: str) -> List[float]:
-        """Generate embedding for search query.
+        """Generate dense embedding for search query.
         
         Args:
             query_text: The search query
@@ -40,6 +48,31 @@ class QdrantRetrievalService:
             logger.exception(f"Error generating query embedding: {e}")
             embedding_dim = getattr(settings, 'EMBEDDING_MODEL_DIM', 1536)
             return [0.0] * embedding_dim
+    
+    def generate_sparse_vector(self, text: str) -> models.SparseVector:
+        """Generate BM25 sparse vector using FastEmbed.
+        
+        Args:
+            text: The text to encode
+            
+        Returns:
+            SparseVector with BM25 indices and values
+        """
+        try:
+            sparse_model = self._get_sparse_model()
+            embeddings = list(sparse_model.embed([text]))
+            if embeddings:
+                sparse_embedding = embeddings[0]
+                return models.SparseVector(
+                    indices=sparse_embedding.indices.tolist(),
+                    values=sparse_embedding.values.tolist()
+                )
+            else:
+                logger.error("FastEmbed BM25 returned no embeddings")
+                return models.SparseVector(indices=[], values=[])
+        except Exception as e:
+            logger.exception(f"Error generating BM25 sparse vector: {e}")
+            return models.SparseVector(indices=[], values=[])
     
     def build_search_filter(self, query: SearchQuery, skip_patient_filter: bool = False) -> Optional[models.Filter]:
         """
@@ -70,17 +103,19 @@ class QdrantRetrievalService:
     async def search_collection(
         self,
         collection_name: str,
+        query_text: str,
         query_embedding: List[float],
-        search_filter: Optional[models.Filter],
-        limit: int,
-        score_threshold: float
-    ) -> List[Tuple[float, Dict[str, Any]]]:
+        search_filter: Optional[models.Filter] = None,
+        limit: int = 10,
+        score_threshold: float = 0.0
+    ) -> List[Tuple[float, Dict]]:
         """
-        Search a single collection.
+        Hybrid search on a single collection using RRF fusion.
         
         Args:
             collection_name: Name of collection to search
-            query_embedding: Query vector
+            query_text: Query text for sparse vector generation
+            query_embedding: Dense query vector
             search_filter: Filter conditions
             limit: Maximum results
             score_threshold: Minimum score threshold
@@ -90,31 +125,48 @@ class QdrantRetrievalService:
         """
         try:
             client = qdrant_manager.client
+            if client is None:
+                logger.error(f"Qdrant client is None, cannot search collection {collection_name}")
+                return []
             
             if not qdrant_manager.collection_exists(collection_name):
                 logger.warning(f"Collection {collection_name} does not exist")
                 return []
             
-            search_result = client.search(
+            sparse_vector = self.generate_sparse_vector(query_text)
+            
+            search_result = client.query_points(
                 collection_name=collection_name,
-                query_vector=query_embedding,
+                prefetch=[
+                    models.Prefetch(
+                        query=query_embedding,
+                        using="dense",
+                        limit=limit * 2,
+                    ),
+                    models.Prefetch(
+                        query=sparse_vector,
+                        using="sparse",
+                        limit=limit * 2,
+                    ),
+                ],
+                query=models.FusionQuery(fusion=models.Fusion.RRF),
                 query_filter=search_filter,
                 limit=limit,
                 with_payload=True,
-                with_vectors=False
-            )
+                with_vectors=False,
+                score_threshold=score_threshold
+            ).points
             
             results = []
-            logger.debug(f"Raw search results in {collection_name}: {len(search_result)} hits")
+            logger.debug(f"Hybrid search results in {collection_name}: {len(search_result)} hits")
             for hit in search_result:
-                if hit.score >= score_threshold:
-                    results.append((hit.score, hit.payload))
+                results.append((hit.score, hit.payload))
             
-            logger.debug(f"Found {len(results)} results above threshold in collection {collection_name}")
+            logger.debug(f"Found {len(results)} results after RRF fusion in collection {collection_name}")
             return results
             
         except Exception as e:
-            logger.error(f"Error searching collection {collection_name}: {e}")
+            logger.error(f"Error in hybrid search for collection {collection_name}: {e}")
             return []
     
     async def search_multiple_collections(
@@ -160,6 +212,7 @@ class QdrantRetrievalService:
         for collection_name in collections_to_search:
             task = self.search_collection(
                 collection_name=collection_name,
+                query_text=query.query_text,
                 query_embedding=query_embedding,
                 search_filter=search_filter,
                 limit=query.limit,

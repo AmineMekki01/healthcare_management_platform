@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from src.medical_records.service import S3MedicalRecordsService
+from src.medical_records.service import s3_medical_records_service
 from src.medical_records.schemas import MedicalRecordIngestionResponse, MedicalRecordIngestionRequest
+
+from src.shared.logs import logger
 
 router = APIRouter(prefix="/api/v1/medical-records", tags=["Medical Records"])
 
@@ -25,7 +27,7 @@ async def ingest_s3_medical_records(
         if not request.patient_id:
             raise HTTPException(status_code=400, detail="No patient ID provided")
         
-        result = await S3MedicalRecordsService.ingest_patient_records(
+        result = await s3_medical_records_service.ingest_patient_records(
             patient_id=request.patient_id,
             doctor_id=request.doctor_id,
             s3_keys=request.s3_keys

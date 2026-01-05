@@ -7,6 +7,9 @@ import time
 from src.config import settings
 from src.chat.router import router as chat_router
 from src.medical_records.router import router as medical_records_router
+from src.chat.models import Chat, Message
+from src.documents.models import ChatbotChatDocument
+from src.database import create_tables
 
 app = FastAPI(
     title="Healthcare RAG API",
@@ -15,6 +18,12 @@ app = FastAPI(
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup"""
+    await create_tables()
 
 app.add_middleware(
     CORSMiddleware,

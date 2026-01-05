@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams, CollectionStatus
+from qdrant_client.http.models import Distance, VectorParams, CollectionStatus, SparseVectorParams, SparseIndexParams
 from src.config import settings
 from src.shared.logs import logger
 
@@ -75,7 +75,7 @@ class QdrantManager:
         ttl_seconds: Optional[int] = None
     ) -> bool:
         """
-        Create a new collection with proper configuration.
+        Create a new collection with hybrid search support (dense + sparse vectors).
         
         Args:
             collection_name: Name of the collection to create
@@ -89,20 +89,29 @@ class QdrantManager:
                 logger.info(f"Collection {collection_name} already exists")
                 return True
             
-            vector_config = VectorParams(
-                size=self._embedding_dim,
-                distance=Distance.COSINE
-            )
+            vectors_config = {
+                "dense": VectorParams(
+                    size=self._embedding_dim,
+                    distance=Distance.COSINE
+                )
+            }
+            
+            sparse_vectors_config = {
+                "sparse": SparseVectorParams(
+                    index=SparseIndexParams()
+                )
+            }
             
             self.client.create_collection(
                 collection_name=collection_name,
-                vectors_config=vector_config
+                vectors_config=vectors_config,
+                sparse_vectors_config=sparse_vectors_config
             )
             
             if ttl_seconds:
-                logger.info(f"Collection {collection_name} created with TTL tracking")
+                logger.info(f"Hybrid collection {collection_name} created with TTL tracking")
             else:
-                logger.info(f"Persistent collection {collection_name} created")
+                logger.info(f"Persistent hybrid collection {collection_name} created (dense + sparse)")
             
             return True
             

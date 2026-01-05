@@ -6,6 +6,7 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchValue, Filter
 import openai
 from src.config import settings
 from src.shared.logs import logger
+from fastembed import SparseTextEmbedding
 
 class QdrantDocumentService:
     """
@@ -22,6 +23,7 @@ class QdrantDocumentService:
             self.openai_client = openai.OpenAI(api_key=settings.openai_api_key)
             self.embedding_model = "text-embedding-3-small"
             self.vector_size = 1536
+            self.sparse_model = None
             logger.info(f"Qdrant client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize Qdrant client: {e}")
@@ -29,6 +31,31 @@ class QdrantDocumentService:
             self.openai_client = openai.OpenAI(api_key=settings.openai_api_key)
             self.embedding_model = "text-embedding-3-small"
             self.vector_size = 1536
+            self.sparse_model = None
+    
+    def _get_sparse_model(self):
+        """Lazy load BM25 sparse embedding model."""
+        if self.sparse_model is None:
+            self.sparse_model = SparseTextEmbedding(model_name="Qdrant/bm25")
+        return self.sparse_model
+    
+    def generate_sparse_vector(self, text: str) -> models.SparseVector:
+        """Generate BM25 sparse vector using FastEmbed."""
+        try:
+            sparse_model = self._get_sparse_model()
+            embeddings = list(sparse_model.embed([text]))
+            if embeddings:
+                sparse_embedding = embeddings[0]
+                return models.SparseVector(
+                    indices=sparse_embedding.indices.tolist(),
+                    values=sparse_embedding.values.tolist()
+                )
+            else:
+                logger.error("FastEmbed BM25 returned no embeddings")
+                return models.SparseVector(indices=[], values=[])
+        except Exception as e:
+            logger.exception(f"Error generating BM25 sparse vector: {e}")
+            return models.SparseVector(indices=[], values=[])
     
     async def store_document_chunks(
         self,
@@ -76,9 +103,15 @@ class QdrantDocumentService:
                     "expires_at": expires_at
                 }
                 
+                # Generate sparse vector for hybrid search
+                sparse_vector = self.generate_sparse_vector(chunk)
+                
                 point = models.PointStruct(
                     id=point_id,
-                    vector=embedding,
+                    vector={
+                        "dense": embedding,
+                        "sparse": sparse_vector
+                    },
                     payload=payload
                 )
                 points.append(point)
@@ -317,17 +350,24 @@ class QdrantDocumentService:
             return None
     
     async def _ensure_collection_exists(self, collection_name: str):
-        """Ensure Qdrant collection exists with proper configuration"""
+        """Ensure Qdrant collection exists with hybrid search configuration"""
         try:
             if not await self._collection_exists(collection_name):
                 self.client.create_collection(
                     collection_name=collection_name,
-                    vectors_config=models.VectorParams(
-                        size=self.vector_size,
-                        distance=models.Distance.COSINE
-                    )
+                    vectors_config={
+                        "dense": models.VectorParams(
+                            size=self.vector_size,
+                            distance=models.Distance.COSINE
+                        )
+                    },
+                    sparse_vectors_config={
+                        "sparse": models.SparseVectorParams(
+                            index=models.SparseIndexParams()
+                        )
+                    }
                 )
-                logger.info(f"Created Qdrant collection: {collection_name}")
+                logger.info(f"Created hybrid Qdrant collection: {collection_name}")
         except Exception as e:
             logger.error(f"Error ensuring collection exists for {collection_name}: {e}")
             raise

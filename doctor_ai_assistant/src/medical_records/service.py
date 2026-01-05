@@ -16,6 +16,7 @@ from src.shared.logs import logger
 from src.chat.constants import ModelsEnum
 from qdrant_client.http import models
 from langchain_openai import OpenAIEmbeddings
+from fastembed import SparseTextEmbedding
 
 
 
@@ -98,6 +99,38 @@ class S3MedicalRecordsService:
         self.chunk_size = 800
         self.chunk_overlap = 100
         self.max_concurrent = 5
+        self.sparse_model = None
+    
+    def _get_sparse_model(self):
+        """Lazy load BM25 sparse embedding model."""
+        if self.sparse_model is None:
+            self.sparse_model = SparseTextEmbedding(model_name="Qdrant/bm25")
+        return self.sparse_model
+    
+    def generate_sparse_vector(self, text: str) -> models.SparseVector:
+        """Generate BM25 sparse vector using FastEmbed.
+        
+        Args:
+            text: The text to encode
+            
+        Returns:
+            SparseVector with BM25 indices and values
+        """
+        try:
+            sparse_model = self._get_sparse_model()
+            embeddings = list(sparse_model.embed([text]))
+            if embeddings:
+                sparse_embedding = embeddings[0]
+                return models.SparseVector(
+                    indices=sparse_embedding.indices.tolist(),
+                    values=sparse_embedding.values.tolist()
+                )
+            else:
+                logger.error("FastEmbed BM25 returned no embeddings")
+                return models.SparseVector(indices=[], values=[])
+        except Exception as e:
+            logger.exception(f"Error generating BM25 sparse vector: {e}")
+            return models.SparseVector(indices=[], values=[])
 
     async def download_s3_file(self, s3_key: str, bucket_name: str = None) -> Optional[bytes]:
         """Download file content from S3"""
@@ -323,9 +356,16 @@ class S3MedicalRecordsService:
                     content=chunk_text
                 )
                 
+                # Generate sparse vector for the chunk
+                sparse_vector = self.generate_sparse_vector(chunk_text)
+                
+                # Create point with both dense and sparse vectors
                 point = models.PointStruct(
                     id=str(uuid.uuid4()),
-                    vector=embeddings[i],
+                    vector={
+                        "dense": embeddings[i],
+                        "sparse": sparse_vector
+                    },
                     payload=chunk_payload.dict()
                 )
                 points.append(point)
@@ -382,14 +422,6 @@ class S3MedicalRecordsService:
             Dictionary with comprehensive ingestion results
         """
         try:
-            valid_keys, invalid_keys = MedicalRecordsValidator.validate_s3_keys_batch(s3_keys)
-            
-            if invalid_keys:
-                logger.warning(f"Invalid S3 keys found: {invalid_keys}")
-            
-            if not valid_keys:
-                raise ValueError("No valid S3 keys provided")
-                        
             semaphore = asyncio.Semaphore(self.max_concurrent)
             
             async def process_file(s3_key: str):
@@ -397,7 +429,7 @@ class S3MedicalRecordsService:
                     return await self._ingest_single_file(s3_key, patient_id, doctor_id, settings.s3_bucket_name)
             
             results = await asyncio.gather(
-                *[process_file(s3_key) for s3_key in valid_keys],
+                *[process_file(s3_key) for s3_key in s3_keys],
                 return_exceptions=True
             )
             
@@ -411,7 +443,7 @@ class S3MedicalRecordsService:
                 if isinstance(result, Exception):
                     failed_ingestions += 1
                     ingestion_details.append({
-                        "s3_key": valid_keys[i],
+                        "s3_key": s3_keys[i],
                         "status": "error",
                         "error": str(result)
                     })
@@ -429,15 +461,15 @@ class S3MedicalRecordsService:
             final_result = {
                 "patient_id": patient_id,
                 "doctor_id": doctor_id,
-                "total_files": len(valid_keys),
-                "invalid_files": invalid_keys,
+                "total_files": len(s3_keys),
+                "invalid_files": [],
                 "successful_ingestions": successful_ingestions,
                 "failed_ingestions": failed_ingestions,
                 "skipped_ingestions": skipped_ingestions,
                 "total_chunks_created": total_chunks,
                 "ingestion_details": ingestion_details,
                 "summary": MedicalRecordsFormatter.format_ingestion_summary({
-                    "total_files": len(valid_keys),
+                    "total_files": len(s3_keys),
                     "successful_ingestions": successful_ingestions,
                     "failed_ingestions": failed_ingestions,
                     "skipped_ingestions": skipped_ingestions,

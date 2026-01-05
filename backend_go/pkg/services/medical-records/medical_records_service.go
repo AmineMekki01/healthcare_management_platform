@@ -26,16 +26,18 @@ import (
 )
 
 type MedicalRecordsService struct {
-	db             *pgxpool.Pool
-	cfg            *config.Config
-	historyService *HistoryService
+	db              *pgxpool.Pool
+	cfg             *config.Config
+	historyService  *HistoryService
+	ingestionClient *IngestionClient
 }
 
 func NewMedicalRecordsService(db *pgxpool.Pool, cfg *config.Config) *MedicalRecordsService {
 	return &MedicalRecordsService{
-		db:             db,
-		cfg:            cfg,
-		historyService: NewHistoryService(db),
+		db:              db,
+		cfg:             cfg,
+		historyService:  NewHistoryService(db),
+		ingestionClient: NewIngestionClient(cfg),
 	}
 }
 
@@ -810,6 +812,17 @@ func (s *MedicalRecordsService) ShareDocumentToPatient(fileInfo *models.FileFold
 	if err != nil {
 		return fmt.Errorf("could not insert shared item: %v", err)
 	}
+
+	// Trigger async ingestion to Qdrant if this is a clinical record
+	if fileInfo.IncludedInRAG && fileInfo.PatientID != nil && fileInfo.UploadedByUserID != nil {
+		doctorID := *fileInfo.UploadedByUserID
+		patientID := *fileInfo.PatientID
+		s3Keys := []string{fileInfo.Path}
+
+		log.Printf("Triggering medical record ingestion for patient %s, file: %s", patientID, fileInfo.Path)
+		s.ingestionClient.TriggerIngestionAsync(patientID, doctorID, s3Keys)
+	}
+
 	return nil
 }
 

@@ -6,6 +6,7 @@ __pycache__/
 generate_test_data.py
 test_documentation/
 app_documentation/
+qdrant_data/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
