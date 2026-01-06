@@ -27,7 +27,13 @@ class ContextFitDecisionEngine:
                 small_doc_threshold=4_000,
                 medium_doc_threshold=20_000,
                 large_doc_threshold=50_000
-            ) # i will add different models latter
+            ),
+            "gpt-5-nano": ModelConfig(
+                context_window=400_000,
+                small_doc_threshold=10_000,
+                medium_doc_threshold=50_000,
+                large_doc_threshold=100_000
+            )
         }
         
         self.default_config = ModelConfig(

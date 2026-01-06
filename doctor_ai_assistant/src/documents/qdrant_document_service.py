@@ -103,7 +103,6 @@ class QdrantDocumentService:
                     "expires_at": expires_at
                 }
                 
-                # Generate sparse vector for hybrid search
                 sparse_vector = self.generate_sparse_vector(chunk)
                 
                 point = models.PointStruct(

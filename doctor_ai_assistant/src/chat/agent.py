@@ -13,7 +13,7 @@ from src.documents.chat_document_handler import ChatDocumentHandler
 from src.documents.qdrant_document_service import QdrantDocumentService
 from src.shared.logs import logger
 from dotenv import load_dotenv
-import re
+
 load_dotenv()
 
 
@@ -56,36 +56,71 @@ class TbibiAgent:
                 Help doctors efficiently access comprehensive patient information, analyze medical data, and make informed clinical decisions by providing instant access to complete patient records and medical documents.
 
                 PATIENT-SPECIFIC QUERIES (when patient is mentioned):
-                AUTOMATICALLY gather ALL patient data by using these tools in sequence:
-                1. get_patient_basic_info() - Demographics, contact info, basic details
-                2. get_patient_appointments() - Recent visits and appointment history  
-                3. get_patient_medical_history() - Diagnoses and medical conditions
-                4. get_patient_medications() - Current and past medications
-                5. get_patient_documents() - Lab results, reports, clinical notes
-                6. get_appointments_report_content() - For appointments with reports
+                CRITICAL: ALWAYS gather ALL patient data by calling ALL these tools in sequence:
+                1. get_patient_basic_info(patient_id) - Demographics, contact info, basic details
+                2. get_patient_appointments(patient_id) - Recent visits and appointment history (doctor_id is optional)
+                3. get_patient_medical_history(patient_id) - Diagnoses and medical conditions
+                4. get_patient_medications(patient_id) - Current and past medications
+                5. get_patient_documents(patient_id, query="medical record") - Lab results, reports, clinical notes
+                6. get_appointments_report_content(appointment_id) - For recent appointments with reports
+                
+                IMPORTANT: Patient ID will be provided in the context. Extract it and use it for ALL tool calls.
 
-                PRESENT IN CLINICAL FORMAT:
+                CRITICAL: ANALYZE AND SYNTHESIZE DATA
+                After gathering all patient data, you MUST:
+                1. **Identify Patterns**: Look for medication interactions, chronic conditions, visit frequency
+                2. **Clinical Insights**: Note concerning trends, polypharmacy risks, missing follow-ups
+                3. **Risk Assessment**: Age-related considerations, multiple conditions coordination
+                4. **Data Synthesis**: Connect appointments, diagnoses, and medications into coherent narrative
+                
+                PRESENT IN COMPREHENSIVE CLINICAL FORMAT:
 
                 **ENGLISH FORMAT:**
-                👤 **[Patient Name], [Age]Y [M/F]**
-                📍 **Primary Conditions:** [Active diagnoses]
-                💊 **Current Medications:** [Active prescriptions] 
-                📅 **Last Seen:** [Most recent appointment]
-                ⚠️ **Alerts:** [Important notes, allergies, critical info]
+                # 👤 Patient: [Name], [Age]Y [M/F]
+                
+                ## ⚠️ Clinical Alerts
+                - List any critical alerts (polypharmacy, age-related, frequent visits)
+                - Highlight drug interactions or missing data
+                
+                ## 📊 Recent Activity (Last 90 Days)
+                - Most recent appointments with key findings
+                - New diagnoses or medication changes
+                - Pending tests or follow-ups
+                
+                ## 🏥 Active Conditions
+                - Primary diagnoses with dates and managing doctors
+                - Chronic vs acute conditions
+                
+                ## 💊 Current Medications
+                | Medication | Dosage | Prescriber | Duration |
+                |------------|---------|------------|----------|
+                | [Name] | [Dose] | Dr. [Name] | [Duration] |
+                
+                **Analysis**: [Your clinical insights on medication regimen]
+                
+                ## 📅 Appointment Timeline
+                - Last visit: [Date] - [Purpose] - [Doctor]
+                - Visit frequency: [High/Moderate/Low]
+                - Pattern analysis: [Your observations]
+                
+                ## 📄 Available Records
+                - Lab results, imaging, reports count and types
+                - Most recent: [List 3 most recent documents]
+                
+                ## 🎯 Clinical Recommendations
+                - Suggested actions based on data analysis
+                - Follow-up priorities
+                - Care coordination needs
 
                 **FRENCH FORMAT:**
-                👤 **[Nom du Patient], [Âge]A [H/F]**
-                📍 **Conditions Principales:** [Diagnostics actifs]
-                💊 **Médicaments Actuels:** [Prescriptions actives] 
-                📅 **Dernière Consultation:** [Dernier rendez-vous]
-                ⚠️ **Alertes:** [Notes importantes, allergies, infos critiques]
+                # 👤 Patient: [Nom], [Âge]A [H/F]
+                
+                [Same structure in French]
 
                 **ARABIC FORMAT:**
-                👤 **[اسم المريض], [العمر]س [ذ/أ]**
-                📍 **الحالات الأساسية:** [التشخيصات النشطة]
-                💊 **الأدوية الحالية:** [الوصفات النشطة] 
-                📅 **آخر زيارة:** [آخر موعد]
-                ⚠️ **تنبيهات:** [ملاحظات مهمة، حساسية، معلومات حرجة]
+                # 👤 المريض: [الاسم], [العمر]س [ذ/أ]
+                
+                [Same structure in Arabic with RTL consideration]
 
                 Then provide based on detected language:
                 - **Recent Clinical Activity / Activité Clinique Récente / النشاط السريري الأخير** (last 3-6 months)
@@ -106,13 +141,25 @@ class TbibiAgent:
                 **Arabic:** 🏥 السجلات الطبية | 📄 المستندات المرفوعة | 📋 التقارير | 💊 الوصفات الطبية | 🧪 نتائج المختبر
 
                 CLINICAL GUIDELINES (apply to all languages):
-                - Present critical/urgent information FIRST
+                - Present critical/urgent information FIRST in alerts section
                 - Use medical terminology appropriately for each language
-                - Include specific dates, dosages, measurements
-                - Highlight concerning patterns or drug interactions
+                - Include specific dates, dosages, measurements in tables
+                - Highlight concerning patterns or drug interactions with ⚠️
                 - Be proactive - anticipate what doctors need to know
-                - When information is incomplete, clearly state what's missing
+                - When information is incomplete, clearly state what's missing with 📋
+                - ALWAYS analyze and synthesize data - don't just list it
+                - Identify temporal patterns (worsening, improving, stable)
+                - Note care coordination needs (multiple specialists, chronic conditions)
+                - Suggest clinical actions based on data gaps or patterns
                 - Always maintain that you assist clinical decision-making, not replace medical judgment
+                
+                DATA SYNTHESIS RULES:
+                - Connect diagnoses with prescribed medications
+                - Link appointments to condition progression
+                - Identify medication-condition relationships
+                - Calculate time since last visit and frequency trends
+                - Group related conditions and treatments
+                - Highlight incomplete treatment plans or missing follow-ups
 
                 LANGUAGE-SPECIFIC NOTES:
                 - French: Use formal medical French, maintain gender agreements
@@ -125,44 +172,6 @@ class TbibiAgent:
             tools=tools_list,
             model=ModelsEnum.OPENAI_GPT.value
         )
-    
-    def _detect_language(self, text: str) -> str:
-        """
-        Detect the language of the input text
-        Returns: 'arabic', 'french', or 'english'
-        """
-        # Check for Arabic characters
-        arabic_pattern = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]')
-        if arabic_pattern.search(text):
-            return 'arabic'
-        
-        # French indicators (common French words and phrases)
-        french_indicators = [
-            'bonjour', 'bonsoir', 'merci', 'patient', 'médecin', 'docteur', 
-            'traitement', 'médicament', 'ordonnance', 'consultation', 'dossier',
-            'antécédents', 'diagnostic', 'symptômes', 'analyses', 'résultats',
-            'rendez-vous', 'hospitalisation', 'chirurgie', 'thérapie',
-            # French medical terms
-            'hypertension', 'diabète', 'cardiovasculaire', 'respiratoire',
-            'neurologique', 'dermatologique', 'gynécologique', 'pédiatrique'
-        ]
-        
-        text_lower = text.lower()
-        french_matches = sum(1 for indicator in french_indicators if indicator in text_lower)
-        
-        # If we find multiple French indicators, it's likely French
-        if french_matches >= 2:
-            return 'french'
-        
-        # Check for explicit language requests
-        if any(phrase in text_lower for phrase in ['en français', 'in french', 'réponds en français']):
-            return 'french'
-        
-        if any(phrase in text_lower for phrase in ['بالعربية', 'in arabic', 'باللغة العربية']):
-            return 'arabic'
-        
-        # Default to English
-        return 'english'
     
     async def process_query(self, input_message: SendMessageRequest) -> str:
         """
@@ -179,10 +188,7 @@ class TbibiAgent:
             doctor_id = input_message.user_id
             chat_id = input_message.chat_id
             patient_id = getattr(input_message, 'patient_id', None)
-            
-            # Detect language
-            detected_language = self._detect_language(query)
-            
+                        
             document_context = await self._build_document_context(chat_id, doctor_id, query)
             
             enhanced_query = self._enhance_query_with_context(
@@ -190,8 +196,7 @@ class TbibiAgent:
                 patient_id=patient_id,
                 doctor_id=doctor_id,
                 chat_id=chat_id,
-                document_context=document_context,
-                detected_language=detected_language
+                document_context=document_context
             )
             
             session = SQLAlchemySession(
@@ -205,15 +210,7 @@ class TbibiAgent:
             return result.final_output
                 
         except Exception as e:
-            # Return error message in detected language
-            error_messages = {
-                'english': f"I encountered an error while processing your request: {str(e)}. Please try again or contact support if the issue persists.",
-                'french': f"J'ai rencontré une erreur lors du traitement de votre demande: {str(e)}. Veuillez réessayer ou contacter le support si le problème persiste.",
-                'arabic': f"واجهت خطأ أثناء معالجة طلبك: {str(e)}. يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة."
-            }
-            
-            detected_language = self._detect_language(input_message.content)
-            return error_messages.get(detected_language, error_messages['english'])
+            return "An error occurred while processing your request. Please try again."
     
     
     def _enhance_query_with_context(
@@ -222,8 +219,7 @@ class TbibiAgent:
         patient_id: Optional[str] = None, 
         doctor_id: Optional[str] = None, 
         chat_id: Optional[str] = None,
-        document_context: Optional[str] = None,
-        detected_language: str = 'english'
+        document_context: Optional[str] = None
     ) -> str:
         """Enhance the user query with available context and documents"""
         
@@ -232,24 +228,30 @@ class TbibiAgent:
         if document_context:
             context_parts.append(document_context)
         
-        # Add language instruction
-        language_instruction = f"""
-        DETECTED LANGUAGE: {detected_language.upper()}
-        CRITICAL: Respond entirely in {detected_language.upper()}. Use appropriate medical terminology and formatting for this language.
-        """
-        context_parts.append(language_instruction)
-        
         if patient_id:
             context_parts.append(f"""
                 PATIENT QUERY: {query}
 
-                CONTEXT:
-                - Patient ID: {patient_id}
-                - Doctor ID: {doctor_id} 
+                CRITICAL CONTEXT - USE THESE VALUES IN YOUR TOOL CALLS:
+                - Patient ID: {patient_id} (USE THIS IN ALL PATIENT TOOLS)
+                - Doctor ID: {doctor_id} (Optional parameter for get_patient_appointments)
                 - Chat ID: {chat_id}
-                - Response Language: {detected_language}
+                - Response Language: Answer in the same language as the user's query
 
-                INSTRUCTION: Patient mentioned - gather complete patient profile using ALWAYS ALL patient tools automatically. Use uploaded documents as additional context when relevant. Format response in {detected_language.upper()}.
+                MANDATORY WORKFLOW:
+                1. Call get_patient_basic_info(patient_id="{patient_id}")
+                2. Call get_patient_appointments(patient_id="{patient_id}")
+                3. Call get_patient_medical_history(patient_id="{patient_id}")
+                4. Call get_patient_medications(patient_id="{patient_id}")
+                5. Call get_patient_documents(patient_id="{patient_id}", query="medical record")
+                
+                AFTER GATHERING ALL DATA:
+                - ANALYZE patterns, risks, and clinical insights
+                - SYNTHESIZE into coherent clinical narrative
+                - FORMAT using comprehensive markdown structure
+                - HIGHLIGHT critical alerts and recommendations
+                
+                Use uploaded documents as additional context when relevant. Format response in the same language as the user's query.
             """)
         else:
             context_parts.append(f"""
@@ -258,9 +260,9 @@ class TbibiAgent:
                 CONTEXT:
                 - Doctor ID: {doctor_id}
                 - Chat ID: {chat_id}
-                - Response Language: {detected_language}
+                - Response Language: Answer in the same language as the user's query
 
-                INSTRUCTION: General medical query - use uploaded documents and provide evidence-based response with proper citations in {detected_language.upper()}.
+                INSTRUCTION: General medical query - use uploaded documents and provide evidence-based response with proper citations.
             """)
         
         return "\n\n".join(context_parts)
@@ -317,9 +319,7 @@ class TbibiAgent:
             chunk_text = result.get('chunk_text', '')
             score = result.get('score', 0)
             
-            formatted_parts.append(f"""📄 **{filename}** (Relevance: {score:.2f})
-{chunk_text}
----""")
+            formatted_parts.append(f"""📄 **{filename}** (Relevance: {score:.2f}) {chunk_text} ---""")
         
         return "\n\n".join(formatted_parts)
 

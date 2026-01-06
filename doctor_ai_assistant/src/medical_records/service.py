@@ -6,6 +6,9 @@ import tiktoken
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
+from qdrant_client.http import models
+from langchain_openai import OpenAIEmbeddings
+from fastembed import SparseTextEmbedding
 
 from src.medical_records.models import DocumentType
 from src.qdrant.client import qdrant_manager
@@ -14,10 +17,6 @@ from src.qdrant.models import ChunkMetadata, ChunkPayload
 from src.config import settings
 from src.shared.logs import logger
 from src.chat.constants import ModelsEnum
-from qdrant_client.http import models
-from langchain_openai import OpenAIEmbeddings
-from fastembed import SparseTextEmbedding
-
 
 
 class MedicalRecordsFormatter:
