@@ -114,18 +114,16 @@ async def agent_response(
     
         return ai_message
 
+    except HTTPException:
+        await chat_service.db.rollback()
+        raise
 
-    except ChatException as e:
-        if e.error_code == "CHAT_NOT_FOUND":
-            logger.error(f"Chat not found for chat_id: {request.chat_id}, user_id: {request.user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=e.message
-            )
-        logger.error(f"Failed to process query: {e}")
+    except Exception as e:
+        await chat_service.db.rollback()
+        logger.exception("[AGENT_RESPONSE] exception chat_id=%s user_id=%s error=%s", request.chat_id, request.user_id, str(e))
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process query"
         )
 
 
@@ -139,17 +137,13 @@ async def delete_chat(
     try:
         success = await chat_service.delete_chat(chat_id, user_id)
         return {"message": "Chat deleted successfully", "success": success}
-    except ChatException as e:
-        if e.error_code == "CHAT_NOT_FOUND":
-            logger.error(f"Chat not found for chat_id: {chat_id}, user_id: {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=e.message
-            )
-        logger.error(f"Failed to delete chat: {e}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("[DELETE_CHAT] exception chat_id=%s user_id=%s error=%s", chat_id, user_id, str(e))
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete chat"
         )
 
 
@@ -169,7 +163,8 @@ async def upload_document(
         result = await document_service.upload_document(
             chat_id=chat_id,
             user_id=user_id,
-            file=file
+            file=file,
+            model_name=ModelsEnum.OPENAI_GPT.value
         )
         
         if result["success"]:
@@ -276,17 +271,13 @@ async def delete_message(
     try:
         success = await chat_service.delete_message(message_id, user_id)
         return {"message": "Message deleted successfully", "success": success}
-    except ChatException as e:
-        if e.error_code == "MESSAGE_NOT_FOUND":
-            logger.exception("[DELETE_MESSAGE] exception message_id=%s user_id=%s error=%s", message_id, user_id, str(e))
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=e.message
-            )
+    except HTTPException:
+        raise
+    except Exception as e:
         logger.exception("[DELETE_MESSAGE] exception message_id=%s user_id=%s error=%s", message_id, user_id, str(e))
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete message"
         )
 
 

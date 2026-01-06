@@ -63,17 +63,17 @@ async def get_patient_basic_info(patient_id: str) -> Dict[str, Any]:
 
 
 @function_tool 
-async def get_patient_appointments(patient_id: str, doctor_id: str, limit: int) -> Dict[str, Any]:
+async def get_patient_appointments(patient_id: str, doctor_id: str = None, limit: int = 10) -> Dict[str, Any]:
     """
-    Retrieve patient's appointment history based on the patient ID and doctor ID.
+    Retrieve patient's appointment history. Automatically filters by the current doctor if doctor_id not provided.
     
     Args:
-        patient_id: UUID string of the patient
-        doctor_id: UUID string of the doctor
-        limit: Maximum number of appointments to retrieve
+        patient_id: UUID string of the patient (REQUIRED)
+        doctor_id: UUID string of the doctor (optional, will use context if not provided)
+        limit: Maximum number of appointments to retrieve (default: 10)
         
     Returns:
-        Dictionary containing appointment history
+        Dictionary containing appointment history with all doctors or filtered by specific doctor
     """
     from sqlalchemy import text
     from uuid import UUID
@@ -81,24 +81,41 @@ async def get_patient_appointments(patient_id: str, doctor_id: str, limit: int) 
     logger.info(f"Retrieving appointments for patient {patient_id}, doctor {doctor_id}")
     try:
         async with AsyncSessionLocal() as session:
-            query = text("""
-                SELECT a.appointment_id, a.appointment_start, a.appointment_end, a.title,
-                        a.doctor_id, d.first_name as doctor_first_name, 
-                        d.last_name as doctor_last_name, d.specialty,
-                        COALESCE(mr.report_id IS NOT NULL, false) AS has_report
-                FROM appointments a
-                JOIN doctor_info d ON a.doctor_id = d.doctor_id
-                LEFT JOIN medical_reports mr ON a.appointment_id = mr.appointment_id
-                WHERE a.patient_id = :patient_id AND a.doctor_id = :doctor_id
-                ORDER BY a.appointment_start DESC
-                LIMIT :limit
-            """)
-            
-            result = await session.execute(query, {
-                "patient_id": UUID(patient_id), 
-                "doctor_id": UUID(doctor_id), 
-                "limit": limit
-            })
+            if doctor_id:
+                query = text("""
+                    SELECT a.appointment_id, a.appointment_start, a.appointment_end, a.title,
+                            a.doctor_id, d.first_name as doctor_first_name, 
+                            d.last_name as doctor_last_name, d.specialty_code as specialty,
+                            COALESCE(mr.report_id IS NOT NULL, false) AS has_report
+                    FROM appointments a
+                    JOIN doctor_info d ON a.doctor_id = d.doctor_id
+                    LEFT JOIN medical_reports mr ON a.appointment_id = mr.appointment_id
+                    WHERE a.patient_id = :patient_id AND a.doctor_id = :doctor_id
+                    ORDER BY a.appointment_start DESC
+                    LIMIT :limit
+                """)
+                result = await session.execute(query, {
+                    "patient_id": UUID(patient_id), 
+                    "doctor_id": UUID(doctor_id), 
+                    "limit": limit
+                })
+            else:
+                query = text("""
+                    SELECT a.appointment_id, a.appointment_start, a.appointment_end, a.title,
+                            a.doctor_id, d.first_name as doctor_first_name, 
+                            d.last_name as doctor_last_name, d.specialty_code as specialty,
+                            COALESCE(mr.report_id IS NOT NULL, false) AS has_report
+                    FROM appointments a
+                    JOIN doctor_info d ON a.doctor_id = d.doctor_id
+                    LEFT JOIN medical_reports mr ON a.appointment_id = mr.appointment_id
+                    WHERE a.patient_id = :patient_id
+                    ORDER BY a.appointment_start DESC
+                    LIMIT :limit
+                """)
+                result = await session.execute(query, {
+                    "patient_id": UUID(patient_id), 
+                    "limit": limit
+                })
             rows = result.mappings().all()
         
         appointments = []
@@ -122,7 +139,8 @@ async def get_patient_appointments(patient_id: str, doctor_id: str, limit: int) 
         }
         
     except Exception as e:
-        return {"error": f"Database error: {str(e)}"}
+        logger.exception("[TOOLS] get_patient_appointments failed patient_id=%s doctor_id=%s error=%s", patient_id, doctor_id, str(e))
+        return {"error": "Appointment history is currently unavailable due to a system error."}
 
 
 @function_tool 
@@ -295,7 +313,8 @@ async def get_appointments_report_content(appointment_id: str) -> Dict[str, Any]
 async def get_patient_documents(
     patient_id: str = None, 
     query: str = "", 
-    limit: int = 10
+    limit: int = 10,
+    score_threshold: float = 0.6
 ) -> Dict[str, Any]:
     """
     Search for documents related to a specific patient or general documents.
@@ -322,18 +341,33 @@ async def get_patient_documents(
             query_text=query,
             patient_id=patient_id,
             limit=limit,
-            score_threshold=0.0
+            score_threshold=score_threshold
         )
         
         search_results = await retrieval_service.search_multiple_collections(search_query)
         logger.info(f"Document search completed: {len(search_results) if search_results else 0} results found")
         documents = []
         for result in search_results:
+            result_patient_id = getattr(result.payload.chunk_metadata, "patient_id", None)
+            if patient_id and result_patient_id and result_patient_id != patient_id:
+                logger.warning(
+                    "[DOC_SEARCH] dropping mismatched result patient_id=%s expected=%s file=%s",
+                    result_patient_id,
+                    patient_id,
+                    getattr(result.payload.chunk_metadata, "file_name", None),
+                )
+                continue
+
+            content = result.content or ""
             documents.append({
-                "content": result.content,
+                "content_preview": content[:400] + ("..." if len(content) > 400 else ""),
                 "score": result.score,
                 "file_name": result.payload.chunk_metadata.file_name,
                 "file_type": result.payload.chunk_metadata.file_type,
+                "file_s3_path": result.payload.chunk_metadata.file_s3_path,
+                "patient_id": result.payload.chunk_metadata.patient_id,
+                "doctor_id": result.payload.chunk_metadata.doctor_id,
+                "source_collection": result.collection_name,
             })
         
         logger.info(f"Returning {len(documents)} documents for patient {patient_id or 'general'}")
