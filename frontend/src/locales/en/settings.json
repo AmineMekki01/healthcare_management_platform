@@ -162,6 +162,9 @@
   },
   "availability": {
     "title": "Doctor Availability Settings",
+    "units": {
+      "minutesShort": "min"
+    },
     "days": {
       "Monday": "Monday",
       "Tuesday": "Tuesday", 

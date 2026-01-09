@@ -13,6 +13,16 @@ const calendarEventService = {
     }
   },
 
+  createPersonalEvent: async (doctorId, eventData) => {
+    try {
+      const response = await axios.post(`/api/v1/doctors/${doctorId}/calendar/events`, eventData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating personal event:', error);
+      throw error;
+    }
+  },
+
   findAvailableSlots: async (doctorId, startDate, endDate, duration = 30, limit = 50) => {
     try {
       const response = await axios.get(

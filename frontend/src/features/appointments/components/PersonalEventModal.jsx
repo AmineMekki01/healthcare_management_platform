@@ -278,7 +278,7 @@ const PersonalEventModal = ({
   doctorId,
   onSuccess 
 }) => {
-  const { t } = useTranslation('appointments');
+  const { t, i18n } = useTranslation('appointments');
   const [formData, setFormData] = useState({
     title: '',
     eventType: 'personal',
@@ -388,7 +388,7 @@ const PersonalEventModal = ({
     { value: '#9F7AEA', label: 'Purple' }
   ];
 
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   return (
     <ModalOverlay onClick={onClose}>
@@ -503,14 +503,14 @@ const PersonalEventModal = ({
                   {t('personalEvent.selectDays')}:
                 </label>
                 <DaySelector>
-                  {dayNames.map((day, index) => (
+                  {dayKeys.map((dayKey, index) => (
                     <DayButton
-                      key={day}
+                      key={dayKey}
                       type="button"
                       $selected={formData.recurringDays.includes(index + 1)}
                       onClick={() => handleDayToggle(index + 1)}
                     >
-                      {day}
+                      {t(`calendar.days.${dayKey}`)}
                     </DayButton>
                   ))}
                 </DaySelector>
@@ -528,6 +528,7 @@ const PersonalEventModal = ({
                   value={formData.recurringEndDate}
                   onChange={handleChange}
                   min={new Date().toISOString().split('T')[0]}
+                  lang={i18n.language}
                 />
               </RecurringSection>
             )}
