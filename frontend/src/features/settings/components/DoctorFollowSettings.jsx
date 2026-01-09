@@ -18,6 +18,7 @@ import {
   CancelButton,
 } from '../styles/settingsStyles';
 import { settingsService } from '../services/settingsService';
+import { getLocalizedSpecialtyLabel } from '../../../utils/specialties';
 
 const UnfollowIcon = () => (
   <svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
@@ -45,12 +46,40 @@ const ExploreIcon = () => (
 
 export default function DoctorFollowSettings({ userId }) {
   const { t } = useTranslation('settings');
+  const { t: tMedical, i18n } = useTranslation('medical');
   const [followedDoctors, setFollowedDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [unfollowingId, setUnfollowingId] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ show: false, doctor: null });
+
+  const isArabicLanguage = (language) => {
+    const lang = String(language || '').toLowerCase();
+    return lang === 'ar' || lang.startsWith('ar-');
+  };
+
+  const getLocalizedDoctorNameParts = (doctor) => {
+    const useAr = isArabicLanguage(i18n.language);
+
+    const first = (useAr ? doctor?.firstNameAr : doctor?.firstName) || doctor?.firstName || doctor?.firstNameAr || '';
+    const last = (useAr ? doctor?.lastNameAr : doctor?.lastName) || doctor?.lastName || doctor?.lastNameAr || '';
+
+    return {
+      first: String(first || '').trim(),
+      last: String(last || '').trim(),
+    };
+  };
+
+  const getLocalizedDoctorFullName = (doctor) => {
+    const { first, last } = getLocalizedDoctorNameParts(doctor);
+    return `${first} ${last}`.trim();
+  };
+
+  const getDoctorSpecialtyLabel = (doctor) => {
+    const code = doctor?.specialtyCode || doctor?.specialty || '';
+    return getLocalizedSpecialtyLabel(code, tMedical);
+  };
 
   const fetchDoctors = useCallback(async () => {
     try {
@@ -86,7 +115,7 @@ export default function DoctorFollowSettings({ userId }) {
       await settingsService.unfollowDoctor(userId, doctor.doctorId);
       
       setFollowedDoctors(followedDoctors.filter(doc => doc.doctorId !== doctor.doctorId));
-      setSuccess(t('followedDoctors.success.unfollowed', { doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}` }));
+      setSuccess(t('followedDoctors.success.unfollowed', { doctorName: `Dr. ${getLocalizedDoctorFullName(doctor)}` }));
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
@@ -145,12 +174,15 @@ export default function DoctorFollowSettings({ userId }) {
               <DoctorInfo>
                 <DoctorName>
                   <DoctorAvatar>
-                    {getInitials(doctor.firstName, doctor.lastName)}
+                    {(() => {
+                      const parts = getLocalizedDoctorNameParts(doctor);
+                      return getInitials(parts.first, parts.last);
+                    })()}
                   </DoctorAvatar>
                   <div>
-                    <div>Dr. {doctor.firstName} {doctor.lastName}</div>
+                    <div>Dr. {getLocalizedDoctorFullName(doctor)}</div>
                     <DoctorSpecialty>
-                      {doctor.specialty || 'Null'}
+                      {getDoctorSpecialtyLabel(doctor) || doctor.specialty || ''}
                     </DoctorSpecialty>
                   </div>
                 </DoctorName>
@@ -181,7 +213,7 @@ export default function DoctorFollowSettings({ userId }) {
           <ConfirmationContent>
             <h3>{t('followedDoctors.confirmDialog.title')}</h3>
             <p>
-              {t('followedDoctors.confirmDialog.message', { doctorName: `Dr. ${confirmDialog.doctor?.firstName} ${confirmDialog.doctor?.lastName}` })}
+              {t('followedDoctors.confirmDialog.message', { doctorName: `Dr. ${getLocalizedDoctorFullName(confirmDialog.doctor)}` })}
             </p>
             <ConfirmationButtons>
               <ConfirmButton onClick={confirmUnfollow}>
