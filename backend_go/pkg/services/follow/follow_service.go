@@ -131,7 +131,12 @@ func (s *FollowService) GetUserFollowings(userID string) ([]models.Doctor, error
 
 	sqlQuery := `
 		SELECT 
-			di.first_name, di.last_name, di.specialty_code, fl.doctor_id
+			di.first_name,
+			COALESCE(di.first_name_ar, ''),
+			di.last_name,
+			COALESCE(di.last_name_ar, ''),
+			COALESCE(di.specialty_code, ''),
+			fl.doctor_id
 		FROM 
 			followers fl
 		JOIN 
@@ -150,7 +155,9 @@ func (s *FollowService) GetUserFollowings(userID string) ([]models.Doctor, error
 		var doctor models.Doctor
 		err := rows.Scan(
 			&doctor.FirstName,
+			&doctor.FirstNameAr,
 			&doctor.LastName,
+			&doctor.LastNameAr,
 			&doctor.SpecialtyCode,
 			&doctor.DoctorID,
 		)
