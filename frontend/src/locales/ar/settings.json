@@ -162,6 +162,9 @@
   },
   "availability": {
     "title": "إعدادات توفر الطبيب",
+    "units": {
+      "minutesShort": "د"
+    },
     "days": {
       "Monday": "الاثنين",
       "Tuesday": "الثلاثاء",

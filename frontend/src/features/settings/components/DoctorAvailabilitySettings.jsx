@@ -2,8 +2,25 @@ import React, { useState, useEffect, useContext } from "react";
 import { useTranslation } from 'react-i18next';
 import axios from "../../../components/axiosConfig";
 import { AuthContext } from "./../../../features/auth/context/AuthContext";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format as formatDate } from 'date-fns';
+import { arSA, enUS, fr } from 'date-fns/locale';
+import { enUS as pickersEnUS, frFR as pickersFrFR } from '@mui/x-date-pickers/locales';
 
-function getWeeksInMonth(year, month) {
+function formatLocalizedDate(date, locale) {
+  const dt = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(dt.getTime())) return '';
+
+  try {
+    return new Intl.DateTimeFormat(locale || undefined, { dateStyle: 'medium' }).format(dt);
+  } catch {
+    return dt.toLocaleDateString(locale || undefined);
+  }
+}
+
+function getWeeksInMonth(year, month, locale) {
   const weeks = [];
   const firstDay = new Date(year, month, 1);
   let start = new Date(firstDay);
@@ -11,7 +28,7 @@ function getWeeksInMonth(year, month) {
     const end = new Date(start);
     end.setDate(start.getDate() + 6 - start.getDay());
     weeks.push({
-      label: `Week of ${start.toLocaleDateString()}`,
+      label: `${formatLocalizedDate(start, locale)} - ${formatLocalizedDate(end, locale)}`,
       start: new Date(start),
       end: new Date(end),
     });
@@ -21,14 +38,57 @@ function getWeeksInMonth(year, month) {
 }
 
 export default function DoctorAvailabilitySettings() {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation('settings');
+  const { t: tCommon } = useTranslation('common');
   const { userId } = useContext(AuthContext);
   const today = new Date();
+  const locale = i18n.language || undefined;
+
+  const parseDateOnlyLocal = (dateStr) => {
+    const raw = String(dateStr || '').trim();
+    if (!raw) return null;
+    const parts = raw.split('-').map((p) => parseInt(p, 10));
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const getAdapterLocale = () => {
+    const lang = String(i18n.language || '').toLowerCase();
+    if (lang === 'fr' || lang.startsWith('fr-')) return fr;
+    if (lang === 'ar' || lang.startsWith('ar-')) return arSA;
+    return enUS;
+  };
+
+  const getPickerLocaleText = () => {
+    const lang = String(i18n.language || '').toLowerCase();
+    if (lang === 'fr' || lang.startsWith('fr-')) {
+      return pickersFrFR.components.MuiLocalizationProvider.defaultProps.localeText;
+    }
+    if (lang === 'ar' || lang.startsWith('ar-')) {
+      const base = pickersEnUS.components.MuiLocalizationProvider.defaultProps.localeText;
+      return {
+        ...base,
+        cancelButtonLabel: tCommon('buttons.cancel'),
+        okButtonLabel: tCommon('common.ok'),
+        todayButtonLabel: tCommon('common.today'),
+        clearButtonLabel: tCommon('buttons.clear'),
+      };
+    }
+    return pickersEnUS.components.MuiLocalizationProvider.defaultProps.localeText;
+  };
+
+  const getExceptionTypeLabel = (type) => {
+    if (type === 'off') return t('availability.exceptions.timeOff');
+    if (type === 'override') return t('availability.exceptions.override');
+    return String(type || '');
+  };
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [weeks, setWeeks] = useState(
-    getWeeksInMonth(today.getFullYear(), today.getMonth())
+    getWeeksInMonth(today.getFullYear(), today.getMonth(), locale)
   );
   const [selectedWeekIdx, setSelectedWeekIdx] = useState(0);
 
@@ -54,9 +114,9 @@ export default function DoctorAvailabilitySettings() {
 
 
   useEffect(() => {
-    setWeeks(getWeeksInMonth(selectedYear, selectedMonth));
+    setWeeks(getWeeksInMonth(selectedYear, selectedMonth, locale));
     setSelectedWeekIdx(0);
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, locale]);
 
 
 
@@ -194,9 +254,7 @@ export default function DoctorAvailabilitySettings() {
         >
           {Array.from({ length: 12 }).map((_, i) => (
             <option key={i} value={i}>
-              {new Date(selectedYear, i).toLocaleString("default", {
-                month: "long",
-              })}
+              {new Date(selectedYear, i).toLocaleString(locale, { month: "long" })}
             </option>
           ))}
         </select>
@@ -298,7 +356,7 @@ export default function DoctorAvailabilitySettings() {
                   >
                     {[15, 20, 30, 45, 60].map((dur) => (
                       <option key={dur} value={dur}>
-                        {dur} min
+                        {dur} {t('availability.units.minutesShort')}
                       </option>
                     ))}
                   </select>
@@ -358,8 +416,11 @@ export default function DoctorAvailabilitySettings() {
               )}
               {filteredExceptions.map((exc, idx) => (
                 <li key={idx} style={{ marginBottom: 6 }}>
-                  <span style={{ fontWeight: 500 }}>{exc.date}</span> &mdash;{" "}
-                  {exc.type}
+                  <span style={{ fontWeight: 500 }}>
+                    {formatLocalizedDate(exc.date, locale) || exc.date}
+                  </span>{" "}
+                  &mdash;{" "}
+                  {getExceptionTypeLabel(exc.type)}
                   {exc.startTime && exc.endTime && (
                     <>
                       {" "}
@@ -383,15 +444,28 @@ export default function DoctorAvailabilitySettings() {
             flexWrap: "wrap",
           }}
         >
-          <input
-            type="date"
-            value={newException.date}
-            onChange={(e) =>
-              setNewException({ ...newException, date: e.target.value })
-            }
-            required
-            style={{ width: 130 }}
-          />
+          <LocalizationProvider
+            dateAdapter={AdapterDateFns}
+            adapterLocale={getAdapterLocale()}
+            localeText={getPickerLocaleText()}
+          >
+            <DatePicker
+              value={parseDateOnlyLocal(newException.date)}
+              onChange={(date) =>
+                setNewException({
+                  ...newException,
+                  date: date ? formatDate(date, 'yyyy-MM-dd') : '',
+                })
+              }
+              slotProps={{
+                textField: {
+                  required: true,
+                  size: 'small',
+                  sx: { width: 160 },
+                },
+              }}
+            />
+          </LocalizationProvider>
           <input
             type="time"
             value={newException.startTime}
