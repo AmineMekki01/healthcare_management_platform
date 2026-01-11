@@ -88,17 +88,16 @@ type ReportMedication struct {
 	Instructions   *string `json:"instructions"`
 }
 
-type DoctorException struct {
-	Date      string `json:"date"`
-	StartTime string `json:"startTime"`
-	EndTime   string `json:"endTime"`
-	Type      string `json:"type"`
+type WeeklyScheduleBlock struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
 }
 
 type WeeklyScheduleEntry struct {
-	Weekday      string `json:"weekday"`
-	Enabled      bool   `json:"enabled"`
-	Start        string `json:"start"`
-	End          string `json:"end"`
-	SlotDuration int    `json:"slotDuration"`
+	Weekday      string                `json:"weekday"`
+	Enabled      bool                  `json:"enabled"`
+	Start        string                `json:"start,omitempty"`
+	End          string                `json:"end,omitempty"`
+	SlotDuration int                   `json:"slotDuration"`
+	Blocks       []WeeklyScheduleBlock `json:"blocks,omitempty"`
 }

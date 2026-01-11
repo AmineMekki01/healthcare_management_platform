@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { userService } from '../services/userService';
 import calendarEventService from '../../appointments/services/calendarEventService';
+import axios from '../../../components/axiosConfig';
 
 const BookingContainer = styled.div`
   background: white;
@@ -343,7 +344,32 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
     notes: ''
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const formatDateOnlyLocal = (dt) => {
+    const d = dt instanceof Date ? dt : new Date(dt);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const parseDateOnlyLocal = (dateStr) => {
+    const raw = String(dateStr || '').trim();
+    if (!raw) return null;
+    const parts = raw.split('-').map((p) => parseInt(p, 10));
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const getWeekdayName = (dateStr) => {
+    const d = parseDateOnlyLocal(dateStr);
+    if (!d) return '';
+    return d.toLocaleDateString('en-US', { weekday: 'long' });
+  };
+
+  const today = formatDateOnlyLocal(new Date());
 
   const fetchAvailableSlots = useCallback(async () => {
     if (!selectedDate) return;
@@ -353,12 +379,26 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
     try {
       const startDateStr = selectedDate;
       const endDateStr = selectedDate;
+
+      let duration = 30;
+      try {
+        const weekdayName = getWeekdayName(selectedDate);
+        const res = await axios.get(`/api/v1/doctors/${doctorId}/weekly_schedule`, {
+          params: { start: selectedDate, end: selectedDate },
+        });
+        const weeklySchedule = Array.isArray(res.data?.weeklySchedule) ? res.data.weeklySchedule : [];
+        const entry = weeklySchedule.find((e) => e?.weekday === weekdayName);
+        if (entry?.enabled && Number(entry?.slotDuration) > 0) {
+          duration = Number(entry.slotDuration);
+        }
+      } catch (e) {
+      }
       
       const response = await calendarEventService.findAvailableSlots(
         doctorId,
         startDateStr,
         endDateStr,
-        30,
+        duration,
         50
       );
       
@@ -379,7 +419,7 @@ const AppointmentBooking = ({ doctorId, doctor, currentUser, onBookingComplete }
       setAvailableSlots(slots);
       
       if (slots.length === 0) {
-        setError(t('appointmentBooking.messages.noAvailableSlots'));
+        setError(t('appointmentBooking.messages.noSlots'));
       }
     } catch (error) {
       console.error('Error fetching available slots:', error);

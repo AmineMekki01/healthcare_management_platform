@@ -179,14 +179,30 @@
       "enabled": "مفعل",
       "start": "البداية",
       "end": "النهاية",
-      "slotDuration": "مدة الفترة الزمنية"
+      "blocks": "الفترات الزمنية",
+      "slotDuration": "مدة الفترة الزمنية",
+      "actions": "إجراءات"
     },
     "buttons": {
       "saveSchedule": "حفظ الجدول",
       "clearAllSchedule": "مسح جميع الجداول",
       "addException": "إضافة استثناء",
+      "addBlock": "إضافة فترة",
+      "removeBlock": "حذف",
+      "copyToAll": "نسخ للجميع",
+      "delete": "حذف",
+      "edit": "تعديل",
+      "addVacation": "إضافة إجازة",
+      "updateVacation": "تحديث الإجازة",
       "cancel": "إلغاء",
       "yesClearAll": "نعم، امسح الكل"
+    },
+    "vacations": {
+      "title": "الإجازات / الغياب",
+      "noVacations": "لا توجد إجازات لهذا الأسبوع.",
+      "defaultTitle": "إجازة",
+      "titlePlaceholder": "عنوان الإجازة",
+      "allDay": "طوال اليوم"
     },
     "exceptions": {
       "title": "الاستثناءات (إجازة / تعديل)",
@@ -203,7 +219,18 @@
       "schedulesCleared": "تم مسح جميع الجداول بنجاح!"
     },
     "errors": {
-      "clearingSchedules": "خطأ في مسح الجداول"
+      "clearingSchedules": "خطأ في مسح الجداول",
+      "noBlocks": "يرجى إضافة فترة زمنية واحدة على الأقل",
+      "invalidBlock": "فترة زمنية غير صالحة (يجب أن تكون النهاية بعد البداية)",
+      "overlappingBlocks": "الفترات الزمنية متداخلة",
+      "missingExceptionFields": "يرجى إدخال التاريخ ووقت البداية ووقت النهاية",
+      "addException": "فشل في إضافة الاستثناء",
+      "deleteException": "فشل في حذف الاستثناء",
+      "missingVacationDates": "يرجى اختيار تاريخ البداية وتاريخ النهاية",
+      "invalidVacationDates": "تاريخ/وقت الإجازة غير صالح",
+      "invalidVacationRange": "يجب أن تكون نهاية الإجازة بعد بدايتها",
+      "addVacation": "فشل في حفظ الإجازة",
+      "deleteVacation": "فشل في حذف الإجازة"
     }
   },
   "followedDoctors": {

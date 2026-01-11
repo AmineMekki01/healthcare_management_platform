@@ -17,7 +17,6 @@ func SetupAppointmentRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *conf
 	router.POST("/doctors/availabilities/:userId", handler.SetDoctorAvailability)
 	router.DELETE("/doctors/availabilities/:userId", handler.ClearDoctorAvailabilities)
 	router.GET("/doctors/:doctorId/weekly_schedule", handler.GetWeeklySchedule)
-	router.POST("/doctors/exceptions", handler.AddDoctorException)
 
 	router.POST("/reservations", handler.CreateReservation)
 	router.GET("/reservations", handler.GetReservations)

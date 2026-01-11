@@ -4,6 +4,7 @@ import (
 	"healthcare_backend/pkg/config"
 	calendarHandler "healthcare_backend/pkg/handlers/calendar"
 	calendarService "healthcare_backend/pkg/services/calendar"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -11,6 +12,9 @@ import (
 
 func SetupCalendarRoutes(router *gin.RouterGroup, db *pgxpool.Pool, cfg *config.Config) {
 	service := calendarService.NewCalendarService(db, cfg)
+	if err := service.MigrateLegacyDoctorExceptionsToCalendarEvents(); err != nil {
+		log.Printf("failed to migrate legacy doctor exceptions: %v", err)
+	}
 	holidayService := calendarService.NewHolidayService(db)
 	handler := calendarHandler.NewCalendarHandler(service, holidayService)
 

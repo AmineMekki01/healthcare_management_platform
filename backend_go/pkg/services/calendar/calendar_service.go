@@ -26,6 +26,83 @@ func NewCalendarService(db *pgxpool.Pool, cfg *config.Config) *CalendarService {
 	}
 }
 
+func (s *CalendarService) MigrateLegacyDoctorExceptionsToCalendarEvents() error {
+	var hasLegacy bool
+	if err := s.db.QueryRow(context.Background(), `SELECT to_regclass('public.doctor_exception') IS NOT NULL`).Scan(&hasLegacy); err != nil {
+		return err
+	}
+	if !hasLegacy {
+		return nil
+	}
+
+	ctx := context.Background()
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	query := `
+		INSERT INTO doctor_calendar_events (
+			doctor_id,
+			title,
+			description,
+			event_type,
+			start_time,
+			end_time,
+			all_day,
+			blocks_appointments,
+			color,
+			created_at,
+			updated_at
+		)
+		SELECT
+			de.doctor_id,
+			'Time off',
+			NULL,
+			'blocked',
+			de.start_time,
+			de.end_time,
+			FALSE,
+			TRUE,
+			'#F56565',
+			NOW(),
+			NOW()
+		FROM doctor_exception de
+		WHERE NOT EXISTS (
+			SELECT 1
+			FROM doctor_calendar_events e
+			WHERE e.doctor_id = de.doctor_id
+			AND e.event_type = 'blocked'
+			AND e.blocks_appointments = TRUE
+			AND e.start_time = de.start_time
+			AND e.end_time = de.end_time
+			AND e.parent_event_id IS NULL
+		)`
+
+	if _, err := tx.Exec(ctx, query); err != nil {
+		return err
+	}
+
+	cleanupQuery := `
+		DELETE FROM doctor_exception de
+		WHERE EXISTS (
+			SELECT 1
+			FROM doctor_calendar_events e
+			WHERE e.doctor_id = de.doctor_id
+			AND e.event_type = 'blocked'
+			AND e.blocks_appointments = TRUE
+			AND e.start_time = de.start_time
+			AND e.end_time = de.end_time
+			AND e.parent_event_id IS NULL
+		)`
+	if _, err := tx.Exec(ctx, cleanupQuery); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 // CreateCalendarEvent creates a new calendar event for a doctor
 func (s *CalendarService) CreateCalendarEvent(doctorID uuid.UUID, req models.CreateCalendarEventRequest) (*models.CalendarEvent, error) {
 	eventID := uuid.New()
@@ -98,7 +175,7 @@ func (s *CalendarService) GetCalendarEvents(doctorID uuid.UUID, startDate, endDa
 		WHERE doctor_id = $1 
 		AND parent_event_id IS NULL
 		AND (
-			(start_time >= $2 AND end_time <= $3)
+			(start_time < $3 AND end_time > $2)
 			OR (recurring_pattern IS NOT NULL)
 		)
 		ORDER BY start_time ASC
@@ -112,7 +189,7 @@ func (s *CalendarService) GetCalendarEvents(doctorID uuid.UUID, startDate, endDa
 	defer rows.Close()
 
 	var allEvents []models.CalendarEvent
-	
+
 	for rows.Next() {
 		var event models.CalendarEvent
 		var recurringPatternJSON []byte
@@ -152,7 +229,7 @@ func (s *CalendarService) GetCalendarEvents(doctorID uuid.UUID, startDate, endDa
 // expandRecurringEvent generates individual occurrences of a recurring event
 func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, rangeStart, rangeEnd time.Time) []models.CalendarEvent {
 	var occurrences []models.CalendarEvent
-	
+
 	pattern, ok := event.RecurringPattern["pattern"].(string)
 	if !ok {
 		return []models.CalendarEvent{event}
@@ -160,7 +237,7 @@ func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, range
 
 	duration := event.EndTime.Sub(event.StartTime)
 	currentDate := event.StartTime
-	
+
 	// Get end date from pattern or use rangeEnd
 	var recurringEnd time.Time
 	if endDateStr, ok := event.RecurringPattern["endDate"].(string); ok {
@@ -185,7 +262,7 @@ func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, range
 
 	// Safety limit: max 365 occurrences to prevent infinite loops
 	const maxOccurrences = 365
-	
+
 	switch pattern {
 	case "daily":
 		count := 0
@@ -211,7 +288,7 @@ func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, range
 				}
 			}
 		}
-		
+
 		if len(daysOfWeek) == 0 {
 			// If no days specified, use the original day
 			daysOfWeek = []int{int(currentDate.Weekday())}
@@ -225,7 +302,7 @@ func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, range
 			if weekday == 0 {
 				weekday = 7
 			}
-			
+
 			// Check if this day is in the recurrence pattern
 			for _, targetDay := range daysOfWeek {
 				if weekday == targetDay {
@@ -258,12 +335,12 @@ func (s *CalendarService) expandRecurringEvent(event models.CalendarEvent, range
 				occurrence.ParentEventID = &event.EventID
 				occurrences = append(occurrences, occurrence)
 			}
-			
+
 			// Move to same day next month
 			nextMonth := currentDate.AddDate(0, 1, 0)
 			// Handle months with fewer days (e.g., Jan 31 -> Feb 28)
 			if nextMonth.Day() != dayOfMonth {
-				nextMonth = time.Date(nextMonth.Year(), nextMonth.Month(), dayOfMonth, 
+				nextMonth = time.Date(nextMonth.Year(), nextMonth.Month(), dayOfMonth,
 					currentDate.Hour(), currentDate.Minute(), currentDate.Second(), 0, currentDate.Location())
 			}
 			currentDate = nextMonth
@@ -337,7 +414,29 @@ func (s *CalendarService) CheckAvailability(doctorID uuid.UUID, startTime time.T
 	endTime := startTime.Add(time.Duration(duration) * time.Minute)
 	conflicts := []models.Conflict{}
 
-	// Check for existing appointments
+	inSchedule := false
+	if err := s.db.QueryRow(context.Background(),
+		`SELECT EXISTS (
+			SELECT 1
+			FROM availabilities
+			WHERE doctor_id = $1
+			AND availability_start = $2
+			AND availability_end = $3
+		)`,
+		doctorID, startTime, endTime,
+	).Scan(&inSchedule); err == nil {
+		if !inSchedule {
+			conflicts = append(conflicts, models.Conflict{
+				Type:      models.ConflictOutsideSchedule,
+				Title:     "Outside schedule",
+				StartTime: startTime,
+				EndTime:   endTime,
+				Details:   "Outside doctor's working hours",
+			})
+			return &models.AvailabilityCheckResult{Available: false, Conflicts: conflicts}, nil
+		}
+	}
+
 	appointmentQuery := `
 		SELECT appointment_start, appointment_end, title
 		FROM appointments
@@ -369,7 +468,6 @@ func (s *CalendarService) CheckAvailability(doctorID uuid.UUID, startTime time.T
 		}
 	}
 
-	// Check for blocking calendar events
 	eventQuery := `
 		SELECT event_id, title, start_time, end_time, event_type
 		FROM doctor_calendar_events
@@ -402,7 +500,6 @@ func (s *CalendarService) CheckAvailability(doctorID uuid.UUID, startTime time.T
 		}
 	}
 
-	// Check for holidays
 	holidayQuery := `
 		SELECT name, holiday_date, duration_days
 		FROM public_holidays
@@ -432,37 +529,6 @@ func (s *CalendarService) CheckAvailability(doctorID uuid.UUID, startTime time.T
 		}
 	}
 
-	// Check for doctor exceptions
-	exceptionQuery := `
-		SELECT start_time, end_time, type
-		FROM doctor_exception
-		WHERE doctor_id = $1
-		AND (
-			(start_time < $3 AND end_time > $2)
-			OR (start_time >= $2 AND start_time < $3)
-		)
-	`
-
-	rows, err = s.db.Query(context.Background(), exceptionQuery, doctorID, startTime, endTime)
-	if err != nil {
-		log.Printf("Error checking doctor exceptions: %v", err)
-	} else {
-		defer rows.Close()
-		for rows.Next() {
-			var excStart, excEnd time.Time
-			var excType string
-			if err := rows.Scan(&excStart, &excEnd, &excType); err == nil {
-				conflicts = append(conflicts, models.Conflict{
-					Type:      models.ConflictException,
-					Title:     fmt.Sprintf("Doctor %s", excType),
-					StartTime: excStart,
-					EndTime:   excEnd,
-					Details:   fmt.Sprintf("Doctor exception: %s", excType),
-				})
-			}
-		}
-	}
-
 	result := &models.AvailabilityCheckResult{
 		Available: len(conflicts) == 0,
 		Conflicts: conflicts,
@@ -477,68 +543,78 @@ func (s *CalendarService) CheckAvailability(doctorID uuid.UUID, startTime time.T
 
 // findNextAvailableSlot finds the next available time slot
 func (s *CalendarService) findNextAvailableSlot(doctorID uuid.UUID, afterTime time.Time, duration int) string {
-	// Simple implementation: suggest 1 hour later
+	var next time.Time
+	if err := s.db.QueryRow(context.Background(),
+		`SELECT availability_start
+		 FROM availabilities
+		 WHERE doctor_id = $1
+		 AND availability_start >= $2
+		 ORDER BY availability_start
+		 LIMIT 1`,
+		doctorID, afterTime,
+	).Scan(&next); err == nil {
+		return fmt.Sprintf("Next available slot at %s", next.Format("3:04 PM"))
+	}
+
 	nextSlot := afterTime.Add(1 * time.Hour)
 	return fmt.Sprintf("Next available slot at %s", nextSlot.Format("3:04 PM"))
 }
 
 // FindAvailableSlots finds multiple available slots
 func (s *CalendarService) FindAvailableSlots(doctorID uuid.UUID, startDate, endDate time.Time, duration, limit int) ([]models.AvailableSlot, error) {
-	/**
-	 * SMART CALENDAR-AWARE SLOT GENERATION
-	 * 
-	 * Instead of querying static availabilities, we generate time slots
-	 * and check each one against all conflicts (appointments, blocked time,
-	 * recurring patterns, holidays).
-	 * 
-	 * This ensures patients only see truly available slots.
-	 */
 	slots := []models.AvailableSlot{}
-	
+	if limit <= 0 {
+		limit = 50
+	}
 	if duration <= 0 {
-		duration = 30 // Default 30 minutes
+		duration = 30
 	}
-	
-	// Generate time slots for each day in the range
-	current := startDate
-	slotCount := 0
-	
-	for current.Before(endDate) || current.Equal(endDate) {
-		// Define working hours (8 AM to 6 PM)
-		workStart := time.Date(current.Year(), current.Month(), current.Day(), 8, 0, 0, 0, current.Location())
-		workEnd := time.Date(current.Year(), current.Month(), current.Day(), 18, 0, 0, 0, current.Location())
-		
-		// Generate slots for this day
-		slotTime := workStart
-		for slotTime.Before(workEnd) && slotCount < limit {
-			// Check if this slot is available
-			result, err := s.CheckAvailability(doctorID, slotTime, duration)
-			if err != nil {
-				log.Printf("Error checking availability for slot %s: %v", slotTime, err)
-				slotTime = slotTime.Add(time.Duration(duration) * time.Minute)
-				continue
-			}
-			
-			// Only add if available
-			if result.Available {
-				slots = append(slots, models.AvailableSlot{
-					StartTime: slotTime,
-					EndTime:   slotTime.Add(time.Duration(duration) * time.Minute),
-					Available: true,
-				})
-				slotCount++
-			}
-			
-			// Move to next slot
-			slotTime = slotTime.Add(time.Duration(duration) * time.Minute)
+
+	loc, err := time.LoadLocation("Africa/Casablanca")
+	if err != nil {
+		loc = time.Local
+	}
+
+	rangeStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, loc)
+	rangeEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, loc)
+
+	query := `
+		SELECT availability_start, availability_end
+		FROM availabilities
+		WHERE doctor_id = $1
+		AND availability_start >= $2
+		AND availability_end <= $3
+		ORDER BY availability_start
+		LIMIT $4`
+
+	rows, err := s.db.Query(context.Background(), query, doctorID, rangeStart, rangeEnd, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query availabilities: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var slotStart, slotEnd time.Time
+		if err := rows.Scan(&slotStart, &slotEnd); err != nil {
+			continue
 		}
-		
-		// Move to next day
-		current = current.AddDate(0, 0, 1)
+
+		if int(slotEnd.Sub(slotStart).Minutes()) != duration {
+			continue
+		}
+
+		result, err := s.CheckAvailability(doctorID, slotStart, duration)
+		if err != nil {
+			continue
+		}
+		if result.Available {
+			slots = append(slots, models.AvailableSlot{
+				StartTime: slotStart,
+				EndTime:   slotEnd,
+				Available: true,
+			})
+		}
 	}
-	
-	log.Printf("Generated %d available slots for doctor %s between %s and %s", 
-		len(slots), doctorID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
 
 	return slots, nil
 }

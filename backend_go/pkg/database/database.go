@@ -265,15 +265,6 @@ func createTables(conn *pgxpool.Pool) error {
 			slot_duration INTEGER
 		)`,
 
-		`CREATE TABLE IF NOT EXISTS doctor_exception (
-			id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-			doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
-			date DATE,
-			start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-			end_time TIMESTAMP WITH TIME ZONE NOT NULL,
-			type VARCHAR(10)
-		)`,
-
 		`CREATE TABLE IF NOT EXISTS receptionists (
 			receptionist_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			username VARCHAR(50) UNIQUE NOT NULL,

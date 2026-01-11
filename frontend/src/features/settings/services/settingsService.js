@@ -168,35 +168,6 @@ class SettingsService {
         }
     }
 
-    async addScheduleException(userId, exception) {
-        if (!userId) {
-        throw new Error('User ID is required');
-        }
-
-        try {
-        const formattedData = this.formatExceptionDataForAPI(exception);
-        const response = await axios.post(`${this.baseURL}/doctors/${userId}/schedule/exceptions`, formattedData);
-        return this.normalizeExceptionData(response.data);
-        } catch (error) {
-        console.error('Failed to add schedule exception:', error);
-        throw new Error('Failed to add schedule exception');
-        }
-    }
-
-    async removeScheduleException(userId, exceptionId) {
-        if (!userId || !exceptionId) {
-        throw new Error('User ID and Exception ID are required');
-        }
-
-        try {
-        await axios.delete(`${this.baseURL}/doctors/${userId}/schedule/exceptions/${exceptionId}`);
-        return { success: true, message: 'Schedule exception removed' };
-        } catch (error) {
-        console.error('Failed to remove schedule exception:', error);
-        throw new Error('Failed to remove schedule exception');
-        }
-    }
-
     normalizeProfileData(data) {
         return {
         id: data.id || data.user_id,
@@ -300,7 +271,6 @@ class SettingsService {
     normalizeScheduleData(data) {
         return {
         weeklySchedule: data.weekly_schedule || data.weeklySchedule || [],
-        exceptions: data.exceptions || [],
         timeSlots: data.time_slots || data.timeSlots || [],
         timezone: data.timezone || 'UTC',
         lastUpdated: data.last_updated || data.lastUpdated,
@@ -311,31 +281,7 @@ class SettingsService {
     formatScheduleDataForAPI(scheduleData) {
         return {
         weekly_schedule: scheduleData.weeklySchedule || scheduleData.weekly_schedule,
-        exceptions: scheduleData.exceptions || [],
         timezone: scheduleData.timezone || 'UTC'
-        };
-    }
-
-    formatExceptionDataForAPI(exception) {
-        return {
-        date: exception.date,
-        start_time: exception.startTime || exception.start_time,
-        end_time: exception.endTime || exception.end_time,
-        type: exception.type || 'off',
-        reason: exception.reason || ''
-        };
-    }
-
-    normalizeExceptionData(exception) {
-        return {
-        id: exception.id,
-        date: exception.date,
-        startTime: exception.start_time || exception.startTime,
-        endTime: exception.end_time || exception.endTime,
-        type: exception.type || 'off',
-        reason: exception.reason || '',
-        
-        ...exception
         };
     }
 
