@@ -96,6 +96,13 @@
   "doctorInfo": {
     "title": "Doctor Information",
     "sections": {
+      "practice": {
+        "title": "Practice",
+        "fields": {
+          "consultationFee": "Consultation Fee (MAD)",
+          "acceptedInsurances": "Accepted Insurances"
+        }
+      },
       "hospitals": {
         "title": "Hospitals",
         "fields": {

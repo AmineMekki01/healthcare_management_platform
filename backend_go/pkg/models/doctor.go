@@ -54,9 +54,20 @@ type Doctor struct {
 	Certifications         []DoctorCertification `json:"certifications"`
 	Languages              []DoctorLanguage      `json:"languages"`
 	ProfilePictureURL      string                `json:"profilePictureUrl"`
+	ConsultationFee        int                   `json:"consultationFee"`
+	AcceptedInsurances     []InsuranceProvider   `json:"acceptedInsurances,omitempty"`
+	AcceptedInsuranceCodes []string              `json:"acceptedInsuranceCodes,omitempty"`
 	DoctorDistance         float64               `json:"distance"`
 	NextAvailableSlotStart *time.Time            `json:"nextAvailableSlotStart,omitempty"`
 	NextAvailableSlotEnd   *time.Time            `json:"nextAvailableSlotEnd,omitempty"`
+}
+
+type InsuranceProvider struct {
+	ProviderID uuid.UUID `json:"providerId"`
+	Code       string    `json:"code"`
+	Name       string    `json:"name"`
+	NameAr     string    `json:"nameAr"`
+	NameFr     string    `json:"nameFr"`
 }
 
 type LoginRequest struct {

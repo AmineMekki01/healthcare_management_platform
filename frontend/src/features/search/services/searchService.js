@@ -7,6 +7,16 @@ class SearchService {
     this.aiServiceURL = 'http://localhost:8000/api/v1';
   }
 
+  async getInsuranceProviders() {
+    try {
+      const response = await axios.get(`${this.baseURL}/insurance-providers`);
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Failed to load insurance providers:', error);
+      return [];
+    }
+  }
+
   async searchDoctors(params = {}, currentLanguage = 'en') {
     try {
       const translatedParams = translateSearchParams(params, currentLanguage);
@@ -127,6 +137,18 @@ class SearchService {
 
     if (params.sort?.trim()) {
       searchParams.sort = params.sort.trim();
+    }
+
+    if (params.minFee !== undefined && params.minFee !== null && String(params.minFee).trim() !== '') {
+      searchParams.minFee = params.minFee;
+    }
+
+    if (params.maxFee !== undefined && params.maxFee !== null && String(params.maxFee).trim() !== '') {
+      searchParams.maxFee = params.maxFee;
+    }
+
+    if (params.insurance?.trim()) {
+      searchParams.insurance = params.insurance.trim();
     }
 
     return searchParams;

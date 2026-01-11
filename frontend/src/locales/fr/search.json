@@ -49,6 +49,11 @@
     "relevance": "Pertinence",
     "availability": "Disponibilité la plus proche"
   },
+  "filters": {
+    "minFeePlaceholder": "Tarif min (MAD)",
+    "maxFeePlaceholder": "Tarif max (MAD)",
+    "anyInsurance": "Toute mutuelle"
+  },
   "specialties": {
     "cardiology": "Cardiologie",
     "dermatology": "Dermatologie",
@@ -65,6 +70,7 @@
     "nextAvailableLabel": "Prochaine disponibilité",
     "nextAvailable": "Prochaine disponibilité : {{value}}",
     "noAvailability": "Aucune disponibilité proche",
+    "consultationFee": "Tarif de consultation : {{value}} MAD",
     "locationNotSpecified": "Localisation non spécifiée",
     "yearsExperience_one": "{{count}} an d'expérience",
     "yearsExperience_other": "{{count}} ans d'expérience",

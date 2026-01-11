@@ -10,6 +10,8 @@ import {
   Grid,
   Paper,
   MenuItem,
+  Checkbox,
+  ListItemText,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,29 +26,54 @@ import {
 import { settingsService } from '../services/settingsService';
 
 export default function DoctorAdditionalInfo() {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation('settings');
   const { userId } = useContext(AuthContext);
   const [hospitals, setHospitals] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [awards, setAwards] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [languages, setLanguages] = useState([]);
+  const [consultationFee, setConsultationFee] = useState(0);
+  const [insuranceProviders, setInsuranceProviders] = useState([]);
+  const [acceptedInsuranceCodes, setAcceptedInsuranceCodes] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await settingsService.getDoctorAdditionalInfo(userId);
+        const [data, providers] = await Promise.all([
+          settingsService.getDoctorAdditionalInfo(userId),
+          settingsService.getInsuranceProviders(),
+        ]);
         setHospitals(data.hospitals || []);
         setOrganizations(data.organizations || []);
         setAwards(data.awards || []);
         setCertifications(data.certifications || []);
         setLanguages(data.languages || []);
+
+        setConsultationFee(Number(data.consultationFee || 0));
+        setAcceptedInsuranceCodes(Array.isArray(data.acceptedInsuranceCodes) ? data.acceptedInsuranceCodes : []);
+        setInsuranceProviders(Array.isArray(providers) ? providers : []);
       } catch (error) {
         console.error('Error fetching additional info:', error);
       }
     };
     fetchData();
   }, [userId]);
+
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+
+  const getProviderDisplayName = (provider) => {
+    if (!provider) return '';
+    if (isArabic) return provider.nameAr || provider.name || provider.code;
+    if (isFrench) return provider.nameFr || provider.name || provider.code;
+    return provider.name || provider.code;
+  };
+
+  const getProviderNameByCode = (code) => {
+    const p = insuranceProviders.find((x) => x.code === code);
+    return p ? getProviderDisplayName(p) : code;
+  };
 
   const handleSubmit = async () => {
     try {
@@ -56,6 +83,8 @@ export default function DoctorAdditionalInfo() {
             awards,
             certifications,
             languages,
+            consultationFee: Number(consultationFee || 0),
+            acceptedInsuranceCodes,
         });
         console.log('Information updated:', data);
         alert(t('doctorInfo.success.informationUpdated'));
@@ -67,6 +96,51 @@ export default function DoctorAdditionalInfo() {
 
   return (
     <Container maxWidth="md" style={{ marginTop: '20px' }}>
+      <Paper style={{ padding: '20px', marginBottom: '30px' }}>
+        <Typography variant="h5" style={{ fontWeight: 'bold', color: '#333', marginBottom: '16px' }}>
+          {t('doctorInfo.sections.practice.title')}
+        </Typography>
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="number"
+              label={t('doctorInfo.sections.practice.fields.consultationFee')}
+              value={consultationFee}
+              onChange={(e) => setConsultationFee(e.target.value)}
+              inputProps={{ min: 0 }}
+              variant="outlined"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              select
+              fullWidth
+              label={t('doctorInfo.sections.practice.fields.acceptedInsurances')}
+              value={acceptedInsuranceCodes}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAcceptedInsuranceCodes(typeof value === 'string' ? value.split(',') : value);
+              }}
+              SelectProps={{
+                multiple: true,
+                renderValue: (selected) => (Array.isArray(selected) ? selected.map(getProviderNameByCode).join(', ') : '')
+              }}
+              variant="outlined"
+            >
+              {insuranceProviders.map((provider) => (
+                <MenuItem key={provider.code} value={provider.code}>
+                  <Checkbox checked={acceptedInsuranceCodes.indexOf(provider.code) > -1} />
+                  <ListItemText primary={getProviderDisplayName(provider)} />
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+        </Grid>
+      </Paper>
+
       <InfoSection
         title={t('doctorInfo.sections.hospitals.title')}
         icon={<HospitalIcon fontSize="large" />}

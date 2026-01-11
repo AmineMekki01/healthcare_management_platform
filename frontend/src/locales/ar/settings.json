@@ -96,6 +96,13 @@
   "doctorInfo": {
     "title": "معلومات الطبيب",
     "sections": {
+      "practice": {
+        "title": "العيادة",
+        "fields": {
+          "consultationFee": "أتعاب الاستشارة (درهم)",
+          "acceptedInsurances": "التأمينات المقبولة"
+        }
+      },
       "hospitals": {
         "title": "المستشفيات",
         "fields": {

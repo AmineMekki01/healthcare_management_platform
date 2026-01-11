@@ -92,6 +92,7 @@ func createTables(conn *pgxpool.Pool) error {
 			phone_number VARCHAR(255) NOT NULL,
 			clinic_phone_number VARCHAR(255) NOT NULL,
 			show_clinic_phone BOOLEAN NOT NULL DEFAULT TRUE,
+			consultation_fee INTEGER NOT NULL DEFAULT 0,
 			street_address VARCHAR(255) NOT NULL,
 			street_address_ar VARCHAR(255),
 			street_address_fr VARCHAR(255),
@@ -202,6 +203,36 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)`,
 
+		`CREATE TABLE IF NOT EXISTS insurance_providers (
+			provider_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+			code VARCHAR(80) UNIQUE NOT NULL,
+			name TEXT NOT NULL,
+			name_ar TEXT,
+			name_fr TEXT,
+			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		)`,
+
+		`CREATE TABLE IF NOT EXISTS doctor_insurance_providers (
+			doctor_id UUID NOT NULL REFERENCES doctor_info(doctor_id) ON DELETE CASCADE,
+			provider_id UUID NOT NULL REFERENCES insurance_providers(provider_id) ON DELETE CASCADE,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+			PRIMARY KEY (doctor_id, provider_id)
+		)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_doctor_insurance_doctor_id ON doctor_insurance_providers(doctor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_doctor_insurance_provider_id ON doctor_insurance_providers(provider_id)`,
+
+		`INSERT INTO insurance_providers (code, name, name_ar, name_fr)
+			VALUES
+				('cnops', 'CNOPS', 'CNOPS', 'CNOPS'),
+				('cnss', 'CNSS', 'CNSS', 'CNSS'),
+				('axa', 'AXA', 'AXA', 'AXA'),
+				('rma', 'RMA', 'RMA', 'RMA'),
+				('sanlam', 'Sanlam', 'Sanlam', 'Sanlam')
+			ON CONFLICT (code) DO NOTHING`,
+
 		`CREATE TABLE IF NOT EXISTS patient_info (
 			patient_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
 			username VARCHAR(50) UNIQUE NOT NULL,
@@ -242,19 +273,7 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)`,
 
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS first_name_ar VARCHAR(50)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS last_name_ar VARCHAR(50)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS bio_ar TEXT`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS street_address_ar VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS street_address_fr VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS city_name_ar VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS city_name_fr VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS state_name_ar VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS state_name_fr VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS country_name_ar VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS country_name_fr VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS location_ar VARCHAR(255)`,
-		`ALTER TABLE patient_info ADD COLUMN IF NOT EXISTS location_fr VARCHAR(255)`,
+
 
 		`CREATE TABLE IF NOT EXISTS availabilities (
 			availability_id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
@@ -305,20 +324,7 @@ func createTables(conn *pgxpool.Pool) error {
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		)`,
 
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS first_name_ar VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS last_name_ar VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS bio_ar TEXT`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS street_address_ar TEXT`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS street_address_fr TEXT`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS city_name_ar VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS city_name_fr VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS state_name_ar VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS state_name_fr VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS country_name_ar VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS country_name_fr VARCHAR(100)`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS location TEXT`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS location_ar TEXT`,
-		`ALTER TABLE receptionists ADD COLUMN IF NOT EXISTS location_fr TEXT`,
+
 
 		`CREATE TABLE IF NOT EXISTS appointments (
 			appointment_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

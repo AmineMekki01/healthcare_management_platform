@@ -97,6 +97,20 @@ export const SearchInputsRow = styled.div`
     }
 `;
 
+export const AdvancedFiltersRow = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
 export const SearchInput = styled.input`
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.8);

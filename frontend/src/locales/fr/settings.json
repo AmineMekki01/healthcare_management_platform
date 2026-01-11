@@ -96,6 +96,13 @@
   "doctorInfo": {
     "title": "Informations du médecin",
     "sections": {
+      "practice": {
+        "title": "Cabinet",
+        "fields": {
+          "consultationFee": "Tarif de consultation (MAD)",
+          "acceptedInsurances": "Mutuelles acceptées"
+        }
+      },
       "hospitals": {
         "title": "Hôpitaux",
         "fields": {

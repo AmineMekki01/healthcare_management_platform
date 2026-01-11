@@ -5,6 +5,16 @@ class SettingsService {
         this.baseURL = '/api/v1';
     }
 
+    async getInsuranceProviders() {
+        try {
+            const response = await axios.get(`${this.baseURL}/insurance-providers`);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Failed to get insurance providers:', error);
+            throw new Error('Failed to load insurance providers');
+        }
+    }
+
     async getPersonalInfo(userId, userType) {
         if (!userId || !userType) {
         throw new Error('User ID and user type are required');

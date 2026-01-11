@@ -111,6 +111,13 @@ func (h *SettingsHandler) GetDoctorAdditionalInfo(c *gin.Context) {
 		return
 	}
 
+	authUserType, _ := c.Get("userType")
+	authUserID, _ := c.Get("userId")
+	if authUserType != "doctor" || authUserID != doctorID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access forbidden"})
+		return
+	}
+
 	info, err := h.settingsService.GetDoctorAdditionalInfo(doctorID)
 	if err != nil {
 		if err.Error() == "invalid doctor ID" {
@@ -133,6 +140,13 @@ func (h *SettingsHandler) UpdateDoctorAdditionalInfo(c *gin.Context) {
 		return
 	}
 
+	authUserType, _ := c.Get("userType")
+	authUserID, _ := c.Get("userId")
+	if authUserType != "doctor" || authUserID != doctorID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access forbidden"})
+		return
+	}
+
 	var data services.DoctorAdditionalInfoData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Println("Invalid input:", err)
@@ -152,4 +166,15 @@ func (h *SettingsHandler) UpdateDoctorAdditionalInfo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Doctor additional info updated successfully"})
+}
+
+func (h *SettingsHandler) ListInsuranceProviders(c *gin.Context) {
+	providers, err := h.settingsService.ListInsuranceProviders()
+	if err != nil {
+		log.Printf("Error listing insurance providers: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list insurance providers"})
+		return
+	}
+
+	c.JSON(http.StatusOK, providers)
 }
