@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, RatingContainer, NumberOfRaters, BadgeContainer, VerifiedBadge, ExperienceBadge, SpecialtyTag, LocationInfo, ContactButton, BookButton } from '../styles/DoctorCardStyles';
+import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, RatingContainer, NumberOfRaters, BadgeContainer, VerifiedBadge, ExperienceBadge, SpecialtyTag, LocationInfo, ContactButton, BookButton, AvailabilityBanner, AvailabilityLeft, AvailabilityIcon, AvailabilityLabel, AvailabilityRight, AvailabilityDate, AvailabilityTime } from '../styles/DoctorCardStyles';
 import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle, FaHeart, FaRegHeart, FaClock } from 'react-icons/fa';
 
 const DoctorCard = ({
   doctorId,
@@ -48,6 +48,36 @@ const DoctorCard = ({
     ? t('labels.doctor', { ns: 'medical', name: doctorName, defaultValue: `Dr. ${doctorName}` })
     : t('doctorCard.unknownDoctor', { defaultValue: 'Unknown Doctor' });
 
+  const getNextSlotLabels = (start, end) => {
+    if (!start) return null;
+    const startDate = start instanceof Date ? start : new Date(start);
+    if (Number.isNaN(startDate.getTime())) return null;
+    const endDate = end ? (end instanceof Date ? end : new Date(end)) : null;
+
+    try {
+      const locale = i18n?.language || undefined;
+      const dateFmt = new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+      const timeFmt = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
+
+      const dateLabel = dateFmt.format(startDate);
+      let timeLabel = timeFmt.format(startDate);
+      if (endDate && !Number.isNaN(endDate.getTime())) {
+        timeLabel = `${timeLabel} – ${timeFmt.format(endDate)}`;
+      }
+
+      return { dateLabel, timeLabel };
+    } catch {
+      return {
+        dateLabel: startDate.toLocaleDateString(),
+        timeLabel: startDate.toLocaleTimeString(),
+      };
+    }
+  };
+
   const experienceYears = Number(data.experience || 0);
   const hasExperience = experienceYears > 0;
   const experienceText = hasExperience
@@ -82,7 +112,7 @@ const DoctorCard = ({
   const formatLocation = (location) => {
     console.log(location);
     if (!location) return t('doctorCard.locationNotSpecified');
-    return location.length > 30 ? location.substring(0, 30) + '...' : location;
+    return location;
   };
 
   const getSpecialtyColor = (specialty) => {
@@ -150,6 +180,8 @@ const DoctorCard = ({
 
   const specialtyColors = getSpecialtyColor(displaySpecialty || displaySpecialty);
   const doctorId_final = data.doctorId || data.userId || doctorId;
+  const nextSlot = getNextSlotLabels(data.nextAvailableSlotStart, data.nextAvailableSlotEnd);
+  const hasNextSlot = Boolean(nextSlot);
 
   return (
     <CardContainer specialtyColors={specialtyColors}>
@@ -176,12 +208,25 @@ const DoctorCard = ({
       </TopSection>
       
       <InfoContainer>
+        <AvailabilityBanner available={hasNextSlot} specialtyColors={specialtyColors}>
+          <AvailabilityLeft>
+            <AvailabilityIcon available={hasNextSlot} specialtyColors={specialtyColors}>
+              <FaClock />
+            </AvailabilityIcon>
+            <AvailabilityLabel available={hasNextSlot}>
+              {hasNextSlot ? t('doctorCard.nextAvailableLabel') : t('doctorCard.noAvailability')}
+            </AvailabilityLabel>
+          </AvailabilityLeft>
+
+          {hasNextSlot && (
+            <AvailabilityRight>
+              <AvailabilityDate>{nextSlot.dateLabel}</AvailabilityDate>
+              <AvailabilityTime specialtyColors={specialtyColors}>{nextSlot.timeLabel}</AvailabilityTime>
+            </AvailabilityRight>
+          )}
+        </AvailabilityBanner>
+
         <div>
-          <DoctorInfo specialtyColors={specialtyColors}>
-            <FaCalendarAlt />
-            <span>{experienceText}</span>
-          </DoctorInfo>
-          
           <LocationInfo>
             <FaMapMarkerAlt />
             <span>{formatLocation(displayLocation || displayLocation)}</span>

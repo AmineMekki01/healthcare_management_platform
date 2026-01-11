@@ -30,6 +30,10 @@
     "noResults": "لم يتم العثور على أطباء يطابقون معاييرك.",
     "searchError": "حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى."
   },
+  "sort": {
+    "relevance": "الأكثر صلة",
+    "availability": "أقرب موعد متاح"
+  },
   "suggestions": {
     "title": "المشاكل الصحية الشائعة",
     "generalCheckup": {
@@ -52,6 +56,9 @@
   "doctorCard": {
     "verified": "موثوق",
     "bookAppointment": "حجز موعد",
+    "nextAvailableLabel": "أقرب موعد متاح",
+    "nextAvailable": "أقرب موعد: {{value}}",
+    "noAvailability": "لا توجد مواعيد قريبة",
     "locationNotSpecified": "الموقع غير محدد",
     "yearsExperience_zero": "بدون خبرة",
     "yearsExperience_one": "سنة خبرة واحدة",

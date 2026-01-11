@@ -390,24 +390,96 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 }
 
 func (s *DoctorService) SearchDoctors(query, specialty, location string, userLatitude, userLongitude float64) ([]models.Doctor, error) {
+	return s.SearchDoctorsWithSort(query, specialty, location, userLatitude, userLongitude, "")
+}
+
+func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string, userLatitude, userLongitude float64, sortBy string) ([]models.Doctor, error) {
 	var doctors []models.Doctor
 
+	q := strings.TrimSpace(query)
+	qLower := strings.ToLower(q)
+	if strings.HasPrefix(qLower, "dr. ") {
+		q = strings.TrimSpace(q[4:])
+	} else if strings.HasPrefix(qLower, "dr ") {
+		q = strings.TrimSpace(q[3:])
+	} else if qLower == "dr" || qLower == "dr." {
+		q = ""
+	}
+
+	q = strings.TrimSpace(q)
+	if strings.HasPrefix(q, "د. ") {
+		q = strings.TrimSpace(q[3:])
+	} else if strings.HasPrefix(q, "د.") {
+		q = strings.TrimSpace(q[2:])
+	} else if strings.HasPrefix(q, "د ") {
+		q = strings.TrimSpace(q[2:])
+	} else if q == "د" || q == "د." {
+		q = ""
+	}
+
 	sqlSelect := `
-		SELECT doctor_id, username,
-		first_name, COALESCE(first_name_ar, ''),
-		last_name, COALESCE(last_name_ar, ''),
-		specialty_code, experience, rating_score, rating_count,
-		location, COALESCE(location_ar, ''), COALESCE(location_fr, ''),
-		profile_photo_url, COALESCE(latitude, 0) as latitude, COALESCE(longitude, 0) as longitude,
-		CASE 
-			WHEN $1::float8 IS NOT NULL AND $2::float8 IS NOT NULL
-		AND 
-			latitude IS NOT NULL 
-		AND 
-			longitude IS NOT NULL THEN (6371 * acos(LEAST(1, GREATEST(-1, cos(radians($1::float8)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2::float8)) + sin(radians($1::float8)) * sin(radians(latitude))))))
-		ELSE NULL
-		END AS distance
-		FROM doctor_info`
+		SELECT
+			d.doctor_id,
+			d.username,
+			d.first_name,
+			COALESCE(d.first_name_ar, ''),
+			d.last_name,
+			COALESCE(d.last_name_ar, ''),
+			d.specialty_code,
+			d.experience,
+			d.rating_score,
+			d.rating_count,
+			d.location,
+			COALESCE(d.location_ar, ''),
+			COALESCE(d.location_fr, ''),
+			d.profile_photo_url,
+			COALESCE(d.latitude, 0) as latitude,
+			COALESCE(d.longitude, 0) as longitude,
+			CASE
+				WHEN $1::float8 IS NOT NULL AND $2::float8 IS NOT NULL
+					AND d.latitude IS NOT NULL
+					AND d.longitude IS NOT NULL THEN (
+						6371 * acos(LEAST(1, GREATEST(-1,
+							cos(radians($1::float8)) * cos(radians(d.latitude)) * cos(radians(d.longitude) - radians($2::float8)) +
+							sin(radians($1::float8)) * sin(radians(d.latitude))
+						)))
+				)
+				ELSE NULL
+			END AS distance,
+			next.availability_start,
+			next.availability_end
+		FROM doctor_info d
+		LEFT JOIN LATERAL (
+			SELECT a.availability_start, a.availability_end
+			FROM availabilities a
+			WHERE a.doctor_id = d.doctor_id
+			AND a.availability_start >= NOW()
+			AND NOT EXISTS (
+				SELECT 1
+				FROM doctor_calendar_events e
+				WHERE e.doctor_id = a.doctor_id
+				AND e.blocks_appointments = true
+				AND e.start_time < a.availability_end
+				AND e.end_time > a.availability_start
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM appointments ap
+				WHERE ap.doctor_id = a.doctor_id
+				AND NOT ap.canceled
+				AND ap.appointment_start < a.availability_end
+				AND ap.appointment_end > a.availability_start
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM public_holidays h
+				WHERE h.affects_booking = true
+				AND a.availability_start::date >= h.holiday_date
+				AND a.availability_start::date < (h.holiday_date + h.duration_days)
+			)
+			ORDER BY a.availability_start
+			LIMIT 1
+		) next ON true`
 
 	queryParams := []interface{}{userLatitude, userLongitude}
 	paramIndex := 3
@@ -416,18 +488,18 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 	if specialty == "undefined" {
 		specialty = ""
 	}
-	if query != "" {
-		conditions = append(conditions, fmt.Sprintf("(first_name ILIKE $%d OR last_name ILIKE $%d)", paramIndex, paramIndex))
-		queryParams = append(queryParams, "%"+query+"%")
+	if q != "" {
+		conditions = append(conditions, fmt.Sprintf("(d.first_name ILIKE $%d OR d.last_name ILIKE $%d OR (d.first_name || ' ' || d.last_name) ILIKE $%d OR d.username ILIKE $%d OR (COALESCE(d.first_name_ar, '') || ' ' || COALESCE(d.last_name_ar, '')) ILIKE $%d)", paramIndex, paramIndex, paramIndex, paramIndex, paramIndex))
+		queryParams = append(queryParams, "%"+q+"%")
 		paramIndex++
 	}
 	if specialty != "" {
-		conditions = append(conditions, fmt.Sprintf("specialty_code ILIKE $%d", paramIndex))
+		conditions = append(conditions, fmt.Sprintf("d.specialty_code ILIKE $%d", paramIndex))
 		queryParams = append(queryParams, "%"+specialty+"%")
 		paramIndex++
 	}
 	if location != "" {
-		conditions = append(conditions, fmt.Sprintf("location ILIKE $%d", paramIndex))
+		conditions = append(conditions, fmt.Sprintf("d.location ILIKE $%d", paramIndex))
 		queryParams = append(queryParams, "%"+location+"%")
 		paramIndex++
 	}
@@ -435,7 +507,9 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 	if len(conditions) > 0 {
 		sqlSelect += " WHERE " + strings.Join(conditions, " AND ")
 	}
-	if userLatitude != 0 && userLongitude != 0 {
+	if strings.EqualFold(sortBy, "availability") {
+		sqlSelect += " ORDER BY next.availability_start NULLS LAST"
+	} else if userLatitude != 0 && userLongitude != 0 {
 		sqlSelect += " ORDER BY distance"
 	}
 
@@ -448,6 +522,8 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 	for rows.Next() {
 		var doctor models.Doctor
 		var distance sql.NullFloat64
+		var nextStart sql.NullTime
+		var nextEnd sql.NullTime
 		err := rows.Scan(
 			&doctor.DoctorID,
 			&doctor.Username,
@@ -465,7 +541,10 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 			&doctor.ProfilePictureURL,
 			&doctor.Latitude,
 			&doctor.Longitude,
-			&distance)
+			&distance,
+			&nextStart,
+			&nextEnd,
+		)
 		if err != nil {
 			log.Printf("Error scanning doctor row: %v", err)
 			continue
@@ -475,6 +554,14 @@ func (s *DoctorService) SearchDoctors(query, specialty, location string, userLat
 		}
 		if distance.Valid {
 			doctor.DoctorDistance = distance.Float64
+		}
+		if nextStart.Valid {
+			dt := nextStart.Time
+			doctor.NextAvailableSlotStart = &dt
+		}
+		if nextEnd.Valid {
+			dt := nextEnd.Time
+			doctor.NextAvailableSlotEnd = &dt
 		}
 		var doctorIDStr string
 		doctorIDStr = doctor.DoctorID.String()

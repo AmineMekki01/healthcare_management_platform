@@ -31,8 +31,9 @@ const SearchBar = () => {
   const [query, setQuery] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [location, setLocation] = useState('');
+  const [sortBy, setSortBy] = useState('relevance');
   const [userQuery, setUserQuery] = useState('');
-  const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '' });
+  const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '', sort: 'relevance' });
   const [userLatitude, setUserLatitude] = useState(null);
   const [userLongitude, setUserLongitude] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,18 +99,19 @@ const SearchBar = () => {
       setSearchParams({
         query: query,
         specialty: specialty,
-        location: location
+        location: location,
+        sort: sortBy
       });
       if (query || specialty || location) {
         setShowSuggestions(false);
       }
     }, 500);
     return () => clearTimeout(handler);
-  }, [query, specialty, location]);
+  }, [query, specialty, location, sortBy]);
 
   const fetchUsers = useCallback(async () => {
-    const { query, specialty, location } = searchParams;
-    if (query || specialty || location || (userLatitude && userLongitude)) {
+    const { query, specialty, location, sort } = searchParams;
+    if (hasSearched || query || specialty || location || (userLatitude && userLongitude)) {
       setIsLoading(true);
       setHasSearched(true);
       try {
@@ -119,6 +121,7 @@ const SearchBar = () => {
           query,
           specialty,
           location,
+          sort: sort,
           latitude: userLatitude,
           longitude: userLongitude,
         }, i18n.language);
@@ -132,7 +135,7 @@ const SearchBar = () => {
         setIsLoading(false);
       }
     }
-  }, [searchParams, userLatitude, userLongitude, i18n.language]);
+  }, [searchParams, userLatitude, userLongitude, i18n.language, hasSearched]);
 
   const debouncedFetchUsers = useCallback(debounce(() => {
     fetchUsers();
@@ -162,6 +165,7 @@ const SearchBar = () => {
 
         const searchResults = await searchService.searchDoctors({
           specialty: newSpecialty,
+          sort: sortBy,
           latitude: userLatitude,
           longitude: userLongitude
         }, i18n.language);
@@ -178,13 +182,7 @@ const SearchBar = () => {
     }
   };
 
-  const filteredUsers = Array.isArray(users) ? users.filter((user) => 
-    (
-      ((user && user.firstName) || '').toLowerCase().startsWith(query.toLowerCase()) &&
-      ((user && user.specialty) || '').toLowerCase().startsWith(specialty.toLowerCase()) &&
-      ((user && user.location) || '').toLowerCase().includes(location.toLowerCase())
-    )
-  ) : [];
+  const filteredUsers = Array.isArray(users) ? users : [];
 
   const handleQuickFilter = async (specialtyObj) => {
     setSpecialty(specialtyObj.label);
@@ -208,11 +206,12 @@ const SearchBar = () => {
     setQuery('');
     setSpecialty('');
     setLocation('');
+    setSortBy('relevance');
     setUserQuery('');
     setUsers([]);
     setHasSearched(false);
     setShowSuggestions(true);
-    setSearchParams({ query: '', specialty: '', location: '' });
+    setSearchParams({ query: '', specialty: '', location: '', sort: 'relevance' });
   };
 
   return (
@@ -246,6 +245,14 @@ const SearchBar = () => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
+          <SearchInput
+            as="select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="relevance">{t('sort.relevance')}</option>
+            <option value="availability">{t('sort.availability')}</option>
+          </SearchInput>
         </SearchInputsRow>
 
         <QuickFiltersContainer>
