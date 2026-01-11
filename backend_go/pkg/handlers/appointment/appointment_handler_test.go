@@ -533,36 +533,6 @@ func TestGetWeeklySchedule_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestAddDoctorException_Success(t *testing.T) {
-	handler, ctx, cleanup := setupHandlerTest(t)
-	defer cleanup()
-
-	err := testDB.CreateTestDoctor(ctx, "docexception@test.com", "pass", "Dr.", "Exception", true)
-	require.NoError(t, err)
-	var doctorID string
-	testDB.Pool.QueryRow(ctx, "SELECT doctor_id FROM doctor_info WHERE email = $1", "docexception@test.com").Scan(&doctorID)
-
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.POST("/exceptions/:id", handler.AddDoctorException)
-
-	tomorrow := time.Now().Add(24 * time.Hour)
-	exception := models.DoctorException{
-		Date:      tomorrow.Format("2006-01-02"),
-		StartTime: tomorrow.Add(9 * time.Hour).Format(time.RFC3339),
-		EndTime:   tomorrow.Add(17 * time.Hour).Format(time.RFC3339),
-	}
-
-	body, _ := json.Marshal(exception)
-	url := fmt.Sprintf("/exceptions/%s", doctorID)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
 func TestClearDoctorAvailabilities_Success(t *testing.T) {
 	handler, ctx, cleanup := setupHandlerTest(t)
 	defer cleanup()

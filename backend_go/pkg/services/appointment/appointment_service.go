@@ -15,6 +15,14 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+func (s *AppointmentService) casablancaLocation() *time.Location {
+	loc, err := time.LoadLocation("Africa/Casablanca")
+	if err != nil {
+		return time.Local
+	}
+	return loc
+}
+
 type AppointmentService struct {
 	db  *pgxpool.Pool
 	cfg *config.Config
@@ -189,26 +197,29 @@ func (s *AppointmentService) SetDoctorAvailability(userId, startStr, endStr stri
 	const dFmt = "2006-01-02"
 	var rangeStart, rangeEnd time.Time
 	limitToRange := false
+	loc := s.casablancaLocation()
 
 	if startStr != "" && endStr != "" {
 		var err error
-		rangeStart, err = time.Parse(dFmt, startStr)
+		rangeStart, err = time.ParseInLocation(dFmt, startStr, loc)
 		if err != nil {
 			log.Println("Invalid start date format:", err)
 			return fmt.Errorf("bad start date")
 		}
-		rangeEnd, err = time.Parse(dFmt, endStr)
+		rangeEnd, err = time.ParseInLocation(dFmt, endStr, loc)
 		if err != nil {
 			log.Println("Invalid end date format:", err)
 			return fmt.Errorf("bad end date")
 		}
+		rangeStart = time.Date(rangeStart.Year(), rangeStart.Month(), rangeStart.Day(), 0, 0, 0, 0, loc)
+		rangeEnd = time.Date(rangeEnd.Year(), rangeEnd.Month(), rangeEnd.Day(), 0, 0, 0, 0, loc)
 		limitToRange = true
 	}
 
 	if limitToRange {
 		_, err := s.db.Exec(context.Background(),
-			"DELETE FROM availabilities WHERE doctor_id = $1 AND DATE(availability_start) >= $2 AND DATE(availability_start) <= $3",
-			userId, rangeStart, rangeEnd)
+			"DELETE FROM availabilities WHERE doctor_id = $1 AND DATE(availability_start) >= $2::date AND DATE(availability_start) <= $3::date",
+			userId, rangeStart.Format(dFmt), rangeEnd.Format(dFmt))
 		if err != nil {
 			log.Println("Error deleting existing availabilities:", err)
 			return fmt.Errorf("failed to delete existing availabilities")
@@ -228,7 +239,8 @@ func (s *AppointmentService) SetDoctorAvailability(userId, startStr, endStr stri
 		availability.AvailabilityID = availabilityId
 
 		if limitToRange {
-			availabilityDate := availability.AvailabilityStart.Truncate(24 * time.Hour)
+			startLocal := availability.AvailabilityStart.In(loc)
+			availabilityDate := time.Date(startLocal.Year(), startLocal.Month(), startLocal.Day(), 0, 0, 0, 0, loc)
 			if availabilityDate.Before(rangeStart) || availabilityDate.After(rangeEnd) {
 				continue
 			}
@@ -259,10 +271,9 @@ func (s *AppointmentService) ClearDoctorAvailabilities(doctorID string) error {
 }
 
 func (s *AppointmentService) GetWeeklySchedule(doctorId string, rangeStart, rangeEnd time.Time) (map[string]interface{}, error) {
+	loc := s.casablancaLocation()
 	query := `
-		SELECT weekday, slot_duration, 
-		       MIN(availability_start) as earliest_start,
-		       MAX(availability_end) as latest_end,
+		SELECT weekday, slot_duration, availability_start, availability_end,
 		       CASE weekday 
 		           WHEN 'Monday' THEN 1 
 		           WHEN 'Tuesday' THEN 2 
@@ -272,10 +283,9 @@ func (s *AppointmentService) GetWeeklySchedule(doctorId string, rangeStart, rang
 		           WHEN 'Saturday' THEN 6 
 		           WHEN 'Sunday' THEN 7 
 		       END as day_order
-		FROM availabilities 
+		FROM availabilities
 		WHERE doctor_id = $1 AND availability_start >= $2 AND availability_start < $3
-		GROUP BY weekday, slot_duration
-		ORDER BY day_order`
+		ORDER BY day_order, availability_start`
 
 	rows, err := s.db.Query(context.Background(), query, doctorId, rangeStart, rangeEnd.AddDate(0, 0, 1))
 	if err != nil {
@@ -284,47 +294,99 @@ func (s *AppointmentService) GetWeeklySchedule(doctorId string, rangeStart, rang
 	}
 	defer rows.Close()
 
-	scheduleMap := make(map[string]map[string]interface{})
+	type mergedDay struct {
+		slotDuration int
+		blocks       []models.WeeklyScheduleBlock
+		inited       bool
+		curStart     time.Time
+		curEnd       time.Time
+	}
+
+	dayMap := make(map[string]*mergedDay)
 
 	for rows.Next() {
 		var weekday string
 		var slotDuration int
-		var earliestStart, latestEnd time.Time
+		var start, end time.Time
 		var dayOrder int
 
-		err := rows.Scan(&weekday, &slotDuration, &earliestStart, &latestEnd, &dayOrder)
+		err := rows.Scan(&weekday, &slotDuration, &start, &end, &dayOrder)
 		if err != nil {
 			log.Printf("Error scanning weekly schedule: %v", err)
 			continue
 		}
 
-		startTime := earliestStart.Format("15:04")
-		endTime := latestEnd.Format("15:04")
+		start = start.In(loc)
+		end = end.In(loc)
 
-		scheduleMap[weekday] = map[string]interface{}{
-			"weekday":      weekday,
-			"enabled":      true,
-			"start":        startTime,
-			"end":          endTime,
-			"slotDuration": slotDuration,
+		md, ok := dayMap[weekday]
+		if !ok {
+			md = &mergedDay{slotDuration: slotDuration}
+			dayMap[weekday] = md
+		}
+		if md.slotDuration <= 0 {
+			md.slotDuration = slotDuration
+		}
+		// If mixed slot durations exist, keep the smallest as a safe default.
+		if slotDuration > 0 && md.slotDuration > 0 && slotDuration < md.slotDuration {
+			md.slotDuration = slotDuration
+		}
+
+		if !md.inited {
+			md.inited = true
+			md.curStart = start
+			md.curEnd = end
+			continue
+		}
+
+		if start.Equal(md.curEnd) {
+			md.curEnd = end
+			continue
+		}
+
+		md.blocks = append(md.blocks, models.WeeklyScheduleBlock{
+			Start: md.curStart.Format("15:04"),
+			End:   md.curEnd.Format("15:04"),
+		})
+		md.curStart = start
+		md.curEnd = end
+	}
+
+	for weekday, md := range dayMap {
+		if md != nil && md.inited {
+			md.blocks = append(md.blocks, models.WeeklyScheduleBlock{
+				Start: md.curStart.Format("15:04"),
+				End:   md.curEnd.Format("15:04"),
+			})
+			dayMap[weekday] = md
 		}
 	}
 
 	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-	var weeklySchedule []map[string]interface{}
+	var weeklySchedule []models.WeeklyScheduleEntry
 
 	for _, day := range weekdays {
-		if schedule, exists := scheduleMap[day]; exists {
-			weeklySchedule = append(weeklySchedule, schedule)
-		} else {
-			weeklySchedule = append(weeklySchedule, map[string]interface{}{
-				"weekday":      day,
-				"enabled":      false,
-				"start":        "09:00",
-				"end":          "17:00",
-				"slotDuration": 30,
+		md, exists := dayMap[day]
+		if exists && md != nil && len(md.blocks) > 0 {
+			weeklySchedule = append(weeklySchedule, models.WeeklyScheduleEntry{
+				Weekday:      day,
+				Enabled:      true,
+				Start:        md.blocks[0].Start,
+				End:          md.blocks[len(md.blocks)-1].End,
+				SlotDuration: md.slotDuration,
+				Blocks:       md.blocks,
 			})
+			continue
 		}
+
+		weeklySchedule = append(weeklySchedule, models.WeeklyScheduleEntry{
+			Weekday:      day,
+			Enabled:      false,
+			Start:        "09:00",
+			End:          "17:00",
+			SlotDuration: 30,
+			Blocks:       []models.WeeklyScheduleBlock{},
+		})
 	}
 
 	return map[string]interface{}{
@@ -1525,6 +1587,8 @@ func (s *AppointmentService) GetPatientMedications(patientID string) ([]models.M
 }
 
 func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty string, limit int) ([]models.Doctor, error) {
+	searchQuery = strings.TrimSpace(searchQuery)
+	specialty = strings.TrimSpace(specialty)
 	query := `
 		SELECT 
 			doctor_id,
@@ -1632,18 +1696,6 @@ func (s *AppointmentService) SearchDoctorsForReferral(searchQuery, specialty str
 		doctors = append(doctors, doctor)
 	}
 	return doctors, nil
-}
-
-func (s *AppointmentService) AddDoctorException(doctorID string, exception models.DoctorException) error {
-	_, err := s.db.Exec(context.Background(),
-		`INSERT INTO doctor_exception (doctor_id, date, start_time, end_time, type)
-		 VALUES ($1, $2, $3, $4, $5)`,
-		doctorID, exception.Date, exception.StartTime, exception.EndTime, exception.Type)
-	if err != nil {
-		log.Printf("Failed to add doctor exception: %v", err)
-		return fmt.Errorf("failed to add exception")
-	}
-	return nil
 }
 
 func (s *AppointmentService) GetReservationsCount(userID, userType, appointmentType string) (map[string]int, error) {

@@ -179,14 +179,30 @@
       "enabled": "Activé",
       "start": "Début",
       "end": "Fin",
-      "slotDuration": "Durée du créneau"
+      "blocks": "Plages horaires",
+      "slotDuration": "Durée du créneau",
+      "actions": "Actions"
     },
     "buttons": {
       "saveSchedule": "Enregistrer l'horaire",
       "clearAllSchedule": "Effacer tous les horaires",
       "addException": "Ajouter une exception",
+      "addBlock": "Ajouter une plage",
+      "removeBlock": "Supprimer",
+      "copyToAll": "Copier vers tous",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "addVacation": "Ajouter une absence",
+      "updateVacation": "Mettre à jour l'absence",
       "cancel": "Annuler",
       "yesClearAll": "Oui, tout effacer"
+    },
+    "vacations": {
+      "title": "Vacances / Absences",
+      "noVacations": "Aucune absence pour cette semaine.",
+      "defaultTitle": "Absence",
+      "titlePlaceholder": "Titre de l'absence",
+      "allDay": "Toute la journée"
     },
     "exceptions": {
       "title": "Exceptions (Congés / Remplacements)",
@@ -203,7 +219,18 @@
       "schedulesCleared": "Tous les horaires ont été effacés avec succès !"
     },
     "errors": {
-      "clearingSchedules": "Erreur lors de l'effacement des horaires"
+      "clearingSchedules": "Erreur lors de l'effacement des horaires",
+      "noBlocks": "Veuillez ajouter au moins une plage horaire",
+      "invalidBlock": "Plage horaire invalide (la fin doit être après le début)",
+      "overlappingBlocks": "Les plages horaires se chevauchent",
+      "missingExceptionFields": "Veuillez renseigner la date, l'heure de début et de fin",
+      "addException": "Échec de l'ajout de l'exception",
+      "deleteException": "Échec de la suppression de l'exception",
+      "missingVacationDates": "Veuillez sélectionner une date de début et de fin",
+      "invalidVacationDates": "Date/heure d'absence invalide",
+      "invalidVacationRange": "La fin de l'absence doit être après le début",
+      "addVacation": "Échec de l'enregistrement de l'absence",
+      "deleteVacation": "Échec de la suppression de l'absence"
     }
   },
   "followedDoctors": {

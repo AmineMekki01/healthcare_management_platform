@@ -47,7 +47,6 @@ export const useSettings = (initialSection = 'personal') => {
     
     const [scheduleData, setScheduleData] = useState({
         weeklySchedule: [],
-        exceptions: [],
         timezone: 'UTC'
     });
     
@@ -302,55 +301,6 @@ export const useSettings = (initialSection = 'personal') => {
         }
     }, [userId, userType, scheduleData, t]);
 
-    const addScheduleException = useCallback(async (exception) => {
-        if (!userId || userType !== 'doctor') return;
-
-        setSaving(true);
-        setError(null);
-
-        try {
-            const newException = await settingsService.addScheduleException(userId, exception);
-            
-            setScheduleData(prev => ({
-                ...prev,
-                exceptions: [...prev.exceptions, newException]
-            }));
-            
-            setSuccess('Schedule exception added successfully');
-        } catch (err) {
-            const errorMessage = formatSettingsError(err, 'adding schedule exception');
-            setError(errorMessage);
-            console.error('Failed to add schedule exception:', err);
-        } finally {
-            setSaving(false);
-        }
-    }, [userId, userType]);
-
-
-    const removeScheduleException = useCallback(async (exceptionId) => {
-        if (!userId || userType !== 'doctor') return;
-
-        setSaving(true);
-        setError(null);
-
-        try {
-            await settingsService.removeScheduleException(userId, exceptionId);
-            
-            setScheduleData(prev => ({
-                ...prev,
-                exceptions: prev.exceptions.filter(ex => ex.id !== exceptionId)
-            }));
-            
-            setSuccess('Schedule exception removed successfully');
-        } catch (err) {
-            const errorMessage = formatSettingsError(err, 'removing schedule exception');
-            setError(errorMessage);
-            console.error('Failed to remove schedule exception:', err);
-        } finally {
-            setSaving(false);
-        }
-    }, [userId, userType]);
-
     const changeSection = useCallback((newSection) => {
         if (hasUnsavedChanges) {
             setConfirmDialog({
@@ -434,14 +384,11 @@ export const useSettings = (initialSection = 'personal') => {
                 case 'unfollowDoctor':
                     unfollowDoctor(data);
                     break;
-                case 'removeException':
-                    removeScheduleException(data);
-                    break;
             }
         }
         
         setConfirmDialog({ show: false, action: null, data: null });
-    }, [confirmDialog, unfollowDoctor, removeScheduleException]);
+    }, [confirmDialog, unfollowDoctor]);
 
     useEffect(() => {
         switch (activeSection) {
@@ -505,8 +452,6 @@ export const useSettings = (initialSection = 'personal') => {
         updateProfessionalInfo,
         handleProfessionalInfoChange,
         updateSchedule,
-        addScheduleException,
-        removeScheduleException,
         handleScheduleChange,
         changeSection: setActiveSection,
         resetChanges,

@@ -179,14 +179,30 @@
       "enabled": "Enabled",
       "start": "Start",
       "end": "End",
-      "slotDuration": "Slot Duration"
+      "blocks": "Time blocks",
+      "slotDuration": "Slot Duration",
+      "actions": "Actions"
     },
     "buttons": {
       "saveSchedule": "Save Schedule",
       "clearAllSchedule": "Clear All Schedule",
       "addException": "Add Exception",
+      "addBlock": "Add block",
+      "removeBlock": "Remove",
+      "copyToAll": "Copy to all",
+      "delete": "Delete",
+      "edit": "Edit",
+      "addVacation": "Add Vacation",
+      "updateVacation": "Update Vacation",
       "cancel": "Cancel",
       "yesClearAll": "Yes, Clear All"
+    },
+    "vacations": {
+      "title": "Vacations / Time Off",
+      "noVacations": "No vacations for this week.",
+      "defaultTitle": "Vacation",
+      "titlePlaceholder": "Vacation title",
+      "allDay": "All day"
     },
     "exceptions": {
       "title": "Exceptions (Time Off / Overrides)",
@@ -203,7 +219,18 @@
       "schedulesCleared": "All schedules cleared successfully!"
     },
     "errors": {
-      "clearingSchedules": "Error clearing schedules"
+      "clearingSchedules": "Error clearing schedules",
+      "noBlocks": "Please add at least one time block",
+      "invalidBlock": "Invalid time block (end must be after start)",
+      "overlappingBlocks": "Time blocks overlap",
+      "missingExceptionFields": "Please fill date, start time and end time",
+      "addException": "Failed to add exception",
+      "deleteException": "Failed to delete exception",
+      "missingVacationDates": "Please select start and end date",
+      "invalidVacationDates": "Invalid vacation date/time",
+      "invalidVacationRange": "Vacation end must be after start",
+      "addVacation": "Failed to save vacation",
+      "deleteVacation": "Failed to delete vacation"
     }
   },
   "followedDoctors": {

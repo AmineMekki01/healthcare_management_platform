@@ -247,15 +247,6 @@ func SetupLocalTestDatabase(ctx context.Context) (*LocalTestDatabase, error) {
 		slot_duration INTEGER
 	)`)
 
-	_, _ = pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS tbibi_test.doctor_exception (
-		id uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-		doctor_id uuid NOT NULL REFERENCES doctor_info(doctor_id),
-		date DATE,
-		start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-		end_time TIMESTAMP WITH TIME ZONE NOT NULL,
-		type VARCHAR(10)
-	)`)
-
 	_, _ = pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS tbibi_test.medical_reports (
 		report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 		appointment_id UUID,
@@ -337,7 +328,6 @@ func (db *LocalTestDatabase) CleanupTables(ctx context.Context) error {
 		"medical_reports",
 		"appointments",
 		"availabilities",
-		"doctor_exception",
 		"receptionists",
 		"patient_info",
 		"doctor_info",

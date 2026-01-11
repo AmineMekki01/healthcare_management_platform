@@ -123,12 +123,17 @@ func (h *AppointmentHandler) convertWeeklyScheduleToAvailabilities(weeklySchedul
 	const dateFormat = "2006-01-02"
 	const timeFormat = "15:04"
 
-	rangeStart, err := time.Parse(dateFormat, startStr)
+	loc, err := time.LoadLocation("Africa/Casablanca")
+	if err != nil {
+		loc = time.Local
+	}
+
+	rangeStart, err := time.ParseInLocation(dateFormat, startStr, loc)
 	if err != nil {
 		return nil, fmt.Errorf("invalid start date format: %v", err)
 	}
 
-	rangeEnd, err := time.Parse(dateFormat, endStr)
+	rangeEnd, err := time.ParseInLocation(dateFormat, endStr, loc)
 	if err != nil {
 		return nil, fmt.Errorf("invalid end date format: %v", err)
 	}
@@ -149,41 +154,56 @@ func (h *AppointmentHandler) convertWeeklyScheduleToAvailabilities(weeklySchedul
 		if scheduleEntry == nil {
 			continue
 		}
-		startTime, err := time.Parse(timeFormat, scheduleEntry.Start)
-		if err != nil {
-			log.Printf("Invalid start time format for %s: %v", scheduleEntry.Weekday, err)
-			continue
+		blocks := scheduleEntry.Blocks
+		if len(blocks) == 0 {
+			// Backward-compatible single-block schedule
+			blocks = []models.WeeklyScheduleBlock{{Start: scheduleEntry.Start, End: scheduleEntry.End}}
 		}
-
-		endTime, err := time.Parse(timeFormat, scheduleEntry.End)
-		if err != nil {
-			log.Printf("Invalid end time format for %s: %v", scheduleEntry.Weekday, err)
-			continue
-		}
-
-		dayStart := time.Date(d.Year(), d.Month(), d.Day(), startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
-		dayEnd := time.Date(d.Year(), d.Month(), d.Day(), endTime.Hour(), endTime.Minute(), 0, 0, time.UTC)
 
 		if scheduleEntry.SlotDuration <= 0 {
 			scheduleEntry.SlotDuration = 30
 		}
 		slotDuration := time.Duration(scheduleEntry.SlotDuration) * time.Minute
-		for slotStart := dayStart; slotStart.Before(dayEnd); slotStart = slotStart.Add(slotDuration) {
-			slotEnd := slotStart.Add(slotDuration)
-			if slotEnd.After(dayEnd) {
-				break
+
+		for _, block := range blocks {
+			startLabel := block.Start
+			endLabel := block.End
+			if startLabel == "" || endLabel == "" {
+				continue
 			}
 
-			availability := models.Availability{
-				AvailabilityID:    uuid.New().String(),
-				AvailabilityStart: slotStart,
-				AvailabilityEnd:   slotEnd,
-				DoctorID:          "",
-				Weekday:           scheduleEntry.Weekday,
-				SlotDuration:      scheduleEntry.SlotDuration,
+			startTime, err := time.ParseInLocation(timeFormat, startLabel, loc)
+			if err != nil {
+				log.Printf("Invalid start time format for %s: %v", scheduleEntry.Weekday, err)
+				continue
 			}
 
-			availabilities = append(availabilities, availability)
+			endTime, err := time.ParseInLocation(timeFormat, endLabel, loc)
+			if err != nil {
+				log.Printf("Invalid end time format for %s: %v", scheduleEntry.Weekday, err)
+				continue
+			}
+
+			dayStart := time.Date(d.Year(), d.Month(), d.Day(), startTime.Hour(), startTime.Minute(), 0, 0, loc)
+			dayEnd := time.Date(d.Year(), d.Month(), d.Day(), endTime.Hour(), endTime.Minute(), 0, 0, loc)
+
+			for slotStart := dayStart; slotStart.Before(dayEnd); slotStart = slotStart.Add(slotDuration) {
+				slotEnd := slotStart.Add(slotDuration)
+				if slotEnd.After(dayEnd) {
+					break
+				}
+
+				availability := models.Availability{
+					AvailabilityID:    uuid.New().String(),
+					AvailabilityStart: slotStart,
+					AvailabilityEnd:   slotEnd,
+					DoctorID:          "",
+					Weekday:           scheduleEntry.Weekday,
+					SlotDuration:      scheduleEntry.SlotDuration,
+				}
+
+				availabilities = append(availabilities, availability)
+			}
 		}
 	}
 
@@ -200,13 +220,18 @@ func (h *AppointmentHandler) GetDoctorWeeklySchedule(c *gin.Context) {
 		return
 	}
 
-	rangeStart, err := time.Parse("2006-01-02", startStr)
+	loc, err := time.LoadLocation("Africa/Casablanca")
+	if err != nil {
+		loc = time.Local
+	}
+
+	rangeStart, err := time.ParseInLocation("2006-01-02", startStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
 		return
 	}
 
-	rangeEnd, err := time.Parse("2006-01-02", endStr)
+	rangeEnd, err := time.ParseInLocation("2006-01-02", endStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
 		return
@@ -231,13 +256,18 @@ func (h *AppointmentHandler) GetWeeklySchedule(c *gin.Context) {
 		return
 	}
 
-	rangeStart, err := time.Parse("2006-01-02", startStr)
+	loc, err := time.LoadLocation("Africa/Casablanca")
+	if err != nil {
+		loc = time.Local
+	}
+
+	rangeStart, err := time.ParseInLocation("2006-01-02", startStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
 		return
 	}
 
-	rangeEnd, err := time.Parse("2006-01-02", endStr)
+	rangeEnd, err := time.ParseInLocation("2006-01-02", endStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
 		return
@@ -483,23 +513,6 @@ func (h *AppointmentHandler) GetReports(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, reports)
-}
-
-func (h *AppointmentHandler) AddDoctorException(c *gin.Context) {
-	doctorID := c.Param("id")
-	var exception models.DoctorException
-
-	if err := c.ShouldBindJSON(&exception); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
-
-	if err := h.appointmentService.AddDoctorException(doctorID, exception); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add exception"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Exception added successfully"})
 }
 
 func (h *AppointmentHandler) GetReport(c *gin.Context) {
