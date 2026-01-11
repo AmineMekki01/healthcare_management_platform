@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"healthcare_backend/pkg/services/doctor"
 	"healthcare_backend/pkg/utils/validators"
@@ -76,6 +77,37 @@ func (h *DoctorHandler) SearchDoctors(c *gin.Context) {
 	location := c.Query("location")
 	sortBy := c.Query("sort")
 
+	var minFeePtr *int
+	if raw := strings.TrimSpace(c.Query("minFee")); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil {
+			minFeePtr = &v
+		}
+	}
+	var maxFeePtr *int
+	if raw := strings.TrimSpace(c.Query("maxFee")); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil {
+			maxFeePtr = &v
+		}
+	}
+
+	insuranceCodes := c.QueryArray("insurance")
+	if len(insuranceCodes) == 0 {
+		raw := strings.TrimSpace(c.Query("insurance"))
+		if raw != "" {
+			insuranceCodes = strings.Split(raw, ",")
+		}
+	}
+	for i := range insuranceCodes {
+		insuranceCodes[i] = strings.TrimSpace(insuranceCodes[i])
+	}
+	filtered := insuranceCodes[:0]
+	for _, code := range insuranceCodes {
+		if code != "" {
+			filtered = append(filtered, code)
+		}
+	}
+	insuranceCodes = filtered
+
 	var userLatitude, userLongitude float64
 	var err error
 
@@ -95,7 +127,7 @@ func (h *DoctorHandler) SearchDoctors(c *gin.Context) {
 		}
 	}
 
-	doctors, err := h.doctorService.SearchDoctorsWithSort(searchQuery, specialty, location, userLatitude, userLongitude, sortBy)
+	doctors, err := h.doctorService.SearchDoctorsWithSortAndFilters(searchQuery, specialty, location, userLatitude, userLongitude, sortBy, minFeePtr, maxFeePtr, insuranceCodes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error searching doctors: " + err.Error()})
 		return

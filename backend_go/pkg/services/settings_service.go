@@ -857,6 +857,38 @@ func (s *SettingsService) GetDoctorAdditionalInfo(doctorID string) (map[string]i
 
 	result := make(map[string]interface{})
 
+	var consultationFee int
+	if err := s.db.QueryRow(context.Background(), `SELECT COALESCE(consultation_fee, 0) FROM doctor_info WHERE doctor_id = $1`, docUUID).Scan(&consultationFee); err == nil {
+		result["consultationFee"] = consultationFee
+	} else {
+		result["consultationFee"] = 0
+	}
+
+	acceptedInsurances := []models.InsuranceProvider{}
+	acceptedCodes := []string{}
+	insuranceQuery := `
+		SELECT ip.provider_id, ip.code, ip.name, COALESCE(ip.name_ar, ''), COALESCE(ip.name_fr, '')
+		FROM doctor_insurance_providers dip
+		JOIN insurance_providers ip ON ip.provider_id = dip.provider_id
+		WHERE dip.doctor_id = $1
+		AND ip.is_active = true
+		ORDER BY ip.name
+	`
+	insuranceRows, err := s.db.Query(context.Background(), insuranceQuery, docUUID)
+	if err == nil {
+		defer insuranceRows.Close()
+		for insuranceRows.Next() {
+			var p models.InsuranceProvider
+			if err := insuranceRows.Scan(&p.ProviderID, &p.Code, &p.Name, &p.NameAr, &p.NameFr); err != nil {
+				continue
+			}
+			acceptedInsurances = append(acceptedInsurances, p)
+			acceptedCodes = append(acceptedCodes, p.Code)
+		}
+	}
+	result["acceptedInsurances"] = acceptedInsurances
+	result["acceptedInsuranceCodes"] = acceptedCodes
+
 	hospitals := []models.DoctorHospital{}
 	hospitalQuery := `
 		SELECT 
@@ -1138,12 +1170,62 @@ func (s *SettingsService) GetDoctorAdditionalInfo(doctorID string) (map[string]i
 	return result, nil
 }
 
+func (s *SettingsService) ListInsuranceProviders() ([]models.InsuranceProvider, error) {
+	providers := []models.InsuranceProvider{}
+	rows, err := s.db.Query(context.Background(), `
+		SELECT provider_id, code, name, COALESCE(name_ar, ''), COALESCE(name_fr, '')
+		FROM insurance_providers
+		WHERE is_active = true
+		ORDER BY name
+	`)
+	if err != nil {
+		return providers, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.InsuranceProvider
+		if err := rows.Scan(&p.ProviderID, &p.Code, &p.Name, &p.NameAr, &p.NameFr); err != nil {
+			continue
+		}
+		providers = append(providers, p)
+	}
+
+	return providers, nil
+}
+
+func (s *SettingsService) ListActiveInsuranceProviders() ([]models.InsuranceProvider, error) {
+	providers := []models.InsuranceProvider{}
+	rows, err := s.db.Query(context.Background(), `
+		SELECT provider_id, code, name, COALESCE(name_ar, ''), COALESCE(name_fr, '')
+		FROM insurance_providers
+		WHERE is_active = true
+		ORDER BY name
+	`)
+	if err != nil {
+		return providers, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.InsuranceProvider
+		if err := rows.Scan(&p.ProviderID, &p.Code, &p.Name, &p.NameAr, &p.NameFr); err != nil {
+			continue
+		}
+		providers = append(providers, p)
+	}
+
+	return providers, nil
+}
+
 type DoctorAdditionalInfoData struct {
-	Hospitals      []models.DoctorHospital      `json:"hospitals"`
-	Organizations  []models.DoctorOrganization  `json:"organizations"`
-	Awards         []models.DoctorAward         `json:"awards"`
-	Certifications []models.DoctorCertification `json:"certifications"`
-	Languages      []models.DoctorLanguage      `json:"languages"`
+	Hospitals              []models.DoctorHospital      `json:"hospitals"`
+	Organizations          []models.DoctorOrganization  `json:"organizations"`
+	Awards                 []models.DoctorAward         `json:"awards"`
+	Certifications         []models.DoctorCertification `json:"certifications"`
+	Languages              []models.DoctorLanguage      `json:"languages"`
+	ConsultationFee        int                          `json:"consultationFee"`
+	AcceptedInsuranceCodes []string                     `json:"acceptedInsuranceCodes"`
 }
 
 func (s *SettingsService) UpdateDoctorAdditionalInfo(doctorID string, data DoctorAdditionalInfoData) error {
@@ -1157,6 +1239,30 @@ func (s *SettingsService) UpdateDoctorAdditionalInfo(doctorID string, data Docto
 		return fmt.Errorf("transaction start failed: %v", err)
 	}
 	defer tx.Rollback(context.Background())
+
+	_, err = tx.Exec(context.Background(), `UPDATE doctor_info SET consultation_fee = $2, updated_at = NOW() WHERE doctor_id = $1`, docUUID, data.ConsultationFee)
+	if err != nil {
+		return fmt.Errorf("failed to update consultation fee: %v", err)
+	}
+
+	_, err = tx.Exec(context.Background(), `DELETE FROM doctor_insurance_providers WHERE doctor_id = $1`, docUUID)
+	if err != nil {
+		return fmt.Errorf("failed to delete existing doctor insurance providers: %v", err)
+	}
+
+	if len(data.AcceptedInsuranceCodes) > 0 {
+		_, err = tx.Exec(context.Background(), `
+			INSERT INTO doctor_insurance_providers (doctor_id, provider_id)
+			SELECT $1, ip.provider_id
+			FROM insurance_providers ip
+			WHERE ip.is_active = true
+			AND ip.code = ANY($2)
+			ON CONFLICT DO NOTHING
+		`, docUUID, data.AcceptedInsuranceCodes)
+		if err != nil {
+			return fmt.Errorf("failed to insert doctor insurance providers: %v", err)
+		}
+	}
 
 	tables := []string{"doctor_hospitals", "doctor_organizations", "doctor_awards", "doctor_certifications", "doctor_languages"}
 	for _, table := range tables {

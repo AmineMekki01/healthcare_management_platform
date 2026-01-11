@@ -428,6 +428,13 @@ const DoctorProfilePage = () => {
     return value;
   };
 
+  const getProviderDisplayName = (provider) => {
+    if (!provider) return '';
+    if (isArabic) return provider.nameAr || provider.name || provider.code;
+    if (isFrench) return provider.nameFr || provider.name || provider.code;
+    return provider.name || provider.code;
+  };
+
   const { currentUser } = useAuth();
   const {
     followUser,
@@ -682,6 +689,19 @@ const DoctorProfilePage = () => {
                     ? doctor.specialty
                     : (getLocalizedSpecialty(doctor.specialty, languageCode) || doctor.specialty)}
                 </SpecialtyTag>
+              </SpecialtiesList>
+            </SpecialtiesCard>
+          )}
+
+          {doctor?.acceptedInsurances && doctor.acceptedInsurances.length > 0 && (
+            <SpecialtiesCard>
+              <SectionTitle>{t('doctorProfile.sections.insurances', { defaultValue: 'Accepted Insurances' })}</SectionTitle>
+              <SpecialtiesList>
+                {doctor.acceptedInsurances.map((provider, index) => (
+                  <SpecialtyTag key={provider.code || index}>
+                    {getProviderDisplayName(provider)}
+                  </SpecialtyTag>
+                ))}
               </SpecialtiesList>
             </SpecialtiesCard>
           )}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CardContainer, TopSection, DoctorImage, NameSpecialtyContainer, DoctorName, InfoContainer, DoctorInfo, DoctorRating, ButtonContainer, RatingContainer, NumberOfRaters, BadgeContainer, VerifiedBadge, ExperienceBadge, SpecialtyTag, LocationInfo, ContactButton, BookButton, AvailabilityBanner, AvailabilityLeft, AvailabilityIcon, AvailabilityLabel, AvailabilityRight, AvailabilityDate, AvailabilityTime } from '../styles/DoctorCardStyles';
 import { Link } from 'react-router-dom';
-import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle, FaHeart, FaRegHeart, FaClock } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaStar, FaShare, FaCheckCircle, FaHeart, FaRegHeart, FaClock, FaMoneyBillWave } from 'react-icons/fa';
 
 const DoctorCard = ({
   doctorId,
@@ -87,6 +87,8 @@ const DoctorCard = ({
   const reviewsText = data.ratingCount > 0
     ? t('doctorCard.reviewsCount', { count: data.ratingCount })
     : t('doctorCard.noReviews');
+
+  const feeValue = Number(data.consultationFee || data.ConsultationFee || 0);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -232,6 +234,13 @@ const DoctorCard = ({
             <span>{formatLocation(displayLocation || displayLocation)}</span>
           </LocationInfo>
         </div>
+
+        {feeValue > 0 && (
+          <DoctorInfo specialtyColors={specialtyColors}>
+            <FaMoneyBillWave style={{ color: specialtyColors.primary }} />
+            <span>{t('doctorCard.consultationFee', { value: feeValue, defaultValue: `Consultation fee: ${feeValue} MAD` })}</span>
+          </DoctorInfo>
+        )}
         
         <RatingContainer>
           <DoctorInfo specialtyColors={specialtyColors}>

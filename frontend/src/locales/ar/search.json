@@ -34,6 +34,11 @@
     "relevance": "الأكثر صلة",
     "availability": "أقرب موعد متاح"
   },
+  "filters": {
+    "minFeePlaceholder": "الحد الأدنى للأتعاب (درهم)",
+    "maxFeePlaceholder": "الحد الأقصى للأتعاب (درهم)",
+    "anyInsurance": "أي تأمين"
+  },
   "suggestions": {
     "title": "المشاكل الصحية الشائعة",
     "generalCheckup": {
@@ -59,6 +64,7 @@
     "nextAvailableLabel": "أقرب موعد متاح",
     "nextAvailable": "أقرب موعد: {{value}}",
     "noAvailability": "لا توجد مواعيد قريبة",
+    "consultationFee": "أتعاب الاستشارة: {{value}} درهم",
     "locationNotSpecified": "الموقع غير محدد",
     "yearsExperience_zero": "بدون خبرة",
     "yearsExperience_one": "سنة خبرة واحدة",

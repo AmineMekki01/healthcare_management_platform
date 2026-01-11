@@ -57,6 +57,10 @@ func SetupRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.Config) {
 
 	community.SetupCommunityRoutes(api, db, cfg)
 
+	settingsService := services.NewSettingsService(db, cfg)
+	settingsHandler := handlers.NewSettingsHandler(settingsService)
+	api.GET("/insurance-providers", settingsHandler.ListInsuranceProviders)
+
 	router.GET("/ws", func(c *gin.Context) {
 		userID := c.Query("userId")
 		if userID == "" {
@@ -109,8 +113,6 @@ func SetupRoutes(router *gin.Engine, db *pgxpool.Pool, cfg *config.Config) {
 			utils.GetUserImageRoute(c, db)
 		})
 
-		settingsService := services.NewSettingsService(db, cfg)
-		settingsHandler := handlers.NewSettingsHandler(settingsService)
 		protected.GET("/user/:userId", settingsHandler.GetUserByID)
 		protected.PUT("/user/:userId", settingsHandler.UpdateUserInfo)
 

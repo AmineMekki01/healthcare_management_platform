@@ -314,8 +314,8 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 		 COALESCE(country_name_ar, ''),
 		 COALESCE(country_name_fr, ''),
 		 COALESCE(latitude, 0),
-		 COALESCE(longitude,
-		 0)
+		 COALESCE(longitude, 0),
+		 COALESCE(consultation_fee, 0)
 		FROM doctor_info WHERE doctor_id = $1`
 
 	err = s.db.QueryRow(context.Background(), query, doctorUUID).Scan(
@@ -354,6 +354,7 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 		&doctor.CountryNameFr,
 		&doctor.Latitude,
 		&doctor.Longitude,
+		&doctor.ConsultationFee,
 	)
 
 	if err != nil {
@@ -381,6 +382,8 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 	doctor.Awards, _ = s.getDoctorAwards(doctorUUID)
 	doctor.Certifications, _ = s.getDoctorCertifications(doctorUUID)
 	doctor.Languages, _ = s.getDoctorLanguages(doctorUUID)
+	doctor.AcceptedInsurances, _ = s.getDoctorInsuranceProviders(doctorUUID)
+	doctor.AcceptedInsuranceCodes, _ = s.getDoctorInsuranceCodes(doctorUUID)
 
 	var doctorIDStr string
 	doctorIDStr = doctor.DoctorID.String()
@@ -390,10 +393,14 @@ func (s *DoctorService) GetDoctorByID(doctorID string) (*models.Doctor, error) {
 }
 
 func (s *DoctorService) SearchDoctors(query, specialty, location string, userLatitude, userLongitude float64) ([]models.Doctor, error) {
-	return s.SearchDoctorsWithSort(query, specialty, location, userLatitude, userLongitude, "")
+	return s.SearchDoctorsWithSortAndFilters(query, specialty, location, userLatitude, userLongitude, "", nil, nil, nil)
 }
 
 func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string, userLatitude, userLongitude float64, sortBy string) ([]models.Doctor, error) {
+	return s.SearchDoctorsWithSortAndFilters(query, specialty, location, userLatitude, userLongitude, sortBy, nil, nil, nil)
+}
+
+func (s *DoctorService) SearchDoctorsWithSortAndFilters(query, specialty, location string, userLatitude, userLongitude float64, sortBy string, minFee, maxFee *int, insuranceCodes []string) ([]models.Doctor, error) {
 	var doctors []models.Doctor
 
 	q := strings.TrimSpace(query)
@@ -433,6 +440,7 @@ func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string,
 			COALESCE(d.location_ar, ''),
 			COALESCE(d.location_fr, ''),
 			d.profile_photo_url,
+			COALESCE(d.consultation_fee, 0) AS consultation_fee,
 			COALESCE(d.latitude, 0) as latitude,
 			COALESCE(d.longitude, 0) as longitude,
 			CASE
@@ -503,6 +511,21 @@ func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string,
 		queryParams = append(queryParams, "%"+location+"%")
 		paramIndex++
 	}
+	if minFee != nil {
+		conditions = append(conditions, fmt.Sprintf("d.consultation_fee >= $%d", paramIndex))
+		queryParams = append(queryParams, *minFee)
+		paramIndex++
+	}
+	if maxFee != nil {
+		conditions = append(conditions, fmt.Sprintf("d.consultation_fee <= $%d", paramIndex))
+		queryParams = append(queryParams, *maxFee)
+		paramIndex++
+	}
+	if len(insuranceCodes) > 0 {
+		conditions = append(conditions, fmt.Sprintf("EXISTS (SELECT 1 FROM doctor_insurance_providers dip JOIN insurance_providers ip ON ip.provider_id = dip.provider_id WHERE dip.doctor_id = d.doctor_id AND ip.is_active = true AND ip.code = ANY($%d))", paramIndex))
+		queryParams = append(queryParams, insuranceCodes)
+		paramIndex++
+	}
 
 	if len(conditions) > 0 {
 		sqlSelect += " WHERE " + strings.Join(conditions, " AND ")
@@ -539,6 +562,7 @@ func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string,
 			&doctor.LocationAr,
 			&doctor.LocationFr,
 			&doctor.ProfilePictureURL,
+			&doctor.ConsultationFee,
 			&doctor.Latitude,
 			&doctor.Longitude,
 			&distance,
@@ -570,6 +594,55 @@ func (s *DoctorService) SearchDoctorsWithSort(query, specialty, location string,
 	}
 
 	return doctors, nil
+}
+
+func (s *DoctorService) getDoctorInsuranceCodes(doctorID uuid.UUID) ([]string, error) {
+	rows, err := s.db.Query(context.Background(), `
+		SELECT ip.code
+		FROM doctor_insurance_providers dip
+		JOIN insurance_providers ip ON ip.provider_id = dip.provider_id
+		WHERE dip.doctor_id = $1
+		AND ip.is_active = true
+		ORDER BY ip.name
+	`, doctorID)
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+
+	codes := []string{}
+	for rows.Next() {
+		var code string
+		if err := rows.Scan(&code); err == nil {
+			codes = append(codes, code)
+		}
+	}
+	return codes, nil
+}
+
+func (s *DoctorService) getDoctorInsuranceProviders(doctorID uuid.UUID) ([]models.InsuranceProvider, error) {
+	providers := []models.InsuranceProvider{}
+	rows, err := s.db.Query(context.Background(), `
+		SELECT ip.provider_id, ip.code, ip.name, COALESCE(ip.name_ar, ''), COALESCE(ip.name_fr, '')
+		FROM doctor_insurance_providers dip
+		JOIN insurance_providers ip ON ip.provider_id = dip.provider_id
+		WHERE dip.doctor_id = $1
+		AND ip.is_active = true
+		ORDER BY ip.name
+	`, doctorID)
+	if err != nil {
+		return providers, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p models.InsuranceProvider
+		if err := rows.Scan(&p.ProviderID, &p.Code, &p.Name, &p.NameAr, &p.NameFr); err != nil {
+			continue
+		}
+		providers = append(providers, p)
+	}
+	return providers, nil
 }
 
 func (s *DoctorService) getDoctorHospitals(doctorID uuid.UUID) ([]models.DoctorHospital, error) {

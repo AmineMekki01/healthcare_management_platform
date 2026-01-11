@@ -20,7 +20,8 @@ import {
   SuggestionGrid,
   SuggestionCard,
   ClearButton,
-  SearchActionsContainer
+  SearchActionsContainer,
+  AdvancedFiltersRow
 } from '../styles/SearchBarStyles';
 import { debounce } from 'lodash';
 
@@ -32,6 +33,10 @@ const SearchBar = () => {
   const [specialty, setSpecialty] = useState('');
   const [location, setLocation] = useState('');
   const [sortBy, setSortBy] = useState('relevance');
+  const [minFee, setMinFee] = useState('');
+  const [maxFee, setMaxFee] = useState('');
+  const [insuranceProviders, setInsuranceProviders] = useState([]);
+  const [insurance, setInsurance] = useState('');
   const [userQuery, setUserQuery] = useState('');
   const [searchParams, setSearchParams] = useState({ query: '', specialty: '', location: '', sort: 'relevance' });
   const [userLatitude, setUserLatitude] = useState(null);
@@ -100,17 +105,36 @@ const SearchBar = () => {
         query: query,
         specialty: specialty,
         location: location,
-        sort: sortBy
+        sort: sortBy,
+        minFee: minFee,
+        maxFee: maxFee,
+        insurance: insurance
       });
       if (query || specialty || location) {
         setShowSuggestions(false);
       }
     }, 500);
     return () => clearTimeout(handler);
-  }, [query, specialty, location, sortBy]);
+  }, [query, specialty, location, sortBy, minFee, maxFee, insurance]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { searchService } = await import('../services/searchService');
+        const providers = await searchService.getInsuranceProviders();
+        if (mounted) setInsuranceProviders(Array.isArray(providers) ? providers : []);
+      } catch {
+        if (mounted) setInsuranceProviders([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const fetchUsers = useCallback(async () => {
-    const { query, specialty, location, sort } = searchParams;
+    const { query, specialty, location, sort, minFee, maxFee, insurance } = searchParams;
     if (hasSearched || query || specialty || location || (userLatitude && userLongitude)) {
       setIsLoading(true);
       setHasSearched(true);
@@ -124,6 +148,9 @@ const SearchBar = () => {
           sort: sort,
           latitude: userLatitude,
           longitude: userLongitude,
+          minFee,
+          maxFee,
+          insurance,
         }, i18n.language);
         
         console.log('Search results:', searchResults);
@@ -207,11 +234,23 @@ const SearchBar = () => {
     setSpecialty('');
     setLocation('');
     setSortBy('relevance');
+    setMinFee('');
+    setMaxFee('');
+    setInsurance('');
     setUserQuery('');
     setUsers([]);
     setHasSearched(false);
     setShowSuggestions(true);
-    setSearchParams({ query: '', specialty: '', location: '', sort: 'relevance' });
+    setSearchParams({ query: '', specialty: '', location: '', sort: 'relevance', minFee: '', maxFee: '', insurance: '' });
+  };
+
+  const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
+  const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
+  const getProviderDisplayName = (provider) => {
+    if (!provider) return '';
+    if (isArabic) return provider.nameAr || provider.name || provider.code;
+    if (isFrench) return provider.nameFr || provider.name || provider.code;
+    return provider.name || provider.code;
   };
 
   return (
@@ -254,6 +293,37 @@ const SearchBar = () => {
             <option value="availability">{t('sort.availability')}</option>
           </SearchInput>
         </SearchInputsRow>
+
+        <AdvancedFiltersRow>
+          <SearchInput
+            type="number"
+            inputMode="numeric"
+            placeholder={t('filters.minFeePlaceholder', { defaultValue: 'Min fee (MAD)' })}
+            value={minFee}
+            onChange={(e) => setMinFee(e.target.value)}
+            min="0"
+          />
+          <SearchInput
+            type="number"
+            inputMode="numeric"
+            placeholder={t('filters.maxFeePlaceholder', { defaultValue: 'Max fee (MAD)' })}
+            value={maxFee}
+            onChange={(e) => setMaxFee(e.target.value)}
+            min="0"
+          />
+          <SearchInput
+            as="select"
+            value={insurance}
+            onChange={(e) => setInsurance(e.target.value)}
+          >
+            <option value="">{t('filters.anyInsurance', { defaultValue: 'Any insurance' })}</option>
+            {insuranceProviders.map((p) => (
+              <option key={p.code} value={p.code}>
+                {getProviderDisplayName(p)}
+              </option>
+            ))}
+          </SearchInput>
+        </AdvancedFiltersRow>
 
         <QuickFiltersContainer>
           {popularSpecialties.map((spec) => (

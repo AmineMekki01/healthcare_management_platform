@@ -30,6 +30,11 @@
     "relevance": "Relevance",
     "availability": "Nearest availability"
   },
+  "filters": {
+    "minFeePlaceholder": "Min fee (MAD)",
+    "maxFeePlaceholder": "Max fee (MAD)",
+    "anyInsurance": "Any insurance"
+  },
   "specialties": {
     "cardiology": "Cardiology",
     "dermatology": "Dermatology",
@@ -65,6 +70,7 @@
     "nextAvailableLabel": "Next available",
     "nextAvailable": "Next available: {{value}}",
     "noAvailability": "No availability soon",
+    "consultationFee": "Consultation fee: {{value}} MAD",
     "locationNotSpecified": "Location not specified",
     "yearsExperience_one": "{{count}} year of experience",
     "yearsExperience_other": "{{count}} years of experience",
