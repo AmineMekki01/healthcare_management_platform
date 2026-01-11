@@ -26,6 +26,10 @@
     "noResults": "No doctors found matching your criteria.",
     "searchError": "An error occurred while searching. Please try again."
   },
+  "sort": {
+    "relevance": "Relevance",
+    "availability": "Nearest availability"
+  },
   "specialties": {
     "cardiology": "Cardiology",
     "dermatology": "Dermatology",
@@ -58,6 +62,9 @@
   "doctorCard": {
     "verified": "Verified",
     "bookAppointment": "Book Appointment",
+    "nextAvailableLabel": "Next available",
+    "nextAvailable": "Next available: {{value}}",
+    "noAvailability": "No availability soon",
     "locationNotSpecified": "Location not specified",
     "yearsExperience_one": "{{count}} year of experience",
     "yearsExperience_other": "{{count}} years of experience",

@@ -11,11 +11,14 @@ const BookingContainer = styled.div`
   padding: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   margin-top: 24px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 `;
 
 const BookingHeader = styled.div`
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
@@ -33,6 +36,7 @@ const BookingGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  min-width: 0;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -59,6 +63,8 @@ const SectionTitle = styled.h4`
 `;
 
 const DatePicker = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
@@ -126,6 +132,10 @@ const FormGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -141,6 +151,8 @@ const FormLabel = styled.label`
 `;
 
 const FormInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
@@ -154,6 +166,8 @@ const FormInput = styled.input`
 `;
 
 const FormTextarea = styled.textarea`
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
@@ -172,6 +186,11 @@ const BookingActions = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 `;
 
 const BookingButton = styled.button`
@@ -250,6 +269,11 @@ const BookingTypeOptions = styled.div`
   display: flex;
   gap: 16px;
   margin-top: 12px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 `;
 
 const BookingTypeOption = styled.label`

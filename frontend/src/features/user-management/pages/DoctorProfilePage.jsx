@@ -10,9 +10,12 @@ import AppointmentBooking from '../components/AppointmentBooking';
 import { getLocalizedSpecialty } from '../../search/utils/translationMaps';
 
 const DoctorProfileContainer = styled.div`
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     padding: 16px;
@@ -21,17 +24,21 @@ const DoctorProfileContainer = styled.div`
 
 const ProfileGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 24px;
   margin-bottom: 24px;
+  width: 100%;
+  min-width: 0;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
 const MainProfile = styled.div`
   grid-column: 1;
+  min-width: 0;
 `;
 
 const Sidebar = styled.div`
@@ -39,28 +46,160 @@ const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
+  align-self: start;
+  position: sticky;
+  top: 24px;
   
   @media (max-width: 768px) {
     grid-column: 1;
-    grid-row: 1;
+    position: static;
+    top: auto;
   }
 `;
 
 const BookingSection = styled.div`
   width: 100%;
+  margin-top: 24px;
+`;
+
+const MobileStatsWrapper = styled.div`
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+`;
+
+const MobileScrollButton = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1f2937;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  z-index: 2;
+
+  &:not(:disabled):hover {
+    transform: translateY(-50%) scale(1.03);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(-50%) scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+`;
+
+const MobileScrollButtonLeft = styled(MobileScrollButton)`
+  left: 4px;
+`;
+
+const MobileScrollButtonRight = styled(MobileScrollButton)`
+  right: 4px;
+`;
+
+const MobileScrollFade = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  pointer-events: none;
+  z-index: 1;
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+`;
+
+const MobileScrollFadeLeft = styled(MobileScrollFade)`
+  left: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 100%);
+`;
+
+const MobileScrollFadeRight = styled(MobileScrollFade)`
+  right: 0;
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 100%);
+`;
+
+const MobileStatsBar = styled.div`
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+
+  overscroll-behavior-x: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const MobileStatChip = styled.div`
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  min-width: 120px;
+  max-width: 220px;
+`;
+
+const MobileStatValue = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1.1;
+`;
+
+const MobileStatLabel = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.1;
 `;
 
 const StatsCard = styled.div`
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+
+  @media (max-width: 768px) {
+    gap: 12px;
+  }
 `;
 
 const StatItem = styled.div`
@@ -69,6 +208,10 @@ const StatItem = styled.div`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   color: white;
+
+  @media (max-width: 768px) {
+    padding: 14px;
+  }
 `;
 
 const StatNumber = styled.div`
@@ -88,13 +231,18 @@ const SpecialtiesCard = styled.div`
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+
+  @media (max-width: 768px) {
+    padding: 18px;
+  }
 `;
 
 const SpecialtiesList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 `;
 
 const SpecialtyTag = styled.div`
@@ -106,6 +254,17 @@ const SpecialtyTag = styled.div`
   font-size: 14px;
   color: #667eea;
   font-weight: 500;
+
+  p {
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  p:not(:first-child) {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+  }
 `;
 
 const SectionTitle = styled.h3`
@@ -133,11 +292,94 @@ const ErrorMessage = styled.div`
   margin: 24px;
 `;
 
+let rtlScrollBehavior;
+
+const getScrollMax = (el) => {
+  if (!el) return 0;
+  return Math.max(0, el.scrollWidth - el.clientWidth);
+};
+
+const detectRtlScrollBehavior = () => {
+  if (rtlScrollBehavior) return rtlScrollBehavior;
+  if (typeof document === 'undefined') {
+    rtlScrollBehavior = 'positive-descending';
+    return rtlScrollBehavior;
+  }
+
+  const div = document.createElement('div');
+  div.dir = 'rtl';
+  div.style.width = '10px';
+  div.style.height = '10px';
+  div.style.overflow = 'scroll';
+  div.style.position = 'absolute';
+  div.style.top = '-9999px';
+
+  const inner = document.createElement('div');
+  inner.style.width = '20px';
+  inner.style.height = '10px';
+  div.appendChild(inner);
+  document.body.appendChild(div);
+
+  const max = getScrollMax(div);
+  const start = div.scrollLeft;
+
+  if (start === 0) {
+    div.scrollLeft = 1;
+    rtlScrollBehavior = div.scrollLeft === 0 ? 'negative' : 'positive-ascending';
+  } else if (start === max) {
+    rtlScrollBehavior = 'positive-descending';
+  } else {
+    rtlScrollBehavior = start > 0 ? 'positive-descending' : 'negative';
+  }
+
+  document.body.removeChild(div);
+  return rtlScrollBehavior;
+};
+
+const getLeftBasedScroll = (el) => {
+  if (!el) return 0;
+  const max = getScrollMax(el);
+  const dir = typeof window !== 'undefined' ? window.getComputedStyle(el).direction : 'ltr';
+  if (dir !== 'rtl') return el.scrollLeft;
+
+  const behavior = detectRtlScrollBehavior();
+  if (behavior === 'negative') return max + el.scrollLeft;
+  if (behavior === 'positive-ascending') return max - el.scrollLeft;
+  return el.scrollLeft;
+};
+
+const scrollToLeftBased = (el, leftBased, behavior = 'smooth') => {
+  if (!el) return;
+  const max = getScrollMax(el);
+  const clamped = Math.max(0, Math.min(leftBased, max));
+  const dir = typeof window !== 'undefined' ? window.getComputedStyle(el).direction : 'ltr';
+
+  let target;
+  if (dir !== 'rtl') {
+    target = clamped;
+  } else {
+    const rtlBehaviorDetected = detectRtlScrollBehavior();
+    if (rtlBehaviorDetected === 'negative') target = clamped - max;
+    else if (rtlBehaviorDetected === 'positive-ascending') target = max - clamped;
+    else target = clamped;
+  }
+
+  try {
+    el.scrollTo({ left: target, behavior });
+  } catch (e) {
+    el.scrollLeft = target;
+  }
+};
+
 const DoctorProfilePage = () => {
   const { t, i18n } = useTranslation('userManagement');
   const navigate = useNavigate();
   const { doctorId } = useParams();
   const { user: doctor, loading, error, fetchUser } = useUserManagement();
+
+  const statsBarRef = useRef(null);
+  const [canScrollStatsLeft, setCanScrollStatsLeft] = useState(false);
+  const [canScrollStatsRight, setCanScrollStatsRight] = useState(false);
 
   const isArabic = (i18n?.language || '').toLowerCase().startsWith('ar');
   const isFrench = (i18n?.language || '').toLowerCase().startsWith('fr');
@@ -259,6 +501,37 @@ const DoctorProfilePage = () => {
     }
   };
 
+  const updateStatsScrollState = useCallback(() => {
+    const el = statsBarRef.current;
+    if (!el) return;
+
+    const max = getScrollMax(el);
+    const leftBased = getLeftBasedScroll(el);
+    setCanScrollStatsLeft(leftBased > 0);
+    setCanScrollStatsRight(max > 1 && leftBased < max - 1);
+  }, []);
+
+  const scrollStatsBy = useCallback((direction) => {
+    const el = statsBarRef.current;
+    if (!el) return;
+
+    const amount = Math.max(180, Math.round(el.clientWidth * 0.7));
+    const current = getLeftBasedScroll(el);
+    scrollToLeftBased(el, current + direction * amount, 'smooth');
+  }, []);
+
+  useEffect(() => {
+    updateStatsScrollState();
+    const onResize = () => updateStatsScrollState();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [updateStatsScrollState]);
+
+  useEffect(() => {
+    const tmr = setTimeout(() => updateStatsScrollState(), 0);
+    return () => clearTimeout(tmr);
+  }, [doctor, updateStatsScrollState]);
+
   const toggleFollow = async () => {
     try {
       if (isFollowing) {
@@ -297,6 +570,49 @@ const DoctorProfilePage = () => {
             editable={false}
             customFields={doctorFields}
             onSave={handleProfileSave}
+            headerBottom={(
+              <MobileStatsWrapper>
+                {canScrollStatsLeft ? <MobileScrollFadeLeft /> : null}
+                {canScrollStatsRight ? <MobileScrollFadeRight /> : null}
+
+                <MobileScrollButtonLeft
+                  type="button"
+                  aria-label={t('common.previous', { defaultValue: 'Previous' })}
+                  onClick={() => scrollStatsBy(-1)}
+                  disabled={!canScrollStatsLeft}
+                >
+                  ‹
+                </MobileScrollButtonLeft>
+
+                <MobileScrollButtonRight
+                  type="button"
+                  aria-label={t('common.next', { defaultValue: 'Next' })}
+                  onClick={() => scrollStatsBy(1)}
+                  disabled={!canScrollStatsRight}
+                >
+                  ›
+                </MobileScrollButtonRight>
+
+                <MobileStatsBar ref={statsBarRef} onScroll={updateStatsScrollState}>
+                  <MobileStatChip>
+                    <MobileStatValue>{doctorStats.patients}</MobileStatValue>
+                    <MobileStatLabel>{t('doctorProfile.stats.patients')}</MobileStatLabel>
+                  </MobileStatChip>
+                  <MobileStatChip>
+                    <MobileStatValue>{doctorStats.experience}</MobileStatValue>
+                    <MobileStatLabel>{t('doctorProfile.stats.experience')}</MobileStatLabel>
+                  </MobileStatChip>
+                  <MobileStatChip>
+                    <MobileStatValue>{doctorStats.rating}</MobileStatValue>
+                    <MobileStatLabel>{t('doctorProfile.stats.rating')}</MobileStatLabel>
+                  </MobileStatChip>
+                  <MobileStatChip>
+                    <MobileStatValue>{doctorStats.followersCount}</MobileStatValue>
+                    <MobileStatLabel>{t('doctorProfile.stats.followers')}</MobileStatLabel>
+                  </MobileStatChip>
+                </MobileStatsBar>
+              </MobileStatsWrapper>
+            )}
             headerActions={[
               ...(canBookAppointment ? [{
                 label: activeTab === 'book' ? t('doctorProfile.actions.hideBooking') : t('doctorProfile.actions.bookAppointment'),
@@ -319,6 +635,17 @@ const DoctorProfilePage = () => {
               }] : [])
             ]}
           />
+
+          {showBooking && canBookAppointment && (
+            <BookingSection ref={bookingRef}>
+              <AppointmentBooking
+                doctorId={doctorId}
+                doctor={doctor}
+                currentUser={currentUser}
+                onBookingComplete={handleBookingComplete}
+              />
+            </BookingSection>
+          )}
         </MainProfile>
 
         <Sidebar>
@@ -468,17 +795,6 @@ const DoctorProfilePage = () => {
 
         </Sidebar>
       </ProfileGrid>
-
-      {showBooking && canBookAppointment && (
-        <BookingSection ref={bookingRef}>
-          <AppointmentBooking
-            doctorId={doctorId}
-            doctor={doctor}
-            currentUser={currentUser}
-            onBookingComplete={handleBookingComplete}
-          />
-        </BookingSection>
-      )}
 
     </DoctorProfileContainer>
   );

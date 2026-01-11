@@ -10,6 +10,9 @@ const ProfileContainer = styled.div`
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 `;
 
 const ProfileHeader = styled.div`
@@ -22,6 +25,14 @@ const ProfileHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+    gap: 16px;
+  }
 
   &::before {
     content: '';
@@ -32,6 +43,19 @@ const ProfileHeader = styled.div`
     bottom: 0;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
     pointer-events: none;
+  }
+`;
+
+const HeaderBottom = styled.div`
+  display: none;
+  padding: 12px 16px 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e2e8f0;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    display: block;
   }
 `;
 
@@ -51,6 +75,12 @@ const HeaderLeft = styled.div`
   gap: 24px;
   flex: 1;
   min-width: 280px;
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    width: 100%;
+    gap: 16px;
+  }
 `;
 
 const HeaderText = styled.div`
@@ -58,6 +88,7 @@ const HeaderText = styled.div`
   flex-direction: column;
   text-align: left;
   gap: 4px;
+  min-width: 0;
 `;
 
 const HeaderActions = styled.div`
@@ -66,6 +97,12 @@ const HeaderActions = styled.div`
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+  }
 `;
 
 const UserName = styled.h1`
@@ -73,6 +110,12 @@ const UserName = styled.h1`
   font-size: 28px;
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  @media (max-width: 768px) {
+    font-size: 22px;
+  }
 `;
 
 const UserRole = styled.p`
@@ -86,10 +129,19 @@ const UserEmail = styled.p`
   margin: 0;
   font-size: 14px;
   opacity: 0.8;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 `;
 
 const ProfileBody = styled.div`
   padding: 32px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const Section = styled.div`
@@ -113,6 +165,11 @@ const FieldGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 `;
 
 const Field = styled.div`
@@ -212,6 +269,47 @@ const Button = styled.button`
   `}
 `;
 
+const HeaderActionButton = styled.button`
+  padding: ${props => props.$small ? '9px 14px' : '12px 18px'};
+  border-radius: 12px;
+  font-size: ${props => props.$small ? '13px' : '14px'};
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+
+  ${props => props.$variant === 'primary' && `
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #4c51bf;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+
+    &:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+    }
+  `}
+
+  ${props => props.$variant === 'secondary' && `
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.95);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+  `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
 const LoadingSpinner = styled.div`
   display: flex;
   justify-content: center;
@@ -237,7 +335,8 @@ const UserProfile = ({
   customFields = [],
   onSave,
   className,
-  headerActions = []
+  headerActions = [],
+  headerBottom = null
 }) => {
   const { t, i18n } = useTranslation('userManagement');
   const { 
@@ -439,7 +538,7 @@ const UserProfile = ({
         {headerActions.length > 0 && (
           <HeaderActions>
             {headerActions.map((action, idx) => (
-              <Button
+              <HeaderActionButton
                 key={idx}
                 $variant={action.variant || 'primary'}
                 $small={action.small}
@@ -448,11 +547,13 @@ const UserProfile = ({
                 title={action.title || action.label}
               >
                 {action.label}
-              </Button>
+              </HeaderActionButton>
             ))}
           </HeaderActions>
         )}
       </ProfileHeader>
+
+      {headerBottom ? <HeaderBottom>{headerBottom}</HeaderBottom> : null}
 
       <ProfileBody>
         <Section>

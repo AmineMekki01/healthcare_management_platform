@@ -65,12 +65,16 @@ func (h *DoctorHandler) GetDoctorByID(c *gin.Context) {
 
 func (h *DoctorHandler) SearchDoctors(c *gin.Context) {
 	searchQuery := c.Query("query")
+	if searchQuery == "" {
+		searchQuery = c.Query("search")
+	}
 	specialty := c.Query("specialty")
 	specialtyCode := c.Query("specialtyCode")
 	if specialty == "" {
 		specialty = specialtyCode
 	}
 	location := c.Query("location")
+	sortBy := c.Query("sort")
 
 	var userLatitude, userLongitude float64
 	var err error
@@ -91,7 +95,7 @@ func (h *DoctorHandler) SearchDoctors(c *gin.Context) {
 		}
 	}
 
-	doctors, err := h.doctorService.SearchDoctors(searchQuery, specialty, location, userLatitude, userLongitude)
+	doctors, err := h.doctorService.SearchDoctorsWithSort(searchQuery, specialty, location, userLatitude, userLongitude, sortBy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error searching doctors: " + err.Error()})
 		return

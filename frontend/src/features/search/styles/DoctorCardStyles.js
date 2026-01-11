@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const CardContainer = styled.div`
-    width: 320px;
+    max-width: 500px;
     min-height: 480px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
@@ -380,4 +380,97 @@ export const ActionLink = styled.a`
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     }
+`;
+
+export const AvailabilityBanner = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: ${props => props.available
+        ? `linear-gradient(135deg, ${props.specialtyColors?.primary || '#667eea'}14 0%, ${props.specialtyColors?.secondary || '#764ba2'}14 100%)`
+        : 'rgba(226, 232, 240, 0.65)'};
+    border: 1px solid ${props => props.available
+        ? (props.specialtyColors?.primary ? `${props.specialtyColors.primary}2e` : 'rgba(102, 126, 234, 0.22)')
+        : 'rgba(203, 213, 225, 0.9)'};
+    backdrop-filter: blur(10px);
+    box-shadow: ${props => props.available
+        ? '0 10px 24px rgba(15, 23, 42, 0.06)'
+        : '0 6px 14px rgba(15, 23, 42, 0.04)'};
+    transition: all 0.25s ease;
+
+    ${CardContainer}:hover & {
+        transform: translateY(-1px);
+        box-shadow: ${props => props.available
+            ? '0 14px 34px rgba(15, 23, 42, 0.08)'
+            : '0 10px 22px rgba(15, 23, 42, 0.06)'};
+    }
+`;
+
+export const AvailabilityLeft = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+`;
+
+export const AvailabilityIcon = styled.div`
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: ${props => props.available
+        ? (props.specialtyColors?.primary ? `${props.specialtyColors.primary}1f` : 'rgba(102, 126, 234, 0.14)')
+        : 'rgba(148, 163, 184, 0.18)'};
+    color: ${props => props.available
+        ? (props.specialtyColors?.primary || '#667eea')
+        : '#64748b'};
+
+    svg {
+        font-size: 0.95rem;
+    }
+`;
+
+export const AvailabilityLabel = styled.div`
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: ${props => props.available ? '#1f2937' : '#475569'};
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+`;
+
+export const AvailabilityRight = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
+    gap: 2px;
+`;
+
+export const AvailabilityDate = styled.div`
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+`;
+
+export const AvailabilityTime = styled.div`
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: ${props => props.specialtyColors?.primary || '#667eea'};
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;

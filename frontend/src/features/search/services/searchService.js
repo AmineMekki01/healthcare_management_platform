@@ -18,8 +18,17 @@ class SearchService {
       console.log('Search response:', response.data);
       console.log('Response status:', response.status);
       
-      const doctors = response.data
+      const doctors = response.data;
       const localizedDoctors = doctors.map(doctor => this.localizeDoctorData(doctor, currentLanguage));
+
+      if (params.sort === 'availability') {
+        return localizedDoctors.sort((a, b) => {
+          const aStart = a.nextAvailableSlotStart ? new Date(a.nextAvailableSlotStart).getTime() : Number.POSITIVE_INFINITY;
+          const bStart = b.nextAvailableSlotStart ? new Date(b.nextAvailableSlotStart).getTime() : Number.POSITIVE_INFINITY;
+          return aStart - bStart;
+        });
+      }
+
       return this.sortDoctorsByRelevance(localizedDoctors, params);
     } catch (error) {
       console.error('Failed to search doctors:', error);
@@ -88,7 +97,7 @@ class SearchService {
     const searchParams = {};
     
     if (params.query?.trim()) {
-      searchParams.search = params.query.trim();
+      searchParams.query = params.query.trim();
     }
     
     if (params.specialty?.trim()) {
@@ -116,6 +125,10 @@ class SearchService {
       searchParams.availableToday = params.availableToday;
     }
 
+    if (params.sort?.trim()) {
+      searchParams.sort = params.sort.trim();
+    }
+
     return searchParams;
   }
 
@@ -130,6 +143,9 @@ class SearchService {
   }
 
   normalizeDoctorData(doctor) {
+    const nextAvailableSlotStart = doctor.nextAvailableSlotStart || doctor.NextAvailableSlotStart;
+    const nextAvailableSlotEnd = doctor.nextAvailableSlotEnd || doctor.NextAvailableSlotEnd;
+
     return {
       id: doctor.DoctorId || doctor.UserId || doctor.id,
       userId: doctor.UserId || doctor.DoctorId || doctor.id,
@@ -150,6 +166,8 @@ class SearchService {
       verified: doctor.verified || true,
       availableToday: doctor.availableToday || false,
       distance: doctor.distance || null,
+      nextAvailableSlotStart: nextAvailableSlotStart || null,
+      nextAvailableSlotEnd: nextAvailableSlotEnd || null,
       
       ...doctor
     }; 
