@@ -25,15 +25,16 @@ const PatientMention = ({
       const atIndex = beforeCursor.lastIndexOf('@');
       
       
-      if (atIndex !== -1) {
+      if (atIndex !== -1 && (atIndex === 0 || /\s/.test(beforeCursor[atIndex - 1]))) {
         const textAfterAt = beforeCursor.substring(atIndex + 1);
-        
-        const nameMatch = textAfterAt.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)/);
-        const searchTerm = nameMatch ? nameMatch[1] : textAfterAt;
-        
-        setSearchTerm(searchTerm);
-        setIsVisible(true);
-        
+        const isActiveMention = textAfterAt.length > 0 && !/\s$/.test(textAfterAt);
+
+        if (isActiveMention) {
+          setSearchTerm(textAfterAt);
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
       } else {
         setIsVisible(false);
       }
@@ -67,18 +68,19 @@ const PatientMention = ({
   const handlePatientSelect = useCallback((patient) => {
     const beforeCursor = inputValue.substring(0, cursorPosition);
     const afterCursor = inputValue.substring(cursorPosition);
-    const mentionMatch = beforeCursor.match(/@(\w*)$/);
+    const mentionMatch = beforeCursor.match(/@([^@]*)$/);
     
     if (mentionMatch) {
       const beforeMention = beforeCursor.substring(0, mentionMatch.index);
-      const patientMention = `@${patient.full_name}`;
-      const newValue = beforeMention + patientMention + ' ' + afterCursor;
-      const newCursorPos = beforeMention.length + patientMention.length + 1;
+      const newValueRaw = beforeMention + afterCursor;
+      const newValue = newValueRaw.replace(/\s{2,}/g, ' ');
+      const newCursorPos = beforeMention.length;
       
       onPatientSelect(patient, newValue, newCursorPos);
       setIsVisible(false);
+      if (onClose) onClose();
     }
-  }, [inputValue, cursorPosition, onPatientSelect]);
+  }, [inputValue, cursorPosition, onPatientSelect, onClose]);
 
   const handleKeyDown = useCallback((e) => {
     if (!isVisible || patients.length === 0) return;
@@ -102,11 +104,12 @@ const PatientMention = ({
         break;
       case 'Escape':
         setIsVisible(false);
+        if (onClose) onClose();
         break;
       default:
         break;
     }
-  }, [isVisible, patients, selectedIndex, handlePatientSelect]);
+  }, [isVisible, patients, selectedIndex, handlePatientSelect, onClose]);
 
   useEffect(() => {
     if (isVisible && inputRef.current) {

@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../../auth/context/AuthContext';
 import remarkGfm from 'remark-gfm';
-import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadContainer, FilesUploadTitle, ChatInputContainer, Header, BackButton, ChatTitle} from './ChatInterface.styles';
+import { ChatInterfaceContainer, ChatInterfaceMessages, ChatInterfaceMessageLlm, ChatInterfaceMessageUser, ChatInterfaceInput, ChatInterfaceSubmitButton, ChatInterfaceForm, FileUploadContainer, FilesUploadTitle, ChatInputContainer, Header, BackButton, ChatTitle, MentionText, MentionChipsContainer, MentionChip, MentionChipRemoveButton } from './ChatInterface.styles';
 import ReactMarkdown from 'react-markdown';
 import DocumentList from '../DocumentUpload/DocumentList';
 import FileUploadComponent from '../DocumentUpload/FileUpload';
@@ -56,6 +56,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
 
   const handlePatientSelect = (patient, newValue, newCursorPos) => {
     setUserInput(newValue);
+    setCursorPosition(newCursorPos);
     setMentionedPatients(prev => {
       const updated = new Map(prev);
       updated.set(patient.full_name, patient);
@@ -72,6 +73,49 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
 
   const extractMentionedPatients = (message) => {
     return messageService.extractMentionedPatients(message, mentionedPatients);
+  };
+
+  const handleRemoveMention = (patientName) => {
+    setMentionedPatients(prev => {
+      const updated = new Map(prev);
+      updated.delete(patientName);
+      return updated;
+    });
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+      setTimeout(() => {
+        const pos = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(pos, pos);
+        setCursorPosition(pos);
+      }, 0);
+    }
+  };
+
+  const renderContentWithMentions = (content) => {
+    if (!content) return content;
+
+    const mentionRegex = /@([^\s@]+(?:\s+[^\s@]+)*)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+
+      const mentionText = match[0];
+      const key = `${match.index}-${mentionText}`;
+      parts.push(<MentionText key={key}>{mentionText}</MentionText>);
+      lastIndex = match.index + mentionText.length;
+    }
+
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : content;
   };
     
 
@@ -100,9 +144,8 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
       return;
     }
 
-    const mentionedPatientsList = extractMentionedPatients(userInput);
-    console.log('Mentioned patients list:', mentionedPatientsList);
-    const patientId = mentionedPatientsList.length > 0 ? mentionedPatientsList[0].patient_id : null;
+    const selectedMentions = Array.from(mentionedPatients.values());
+    const patientId = selectedMentions.length > 0 ? selectedMentions[0].patient_id : null;
 
   
     const userMessage = { role: 'user', content: userInput, created_at: new Date().toISOString() };
@@ -110,6 +153,8 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
 
     const originalInput = userInput;
     setUserInput('');
+    setCursorPosition(0);
+    setMentionedPatients(new Map());
 
     try {
       const aiMessage = await messageService.sendMessage({
@@ -187,7 +232,7 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
             {displayRole === 'user' && (
               <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <ChatInterfaceMessageUser style={{ flex: 1 }}>
-                  {msg.content}
+                  {renderContentWithMentions(msg.content)}
                 </ChatInterfaceMessageUser>
                 <button
                   onClick={() => handleDeleteMessage(msg.id)}
@@ -255,6 +300,23 @@ const ChatInterface = ({ onFileSelect, onDeleteDocument, documents, chatId, togg
 
       
       <ChatInputContainer>
+        {mentionedPatients.size > 0 && (
+          <MentionChipsContainer>
+            {Array.from(mentionedPatients.keys()).map((patientName) => (
+              <MentionChip key={patientName}>
+                @{patientName}
+                <MentionChipRemoveButton
+                  type="button"
+                  onClick={() => handleRemoveMention(patientName)}
+                  aria-label={t('common:remove')}
+                  title={t('common:remove')}
+                >
+                  ×
+                </MentionChipRemoveButton>
+              </MentionChip>
+            ))}
+          </MentionChipsContainer>
+        )}
         <ChatInterfaceForm onSubmit={handleSendMessage}>
           <ChatInterfaceInput
             ref={inputRef}
