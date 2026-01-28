@@ -169,12 +169,54 @@ export const FileUploadContainer = styled.div`
 
 export const ChatInputContainer = styled.div`
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     padding: 20px 24px;
     gap: 12px;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-top: 1px solid #e2e8f0;
+`;
+
+export const MentionChipsContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+`;
+
+export const MentionChip = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    border: 1px solid #fbbf24;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 800;
+    font-size: 14px;
+    line-height: 1.1;
+`;
+
+export const MentionChipRemoveButton = styled.button`
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: #92400e;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+
+    &:hover {
+        color: #7c2d12;
+    }
 `;
 
 export const FileUploadButton = styled.button`
@@ -314,4 +356,16 @@ export const ChatTitle = styled.h1`
     color: #1e293b;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+`;
+
+export const MentionText = styled.span`
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid #fbbf24;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 900;
+    font-size: 16px;
+    line-height: 1.2;
 `;
